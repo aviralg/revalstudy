@@ -1,4 +1,4 @@
-jan:
+build:
 	pdflatex main && bibtex main && open main.pdf
 
 clean:
