@@ -1,0 +1,108 @@
+---
+title: "analysis_stable"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+date: "`r substr(Sys.time(), 1, 10)`"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.align = "center",
+  fig.retina = 2,
+  fig.width = 10,
+  cache.lazy = FALSE
+  )
+
+library(tidyverse)
+library(stringr)
+library(viridis)
+library(vctrs)
+
+library(DT)
+
+library(fst)
+
+library(bench)
+
+source("insights.R", local = knitr::knit_global())
+```
+
+All insights about eval calls are to put here, after the computations are stabilized (so use another notebook to explore).
+
+
+# Setup
+
+```{r eval_calls_file}
+eval_calls_file <- "/var/lib/R/project-evalR/run/package-evals-traced-all.1/calls.fst"
+```
+
+
+```{r load_file}
+eval_calls <- read_fst(eval_calls_file)
+eval_calls <- as_tibble(eval_calls) 
+```
+
+```{r resolve_types}
+eval_calls <- eval_calls %>% resolve_sexp_name(expr_expression_type) %>% 
+                             resolve_sexp_name(expr_resolved_type) %>%
+                             resolve_sexp_name(enclos_type) %>%
+                             resolve_sexp_name(envir_type)
+```
+
+
+# Usage metrics
+
+
+## R code size
+
+## Number of `eval`
+
+
+For the number of call sites, we either use the `srcref` when there is one. When there is not (such as in *base*), we use a combination of file and `eval_expr_expression`.
+
+```{r}
+nb_call_sites <- eval_calls %>% select(eval_call_srcref) %>% n_distinct(na.rm = TRUE)  + eval_calls %>% filter(is.na(eval_call_srcref)) %>% select(file, eval_call_expression)%>% n_distinct()
+```
+
+There are `r nb_call_sites` different `eval` call sites.
+
+
+
+
+## Number of calls to `eval`
+
+```{r}
+nb_eval_calls <- eval_calls %>% nrow()
+```
+
+There are `r nb_eval_calls` eval calls.
+
+## Size of expressions as arguments to `eval`
+
+## Amount of computations performed in `eval`
+
+## Aliases of `eval`
+
+
+# A taxonomy of `eval`
+
+## The operation mix
+
+## Scope (environments)
+
+
+## Patterns
+
+## Provenance
+
+## Consistence
+
+# Other faces of `eval`
+
+# Case studies
