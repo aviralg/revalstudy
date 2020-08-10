@@ -63,6 +63,36 @@ component, formatting, style, styling, insert
 \end{IEEEkeywords}
 
 \section{Introduction}
+- Why eval is used in R
+- What the community says about using eval
+- What existing tools do about eval
+- Do people use eval for obvious things like looking up variable, if yes, it is
+because they are unaware of alternatives?
+- Why automating the transformation is a hard problem.
+- What is the goal of the work? To replace eval with code for static analyssi or
+for consumption by the users of the language?
+- We only permit transformations that preserve code behavior?
+- Do we accept overly complex code as the output?
+
+Why do we do this dynamically? Because it raises a chicken-and-egg problem,
+doing it statically would require us to reason about eval based code which may
+not be possible in general.
+
+
+What are the challenges? Why is it not trivial?
+- Do we handle aliasing of eval?
+- Simple cases can be subtle? (laziness for ex.
+
+Why can't we replace eval(code) by code?
+
+Intended user of the technique? Which version of R is targeted.
+
+Contributions:
+- Describe the use of eval in R
+- Develop a tool to replace evals guided by dynamic traces
+
+
+- cannot replace with (cite study of with construct).
 \textbf{*}
 
 \section{Background on R}
@@ -87,6 +117,7 @@ This section presents the results of our empirical study of eval in the R langua
 
 \subsection{How are they used}
 \textbf{Pierre}
+- classify evals based on what they can be replaced with
 
 \subsection{How to replace evals}
 \textbf{Aviral}
@@ -94,8 +125,18 @@ This section presents the results of our empirical study of eval in the R langua
 \subsection{How many evals can be replaced}
 \textbf{Aviral}
 
+\section{Evaluation}
+
 \section{Related Work}
+\eval has been widely discussed in the research literature for the challenges it
+imposes for code comprehension and automated code analyses.
+Perhaps, \citeit{EvalMenDo} is the most popular exposition of \eval and its
+challenges for JavaScript. 
+
 \textbf{Aviral}
+- javascript
+- ruby
+- php
 
 \section{Conclusion}
 \textbf{*}
