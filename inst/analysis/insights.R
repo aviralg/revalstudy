@@ -1,3 +1,16 @@
+library(rlang)
+
+
+nb_eval_call_sites <- function(eval_calls)
+{
+  # Two cases: with srcref, without srcref
+  
+  nb_with_srcref <- eval_calls %>% select(eval_call_srcref) %>% n_distinct(na.rm = TRUE)
+  nb_without_srcref <- eval_calls %>% filter(is.na(eval_call_srcref)) %>% select(caller_package, caller_function) %>% n_distinct(na.rm = TRUE)
+  
+  return(nb_with_srcref + nb_without_srcref)
+}
+
 
 get_expr <- function(eval_call)
 {
@@ -42,6 +55,20 @@ function_arguments <- function(eval_call)
     return(map_chr(as.list(exp[-1]), function(chr) { paste(deparse(chr), collapse = "\n")}))
   }
   return(NA)
+}
+
+# placeholder for the `parse_only` function of library xfun
+parse_only <- function(code) {}
+.myparse <- function(text) {}
+parse_all <- function(x, filename,allow_error) {}
+
+extract_args_parse <- function(eval_call) 
+{
+  exp <- get_expr(eval_call)
+  exp <- call_standardise(exp)
+  args <- map_chr(as.list(exp[-1]), function(chr) { paste(deparse(chr), collapse = "\n")})
+  
+  return(args[str_detect(names(args), "file|text|n|s|keep.source|srcfile")])# "file|text|n|s|prompt|keep.source|srcfile|code"
 }
 
 # See extract_inner_exp which takes a str

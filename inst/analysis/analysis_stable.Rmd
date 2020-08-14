@@ -39,7 +39,11 @@ All insights about eval calls are to put here, after the computations are stabil
 # Setup
 
 ```{r eval_calls_file}
-eval_calls_file <- "/var/lib/R/project-evalR/run/package-evals-traced-all.1/calls.fst"
+# All CRAN
+#eval_calls_file <- "/var/lib/R/project-evalR/run/package-evals-traced-all.1/calls.fst"
+
+# Subset (500 packages)
+eval_calls_file <- "/var/lib/R/project-evalR/run/package-evals-traced-corpus.1/calls.fst"
 ```
 
 
@@ -121,23 +125,17 @@ nb_eval_calls_per_package  %>% datatable()
 
 ## Size of expressions as arguments to `eval`
 
-```{r expression_size}
-
-eval_calls <- eval_calls %>% mutate(expr_expression_size = str_length(expr_expression), expr_resolved_size = str_length(expr_resolved), envir_expression_size = str_length(envir_expression), enclos_expression_size = str_length(enclos_expression))
-
-```
-
 
 ```{r}
 eval_calls %>% ggplot() +
-  geom_histogram(aes(x = expr_expression_size), na.rm = TRUE, binwidth=1) +
+  geom_histogram(aes(x = expr_expression_length), na.rm = TRUE, binwidth=1) +
   scale_x_log10() +  scale_y_sqrt()
 ```
 
 If we remove the outliers:
 ```{r}
-eval_calls %>% filter(expr_expression_size < 25000) %>% ggplot() +
-  geom_histogram(aes(x = expr_expression_size), na.rm = TRUE, binwidth=2)  + scale_x_sqrt() +  scale_y_sqrt() 
+eval_calls %>% filter(expr_expression_length < 25000) %>% ggplot() +
+  geom_histogram(aes(x = expr_expression_length), na.rm = TRUE, binwidth=2)  + scale_x_sqrt() +  scale_y_sqrt() 
 ```
 
 
@@ -151,17 +149,17 @@ An approximation of *generated* will be no `srcref` and not in `base`.
 
 ```{r code_size_srcref}
 eval_calls %>% filter(is.na(eval_call_srcref), caller_package != "base") %>% ggplot() +
-  geom_histogram(aes(x = expr_expression_size), na.rm = TRUE, binwidth=1) + scale_x_sqrt() + scale_y_sqrt()
+  geom_histogram(aes(x = expr_expression_length), na.rm = TRUE, binwidth=1) + scale_x_sqrt() + scale_y_sqrt()
 ```
 
 And the average size per package:
 ```{r average_size_package}
-eval_calls %>% group_by(caller_package) %>% summarize(average_expr_size = mean(expr_expression_size, na.rm = TRUE)) %>% arrange(desc(average_expr_size))
+eval_calls %>% group_by(caller_package) %>% summarize(average_expr_size = mean(expr_expression_length, na.rm = TRUE)) %>% arrange(desc(average_expr_size))
 ```
 
 If we look at the maxima, the largest ones are in *base*:
 ```{r max_size_package}
-eval_calls %>% group_by(caller_package) %>% summarize(max_expr_size = max(expr_expression_size, na.rm = TRUE)) %>% arrange(desc(max_expr_size))
+eval_calls %>% group_by(caller_package) %>% summarize(max_expr_size = max(expr_expression_length, na.rm = TRUE)) %>% arrange(desc(max_expr_size))
 ```
 
 </details>
@@ -187,10 +185,11 @@ eval_calls %>% group_by(caller_package) %>% summarize(max_expr_size = max(expr_e
 Some `eval` result from parsing text (directly or through a file) with `parse`.
 
 ```{r eval_from_parse}
-parsed_evals <- eval_calls %>% filter(!is.na(expr_parsed))
+parsed_evals <- eval_calls %>% filter(!is.na(expr_parsed_expression))
+nb_parsed_evals <- parsed_evals %>% nrow()
 ```
 
-There are `r parsed_evals %>% nrow()` such calls, `r (parsed_evals %>% nrow()) / nb_eval_calls * 100`%.
+There are `r nb_parsed_evals` such calls, `r nb_parsed_evals / nb_eval_calls * 100`%.
 
 ```{r, hide = TRUE}
 nb_parsed_call_sites <- nb_eval_call_sites(parsed_evals)
@@ -201,14 +200,21 @@ In terms of call sites, there are `r nb_parsed_call_sites` i.e. `r nb_parsed_cal
 <details>
   <summary>More about <code>parse</code> </summary>
   
-  We can differentiate further the provenance, i.e. whether the evaluated string comes from `file` or from `text`.
+  We can differentiate further the provenance, i.e. whether the evaluated string comes from `file` or from `text`. However, we can only do it for `parse`, `str2lang` and `str2expression` at the top level of `expr_expression`, not buried in a function call.
   
 ```{r parsed_evals_source}
-parsed_evals <- parsed_evals %>% mutate(parse_args = map(expr_expression, function_arguments)) %>% unnest_wider(parse_args, names_repair = "unique")
-
+parsed_evals_args <- parsed_evals %>% filter(str_detect(expr_parsed_expression, "(parse|str2lang|str2expression)\\(")) %>% mutate(parse_args = map(expr_parsed_expression, extract_args_parse)) %>% unnest_wider(parse_args,  names_sep = "_")
 ```
 
+```{r}
+nb_file <- parsed_evals_args %>% filter(!is.na(parse_args_file)) %>% nrow()
+```
 
+```{r}
+nb_text <- parsed_evals_args %>% filter(!is.na(parse_args_text)) %>% nrow()
+```
+
+There are `r nb_file` calls with the `file` argument, and `r nb_text` with the `text` argument, i.e. `r  nb_file / nb_parsed_evals * 100`%, and `r nb_text / nb_parsed_evals *100`% respectively.
   
 </details>
 
