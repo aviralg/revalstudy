@@ -30,7 +30,7 @@ Imports:
     vctrs,
     DT,
     fst,
-    bench
+    fs
 Remotes:
     juba/rmdformats
 Roxygen: list(markdown = TRUE)

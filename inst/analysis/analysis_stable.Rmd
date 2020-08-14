@@ -27,11 +27,18 @@ library(viridis)
 library(vctrs)
 library(DT)
 library(fst)
+library(fs)
 
 source("insights.R", local = knitr::knit_global())
 ```
 
 # Data
+
+The analysis is being performed on dataset read from file `r params$data_filepath`.
+
+```{r file-info, echo=FALSE}
+file_info(params$data_filepath)
+```
 
 ```{r load-data, echo=FALSE}
 eval_calls <-
@@ -62,30 +69,124 @@ column_names <- column_names %>%  rename("Description" = `1`) %>% filter(!is.na(
 column_names %>% knitr::kable()
 ```
 
+# Corpus
+
+TODO
+
 # Research Questions
 
 ## RQ1: How many evals are there?
 
-For the number of call sites, we either use the `srcref` when there is one. When there is not (such as in *base*), we use a combination of `caller_package` and `caller_function`.
+There are four kinds of `eval` in the `base` package. Their definitions are shown below.
 
-```{r}
-nb_call_sites <- eval_calls %>% select(eval_call_srcref) %>% n_distinct(na.rm = TRUE)  + eval_calls %>% filter(is.na(eval_call_srcref)) %>% select(caller_package, caller_function)%>% n_distinct()
+```{r, eval-definition, eval=FALSE}
+base::eval <-
+    function(expr, 
+             envir = parent.frame(), 
+             enclos = if (is.list(envir)||is.pairlist(envir)) parent.frame() else baseenv())
+        .Internal(eval(expr, envir, enclos))
+
+base::evalq <-
+    function (expr, 
+              envir = parent.frame(), 
+              enclos = if (is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv())
+        .Internal(eval(substitute(expr), envir, enclos))
+
+base::eval.parent <-
+    function (expr, n = 1) {
+        p <- parent.frame(n + 1)
+        eval(expr, p)
+    }
+
+base::local <-
+    function (expr, envir = new.env())
+        eval.parent(substitute(eval(quote(expr), envir)))
 ```
 
-<details>
-  <summary>More information about when there is no <code>srcref</code> </summary>
-  
-  We assume that:
-  
+```{r eval-count-table}
+callsites_with_srcref <-
+    eval_calls %>% 
+    select(eval_call_srcref) %>% 
+    n_distinct(na.rm = TRUE)
+
+callsites_without_srcref <-
+    eval_calls %>% 
+    filter(is.na(eval_call_srcref)) %>% 
+    select(caller_package, caller_function) %>% 
+    n_distinct()
+
+eval_calls <-
+    eval_calls %>%
+    mutate(eval_call_srcref = coalesce(eval_call_srcref, 
+                                       str_c("missing", "::", caller_package, "::", caller_function)))
+eval_count_table <-
+    eval_calls %>%
+    group_by(eval_function, eval_call_srcref) %>%
+    summarize(count = n()) %>%
+    summarize(call_count = sum(count), callsite_count = n())
+    
+nb_eval_calls <- total_call_count <- sum(eval_count_table$call_count)
+
+nb_call_sites <- total_callsite_count <- sum(eval_count_table$callsite_count)
+    
+eval_count_table <-
+    eval_count_table %>%
+    mutate(call_proportion = 100 * call_count / total_call_count,
+           callsite_proportion = 100 * callsite_count / total_callsite_count) %>%
+    arrange(desc(call_count))
+
+eval_call_proportion <- 
+    eval_count_table %>%
+    filter(eval_function == "eval") %>%
+    pull(call_proportion)
+```
+
+There are `r NA` R function calls with `r total_call_count` calls to the four kinds of eval which accounts for `r NA`% of all R function calls.
+The table below summarizes the proportion of calls to the different kinds of evals.
+
+```{}
+eval_count_table %>%
+select(eval_function, call_count, call_proportion)
+datatable()
+```
+
+We observe that `r eval_call_proportion`% of the calls are made to the `eval` function.
+
+These `eval` calls originate from `r total_callsite_count` call sites. For the number of call sites, we use line number information attached to the AST by the parser. When it is not available (such as in *base*), we use a combination of `caller_package` and `caller_function`. We assume that:
   - the combination `caller_package` and `caller_function` is unique
   - there is only one call site per such `caller_function`
-  
-  It means that we get a lower bound.
-</details> 
+This assumption results in a lower bound for the number of unique callsites for eval.
 
-There are `r nb_call_sites` different `eval` call sites.
 
-### Per package
+```{r call-site-table}
+eval_callsite_table <-
+    eval_calls %>%
+    count(eval_function, caller_package, eval_call_srcref, name = "call_count") %>%
+    group_by(eval_function, caller_package) %>%
+    summarize(call_count = sum(call_count), callsite_count = n()) %>%
+    ungroup()
+
+eval_callsite_table %>%
+datatable()
+```
+
+```{r call-site-distribution}
+package_callsite_distribution <-
+    eval_callsite_table %>%
+    mutate(callsite_count = if_else(callsite_count <= 5, as.character(callsite_count), "> 5")) %>%
+    group_by(eval_function, callsite_count) %>%
+    summarize(package_count = n())
+    
+package_callsite_distribution %>%
+datatable()
+
+p <-
+    package_callsite_distribution %>%
+    ggplot(aes(callsite_count, package_count)) +
+    geom_col() +
+    facet_wrap(vars(eval_function))
+p
+```
 
 ```{r eval_call_sites_base}
 eval_calls %>% filter(caller_package == "base") %>% select(caller_function) %>% n_distinct(na.rm = TRUE)
@@ -101,15 +202,6 @@ eval_calls %>% filter(caller_package != "base") %>% group_by(caller_package) %>%
 ```
 
 We probably forget the generated ones here, but should we count them in the _call sites_?
-
-## Number of calls to `eval`
-
-```{r}
-nb_eval_calls <- eval_calls %>% nrow()
-```
-
-There are `r nb_eval_calls` eval calls.
-
 
 ```{r nb_eval_calls_per_package}
 nb_eval_calls_per_package <- eval_calls %>% group_by(caller_package) %>% summarise(nb_eval_calls_package = n(), per_cent = nb_eval_calls_package / nb_eval_calls * 100) %>% arrange(desc(nb_eval_calls_package))
