@@ -24,7 +24,15 @@ LazyData: true
 Imports:
     tidyverse,
     knitr,
-    rmarkdown
+    rmarkdown,
+    stringr,
+    viridis,
+    vctrs,
+    DT,
+    fst,
+    bench
+Remotes:
+    juba/rmdformats
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.0
 VignetteBuilder: knitr

@@ -1,68 +1,47 @@
 ---
-title: "analysis_stable"
-output: 
-  html_document:
-    toc: true
-    toc_float: true
-    df_print: paged
-date: "`r substr(Sys.time(), 1, 10)`"
+title: "Empirical Evaluation of eval in R"
+output:
+  rmdformats::readthedown:
+        code_folding: hide
+        lightbox: true
+        gallery: false
+        df_print: paged
+        toc_depth: 3
+date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
+params:
+    data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-all.1/calls.fst"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(
-  echo = TRUE,
-  fig.align = "center",
-  fig.retina = 2,
-  fig.width = 10,
-  cache.lazy = FALSE
-  )
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.align = "center",
+                      fig.retina = 2,
+                      fig.width = 10,
+                      cache.lazy = FALSE)
 
 library(tidyverse)
 library(stringr)
 library(viridis)
 library(vctrs)
-
 library(DT)
-
 library(fst)
-
-library(bench)
 
 source("insights.R", local = knitr::knit_global())
 ```
 
-All insights about eval calls are to put here, after the computations are stabilized (so use another notebook to explore).
+# Data
 
+```{r load-data, echo=FALSE}
+eval_calls <-
+    read_fst(params$data_filepath) %>%
+    as_tibble() %>%
+    resolve_sexp_name(expr_expression_type) %>%
+    resolve_sexp_name(expr_resolved_type) %>%
+    resolve_sexp_name(enclos_type) %>%
+    resolve_sexp_name(envir_type)
 
-# Setup
-
-```{r eval_calls_file}
-# All CRAN
-#eval_calls_file <- "/var/lib/R/project-evalR/run/package-evals-traced-all.1/calls.fst"
-
-# Subset (500 packages)
-eval_calls_file <- "/var/lib/R/project-evalR/run/package-evals-traced-corpus.1/calls.fst"
-```
-
-
-```{r load_file}
-eval_calls <- read_fst(eval_calls_file)
-eval_calls <- as_tibble(eval_calls) 
-```
-
-```{r resolve_types}
-eval_calls <- eval_calls %>% resolve_sexp_name(expr_expression_type) %>% 
-                             resolve_sexp_name(expr_resolved_type) %>%
-                             resolve_sexp_name(enclos_type) %>%
-                             resolve_sexp_name(envir_type)
-```
-
-
-# Description of the columns
-
-```{r, echo = FALSE}
 c_names <- names(eval_calls)
 column_names <- setNames(data.frame(matrix(ncol = length(c_names), nrow = 0)), c_names)
 
@@ -80,21 +59,12 @@ column_names <- column_names %>% rownames_to_column() %>%
 
 column_names <- column_names %>%  rename("Description" = `1`) %>% filter(!is.na(Description))
 
-```
-
-
-
-```{r, echo = FALSE}
 column_names %>% knitr::kable()
-
 ```
 
+# Research Questions
 
-# Usage metrics
-
-
-## Number of `eval`
-
+## RQ1: How many evals are there?
 
 For the number of call sites, we either use the `srcref` when there is one. When there is not (such as in *base*), we use a combination of `caller_package` and `caller_function`.
 
