@@ -60,6 +60,36 @@ eval_calls <- eval_calls %>% resolve_sexp_name(expr_expression_type) %>%
 ```
 
 
+# Description of the columns
+
+```{r, echo = FALSE}
+c_names <- names(eval_calls)
+column_names <- setNames(data.frame(matrix(ncol = length(c_names), nrow = 0)), c_names)
+
+column_names <- column_names %>% add_row()
+
+column_names["file"] <- "File where the `eval` is executed"
+column_names["eval_call_id"] <- "Unique id of a call" 
+column_names["expr_parsed_expression"] <- "Contains the expression with a call to `parse` if there is one in the `expr` argument somewhere in the call stack."
+
+# Pivoting
+
+column_names <- column_names %>% rownames_to_column() %>% 
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname, values_from=value)
+
+column_names <- column_names %>%  rename("Description" = `1`) %>% filter(!is.na(Description))
+
+```
+
+
+
+```{r, echo = FALSE}
+column_names %>% knitr::kable()
+
+```
+
+
 # Usage metrics
 
 
