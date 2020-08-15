@@ -144,7 +144,7 @@ eval_call_proportion <-
 There are `r NA` R function calls with `r total_call_count` calls to the four kinds of eval which accounts for `r NA`% of all R function calls.
 The table below summarizes the proportion of calls to the different kinds of evals.
 
-```{}
+```{r eval-count-table}
 eval_count_table %>%
 select(eval_function, call_count, call_proportion)
 datatable()
