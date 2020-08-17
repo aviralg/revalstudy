@@ -49,6 +49,8 @@ eval_calls <-
     resolve_sexp_name(enclos_type) %>%
     resolve_sexp_name(envir_type)
 
+
+# A flexible way to document the dataset: it is quick and easy to document a new column
 c_names <- names(eval_calls)
 column_names <- setNames(data.frame(matrix(ncol = length(c_names), nrow = 0)), c_names)
 
@@ -57,6 +59,14 @@ column_names <- column_names %>% add_row()
 column_names["file"] <- "File where the `eval` is executed"
 column_names["eval_call_id"] <- "Unique id of a call" 
 column_names["expr_parsed_expression"] <- "Contains the expression with a call to `parse` if there is one in the `expr` argument somewhere in the call stack."
+column_names["caller_function"] <- "Function in which the `eval` is called."
+column_names["caller_package"] <- "Package in which the `eval` is called."
+column_names["eval_function"] <- "One of `eval`, `evalq`, `eval.parent`, and `local`."
+column_names["eval_call_expression"] <- "The full expression with `eval` that has been traced."
+column_names["eval_call_srcref"] <- "File name and line where the `eval` call is. Might ne NA, especially for calls originating from package base."
+column_names["caller_expression"] <- "Expression in which the `eval` is called."
+column_names["caller_srcref"] <- "File name and line where the caller of the `eval` is located. Might be NA (especially for callers in base)."
+column_names["caller_srcref2"] <- "File name and line for some calls for which the caller seemed to be itself (mainly Rcpp and C calls)."
 
 # Pivoting
 
@@ -144,15 +154,16 @@ eval_call_proportion <-
 There are `r NA` R function calls with `r total_call_count` calls to the four kinds of eval which accounts for `r NA`% of all R function calls.
 The table below summarizes the proportion of calls to the different kinds of evals.
 
-```{}
+```{r }
 eval_count_table %>%
-select(eval_function, call_count, call_proportion)
+select(eval_function, call_count, call_proportion) %>% 
 datatable()
 ```
 
 We observe that `r eval_call_proportion`% of the calls are made to the `eval` function.
 
 These `eval` calls originate from `r total_callsite_count` call sites. For the number of call sites, we use line number information attached to the AST by the parser. When it is not available (such as in *base*), we use a combination of `caller_package` and `caller_function`. We assume that:
+
   - the combination `caller_package` and `caller_function` is unique
   - there is only one call site per such `caller_function`
 This assumption results in a lower bound for the number of unique callsites for eval.
