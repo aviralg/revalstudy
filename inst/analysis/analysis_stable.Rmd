@@ -203,30 +203,48 @@ p <-
 p
 ```
 
+
+To asses how precise the call site estimate is for calls that do not have `srcref`, we compare it on *base* with the actual count given by `grep`.
+
 ```{r eval_call_sites_base}
-eval_calls %>% filter(caller_package == "base") %>% select(caller_function) %>% n_distinct(na.rm = TRUE)
+nb_call_site_base <- eval_calls %>% filter(caller_package == "base") %>% select(caller_function) %>% n_distinct(na.rm = TRUE)
 ```
+The estimate for *base* is `r nb_call_site_base` call sites, while `grep` yields 40 `eval` call sites.
 
-<details>
-  <summary> Comparing with <code>grep</code></summary>
-  Grepping *base* to find eval call sites yields 40 `eval` call sites.
-</details>
-
+For the other packages, ranked by call sites:
 ```{r eval_call_sites_per_package}
 eval_calls %>% filter(caller_package != "base") %>% group_by(caller_package) %>% summarize(nb_call_sites =  n_distinct(eval_call_srcref, na.rm = TRUE)) %>% arrange(desc(nb_call_sites))
 ```
 
 We probably forget the generated ones here, but should we count them in the _call sites_?
 
+
+What are the packages with the highest number of `eval` calls?
+
 ```{r nb_eval_calls_per_package}
 nb_eval_calls_per_package <- eval_calls %>% group_by(caller_package) %>% summarise(nb_eval_calls_package = n(), per_cent = nb_eval_calls_package / nb_eval_calls * 100) %>% arrange(desc(nb_eval_calls_package))
 ```
 
-*base* has the highest number of eval calls, i.e. `r nb_eval_calls_per_package["per_cent", 1]`% of them.
+*base* has the highest number of eval calls, i.e. `r nb_eval_calls_per_package[1, "per_cent"][[1]]`% of them.
 
   
 ```{r}
 nb_eval_calls_per_package  %>% datatable()
+```
+
+
+### Excluding *base* from the data set
+
+We tried to replace the 40 `eval` call sites in *base* and could do it in about 50% of the cases. The rest of the cases are legitimate uses of `eval`, basically variations of `eval`.
+
+TODO: show some examples, replacements and non replacements
+
+We argue that `eval` in *base* should be considered apart from the other `eval` calls.
+
+`eval` in *base* does not use `parse`, so does not take strings potentially coming from users as input,  and thus are deemed to be _safe_.
+
+```{r parse_in_base}
+nb_parse_base <- eval_calls %>% filter(!is.na(expr_parsed_expression), caller_package == "base")
 ```
 
 
