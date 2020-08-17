@@ -14,6 +14,10 @@ params:
     data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.1/calls.fst"
     #data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-all.1/calls.fst"
     # The trace data on all CRAN does not have all the columns of the smaller corpus. The analysis will fail for the big corpus.
+
+# This makes it possible to generate the html file in the html subfolder
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "html") })
 ---
 
 ```{r setup, include=FALSE}
@@ -247,6 +251,7 @@ We argue that `eval` in *base* should be considered apart from the other `eval` 
 nb_parse_base <- eval_calls %>% filter(!is.na(expr_parsed_expression), caller_package == "base")
 ```
 
+There are `r nrow(nb_parse_base)` `eval` calls in *base* 
 
 ## Size of expressions as arguments to `eval`
 
