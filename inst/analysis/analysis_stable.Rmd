@@ -50,6 +50,7 @@ file_info(params$data_filepath)
 eval_calls <-
     read_fst(params$data_filepath) %>%
     as_tibble() %>%
+    mutate(eval_call_package = map_chr(eval_call_srcref, extract_package_name)) %>% 
     resolve_sexp_name(expr_expression_type) %>%
     resolve_sexp_name(expr_resolved_type) %>%
     resolve_sexp_name(enclos_type) %>%
@@ -78,7 +79,7 @@ column_names["caller_srcref"] <- "File name and line where the caller of the `ev
 #column_names["caller_expression_2"] <- "Same as `caller_expression_2` but uses `format` to print, not `expr_to_string`."
 column_names["caller_stack_expression"] <-"When `eval_function` == `caller_function`, climb up the stack to find the first different caller."
 column_names["caller_stack_expression_raw"] <- "See `caller_stack_expression`. Does not use `expr_to_str` but `format`."
-column_names["caller_stack_expression_srcref"] <- "srcref for `caller_stack_expression."
+column_names["caller_stack_expression_srcref"] <- "srcref for `caller_stack_expression`."
 # To continue
 
 # Pivoting
@@ -251,28 +252,68 @@ nb_eval_calls_per_package  %>% datatable()
 
 ### Excluding *base* from the data set
 
-We tried to replace the 40 `eval` call sites in *base* and could do it in about 50% of the cases. The rest of the cases are legitimate uses of `eval`, basically variations of `eval`.
+When using `grep` , we find 30 call sites that use `eval` in *base*.
+We tried to replace the 30 `eval` call sites in *base* and could do it in  50% of the cases. 
 
-TODO: show some examples, replacements and non replacements
 
-We argue that `eval` in *base* should be considered apart from the other `eval` calls.
 
-`eval` in *base* does not use `parse`, so does not take strings potentially coming from users as input,  and thus are deemed to be _safe_.
+We reckon that `eval` in *base* should be considered apart from the other `eval` calls.
+
+`eval` in *base* does not consume user input, i.e. input coming from `parse`, except in 5 legitimate cases, such as the `sys.source` function that is used to `eval` a file.  
+
+
+| Function name              | File           | Line | Parse ? | Comments                                                                           |
+|----------------------------|----------------|------|---------|------------------------------------------------------------------------------------|
+| autoload                   | autoload       | 25   |         |                                                                                    |
+| autoloader                 | autoload       | 43   |         | To execute a call to library                                                       |
+| autoloader                 | autoload       | 49   |         |                                                                                    |
+| bquote                     | backquote      | 33   |         | In subfunction unquote. To eval what is in .() . Metaprogramming                   |
+| bquote                     | backquote      | 56   |         | idem (in unquote.list, defined inside bquote)                                      |
+| by.default                 | by             | 35   |         | eval(substitute pattern?                                                           |
+| by.data.frame              | by             | 50   |         | idem                                                                               |
+| invokeRestartInteractively | conditions     | 245  | yes     | prompt                                                                             |
+| invokeRestartInteractively | conditions     | 249  | yes     | prompt                                                                             |
+| Ops.data.frame             | dataframe      | 1678 |         | for arithmetic operators on data frames ; do.call could be probably used here also |
+| dget                       | dput           | 32   | yes     | from file                                                                          |
+| eval                       | eval           | 26   |         | Call Internal eval                                                                 |
+| eval.parent                | eval           | 30   |         |                                                                                    |
+| evalq                      | eval           | 36   |         | evalq is basically eval(substitute                                                 |
+| local                      | eval           | 49   |         |                                                                                    |
+| with.default               | eval           | 57   |         |                                                                                    |
+| within.data.frame          | eval           | 63   |         |                                                                                    |
+| within.list                | eval           | 77   |         | evalq                                                                              |
+| replicate                  | replicate      | 21   |         |                                                                                    |
+| subset.data.frame          | frametools     | 25   |         |                                                                                    |
+| subset.data.frame          | frametools     | 34   |         |                                                                                    |
+| subset.matrix              | frametools     | 56   |         |                                                                                    |
+| transform.data.frame       | frametools     | 69   |         |                                                                                    |
+| match.arg                  | match          | 45   |         |                                                                                    |
+| char.expand                | match          | 79   |         |                                                                                    |
+| max.col                    | max            | 22   |         | To access formals                                                                  |
+| parseNamespaceFile         | namespace      | 1315 | yes     | To parse directives                                                                |
+| idem                       | namespace      | 1319 | yes     |                                                                                    |
+| idem                       | namespace      | 1442 | yes     | evaluate a call from a parse                                                       |
+| source                     | source         | 123  | yes     | Use the internal parse function (here it is a comment)                             |
+| source                     | source         | 170  | yes     | comment                                                                            |
+| source                     | source         | 219  | yes     | the actual eval                                                                    |
+| sys.source                 | source         | 277  | yes     | the non-internal parse is used                                                     |
+| stopifnot                  | stop           | 54   |         | change of caller pattern                                                           |
+| as.data.frame.table        | table          | 244  |         | Build a call?                                                                      |
+| match.fun                  | match.fun      | 28   |         | eval.parent                                                                        |
+| trace                      | methodsSupport | 38   |         | eval.parent                                                                        |
+| untrace                    | methodsSupport | 53   |         | eval.parent                                                                        |
+| .doTrace                   | methodsSupport | 78   |         | eval.parent                                                                        |
+
+
 
 ```{r parse_in_base}
-parsed_base <- eval_calls %>% filter(!is.na(expr_parsed_expression), caller_package == "base")
+parsed_base <- eval_calls %>% filter(!is.na(expr_parsed_expression), eval_call_package == "base")
 
 nb_call_site_parse_base <-  nb_eval_call_sites(parsed_base)
 ```
 
-There are `r nrow(parsed_base)` `eval` calls with `parse` in *base*, which is `r nrow(parsed_base) / nrow(filter(eval_calls, caller_package == "base"))`%. In terms of call sites, there are `r nb_call_site_parse_base` such ones, i.e. `r nb_call_site_parse_base / nb_call_site_base * 100`.
+There are `r nrow(parsed_base)` `eval` calls with `parse` in *base*, which is `r nrow(parsed_base) / nrow(filter(eval_calls, eval_call_package == "base"))`%. 
 
-They are the following ones:
-
-```{r call_site_parse_base}
-parsed_base %>% count(file, caller_function, caller_expression, expr_parsed_expression) %>% 
-  arrange(desc(n)) %>% knitr::kable()
-```
 
 
 ## Size of expressions as arguments to `eval`
