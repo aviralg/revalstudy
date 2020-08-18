@@ -442,6 +442,7 @@ We can distinguish a few groups:
 - building logical values
 - formula
 - meta programming on functions (getting access to the body of the function, to the call stack)
+- 'NA' corresponds to no function calls (or that it was not deparsed successfully)
 
 ```{r group_expr_functions}
 group_expr_functions <- expr_call_arg %>% mutate(group_function_expr = fct_collapse(function_expr, 
@@ -449,17 +450,16 @@ group_expr_functions <- expr_call_arg %>% mutate(group_function_expr = fct_colla
                           read = c("[", "[[", "$"),
                           parsing = c("parse", "str2lang", "str2expression", "parse_only", "base::parse"),
                           defusing = c("quote", "substitute", "bquote", "expr", "quo"),
-                          conversion = c("as.list", "expression", "as.name", "as.expression", "list", "as.data.frame", "as.character"),
+                          expressions = c("as.list", "expression", "as.name", "as.expression", "list", "as.data.frame", "as.character", "{", "modify_lang"),
                           calling = c("call", "as.call", "do.call"),
                           environment = c("environment", "as.environment"),
                           classAssign = c("@<-"),
                           classRead = c("slot", "@"),
                           classDef = c(".Primitive(\"class\")"),
                           logical = c("<", ">", "is.element"),
-                          scope = c("{"),
                           choice = c("if"),
                           function_meta = c("sys.calls", "function", "body"),
-                          formula = c("~"), # Add mathematical operators
+                          formula = c("~", "deriv", "D", "model.frame", "rootftfunc", "contest.lmerModLmerTest", "JacFunc", "gamlss.family", "contest1D.lmerModLmerTest", "contestMD.lmerModLmerTest", "reexpr"),                           
                           other_level = "other" ))
                           #TODO: add anonymous function applications
 ```
@@ -472,10 +472,20 @@ group_expr_functions %>% count(group_function_expr) %>% arrange(desc(n)) %>% kni
 ```{r}
 group_expr_functions %>% ggplot() +
   geom_bar(aes(x = fct_rev(fct_infreq(group_function_expr)))) +
-  scale_y_sqrt(n.breaks = 15) +
+  scale_y_sqrt() +
   coord_flip() +
   labs(title = "Category of calls", y = "n", x = "category" ) 
 ```
+
+```{r }
+group_expr_functions %>% ggplot() +
+  geom_bar(aes(x = fct_rev(fct_infreq(group_function_expr)))) +
+  scale_y_sqrt() +
+  coord_flip() +
+  labs(title = "Category of calls", y = "n", x = "category" ) +
+  facet_wrap(vars(eval_function))
+```
+
 
 
 
