@@ -204,3 +204,38 @@ resolve_sexp_name <- function(df, var) {
     select(-!!en_var) %>%
     rename(!!en_var:=name)
 }
+
+
+extract_package_name <- function(src_ref)
+{
+  # There are 5 possibilities for a srcref:
+  # - NA
+  # - /tmp/Rtmp..../R.INSTALL....../packagename/R/file:linenumbers
+  # - /mnt/nvme0/R/project-evalR/library/4.0/instrumentr/srcref/packagename/4.0.4/file:linenumbers
+  # - /R/* : core packages (we cannot distinguish between them yet so we write core for the package name)
+  # - /testit/... or /testthat/... : it is the testit or testthat packages
+  if(is.na(src_ref))
+  {
+    return("base")
+  }
+  else if(str_starts(src_ref, fixed("./R/")))
+  {
+    return("core")
+  }
+  else if(str_starts(src_ref, fixed("/tmp/")))
+  {
+    return(str_match(src_ref, "/tmp/Rtmp[^/]*/R\\.INSTALL[^/]*/([^/]+)/.*")[[2]])
+  }
+  else if(str_starts(src_ref, fixed("/mnt/nvme0/")))
+  {
+    return(str_match(src_ref, "/mnt/nvme0/R/project-evalR/library/4.0/instrumentr/srcref/([^/]*)/.*")[[2]])
+  }
+  else if(str_starts(src_ref, fixed("test")))
+  {
+    return(str_match(src_ref, "([^/]*)/.*")[[2]])
+  }
+  else
+  {
+    return("unknown")
+  }
+}

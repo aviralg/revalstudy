@@ -11,7 +11,7 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-    data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.1/calls.fst"
+    data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.2/calls.fst"
     #data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-all.1/calls.fst"
     # The trace data on all CRAN does not have all the columns of the smaller corpus. The analysis will fail for the big corpus.
 
@@ -72,7 +72,13 @@ column_names["eval_call_expression"] <- "The full expression with `eval` that ha
 column_names["eval_call_srcref"] <- "File name and line where the `eval` call is. Might ne NA, especially for calls originating from package base."
 column_names["caller_expression"] <- "Expression in which the `eval` is called."
 column_names["caller_srcref"] <- "File name and line where the caller of the `eval` is located. Might be NA (especially for callers in base)."
-column_names["caller_srcref2"] <- "File name and line for some calls for which the caller seemed to be itself (mainly Rcpp and C calls)."
+# The following ones were in package-evals-traced-corpus.1/calls.fst
+#column_names["caller_srcref2"] <- "File name and line for some calls for which the caller seemed to be itself (mainly Rcpp and C calls)."
+#column_names["caller_expression_2"] <- "Caller expression when the caller seems to call itself (see `caller_srcref2`)."
+#column_names["caller_expression_2"] <- "Same as `caller_expression_2` but uses `format` to print, not `expr_to_string`."
+column_names["caller_stack_expression"] <-"When `eval_function` == `caller_function`, climb up the stack to find the first different caller."
+column_names["caller_stack_expression_raw"] <- "See `caller_stack_expression`. Does not use `expr_to_str` but `format`."
+column_names["caller_stack_expression_srcref"] <- "srcref for `caller_stack_expression."
 # To continue
 
 # Pivoting
@@ -83,8 +89,14 @@ column_names <- column_names %>% rownames_to_column() %>%
 
 column_names <- column_names %>%  rename("Description" = `1`) %>% filter(!is.na(Description))
 
+```
+
+
+The columns of the dataset are the following ones:
+```{r column_names}
 column_names %>% knitr::kable()
 ```
+
 
 # Corpus
 
@@ -248,10 +260,20 @@ We argue that `eval` in *base* should be considered apart from the other `eval` 
 `eval` in *base* does not use `parse`, so does not take strings potentially coming from users as input,  and thus are deemed to be _safe_.
 
 ```{r parse_in_base}
-nb_parse_base <- eval_calls %>% filter(!is.na(expr_parsed_expression), caller_package == "base")
+parsed_base <- eval_calls %>% filter(!is.na(expr_parsed_expression), caller_package == "base")
+
+nb_call_site_parse_base <-  nb_eval_call_sites(parsed_base)
 ```
 
-There are `r nrow(nb_parse_base)` `eval` calls in *base* 
+There are `r nrow(parsed_base)` `eval` calls with `parse` in *base*, which is `r nrow(parsed_base) / nrow(filter(eval_calls, caller_package == "base"))`%. In terms of call sites, there are `r nb_call_site_parse_base` such ones, i.e. `r nb_call_site_parse_base / nb_call_site_base * 100`.
+
+They are the following ones:
+
+```{r call_site_parse_base}
+parsed_base %>% count(file, caller_function, caller_expression, expr_parsed_expression) %>% 
+  arrange(desc(n)) %>% knitr::kable()
+```
+
 
 ## Size of expressions as arguments to `eval`
 
