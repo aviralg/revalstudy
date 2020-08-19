@@ -17,9 +17,9 @@ my_datatable <- function(df, page_size=20, round=TRUE, ...) {
   }
   
   table <- datatable(df, options=options, ...)
-  if (round) {
-    table <- formatRound(table, sapply(df, is.numeric), 2)
-  }
+  #if (round) {
+  #  table <- formatRound(table, sapply(df, is.numeric), 2)
+  #}
   table
 }
 
@@ -54,6 +54,15 @@ r.Duration <- function(name, value, ...) {
 
   r(name, v)
 }
+
+r.difftime <- function(name, value, ...) {
+  v <- as.numeric(value)
+  class(v) <- "num_with_suffix"
+  attr(v, "suffix") <- paste0(" ", attr(value, "units"))
+
+  r(name, v)
+}
+
 
 r.default <- function(name, value, ...) {
   stopifnot(length(value) == 1)
@@ -205,14 +214,11 @@ latex_escape <- function(s) {
 }
 
 generate_latex_command_name <- function(name, prefix="") {
-  if (nchar(prefix)) {
-    prefix <- stringr::str_c(prefix, " ")
-  }
-  
-  name <- stringr::str_c(prefix, name)
   name <- latex_command_name(name)
+  name <- latex_escape(name)
+  prefix <- latex_escape(prefix)
   
-  latex_escape(name)
+  stringr::str_c(prefix, name)
 }
 
 generate_latex_command <- function(command_name, value) {
