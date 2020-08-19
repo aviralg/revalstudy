@@ -411,7 +411,7 @@ Expressions of types other than `call`,  `expression`, `name`, `bytecode` and `p
 
 
 ```{r not_unchanged_eval}
-changed_evals <- eval_calls %>% mutate(changed =  fct_collapse(expr_expression_type, base_types = c("LANGSXP", "EXPRSXP", "SYMSXP", "PROMSXP", "BCODESXP"))) %>% count(changed) %>% mutate(per_cent = n / nb_eval_calls * 100 ) 
+changed_evals <- eval_calls %>% mutate(changed =  fct_collapse(expr_expression_type, lang_types = c("LANGSXP", "EXPRSXP", "SYMSXP", "PROMSXP", "BCODESXP"), other_level = "other_types")) %>% count(changed) %>% mutate(per_cent = n / nb_eval_calls * 100 ) 
 ```
 
 We can remove `eval` and leave there the expression in `r changed_evals[2, "per_cent"][[1]]`% of the eval calls (i.e. `r changed_evals[2, "n"][[1]]`).
@@ -442,7 +442,7 @@ We can distinguish a few groups:
 - building logical values
 - formula
 - meta programming on functions (getting access to the body of the function, to the call stack)
-- 'NA' corresponds to no function calls (or that it was not deparsed successfully)
+- 'NA' corresponds to no function calls (or that it was not parsed successfully)
 
 ```{r group_expr_functions}
 group_expr_functions <- expr_call_arg %>% mutate(group_function_expr = fct_collapse(function_expr, 
@@ -487,7 +487,36 @@ group_expr_functions %>% ggplot() +
 ```
 
 
+### For resolved `expr`
 
+We can do the same for resolved expressions:
+
+```{r types_resolved}
+per_expr_resolved_type <- eval_calls %>% count(expr_resolved_type)
+```
+
+
+
+```{r}
+ per_expr_resolved_type %>% mutate(per_cent = n / nb_eval_calls * 100 ) %>% arrange(desc(n)) %>% knitr::kable()
+```
+
+
+```{r}
+per_expr_resolved_type %>% ggplot() +
+  geom_col(aes(x = fct_reorder(expr_resolved_type, n), y = n)) +
+  scale_y_sqrt() + 
+  coord_flip() +
+  labs(title = "Calls per type", y = "n", x = "type" ) 
+```
+
+There is a much larger variety of types for the resolved expressions.
+
+```{r not_unchanged_resolved_eval}
+changed_resolved_evals <- eval_calls %>% mutate(changed =  fct_collapse(expr_resolved_type, lang_types = c("LANGSXP", "EXPRSXP", "SYMSXP", "PROMSXP", "BCODESXP"), other_level = "other_types")) %>% count(changed) %>% mutate(per_cent = n / nb_eval_calls * 100 ) 
+```
+
+We can remove `eval` and leave there the expression in `r changed_resolved_evals[2, "per_cent"][[1]]`% of the eval calls (i.e. `r changed_resolved_evals[2, "n"][[1]]`).
 
 ## Provenance
 
