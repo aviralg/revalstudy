@@ -1,4 +1,11 @@
 ################################################################################
+## Local
+################################################################################
+inst/docker-image/CRAN
+inst/docker-image/library
+inst/docker-image/*.tar.gz
+
+################################################################################
 ## R
 ################################################################################
 
@@ -428,4 +435,3 @@ TSWLatexianTemp*
 # option is specified. Footnotes are the stored in a file with suffix Notes.bib.
 # Uncomment the next line to have this generated file ignored.
 #*Notes.bib
-/inst/analysis/*.html

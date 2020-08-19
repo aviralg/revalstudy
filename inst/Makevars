@@ -1,0 +1,26 @@
+MAKEFLAGS += --no-builtin-rules
+
+.SUFFIXES:
+
+IMAGE_NAME := prlprg/project-evalr
+BASE_IMAGE_NAME := $(IMAGE_NAME)-base
+TOOLING_GIT_BRANCH := project-evalR
+RUNR_GITHUB_URL := https://raw.githubusercontent.com/PRL-PRG/runr/$(TOOLING_GIT_BRANCH)
+
+CRAN_MIRROR     ?= cran.r-project.org
+CRAN_MIRROR_URL ?= https://$(CRAN_MIRROR)
+
+CRAN_MIRROR_LOCAL          := CRAN
+CRAN_MIRROR_LOCAL_URL      := file://$(CRAN_MIRROR_LOCAL)
+CRAN_MIRROR_LOCAL_PACKAGES := $(CRAN_MIRROR_LOCAL)/src/contrib/PACKAGES.gz
+
+R_VERSION := 4.0.2
+R_LIBS := library/$(shell echo "$(R_VERSION)" | cut -c 1-3)
+
+DOCKER_PREFIX := /R
+DOCKER_CRAN_MIRROR_LOCAL := $(DOCKER_PREFIX)/$(CRAN_MIRROR_LOCAL)
+DOCKER_CRAN_MIRROR_LOCAL_URL := file://$(DOCKER_CRAN_MIRROR_LOCAL)
+DOCKER_R_DIR := /R/R-$(R_VERSION)
+DOCKER_R := $(DOCKER_R_DIR)/bin/R
+DOCKER_R_SCRIPT := $(DOCKER_R_DIR)/bin/Rscript
+DOCKER_R_LIBS := $(DOCKER_PREFIX)/$(R_LIBS)
