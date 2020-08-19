@@ -36,6 +36,9 @@ library(fst)
 library(fs)
 
 source("insights.R", local = knitr::knit_global())
+
+source("inc/latextags.R")
+create_tags(path("/var/lib/R/project-evalR/revalstudy/data", "analysisStable.tex"), prefix="", default=TRUE)
 ```
 
 # Data
@@ -50,7 +53,7 @@ file_info(params$data_filepath)
 eval_calls <-
     read_fst(params$data_filepath) %>%
     as_tibble() %>%
-    mutate(eval_call_package = map_chr(eval_call_srcref, extract_package_name)) %>% 
+    mutate(eval_call_package = extract_package_name(eval_call_srcref, file)) %>% 
     resolve_sexp_name(expr_expression_type) %>%
     resolve_sexp_name(expr_resolved_type) %>%
     resolve_sexp_name(enclos_type) %>%
@@ -332,9 +335,6 @@ eval_calls %>% filter(expr_expression_length < 25000) %>% ggplot() +
 ```
 
 
-<details>
-  <summary>More details</summary>
-  
   
 What about the code size of expressions that seem to be generated?
 An approximation of *generated* will be no `srcref` and not in `base`.
@@ -354,8 +354,6 @@ If we look at the maxima, the largest ones are in *base*:
 ```{r max_size_package}
 eval_calls %>% group_by(caller_package) %>% summarize(max_expr_size = max(expr_expression_length, na.rm = TRUE)) %>% arrange(desc(max_expr_size))
 ```
-
-</details>
 
 
 
@@ -434,7 +432,7 @@ We can distinguish a few groups:
 - assignments
 - reading (in a data frame, a vector)
 - parsing
-- defusing (`quote` and so on)
+- defusing (`quote`, `substitute` and so on)
 - conversion or creation of new values
 - building calls and calling
 - working with environments
@@ -447,9 +445,11 @@ We can distinguish a few groups:
 
 ```{r group_expr_functions}
 group_expr_functions <- expr_call_arg %>%
-                            mutate(function_expr2 = map_chr(detect_anonymous_func, function_expr)) %>%
-                            mutate(group_function_expr = fct_collapse(function_expr2, 
-                              assignment = c("<-", "[[<-", "[<-", "$<-"),
+                            mutate(function_expr2 = if_else(str_starts(function_expr, fixed("(function(")), "anonymous", function_expr))
+  
+group_expr_functions <-  group_expr_functions %>% 
+                              mutate(group_function_expr = fct_collapse(function_expr2, 
+                              assignment = c("<-", "[[<-", "[<-", "$<-", "<<-", "="),
                               read = c("[", "[[", "$"),
                               parsing = c("parse", "str2lang", "str2expression", "parse_only", "base::parse"),
                               defusing = c("quote", "substitute", "bquote", "expr", "quo"),
@@ -536,13 +536,13 @@ expr_resolved_call_arg %>% count(function_expr) %>% arrange(desc(n))
 
 ```{r group_expr_resolved_functions}
 group_expr_resolved_functions <- expr_resolved_call_arg %>%
-                            mutate(function_expr2 = map_chr(detect_anonymous_func, function_expr)) %>%
+                            mutate(function_expr2 = if_else(str_starts(function_expr, fixed("(function(")), "anonymous", function_expr)) %>%
                             mutate(group_function_expr = fct_collapse(function_expr2, 
-                              assignment = c("<-", "[[<-", "[<-", "$<-"),
+                              assignment = c("<-", "[[<-", "[<-", "$<-", "<<-", "="),
                               read = c("[", "[[", "$"),
                               parsing = c("parse", "str2lang", "str2expression", "parse_only", "base::parse"),
                               defusing = c("quote", "substitute", "bquote", "expr", "quo"),
-                              expressions = c("as.list", "expression", "as.name", "as.expression", "list", "as.data.frame", "as.character", "{", "modify_lang"),
+                              expressions = c("as.list", "expression", "as.name", "as.expression", "list", "c", "as.data.frame", "as.character", "{", "modify_lang"),
                               calling = c("call", "as.call", "do.call"),
                               environment = c("environment", "as.environment"),
                               classAssign = c("@<-"),
@@ -551,7 +551,7 @@ group_expr_resolved_functions <- expr_resolved_call_arg %>%
                               logical = c("<", ">", "is.element"),
                               choice = c("if"),
                               anonymous = c("anonymous"),
-                              function_meta = c("sys.calls", "function", "body"),
+                              function_meta = c("sys.calls", "function", "body", "missing"),
                               formula = c("~", "deriv", "D", "model.frame", "rootftfunc", "contest.lmerModLmerTest", "JacFunc", "gamlss.family", "contest1D.lmerModLmerTest", "contestMD.lmerModLmerTest", "reexpr"),                           
                               other_level = "other" ))
 ```
