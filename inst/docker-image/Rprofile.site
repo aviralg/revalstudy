@@ -1,5 +1,5 @@
 options(
-  repos=Sys.getenv("CRAN_MIRROR_LOCAL_URL", "https://cran.r-project.org")
+  repos=Sys.getenv("CRAN_MIRROR_LOCAL_URL", "https://cran.r-project.org"),
   keep.parse.data=TRUE,
   keep.parse.data.pkgs=TRUE,
   keep.source=TRUE,

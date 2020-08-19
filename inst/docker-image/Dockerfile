@@ -60,8 +60,7 @@ env PATH=$R_DIR/bin:$PATH
 RUN mkdir -p $R_LIBS && \
     mkdir -p $PACKAGES_ZIP_DIR && \
     R --slave -e \
-      "Sys.setenv(_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_=5000); \
-       source('$RUNR_GITHUB_URL/inst/install-cran-packages.R'); \
+      "source('$RUNR_GITHUB_URL/inst/install-cran-packages.R'); \
        install_cran_packages(mirror='$CRAN_MIRROR_URL', lib='$R_LIBS', destdir='$PACKAGES_ZIP_DIR')" \
       2>&1 | tee "$R_PROJECT_BASE_DIR/CRAN/install.log"
 
