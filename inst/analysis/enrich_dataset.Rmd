@@ -46,24 +46,44 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Data
 
-The analysis is being performed on dataset read from file `r params$data_filepath`.
+The analysis is being performed on a dataset read from file `r params$data_filepath`.
 
 ```{r file-info, echo=FALSE}
 file_info(params$data_filepath)
 ```
 
+```{r eval_in_base}
+eval_base_functions <- c("autoload", "autoloader", "bquote", "by.default", "by.data.frame", "invokeRestartInteractively", "Ops.data.frame", "dget", 
+                         "eval", "eval.parent", "evalq", "local", "with.default", "within.data.frame", "within.list", "replicate", "subset.data.frame",
+                         "subset.matrix", "transform.data.frame", "match.arg", "char.expand", "max.col", "parseNamespaceFile", "source", "sys.source",
+                         "stopfinot", "as.data.frane.table", "match.fun", "trace", "untrace", ".doTrace")
+```
+
+
 ```{r load-data, echo=FALSE}
 eval_calls <-
     read_fst(params$data_filepath) %>%
+    filter(!caller_function %in% eval_base_functions) %>%
     as_tibble() %>%
     mutate(eval_call_package = map_chr(eval_call_srcref, extract_package_name)) %>% 
     resolve_sexp_name(expr_expression_type) %>%
     resolve_sexp_name(expr_resolved_type) %>%
     resolve_sexp_name(enclos_type) %>%
     resolve_sexp_name(envir_type)
-
-
 ```
 
+
+```{r}
+eval_calls <-  eval_calls %>% mutate(function_expr = if_else(expr_expression_type == "LANGSXP", map_chr(expr_expression, function_name), NA), function_expr_resolved = if_else(expr_resolved_type == "LANGSXP", map_chr(expr_resolved, function_name), NA))
+```
+
+```{r}
+eval_calls <- eval_calls %>% mutate(parse_args = if_else(is.na(expr_parsed_expression), NA, map(expr_parsed_expression, extract_args_parse)))
+```
+
+
+```{r write_back}
+write_fst(eval_calls, paste0(params$data_dirpath, "enriched_calls.fst"))
+```
 
 
