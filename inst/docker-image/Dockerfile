@@ -56,6 +56,7 @@ RUN curl "$RUNR_GITHUB_URL/inst/install-r.sh" | bash -s -- -d "$R_DIR" -v "$R_VE
 
 env PATH=$R_DIR/bin:$PATH
 
+# TODO mirror packages before
 # CRAN packages
 RUN mkdir -p $R_LIBS && \
     mkdir -p $PACKAGES_ZIP_DIR && \
@@ -64,44 +65,49 @@ RUN mkdir -p $R_LIBS && \
        install_cran_packages(mirror='$CRAN_MIRROR_URL', lib='$R_LIBS', destdir='$PACKAGES_ZIP_DIR')" \
       2>&1 | tee "$R_PROJECT_BASE_DIR/CRAN/install.log"
 
-# RUN mkdir -p "$PACKAGES_SRC_DIR" && \
-#     ls -1 "$PACKAGES_ZIP_DIR"/*.tar.gz | xargs -L 1 tar -C "$PACKAGES_SRC_DIR" -xzf
+RUN mkdir -p "$PACKAGES_SRC_DIR" && \
+    ls -1 "$PACKAGES_ZIP_DIR"/*.tar.gz | xargs -L 1 tar -C "$PACKAGES_SRC_DIR" -xzf
 
 # ## The following are dependencies that are too outdated in the package repository
 
-# # GNU parallel
-# RUN mkdir parallel && \
-#     cd parallel && \
-#     curl http://ftp.gnu.org/gnu/parallel/parallel-latest.tar.bz2 | tar -xjf- --strip 1 && \
-#     ./configure && \
-#     make install && \
-#     mkdir /root/.parallel && \
-#     touch /root/.parallel/will-cite && \
-#     mkdir /home/rstudio/.parallel && \
-#     touch /home/rstudio/.parallel/will-cite
+# GNU parallel
+RUN mkdir parallel && \
+    cd parallel && \
+    curl http://ftp.gnu.org/gnu/parallel/parallel-latest.tar.bz2 | tar -xjf- --strip 1 && \
+    ./configure && \
+    make install && \
+    mkdir /root/.parallel && \
+    touch /root/.parallel/will-cite && \
+    mkdir /home/rstudio/.parallel && \
+    touch /home/rstudio/.parallel/will-cite
 
-# # tooling
+# tooling
 
-# ARG INJECTR_VERSION=master
-# RUN git clone https://github.com/PRL-PRG/injectr --branch "$TOOLING_GIT_BRANCH" && \
-#     R CMD INSTALL injectr
+ARG INJECTR_VERSION=HEAD
+RUN git clone https://github.com/PRL-PRG/injectr && \
+    cd injectr && \
+    git checkout $INJECTR_VERSION && \
+    R CMD INSTALL .
 
-# ARG INSTRUMENTR_VERSION=master
-# RUN git clone https://github.com/PRL-PRG/contractr --branch "$TOOLING_GIT_BRANCH" && \
-#     R CMD INSTALL contractr
+ARG INSTRUMENTR_VERSION=HEAD
+RUN git clone https://github.com/PRL-PRG/instrumentr && \
+    cd instrumentr && \
+    git checkout $INSTRUMENTR_VERSION && \
+    R CMD INSTALL .
 
-# ARG EVIL_VERSION=master
-# RUN git clone https://github.com/PRL-PRG/propagatr --branch "$TOOLING_GIT_BRANCH" && \
-#     R CMD INSTALL propagatr
-# #    $RDT_DIR/bin/R CMD INSTALL propagatr
+ARG EVIL_VERSION=HEAD
+RUN git clone https://github.com/PRL-PRG/evil && \
+    cd evil && \
+    git checkout $EVIL_VERSION && \
+    R CMD INSTALL .
 
-# ARG RUNR_VERSION=master
-# RUN git clone https://github.com/PRL-PRG/runr --branch "$TOOLING_GIT_BRANCH" && \
-#     R CMD INSTALL runr
+ARG RUNR_VERSION=HEAD
+RUN git clone https://github.com/PRL-PRG/runr && \
+    cd runr && \
+    git checkout $RUNR_VERSION && \
+    R CMD INSTALL .
 
-# WORKDIR /
-
-# env IN_DOCKER=1
+WORKDIR /
 
 ADD Rprofile.site $R_DIR/etc
 # # configure entrypoint
