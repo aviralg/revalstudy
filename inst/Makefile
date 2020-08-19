@@ -43,7 +43,10 @@ on-each-package:
 	@[ "$(OUTPUT_DIR)" ] || ( echo "*** Undefined OUTPUT_DIR"; exit 1 )
 
 	-mkdir -p "$(OUTPUT_DIR)"
-	-[ -z "$(START_XVFB)" ] || eval $$($(RUNR_DIR)/inst/start-xvfb.sh); \
+	-if [ -z "$(START_XVFB)" ]; then  \
+     nohup Xvfb :6 -screen 0 1280x1024x24 >/dev/null 2>&1 & \
+     export DISPLAY=:6; \
+  fi; \
   parallel \
     -a $(PACKAGES_FILE) \
     --bar \
