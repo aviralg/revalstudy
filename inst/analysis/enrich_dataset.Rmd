@@ -1,0 +1,69 @@
+---
+title: "Enrich the datasets with new columns."
+output:
+  rmdformats::readthedown:
+        code_folding: hide
+        lightbox: true
+        gallery: false
+        df_print: paged
+        toc_depth: 3
+date: "`r Sys.Date()`"
+editor_options: 
+  chunk_output_type: console
+params:
+  data_dirpath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.3/"
+  data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.3/calls.fst"
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "html") })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.align = "center",
+                      fig.retina = 2,
+                      fig.width = 10,
+                      cache.lazy = FALSE)
+
+library(tidyverse)
+library(stringr)
+library(viridis)
+library(vctrs)
+library(DT)
+library(fst)
+library(fs)
+
+source("insights.R", local = knitr::knit_global())
+
+source("inc/latextags.R")
+create_tags(path("/var/lib/R/project-evalR/revalstudy/data", "analysisStable.tex"), prefix="", default=TRUE)
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Data
+
+The analysis is being performed on dataset read from file `r params$data_filepath`.
+
+```{r file-info, echo=FALSE}
+file_info(params$data_filepath)
+```
+
+```{r load-data, echo=FALSE}
+eval_calls <-
+    read_fst(params$data_filepath) %>%
+    as_tibble() %>%
+    mutate(eval_call_package = map_chr(eval_call_srcref, extract_package_name)) %>% 
+    resolve_sexp_name(expr_expression_type) %>%
+    resolve_sexp_name(expr_resolved_type) %>%
+    resolve_sexp_name(enclos_type) %>%
+    resolve_sexp_name(envir_type)
+
+
+```
+
+
+
