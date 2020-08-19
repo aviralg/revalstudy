@@ -206,7 +206,7 @@ resolve_sexp_name <- function(df, var) {
 }
 
 
-extract_package_name <- function(src_ref)
+extract_package_name <- function(src_ref, file)
 {
   # There are 5 possibilities for a srcref:
   # - NA
@@ -214,28 +214,18 @@ extract_package_name <- function(src_ref)
   # - /mnt/nvme0/R/project-evalR/library/4.0/instrumentr/srcref/packagename/4.0.4/file:linenumbers
   # - /R/* : core packages (we cannot distinguish between them yet so we write core for the package name)
   # - /testit/... or /testthat/... : it is the testit or testthat packages
-  if(is.na(src_ref))
-  {
-    return("base")
-  }
-  else if(str_starts(src_ref, fixed("./R/")))
-  {
-    return("core")
-  }
-  else if(str_starts(src_ref, fixed("/tmp/")))
-  {
-    return(str_match(src_ref, "/tmp/Rtmp[^/]*/R\\.INSTALL[^/]*/([^/]+)/.*")[[2]])
-  }
-  else if(str_starts(src_ref, fixed("/mnt/nvme0/")))
-  {
-    return(str_match(src_ref, "/mnt/nvme0/R/project-evalR/library/4.0/instrumentr/srcref/([^/]*)/.*")[[2]])
-  }
-  else if(str_starts(src_ref, fixed("test")))
-  {
-    return(str_match(src_ref, "([^/]*)/.*")[[2]])
-  }
-  else
-  {
-    return("unknown")
-  }
+  # - :/R : extract the package name from the file path in the column path
+  case_when
+  (
+    is.na(src_ref) ~ "base",
+    str_starts(src_ref, fixed("./R/")) ~ "core",
+    str_starts(src_ref, fixed("/tmp/")) ~ str_match(src_ref, "/tmp/Rtmp[^/]*/R\\.INSTALL[^/]*/([^/]+)/.*")[[2]],
+    str_starts(src_ref, fixed("/mnt/nvme0/")) ~ str_match(src_ref, "/mnt/nvme0/R/project-evalR/library/4.0/instrumentr/srcref/([^/]*)/.*")[[2]],
+    str_starts(src_ref, fixed("test")) ~ str_match(src_ref, "([^/]*)/.*")[[2]],
+    str_starts(src_ref, ":/") ~ str_match(file, "[^/]*/[^/]*/([^/]*)/.*")[[2]],
+    TRUE ~ "unknown"
+  )
 }
+
+
+
