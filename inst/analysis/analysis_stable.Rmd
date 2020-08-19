@@ -11,7 +11,7 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-    data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.2/calls.fst"
+    data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.3/calls.fst"
     #data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-all.1/calls.fst"
     # The trace data on all CRAN does not have all the columns of the smaller corpus. The analysis will fail for the big corpus.
 
@@ -443,25 +443,28 @@ We can distinguish a few groups:
 - formula
 - meta programming on functions (getting access to the body of the function, to the call stack)
 - 'NA' corresponds to no function calls (or that it was not parsed successfully)
+- anonymous functions
 
 ```{r group_expr_functions}
-group_expr_functions <- expr_call_arg %>% mutate(group_function_expr = fct_collapse(function_expr, 
-                          assignment = c("<-", "[[<-", "[<-", "$<-"),
-                          read = c("[", "[[", "$"),
-                          parsing = c("parse", "str2lang", "str2expression", "parse_only", "base::parse"),
-                          defusing = c("quote", "substitute", "bquote", "expr", "quo"),
-                          expressions = c("as.list", "expression", "as.name", "as.expression", "list", "as.data.frame", "as.character", "{", "modify_lang"),
-                          calling = c("call", "as.call", "do.call"),
-                          environment = c("environment", "as.environment"),
-                          classAssign = c("@<-"),
-                          classRead = c("slot", "@"),
-                          classDef = c(".Primitive(\"class\")"),
-                          logical = c("<", ">", "is.element"),
-                          choice = c("if"),
-                          function_meta = c("sys.calls", "function", "body"),
-                          formula = c("~", "deriv", "D", "model.frame", "rootftfunc", "contest.lmerModLmerTest", "JacFunc", "gamlss.family", "contest1D.lmerModLmerTest", "contestMD.lmerModLmerTest", "reexpr"),                           
-                          other_level = "other" ))
-                          #TODO: add anonymous function applications
+group_expr_functions <- expr_call_arg %>%
+                            mutate(function_expr2 = map_chr(detect_anonymous_func, function_expr)) %>%
+                            mutate(group_function_expr = fct_collapse(function_expr2, 
+                              assignment = c("<-", "[[<-", "[<-", "$<-"),
+                              read = c("[", "[[", "$"),
+                              parsing = c("parse", "str2lang", "str2expression", "parse_only", "base::parse"),
+                              defusing = c("quote", "substitute", "bquote", "expr", "quo"),
+                              expressions = c("as.list", "expression", "as.name", "as.expression", "list", "as.data.frame", "as.character", "{", "modify_lang"),
+                              calling = c("call", "as.call", "do.call"),
+                              environment = c("environment", "as.environment"),
+                              classAssign = c("@<-"),
+                              classRead = c("slot", "@"),
+                              classDef = c(".Primitive(\"class\")"),
+                              logical = c("<", ">", "is.element"),
+                              choice = c("if"),
+                              anonymous = c("anonymous"),
+                              function_meta = c("sys.calls", "function", "body"),
+                              formula = c("~", "deriv", "D", "model.frame", "rootftfunc", "contest.lmerModLmerTest", "JacFunc", "gamlss.family", "contest1D.lmerModLmerTest", "contestMD.lmerModLmerTest", "reexpr"),                           
+                              other_level = "other" ))
 ```
 
 
@@ -517,6 +520,63 @@ changed_resolved_evals <- eval_calls %>% mutate(changed =  fct_collapse(expr_res
 ```
 
 We can remove `eval` and leave there the expression in `r changed_resolved_evals[2, "per_cent"][[1]]`% of the eval calls (i.e. `r changed_resolved_evals[2, "n"][[1]]`).
+
+We can do the same analysis as for the non-resolved expressions:
+
+```{r expr_resolved__call_arg}
+expr_resolved_call_arg <- eval_calls %>% filter(expr_resolved_type == "LANGSXP") %>% 
+  mutate(function_expr = map_chr(expr_resolved, function_name))
+```
+
+The following top level functions are used:
+
+```{r top_level_function_resolved_expr}
+expr_resolved_call_arg %>% count(function_expr) %>% arrange(desc(n))
+```
+
+```{r group_expr_resolved_functions}
+group_expr_resolved_functions <- expr_resolved_call_arg %>%
+                            mutate(function_expr2 = map_chr(detect_anonymous_func, function_expr)) %>%
+                            mutate(group_function_expr = fct_collapse(function_expr2, 
+                              assignment = c("<-", "[[<-", "[<-", "$<-"),
+                              read = c("[", "[[", "$"),
+                              parsing = c("parse", "str2lang", "str2expression", "parse_only", "base::parse"),
+                              defusing = c("quote", "substitute", "bquote", "expr", "quo"),
+                              expressions = c("as.list", "expression", "as.name", "as.expression", "list", "as.data.frame", "as.character", "{", "modify_lang"),
+                              calling = c("call", "as.call", "do.call"),
+                              environment = c("environment", "as.environment"),
+                              classAssign = c("@<-"),
+                              classRead = c("slot", "@"),
+                              classDef = c(".Primitive(\"class\")"),
+                              logical = c("<", ">", "is.element"),
+                              choice = c("if"),
+                              anonymous = c("anonymous"),
+                              function_meta = c("sys.calls", "function", "body"),
+                              formula = c("~", "deriv", "D", "model.frame", "rootftfunc", "contest.lmerModLmerTest", "JacFunc", "gamlss.family", "contest1D.lmerModLmerTest", "contestMD.lmerModLmerTest", "reexpr"),                           
+                              other_level = "other" ))
+```
+
+
+```{r}
+group_expr_resolved_functions %>% count(group_function_expr) %>% arrange(desc(n)) %>% knitr::kable()
+```
+
+```{r}
+group_expr_resolved_functions %>% ggplot() +
+  geom_bar(aes(x = fct_rev(fct_infreq(group_function_expr)))) +
+  scale_y_sqrt() +
+  coord_flip() +
+  labs(title = "Category of calls", y = "n", x = "category" ) 
+```
+
+```{r }
+group_expr_functions %>% ggplot() +
+  geom_bar(aes(x = fct_rev(fct_infreq(group_function_expr)))) +
+  scale_y_sqrt() +
+  coord_flip() +
+  labs(title = "Category of calls", y = "n", x = "category" ) +
+  facet_wrap(vars(eval_function))
+```
 
 ## Provenance
 
