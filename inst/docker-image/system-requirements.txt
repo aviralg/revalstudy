@@ -1,0 +1,2378 @@
+# this file comes from: https://packagemanager.rstudio.com/client/#/repos/1/overview
+
+# rkafka requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# rriskDistributions requirements:
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+apt-get install -y tk-table
+
+# CollapsABEL requirements:
+apt-get install -y default-jdk
+apt-get install -y mysql-server
+R CMD javareconf
+
+# bdpopt requirements:
+apt-get install -y jags
+
+# RWebLogo requirements:
+apt-get install -y python
+
+# gdata requirements:
+apt-get install -y perl
+
+# mailR requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# DeducerText requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# gbp requirements:
+apt-get install -y make
+
+# prevalence requirements:
+apt-get install -y jags
+
+# permGPU requirements:
+apt-get install -y nvidia-cuda-dev
+
+# dataframes2xls requirements:
+apt-get install -y python
+
+# dpa requirements:
+apt-get install -y bwidget
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+
+# GeoMongo requirements:
+apt-get install -y mongodb
+apt-get install -y python
+
+# MSIseq requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# SBRect requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# GGEBiplotGUI requirements:
+apt-get install -y bwidget
+
+# ezknitr requirements:
+apt-get install -y pandoc
+
+# caRpools requirements:
+apt-get install -y bowtie2
+
+# rkafkajars requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# rapport requirements:
+apt-get install -y pandoc
+
+# networkreporting requirements:
+apt-get install -y make
+
+# coxinterval requirements:
+apt-get install -y make
+
+# IUPS requirements:
+apt-get install -y jags
+
+# helloJavaWorld requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# skm requirements:
+apt-get install -y make
+
+# multibiplotGUI requirements:
+apt-get install -y bwidget
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+
+# tutorial requirements:
+apt-get install -y pandoc
+
+# forensim requirements:
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+apt-get install -y tk-table
+
+# Deducer requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# MDSGUI requirements:
+apt-get install -y bwidget
+apt-get install -y tk-table
+
+# edeR requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# PortfolioEffectHFT requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# milr requirements:
+apt-get install -y make
+
+# dgmb requirements:
+apt-get install -y bwidget
+apt-get install -y tk-table
+
+# minqa requirements:
+apt-get install -y make
+
+# simplexreg requirements:
+apt-get install -y libgsl0-dev
+
+# elexr requirements:
+apt-get install -y python
+
+# RFreak requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# Rdroolsjars requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# BiBitR requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# survSNP requirements:
+apt-get install -y libgsl0-dev
+
+# FFD requirements:
+apt-get install -y bwidget
+
+# gcbd requirements:
+apt-get install -y nvidia-cuda-dev
+
+# rnetcarto requirements:
+apt-get install -y libgsl0-dev
+
+# SBSA requirements:
+apt-get install -y make
+
+# sharx requirements:
+apt-get install -y jags
+
+# RKEA requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# RNetLogo requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# simFrame requirements:
+apt-get install -y make
+
+# sendplot requirements:
+apt-get install -y libtiff-dev
+
+# collUtils requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# diskImageR requirements:
+apt-get install -y imagej
+
+# Plasmidprofiler requirements:
+apt-get install -y pandoc
+
+# apmsWAPP requirements:
+apt-get install -y saint
+
+# PreKnitPostHTMLRender requirements:
+apt-get install -y pandoc
+
+# nmfgpu4R requirements:
+apt-get install -y nvidia-cuda-dev
+
+# x.ent requirements:
+apt-get install -y perl
+
+# dynBiplotGUI requirements:
+apt-get install -y make
+
+# png requirements:
+apt-get install -y libpng-dev
+
+# PortfolioEffectEstim requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# dcmle requirements:
+apt-get install -y jags
+
+# coreNLP requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# udunits2 requirements:
+apt-get install -y libudunits2-dev
+
+# planar requirements:
+apt-get install -y make
+
+# mallet requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# rJython requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# PVAClone requirements:
+apt-get install -y jags
+
+# jSonarR requirements:
+apt-get install -y mongodb
+
+# PhViD requirements:
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+apt-get install -y tk-table
+
+# DeducerSpatial requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# kerasR requirements:
+apt-get install -y python
+
+# cncaGUI requirements:
+apt-get install -y bwidget
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+
+# XBRL requirements:
+apt-get install -y libxml2-dev
+
+# Rpoppler requirements:
+apt-get install -y libglib2.0-dev
+apt-get install -y libpoppler-cpp-dev
+
+# RcmdrPlugin.RMTCJags requirements:
+apt-get install -y jags
+
+# tiff requirements:
+apt-get install -y libjpeg-dev
+apt-get install -y libtiff-dev
+
+# ABC.RAP requirements:
+apt-get install -y make
+
+# pbdNCDF4 requirements:
+apt-get install -y libhdf5-dev
+apt-get install -y libnetcdf-dev
+apt-get install -y libopenmpi-dev
+
+# orQA requirements:
+apt-get install -y make
+
+# sodium requirements:
+apt-get install -y libsodium-dev
+
+# extraTrees requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# cycleRtools requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# RNCBIEUtilsLibs requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# lightsout requirements:
+apt-get install -y pandoc
+
+# poisbinom requirements:
+apt-get install -y libfftw3-dev
+
+# subspace requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# bigGP requirements:
+apt-get install -y libopenmpi-dev
+
+# DALY requirements:
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+apt-get install -y tk-table
+
+# compendiumdb requirements:
+apt-get install -y mysql-server
+apt-get install -y perl
+
+# OligoSpecificitySystem requirements:
+apt-get install -y bwidget
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+
+# fftwtools requirements:
+apt-get install -y libfftw3-dev
+
+# bayescount requirements:
+apt-get install -y jags
+
+# tcltk2 requirements:
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+apt-get install -y tk-table
+
+# bsam requirements:
+apt-get install -y jags
+
+# openNLPdata requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# cit requirements:
+apt-get install -y libgsl0-dev
+
+# SpatMCA requirements:
+apt-get install -y make
+
+# Myrrixjars requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# RSurvey requirements:
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+apt-get install -y tk-table
+
+# rpostgisLT requirements:
+apt-get install -y libpq-dev
+
+# pcnetmeta requirements:
+apt-get install -y jags
+
+# h2o4gpu requirements:
+apt-get install -y python
+
+# mixture requirements:
+apt-get install -y make
+
+# monoreg requirements:
+apt-get install -y libgsl0-dev
+
+# slowraker requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# specklestar requirements:
+apt-get install -y libfftw3-dev
+
+# BayesXsrc requirements:
+apt-get install -y make
+
+# rGroovy requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# Myrrix requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# mutossGUI requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# geno2proteo requirements:
+apt-get install -y perl
+
+# bartMachineJARs requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# corehunter requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# fuzzywuzzyR requirements:
+apt-get install -y python
+
+# wordnet requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# RH2 requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# lira requirements:
+apt-get install -y jags
+
+# Rbgs requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# RcppMeCab requirements:
+apt-get install -y make
+
+# designmatch requirements:
+apt-get install -y libglpk-dev
+
+# mvst requirements:
+apt-get install -y libgsl0-dev
+
+# redux requirements:
+apt-get install -y libhiredis-dev
+
+# GreedyExperimentalDesign requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# freetypeharfbuzz requirements:
+apt-get install -y make
+
+# TAQMNGR requirements:
+apt-get install -y zlib1g-dev
+
+# RMOA requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# idm requirements:
+apt-get install -y imagemagick
+apt-get install -y libmagick++-dev
+
+# Libra requirements:
+apt-get install -y libgsl0-dev
+
+# pander requirements:
+apt-get install -y pandoc
+
+# rtkore requirements:
+apt-get install -y make
+
+# ChoR requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# rhli requirements:
+apt-get install -y make
+
+# genotypeR requirements:
+apt-get install -y perl
+
+# gcForest requirements:
+apt-get install -y python
+
+# qualpalr requirements:
+apt-get install -y make
+
+# GreedyExperimentalDesignJARs requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# gifski requirements:
+apt-get install -y rustc
+apt-get install -y cargo
+
+# rpanel requirements:
+apt-get install -y bwidget
+
+# tabulizer requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# ADMMsigma requirements:
+apt-get install -y make
+
+# SCPME requirements:
+apt-get install -y make
+
+# rJPSGCS requirements:
+apt-get install -y default-jdk
+apt-get install -y zlib1g-dev
+R CMD javareconf
+
+# libstableR requirements:
+apt-get install -y libgsl0-dev
+
+# expands requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# CommonJavaJars requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# beanz requirements:
+apt-get install -y make
+
+# readbitmap requirements:
+apt-get install -y libjpeg-dev
+apt-get install -y libpng-dev
+
+# blandr requirements:
+apt-get install -y pandoc
+
+# keyring requirements:
+apt-get install -y libsecret-1-dev
+
+# DeLorean requirements:
+apt-get install -y make
+
+# pbdZMQ requirements:
+apt-get install -y libzmq3-dev
+
+# pysd2r requirements:
+apt-get install -y python3
+
+# RMOAjars requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# DRIP requirements:
+apt-get install -y libgsl0-dev
+
+# tabulizerjars requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# bayeslm requirements:
+apt-get install -y make
+
+# BALD requirements:
+apt-get install -y make
+apt-get install -y jags
+
+# rmatio requirements:
+apt-get install -y zlib1g-dev
+
+# kmcudaR requirements:
+apt-get install -y nvidia-cuda-dev
+
+# dclone requirements:
+apt-get install -y jags
+
+# ssMousetrack requirements:
+apt-get install -y make
+
+# sequenza requirements:
+apt-get install -y pandoc
+
+# deisotoper requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# rstap requirements:
+apt-get install -y make
+
+# rTRNG requirements:
+apt-get install -y make
+
+# Rlda requirements:
+apt-get install -y make
+
+# bmlm requirements:
+apt-get install -y make
+
+# RPyGeo requirements:
+apt-get install -y python
+
+# fRLR requirements:
+apt-get install -y libgsl0-dev
+
+# ruta requirements:
+apt-get install -y python
+
+# RGF requirements:
+apt-get install -y python
+
+# rchie requirements:
+apt-get install -y libv8-dev
+
+# exifr requirements:
+apt-get install -y perl
+
+# Rserve requirements:
+apt-get install -y make
+
+# argparse requirements:
+apt-get install -y python
+
+# jarbes requirements:
+apt-get install -y jags
+
+# Rglpk requirements:
+apt-get install -y libglpk-dev
+
+# metaMix requirements:
+apt-get install -y libopenmpi-dev
+
+# MADPop requirements:
+apt-get install -y make
+
+# dfpk requirements:
+apt-get install -y make
+
+# r.blip requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# redist requirements:
+apt-get install -y libgmp3-dev
+apt-get install -y libxml2-dev
+
+# Rlibeemd requirements:
+apt-get install -y libgsl0-dev
+
+# rerf requirements:
+apt-get install -y make
+
+# NestedCategBayesImpute requirements:
+apt-get install -y make
+
+# mbbefd requirements:
+apt-get install -y make
+
+# CPAT requirements:
+apt-get install -y make
+
+# aphid requirements:
+apt-get install -y make
+
+# excerptr requirements:
+apt-get install -y python
+
+# Scalelink requirements:
+apt-get install -y make
+
+# reinforcelearn requirements:
+apt-get install -y python
+
+# RGtk2 requirements:
+apt-get install -y libatk1.0-dev
+apt-get install -y libcairo2-dev
+apt-get install -y libglib2.0-dev
+apt-get install -y libgtk2.0-dev
+apt-get install -y libpango1.0-dev
+
+# RSAGA requirements:
+apt-get install -y saga
+
+# survHE requirements:
+apt-get install -y make
+
+# gsl requirements:
+apt-get install -y libgsl0-dev
+
+# cogmapr requirements:
+apt-get install -y libcurl4-openssl-dev
+apt-get install -y libssl-dev
+
+# mdendro requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# PBSmodelling requirements:
+apt-get install -y bwidget
+
+# StMoSim requirements:
+apt-get install -y make
+
+# animation requirements:
+apt-get install -y imagemagick
+apt-get install -y libmagick++-dev
+apt-get install -y texlive
+
+# readr requirements:
+apt-get install -y make
+
+# HDPenReg requirements:
+apt-get install -y make
+
+# rPref requirements:
+apt-get install -y make
+
+# textmineR requirements:
+apt-get install -y make
+
+# webp requirements:
+apt-get install -y libwebp-dev
+
+# elliptic requirements:
+apt-get install -y pari-gp
+
+# rcdd requirements:
+apt-get install -y libgmp3-dev
+
+# SAR requirements:
+apt-get install -y make
+
+# untb requirements:
+apt-get install -y pari-gp
+
+# blockcluster requirements:
+apt-get install -y make
+
+# represtools requirements:
+apt-get install -y make
+
+# igate requirements:
+apt-get install -y pandoc
+
+# bamdit requirements:
+apt-get install -y jags
+
+# tesseract requirements:
+apt-get install -y libleptonica-dev
+apt-get install -y libtesseract-dev
+
+# rjags requirements:
+apt-get install -y jags
+
+# ergm requirements:
+apt-get install -y libopenmpi-dev
+
+# otsad requirements:
+apt-get install -y python
+apt-get install -y python3
+
+# visit requirements:
+apt-get install -y make
+
+# reprex requirements:
+apt-get install -y pandoc
+
+# coga requirements:
+apt-get install -y libgsl0-dev
+
+# morse requirements:
+apt-get install -y jags
+
+# LeafArea requirements:
+apt-get install -y imagej
+apt-get install -y default-jdk
+R CMD javareconf
+
+# MaOEA requirements:
+apt-get install -y python
+
+# BioMedR requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# PReMiuM requirements:
+apt-get install -y make
+
+# bayesdfa requirements:
+apt-get install -y make
+
+# GMKMcharlie requirements:
+apt-get install -y make
+
+# MixAll requirements:
+apt-get install -y make
+
+# seqinr requirements:
+apt-get install -y zlib1g-dev
+
+# openCR requirements:
+apt-get install -y make
+
+# Rlgt requirements:
+apt-get install -y make
+
+# Rhpc requirements:
+apt-get install -y libopenmpi-dev
+
+# cloudml requirements:
+apt-get install -y python
+
+# ggdemetra requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# MixGHD requirements:
+apt-get install -y make
+
+# biplotbootGUI requirements:
+apt-get install -y bwidget
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+
+# jpeg requirements:
+apt-get install -y libjpeg-dev
+
+# scModels requirements:
+apt-get install -y libgmp3-dev
+apt-get install -y libmpfr-dev
+
+# mwaved requirements:
+apt-get install -y libfftw3-dev
+
+# OpenStreetMap requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# ncdf4 requirements:
+apt-get install -y libnetcdf-dev
+
+# rCBA requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# jSDM requirements:
+apt-get install -y libgsl0-dev
+
+# libsoc requirements:
+apt-get install -y libxml2-dev
+
+# WriteXLS requirements:
+apt-get install -y perl
+
+# openNLP requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# rdataretriever requirements:
+apt-get install -y python
+
+# streamMOA requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# RWekajars requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# greta requirements:
+apt-get install -y python
+
+# gert requirements:
+apt-get install -y libgit2-dev
+
+# HierDpart requirements:
+apt-get install -y make
+
+# redland requirements:
+apt-get install -y librdf0-dev
+
+# FLSSS requirements:
+apt-get install -y make
+
+# ECOSolveR requirements:
+apt-get install -y make
+
+# ggExtra requirements:
+apt-get install -y pandoc
+
+# jagsUI requirements:
+apt-get install -y jags
+
+# RKEAjars requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# pcaL1 requirements:
+apt-get install -y coinor-libclp-dev
+
+# PMCMRplus requirements:
+apt-get install -y libgmp3-dev
+apt-get install -y libmpfr-dev
+
+# adimpro requirements:
+apt-get install -y dcraw
+apt-get install -y imagemagick
+apt-get install -y libmagick++-dev
+
+# JointAI requirements:
+apt-get install -y jags
+
+# catSurv requirements:
+apt-get install -y make
+
+# nbconvertR requirements:
+apt-get install -y pandoc
+apt-get install -y python
+
+# rmcfs requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# fftw requirements:
+apt-get install -y libfftw3-dev
+
+# tiler requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y python
+
+# rcdk requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# BayesVarSel requirements:
+apt-get install -y libgsl0-dev
+
+# ftExtra requirements:
+apt-get install -y pandoc
+
+# pm4py requirements:
+apt-get install -y python
+
+# fsdaR requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# protolite requirements:
+apt-get install -y libprotobuf-dev
+apt-get install -y protobuf-compiler
+
+# RcppRedis requirements:
+apt-get install -y libhiredis-dev
+
+# SuperGauss requirements:
+apt-get install -y libfftw3-dev
+
+# clusternor requirements:
+apt-get install -y make
+
+# Thermimage requirements:
+apt-get install -y libimage-exiftool-perl
+apt-get install -y imagemagick
+apt-get install -y libmagick++-dev
+apt-get install -y perl
+
+# link2GI requirements:
+apt-get install -y make
+
+# dynr requirements:
+apt-get install -y make
+
+# cld3 requirements:
+apt-get install -y libprotobuf-dev
+apt-get install -y protobuf-compiler
+
+# YPPE requirements:
+apt-get install -y make
+
+# pbdPROF requirements:
+apt-get install -y libopenmpi-dev
+
+# dtwclust requirements:
+apt-get install -y make
+
+# optimalThreshold requirements:
+apt-get install -y jags
+
+# HiClimR requirements:
+apt-get install -y libnetcdf-dev
+
+# publipha requirements:
+apt-get install -y make
+
+# cleanNLP requirements:
+apt-get install -y python
+
+# curl requirements:
+apt-get install -y libcurl4-openssl-dev
+apt-get install -y libssl-dev
+
+# RKEEL requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# ced requirements:
+apt-get install -y make
+
+# rDEA requirements:
+apt-get install -y libglpk-dev
+
+# conStruct requirements:
+apt-get install -y make
+
+# scaffolder requirements:
+apt-get install -y python
+
+# shinyjs requirements:
+apt-get install -y pandoc
+
+# spcosa requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# rmdcev requirements:
+apt-get install -y make
+
+# altair requirements:
+apt-get install -y python
+
+# kza requirements:
+apt-get install -y libfftw3-dev
+
+# chebpol requirements:
+apt-get install -y libfftw3-dev
+apt-get install -y libgsl0-dev
+
+# dataMaid requirements:
+apt-get install -y git
+apt-get install -y pandoc
+
+# pedometrics requirements:
+apt-get install -y pandoc
+
+# BivRec requirements:
+apt-get install -y make
+
+# DataExplorer requirements:
+apt-get install -y pandoc
+
+# disaggregation requirements:
+apt-get install -y make
+
+# KSgeneral requirements:
+apt-get install -y libfftw3-dev
+
+# pbdBASE requirements:
+apt-get install -y libopenmpi-dev
+
+# baseflow requirements:
+apt-get install -y make
+apt-get install -y rustc
+apt-get install -y cargo
+
+# registr requirements:
+apt-get install -y make
+
+# dbmss requirements:
+apt-get install -y make
+apt-get install -y pandoc
+
+# cppRouting requirements:
+apt-get install -y make
+
+# easyNCDF requirements:
+apt-get install -y libnetcdf-dev
+
+# GRANBase requirements:
+apt-get install -y git
+
+# PopGenome requirements:
+apt-get install -y zlib1g-dev
+
+# RDieHarder requirements:
+apt-get install -y libgsl0-dev
+
+# BIRDS requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+
+# CBSr requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# sass requirements:
+apt-get install -y make
+
+# RWeka requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# phase1PRMD requirements:
+apt-get install -y jags
+
+# tidycwl requirements:
+apt-get install -y pandoc
+
+# Rmpfr requirements:
+apt-get install -y libgmp3-dev
+apt-get install -y libmpfr-dev
+
+# RJDemetra requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# ndjson requirements:
+apt-get install -y zlib1g-dev
+
+# matchingMarkets requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# diversitree requirements:
+apt-get install -y libfftw3-dev
+apt-get install -y libgsl0-dev
+
+# bayes4psy requirements:
+apt-get install -y make
+
+# shinyloadtest requirements:
+apt-get install -y pandoc
+
+# botor requirements:
+apt-get install -y python
+
+# OpenCL requirements:
+apt-get install -y ocl-icd-opencl-dev
+
+# collector requirements:
+apt-get install -y pandoc
+
+# REPLesentR requirements:
+apt-get install -y pandoc
+
+# SGP requirements:
+apt-get install -y texlive
+
+# TDA requirements:
+apt-get install -y libgmp3-dev
+
+# qmix requirements:
+apt-get install -y make
+
+# trackdem requirements:
+apt-get install -y libimage-exiftool-perl
+apt-get install -y python
+
+# salso requirements:
+apt-get install -y rustc
+apt-get install -y cargo
+
+# r2pmml requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# rmumps requirements:
+apt-get install -y make
+
+# seqminer requirements:
+apt-get install -y make
+apt-get install -y zlib1g-dev
+
+# EcoDiet requirements:
+apt-get install -y jags
+
+# MBNMAtime requirements:
+apt-get install -y jags
+
+# ip2location requirements:
+apt-get install -y python
+
+# bdpar requirements:
+apt-get install -y python
+
+# LCMCR requirements:
+apt-get install -y libgsl0-dev
+
+# sdcTable requirements:
+apt-get install -y libglpk-dev
+
+# rmdfiltr requirements:
+apt-get install -y pandoc
+
+# rblt requirements:
+apt-get install -y libhdf5-dev
+
+# rtmpt requirements:
+apt-get install -y libgsl0-dev
+
+# RAppArmor requirements:
+apt-get install -y libapparmor-dev
+
+# MBNMAdose requirements:
+apt-get install -y jags
+
+# RPostgres requirements:
+apt-get install -y libpq-dev
+
+# xlsx requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# ridge requirements:
+apt-get install -y libgsl0-dev
+
+# scs requirements:
+apt-get install -y make
+
+# gpg requirements:
+apt-get install -y libgpgme11-dev
+apt-get install -y haveged
+
+# RJSDMX requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# mongolite requirements:
+apt-get install -y libssl-dev
+apt-get install -y libsasl2-dev
+
+# eggCounts requirements:
+apt-get install -y make
+
+# smam requirements:
+apt-get install -y make
+apt-get install -y libgsl0-dev
+
+# rpostgis requirements:
+apt-get install -y libpq-dev
+
+# spate requirements:
+apt-get install -y libfftw3-dev
+
+# prettydoc requirements:
+apt-get install -y pandoc
+
+# rchallenge requirements:
+apt-get install -y pandoc
+
+# MethComp requirements:
+apt-get install -y jags
+
+# eaf requirements:
+apt-get install -y make
+
+# webshot requirements:
+apt-get install -y imagemagick
+apt-get install -y libmagick++-dev
+
+# Rssa requirements:
+apt-get install -y libfftw3-dev
+
+# bfw requirements:
+apt-get install -y jags
+apt-get install -y default-jdk
+R CMD javareconf
+
+# knor requirements:
+apt-get install -y make
+
+# igraph requirements:
+apt-get install -y libglpk-dev
+apt-get install -y libgmp3-dev
+apt-get install -y libxml2-dev
+
+# glpkAPI requirements:
+apt-get install -y libglpk-dev
+
+# proj4 requirements:
+apt-get install -y libproj-dev
+
+# orderly requirements:
+apt-get install -y git
+
+# rzmq requirements:
+apt-get install -y libzmq3-dev
+
+# gdalUtils requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+
+# pbdMPI requirements:
+apt-get install -y libopenmpi-dev
+
+# JMbayes requirements:
+apt-get install -y jags
+
+# clpAPI requirements:
+apt-get install -y coinor-libclp-dev
+
+# entropart requirements:
+apt-get install -y pandoc
+
+# RMySQL requirements:
+apt-get install -y libmysqlclient-dev
+apt-get install -y mysql-server
+
+# tsapp requirements:
+apt-get install -y libfftw3-dev
+
+# BTSPAS requirements:
+apt-get install -y jags
+
+# rapidjsonr requirements:
+apt-get install -y make
+
+# mleap requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# nmslibR requirements:
+apt-get install -y python
+
+# pandocfilters requirements:
+apt-get install -y pandoc
+
+# RSiena requirements:
+apt-get install -y make
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+apt-get install -y tk-table
+
+# NobBS requirements:
+apt-get install -y jags
+
+# Orcs requirements:
+apt-get install -y make
+
+# pdSpecEst requirements:
+apt-get install -y make
+
+# febr requirements:
+apt-get install -y pandoc
+
+# rtiff requirements:
+apt-get install -y libtiff-dev
+
+# runjags requirements:
+apt-get install -y jags
+
+# pbdSLAP requirements:
+apt-get install -y libopenmpi-dev
+
+# hBayesDM requirements:
+apt-get install -y make
+
+# rsparkling requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# arrangements requirements:
+apt-get install -y libgmp3-dev
+
+# nlrx requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libgeos-dev
+apt-get install -y default-jdk
+apt-get install -y libxml2-dev
+apt-get install -y libssl-dev
+apt-get install -y pandoc
+apt-get install -y libproj-dev
+apt-get install -y libudunits2-dev
+R CMD javareconf
+
+# rticles requirements:
+apt-get install -y make
+
+# dti requirements:
+apt-get install -y libgsl0-dev
+
+# stringi requirements:
+apt-get install -y libicu-dev
+
+# baggr requirements:
+apt-get install -y make
+
+# sqp requirements:
+apt-get install -y make
+
+# rdefra requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+
+# SpatialPosition requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libgeos-dev
+apt-get install -y libproj-dev
+
+# PKI requirements:
+apt-get install -y libssl-dev
+
+# evaluator requirements:
+apt-get install -y pandoc
+
+# XLConnect requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# rgl requirements:
+apt-get install -y libfreetype6-dev
+apt-get install -y libglu1-mesa-dev
+apt-get install -y libpng-dev
+apt-get install -y libgl1-mesa-dev
+apt-get install -y pandoc
+apt-get install -y zlib1g-dev
+
+# JGR requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# trialr requirements:
+apt-get install -y make
+
+# RProtoBuf requirements:
+apt-get install -y libprotobuf-dev
+apt-get install -y protobuf-compiler
+
+# spsurv requirements:
+apt-get install -y make
+
+# tsmp requirements:
+apt-get install -y make
+
+# ISEtools requirements:
+apt-get install -y jags
+
+# iMRMC requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# oceanmap requirements:
+apt-get install -y imagemagick
+apt-get install -y libmagick++-dev
+
+# meltt requirements:
+apt-get install -y python
+
+# irace requirements:
+apt-get install -y make
+
+# MetaStan requirements:
+apt-get install -y make
+
+# rscala requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# rubias requirements:
+apt-get install -y make
+
+# RCurl requirements:
+apt-get install -y make
+apt-get install -y libcurl4-openssl-dev
+
+# moveVis requirements:
+apt-get install -y imagemagick
+apt-get install -y libmagick++-dev
+
+# topicmodels requirements:
+apt-get install -y libgsl0-dev
+
+# hdf5r requirements:
+apt-get install -y libhdf5-dev
+
+# neptune requirements:
+apt-get install -y python
+
+# mlr requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libgeos-dev
+apt-get install -y libglu1-mesa-dev
+apt-get install -y libgmp3-dev
+apt-get install -y libgsl0-dev
+apt-get install -y jags
+apt-get install -y libproj-dev
+
+# gMCP requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# mapview requirements:
+apt-get install -y make
+
+# PROJ requirements:
+apt-get install -y libproj-dev
+
+# conflr requirements:
+apt-get install -y pandoc
+
+# SimJoint requirements:
+apt-get install -y make
+
+# h2o requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# mwa requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# gdtools requirements:
+apt-get install -y libcairo2-dev
+apt-get install -y libfreetype6-dev
+
+# RQuantLib requirements:
+apt-get install -y libquantlib0-dev
+
+# frequency requirements:
+apt-get install -y pandoc
+
+# reproj requirements:
+apt-get install -y libproj-dev
+
+# coveffectsplot requirements:
+apt-get install -y pandoc
+
+# IncDTW requirements:
+apt-get install -y make
+
+# RcppAlgos requirements:
+apt-get install -y libgmp3-dev
+
+# pkgdown requirements:
+apt-get install -y pandoc
+
+# metagear requirements:
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+
+# switchr requirements:
+apt-get install -y git
+
+# cartography requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libgeos-dev
+apt-get install -y libproj-dev
+
+# rsubgroup requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# mRpostman requirements:
+apt-get install -y libcurl4-openssl-dev
+apt-get install -y libssl-dev
+
+# patternplot requirements:
+apt-get install -y make
+
+# xml2 requirements:
+apt-get install -y libxml2-dev
+
+# rtika requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# MFPCA requirements:
+apt-get install -y libfftw3-dev
+
+# arulesNBMiner requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# pcFactorStan requirements:
+apt-get install -y make
+
+# flan requirements:
+apt-get install -y libgsl0-dev
+
+# uchardet requirements:
+apt-get install -y make
+
+# prophet requirements:
+apt-get install -y make
+
+# osmose requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# R2jags requirements:
+apt-get install -y jags
+
+# bcTSNE requirements:
+apt-get install -y make
+
+# shinyalert requirements:
+apt-get install -y pandoc
+
+# workflowr requirements:
+apt-get install -y pandoc
+
+# git2r requirements:
+apt-get install -y libgit2-dev
+apt-get install -y libssh2-1-dev
+apt-get install -y libssl-dev
+apt-get install -y zlib1g-dev
+
+# JavaGD requirements:
+apt-get install -y make
+apt-get install -y default-jdk
+R CMD javareconf
+
+# StatCharrms requirements:
+apt-get install -y libgtk2.0-dev
+
+# Boom requirements:
+apt-get install -y make
+
+# RSCABS requirements:
+apt-get install -y libatk1.0-dev
+apt-get install -y libcairo2-dev
+apt-get install -y libglib2.0-dev
+apt-get install -y libgtk2.0-dev
+apt-get install -y libpango1.0-dev
+
+# minidown requirements:
+apt-get install -y pandoc
+
+# BANOVA requirements:
+apt-get install -y jags
+
+# pagedown requirements:
+apt-get install -y pandoc
+
+# RNetCDF requirements:
+apt-get install -y libnetcdf-dev
+apt-get install -y libudunits2-dev
+
+# dodgr requirements:
+apt-get install -y make
+
+# GWpcor requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libgeos-dev
+apt-get install -y libproj-dev
+
+# MODIStsp requirements:
+apt-get install -y libatk1.0-dev
+apt-get install -y libcairo2-dev
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libglib2.0-dev
+apt-get install -y libgtk2.0-dev
+apt-get install -y libpango1.0-dev
+apt-get install -y libproj-dev
+
+# rviewgraph requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# OncoBayes2 requirements:
+apt-get install -y make
+apt-get install -y pandoc-citeproc
+apt-get install -y pandoc
+
+# rpf requirements:
+apt-get install -y make
+
+# sysfonts requirements:
+apt-get install -y libfreetype6-dev
+apt-get install -y libpng-dev
+apt-get install -y zlib1g-dev
+
+# rgeos requirements:
+apt-get install -y libgeos-dev
+
+# rjdmarkdown requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# SIBER requirements:
+apt-get install -y jags
+
+# uFTIR requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libproj-dev
+
+# imager requirements:
+apt-get install -y libfftw3-dev
+apt-get install -y libtiff-dev
+
+# CoordinateCleaner requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+
+# concaveman requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libgeos-dev
+apt-get install -y libproj-dev
+
+# RODBC requirements:
+apt-get install -y unixodbc-dev
+
+# ClusterR requirements:
+apt-get install -y libfftw3-dev
+
+# ProcData requirements:
+apt-get install -y python
+
+# rosr requirements:
+apt-get install -y pandoc
+
+# MixSIAR requirements:
+apt-get install -y jags
+
+# PoissonBinomial requirements:
+apt-get install -y libfftw3-dev
+
+# xslt requirements:
+apt-get install -y libxslt-dev
+
+# walker requirements:
+apt-get install -y make
+
+# blastula requirements:
+apt-get install -y pandoc
+
+# rsvg requirements:
+apt-get install -y librsvg2-dev
+
+# bioacoustics requirements:
+apt-get install -y cmake
+apt-get install -y libfftw3-dev
+apt-get install -y make
+
+# rkeops requirements:
+apt-get install -y cmake
+apt-get install -y nvidia-cuda-dev
+
+# caracas requirements:
+apt-get install -y python
+
+# pdftools requirements:
+apt-get install -y libpoppler-cpp-dev
+
+# markovchain requirements:
+apt-get install -y make
+
+# showtext requirements:
+apt-get install -y libfreetype6-dev
+apt-get install -y libpng-dev
+apt-get install -y zlib1g-dev
+
+# nimble requirements:
+apt-get install -y make
+
+# idem requirements:
+apt-get install -y make
+
+# reticulate requirements:
+apt-get install -y python
+
+# cbq requirements:
+apt-get install -y make
+
+# PRIMME requirements:
+apt-get install -y make
+
+# glmulti requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# tables requirements:
+apt-get install -y pandoc
+
+# NACHO requirements:
+apt-get install -y pandoc-citeproc
+apt-get install -y pandoc
+
+# nucim requirements:
+apt-get install -y libfftw3-dev
+apt-get install -y libcurl4-openssl-dev
+apt-get install -y libtiff-dev
+apt-get install -y libssl-dev
+
+# seewave requirements:
+apt-get install -y libsndfile1-dev
+
+# DCPO requirements:
+apt-get install -y make
+
+# mrbayes requirements:
+apt-get install -y make
+
+# bioimagetools requirements:
+apt-get install -y libfftw3-dev
+apt-get install -y libcurl4-openssl-dev
+apt-get install -y libtiff-dev
+apt-get install -y libssl-dev
+
+# RBesT requirements:
+apt-get install -y make
+apt-get install -y pandoc-citeproc
+apt-get install -y pandoc
+
+# TreeBUGS requirements:
+apt-get install -y jags
+
+# MrSGUIDE requirements:
+apt-get install -y make
+
+# bayesplot requirements:
+apt-get install -y pandoc-citeproc
+apt-get install -y pandoc
+
+# exiftoolr requirements:
+apt-get install -y perl
+
+# BayesPostEst requirements:
+apt-get install -y jags
+
+# mfbvar requirements:
+apt-get install -y make
+
+# metaBMA requirements:
+apt-get install -y make
+
+# CausalQueries requirements:
+apt-get install -y make
+
+# pivmet requirements:
+apt-get install -y pandoc-citeproc
+apt-get install -y pandoc
+
+# QCA requirements:
+apt-get install -y make
+
+# haven requirements:
+apt-get install -y make
+
+# httpuv requirements:
+apt-get install -y make
+
+# grf requirements:
+apt-get install -y make
+
+# bacistool requirements:
+apt-get install -y jags
+
+# pathfindR requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# jdx requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# GGally requirements:
+apt-get install -y libssl-dev
+
+# OpenMx requirements:
+apt-get install -y make
+
+# BCHM requirements:
+apt-get install -y jags
+
+# jsr223 requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# systemfonts requirements:
+apt-get install -y libfontconfig1-dev
+apt-get install -y libfreetype6-dev
+
+# StanHeaders requirements:
+apt-get install -y pandoc
+
+# PTXQC requirements:
+apt-get install -y pandoc
+
+# gmp requirements:
+apt-get install -y libgmp3-dev
+
+# modeLLtest requirements:
+apt-get install -y make
+
+# xgboost requirements:
+apt-get install -y make
+
+# Rmixmod requirements:
+apt-get install -y make
+
+# units requirements:
+apt-get install -y libudunits2-dev
+
+# lwgeom requirements:
+apt-get install -y libgeos-dev
+apt-get install -y libproj-dev
+
+# gwsem requirements:
+apt-get install -y make
+
+# Rsagacmd requirements:
+apt-get install -y saga
+
+# huxtable requirements:
+apt-get install -y texlive
+
+# jackalope requirements:
+apt-get install -y make
+
+# rmarkdown requirements:
+apt-get install -y pandoc
+
+# JMcmprsk requirements:
+apt-get install -y libgsl0-dev
+
+# PythonInR requirements:
+apt-get install -y python
+
+# rstanemax requirements:
+apt-get install -y make
+
+# bfp requirements:
+apt-get install -y make
+
+# odbc requirements:
+apt-get install -y make
+apt-get install -y unixodbc-dev
+
+# texreg requirements:
+apt-get install -y texlive
+apt-get install -y pandoc
+
+# SimInf requirements:
+apt-get install -y libgsl0-dev
+
+# tkRplotR requirements:
+apt-get install -y tcl
+apt-get install -y tk
+apt-get install -y tk-dev
+
+# V8 requirements:
+apt-get install -y libv8-dev
+
+# OpenImageR requirements:
+apt-get install -y libfftw3-dev
+apt-get install -y libjpeg-dev
+apt-get install -y libpng-dev
+
+# RcppGSL requirements:
+apt-get install -y libgsl0-dev
+
+# RcppParallel requirements:
+apt-get install -y make
+
+# BayesGWQS requirements:
+apt-get install -y jags
+
+# magick requirements:
+apt-get install -y imagemagick
+apt-get install -y libmagick++-dev
+
+# magickGUI requirements:
+apt-get install -y imagemagick
+apt-get install -y libmagick++-dev
+
+# pdfminer requirements:
+apt-get install -y python
+
+# RcppBigIntAlgos requirements:
+apt-get install -y libgmp3-dev
+
+# knitr requirements:
+apt-get install -y pandoc
+
+# IOHexperimenter requirements:
+apt-get install -y make
+
+# blogdown requirements:
+apt-get install -y pandoc
+
+# bookdown requirements:
+apt-get install -y pandoc
+
+# drf requirements:
+apt-get install -y make
+
+# vapour requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libproj-dev
+
+# openssl requirements:
+apt-get install -y libssl-dev
+
+# lamW requirements:
+apt-get install -y make
+
+# bayesbr requirements:
+apt-get install -y make
+
+# exactextractr requirements:
+apt-get install -y libgeos-dev
+
+# sentometrics requirements:
+apt-get install -y make
+
+# cairoDevice requirements:
+apt-get install -y libcairo2-dev
+
+# bellreg requirements:
+apt-get install -y make
+
+# Cairo requirements:
+apt-get install -y libcairo2-dev
+
+# asbio requirements:
+apt-get install -y bwidget
+
+# hpa requirements:
+apt-get install -y make
+
+# brinton requirements:
+apt-get install -y pandoc
+
+# anticlust requirements:
+apt-get install -y libglpk-dev
+
+# bigMap requirements:
+apt-get install -y make
+
+# YPBP requirements:
+apt-get install -y make
+
+# multinma requirements:
+apt-get install -y make
+
+# hsstan requirements:
+apt-get install -y make
+
+# officedown requirements:
+apt-get install -y pandoc
+
+# InSilicoVA requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# devEMF requirements:
+apt-get install -y libxft-dev
+apt-get install -y zlib1g-dev
+
+# ROpenCVLite requirements:
+apt-get install -y cmake
+
+# landsepi requirements:
+apt-get install -y libgsl0-dev
+
+# ragg requirements:
+apt-get install -y libfreetype6-dev
+apt-get install -y libjpeg-dev
+apt-get install -y libpng-dev
+apt-get install -y libtiff-dev
+
+# ubiquity requirements:
+apt-get install -y perl
+
+# RMariaDB requirements:
+apt-get install -y libmysqlclient-dev
+apt-get install -y mysql-server
+
+# apcf requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libgeos-dev
+
+# hadron requirements:
+apt-get install -y libgsl0-dev
+
+# opencpu requirements:
+apt-get install -y libapparmor-dev
+apt-get install -y pandoc
+
+# spatsoc requirements:
+apt-get install -y libgeos-dev
+
+# uavRmp requirements:
+apt-get install -y make
+
+# glmmTMB requirements:
+apt-get install -y make
+
+# unmarked requirements:
+apt-get install -y make
+
+# cairoDevice requirements:
+apt-get install -y libcairo2-dev
+
+# govdown requirements:
+apt-get install -y pandoc
+
+# cubature requirements:
+apt-get install -y make
+
+# HydeNet requirements:
+apt-get install -y jags
+
+# stplanr requirements:
+apt-get install -y make
+
+# symengine requirements:
+apt-get install -y cmake
+apt-get install -y libgmp3-dev
+apt-get install -y make
+apt-get install -y libmpfr-dev
+
+# bbsBayes requirements:
+apt-get install -y jags
+
+# datasailr requirements:
+apt-get install -y make
+
+# RcppCWB requirements:
+apt-get install -y libglib2.0-dev
+apt-get install -y make
+
+# rJava requirements:
+apt-get install -y make
+apt-get install -y default-jdk
+R CMD javareconf
+
+# rstantools requirements:
+apt-get install -y pandoc
+
+# Cairo requirements:
+apt-get install -y libcairo2-dev
+
+# DNAtools requirements:
+apt-get install -y make
+
+# sen2r requirements:
+apt-get install -y libcairo2-dev
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libgeos-dev
+apt-get install -y libxml2-dev
+apt-get install -y libnetcdf-dev
+apt-get install -y libssl-dev
+apt-get install -y libproj-dev
+apt-get install -y libv8-dev
+
+# fishflux requirements:
+apt-get install -y make
+
+# GetoptLong requirements:
+apt-get install -y perl
+
+# textrecipes requirements:
+apt-get install -y make
+
+# dialr requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# glmmfields requirements:
+apt-get install -y make
+
+# specmine requirements:
+apt-get install -y python
+
+# loo requirements:
+apt-get install -y pandoc-citeproc
+apt-get install -y pandoc
+
+# sf requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libgeos-dev
+apt-get install -y libproj-dev
+
+# websocket requirements:
+apt-get install -y make
+apt-get install -y libssl-dev
+
+# clustermq requirements:
+apt-get install -y libzmq3-dev
+
+# secr requirements:
+apt-get install -y make
+
+# breathtestcore requirements:
+apt-get install -y pandoc
+
+# roll requirements:
+apt-get install -y make
+
+# rGEDI requirements:
+apt-get install -y libgsl0-dev
+apt-get install -y libhdf5-dev
+apt-get install -y zlib1g-dev
+
+# breathteststan requirements:
+apt-get install -y make
+
+# SDMtune requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# paws.common requirements:
+apt-get install -y pandoc
+
+# MUACz requirements:
+apt-get install -y make
+
+# thurstonianIRT requirements:
+apt-get install -y make
+
+# ctsem requirements:
+apt-get install -y make
+
+# dialrjars requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# IRkernel requirements:
+apt-get install -y python
+
+# credentials requirements:
+apt-get install -y git
+
+# remotes requirements:
+apt-get install -y git
+
+# ggquickeda requirements:
+apt-get install -y pandoc
+
+# bartMachine requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# foieGras requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libgeos-dev
+apt-get install -y libproj-dev
+
+# ssh requirements:
+apt-get install -y libssh2-1-dev
+
+# rstanarm requirements:
+apt-get install -y make
+apt-get install -y pandoc-citeproc
+apt-get install -y pandoc
+
+# causact requirements:
+apt-get install -y python
+
+# J4R requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# inlmisc requirements:
+apt-get install -y pandoc
+
+# data.table requirements:
+apt-get install -y zlib1g-dev
+
+# XML requirements:
+apt-get install -y libxml2-dev
+
+# altmeta requirements:
+apt-get install -y jags
+
+# betadiv requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# GWnnegPCA requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libgeos-dev
+apt-get install -y libproj-dev
+
+# rstan requirements:
+apt-get install -y make
+apt-get install -y pandoc
+
+# camtrapR requirements:
+apt-get install -y libimage-exiftool-perl
+
+# ChannelAttribution requirements:
+apt-get install -y make
+
+# gastempt requirements:
+apt-get install -y make
+
+# anglr requirements:
+apt-get install -y libglu1-mesa-dev
+apt-get install -y libgl1-mesa-dev
+apt-get install -y libproj-dev
+
+# geouy requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libgeos-dev
+apt-get install -y libproj-dev
+
+# terra requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libgeos-dev
+apt-get install -y libproj-dev
+
+# fs requirements:
+apt-get install -y make
+
+# idiogramFISH requirements:
+apt-get install -y pandoc
+
+# image.CannyEdges requirements:
+apt-get install -y libfftw3-dev
+apt-get install -y libpng-dev
+
+# ropenblas requirements:
+apt-get install -y make
+
+# MIMSunit requirements:
+apt-get install -y libxml2-dev
+apt-get install -y libssl-dev
+
+# R2SWF requirements:
+apt-get install -y libfreetype6-dev
+apt-get install -y libpng-dev
+apt-get install -y zlib1g-dev
+
+# xlsimple requirements:
+apt-get install -y default-jdk
+R CMD javareconf
+
+# ctrdata requirements:
+apt-get install -y perl
+
+# rgdal requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libproj-dev
+
+# blavaan requirements:
+apt-get install -y make
+
+# bspm requirements:
+apt-get install -y python3
+
+# ijtiff requirements:
+apt-get install -y libjpeg-dev
+apt-get install -y libtiff-dev
+apt-get install -y zlib1g-dev
+
+# detrendr requirements:
+apt-get install -y make
+
+# rmsb requirements:
+apt-get install -y make
+
+# gdalcubes requirements:
+apt-get install -y libgdal-dev
+apt-get install -y gdal-bin
+apt-get install -y libcurl4-openssl-dev
+apt-get install -y libnetcdf-dev
