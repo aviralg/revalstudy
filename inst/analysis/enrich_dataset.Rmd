@@ -2,7 +2,6 @@
 title: "Enrich the datasets with new columns."
 output:
   rmdformats::readthedown:
-        code_folding: hide
         lightbox: true
         gallery: false
         df_print: paged
@@ -61,11 +60,35 @@ eval_base_functions <- c("autoload", "autoloader", "bquote", "by.default", "by.d
 
 
 ```{r load-data, echo=FALSE}
-eval_calls <-
+eval_calls_raw <-
     read_fst(params$data_filepath) %>%
-    filter(!caller_function %in% eval_base_functions) %>%
-    as_tibble() %>%
-    mutate(eval_call_package = map_chr(eval_call_srcref, extract_package_name)) %>% 
+    as_tibble()
+
+eval_calls <- eval_calls_raw %>% filter(!caller_function %in% eval_base_functions)
+```
+
+There are so many calls that are similar:
+```{r}
+eval_calls_base <- eval_calls_raw %>% filter(caller_function %in% eval_base_functions) 
+```
+
+Let's remove the duplicate ones:
+
+```{r}
+eval_calls_base <- eval_calls_base %>% select(-eval_call_id, -starts_with("caller_stack")) %>% distinct()
+
+eval_calls <- eval_calls_base %>% select(-eval_call_id) %>% distinct()
+```
+
+```{r}
+eval_calls_base <- eval_calls_base %>% 
+    resolve_sexp_name(expr_expression_type) %>%
+    resolve_sexp_name(expr_resolved_type) %>%
+    resolve_sexp_name(enclos_type) %>%
+    resolve_sexp_name(envir_type)
+
+eval_calls <- eval_calls %>% 
+    mutate(eval_call_package = extract_package_name(eval_call_srcref, file)) %>% 
     resolve_sexp_name(expr_expression_type) %>%
     resolve_sexp_name(expr_resolved_type) %>%
     resolve_sexp_name(enclos_type) %>%
@@ -74,16 +97,19 @@ eval_calls <-
 
 
 ```{r}
+# We are doing some work once again! Parsing what was deparsed previously...
 eval_calls <-  eval_calls %>% mutate(function_expr = if_else(expr_expression_type == "LANGSXP", map_chr(expr_expression, function_name), NA), function_expr_resolved = if_else(expr_resolved_type == "LANGSXP", map_chr(expr_resolved, function_name), NA))
 ```
 
 ```{r}
-eval_calls <- eval_calls %>% mutate(parse_args = if_else(is.na(expr_parsed_expression), NA, map(expr_parsed_expression, extract_args_parse)))
+eval_calls <- eval_calls %>% mutate(parse_args = if_else(is.na(expr_parsed_expression), NA, map_chr(expr_parsed_expression, extract_args_parse)))
 ```
 
 
 ```{r write_back}
 write_fst(eval_calls, paste0(params$data_dirpath, "enriched_calls.fst"))
+
+write_dst(eval_calls_base, paste0(params$data_dirpath, "base_calls.fst"))
 ```
 
 
