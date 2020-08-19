@@ -215,8 +215,7 @@ extract_package_name <- function(src_ref, file)
   # - /R/* : core packages (we cannot distinguish between them yet so we write core for the package name)
   # - /testit/... or /testthat/... : it is the testit or testthat packages
   # - :/R : extract the package name from the file path in the column path
-  case_when
-  (
+  case_when(
     is.na(src_ref) ~ "base",
     str_starts(src_ref, fixed("./R/")) ~ "core",
     str_starts(src_ref, fixed("/tmp/")) ~ str_match(src_ref, "/tmp/Rtmp[^/]*/R\\.INSTALL[^/]*/([^/]+)/.*")[[2]],
