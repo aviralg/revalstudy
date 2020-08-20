@@ -7,8 +7,14 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage{xspace}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\newcommand{\missingNumber}{\textcolor{red}{XX}\xspace}
+\newcommand{\missingPercentage}{\textcolor{red}{XX\%}\xspace}
+\newcommand{\missingTable}{\textcolor{red}{XXTable}\xspace}
+\newcommand{\missingGraph}{\textcolor{red}{XXGraph}\xspace}
 \begin{document}
 
 \title{On the Design, Use and Removal of Eval in R}
@@ -123,6 +129,24 @@ The most important one is \texttt{eval}:
 \section{Research Question}
 This section presents the results of our empirical study of eval in the R language.
 \subsection{How many evals}
+
+In our corpus eval is called \missingNumber times out of \missingNumber
+total calls to all R functions. This is merely \missingPercentage of the total
+number of calls. \missingTable breaks down the number of calls and callsites for
+the four kinds of eval functions from the three source; core R, packages and
+Kaggle code.
+
+The core R packages are the biggest consumers of eval. Majority of calls,
+\missingPercentage, originate from the core R packages. Kaggle code, which is
+end-user code, has merely \missingNumber calls to eval.
+
+Of the \missingNumber packages in our corpus, only \missingNumber packages call
+eval. \missingTable shows the number of calls to eval made by the ten most
+frequent callers to eval. \missingNumber packages account for over
+\missingPercentage calls to eval.
+
+\missingGraph shows the distribution of number of callsites to eval across these
+packages. \missingNumber packages have a single eval callsite.
 
 
 \subsection{How are they used}
