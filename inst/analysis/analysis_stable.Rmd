@@ -11,7 +11,7 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-    data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.3/calls.fst"
+    data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.4/calls.fst"
     #data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-all.1/calls.fst"
     # The trace data on all CRAN does not have all the columns of the smaller corpus. The analysis will fail for the big corpus.
 
@@ -417,14 +417,13 @@ We can remove `eval` and leave there the expression in `r changed_evals[2, "per_
 ### `expr` argument when it is a call
 
 ```{r expr_call_arg}
-expr_call_arg <- eval_calls %>% filter(expr_expression_type == "LANGSXP") %>% 
-  mutate(function_expr = map_chr(expr_expression, function_name))
+expr_call_arg <- eval_calls %>% filter(expr_expression_type == "LANGSXP")
 ```
 
 The following top level functions are used:
 
 ```{r top_level_function_expr}
-expr_call_arg %>% count(function_expr) %>% arrange(desc(n))
+expr_call_arg %>% count(expr_expression_function, sort = TRUE) 
 ```
 
 We can distinguish a few groups:
@@ -445,7 +444,8 @@ We can distinguish a few groups:
 
 ```{r group_expr_functions}
 group_expr_functions <- expr_call_arg %>%
-                            mutate(function_expr2 = if_else(str_starts(function_expr, fixed("(function(")), "anonymous", function_expr))
+                            #mutate(function_expr2 = if_else(str_starts(expr_expression_function, fixed("(function(")), "anonymous", expr_expression_function))
+                            mutate(function_expr2 = groupify_function(expr_expression_function)) %>%
   
 group_expr_functions <-  group_expr_functions %>% 
                               mutate(group_function_expr = fct_collapse(function_expr2, 
@@ -489,6 +489,30 @@ group_expr_functions %>% ggplot() +
   facet_wrap(vars(eval_function))
 ```
 
+We also look at the arity of the top-level function:
+
+```{r arity_expr_expression}
+expr_call_arg %>% count(expr_expression_args_num, sort = TRUE) %>% knitr::kable()
+```
+
+```{r arity_expr_expression_plot}
+expr_call_arg %>% ggplot() + 
+  geom_bar(aes(x = expr_expression_args_num)) +
+  scale_y_sqrt() +
+  coord_flip() + 
+  labs(title = "Arity of calls", x = "arity", y = "n")
+
+```
+
+```{r arity_expr_expression_plot_per_eval}
+expr_call_arg %>% ggplot() + 
+  geom_bar(aes(x = expr_expression_args_num)) +
+  scale_y_sqrt() +
+  coord_flip() + 
+  labs(title = "Arity of calls", x = "arity", y = "n") +
+  facet_wrap(vars(eval_function))
+```
+
 
 ### For resolved `expr`
 
@@ -524,19 +548,19 @@ We can remove `eval` and leave there the expression in `r changed_resolved_evals
 We can do the same analysis as for the non-resolved expressions:
 
 ```{r expr_resolved__call_arg}
-expr_resolved_call_arg <- eval_calls %>% filter(expr_resolved_type == "LANGSXP") %>% 
-  mutate(function_expr = map_chr(expr_resolved, function_name))
+expr_resolved_call_arg <- eval_calls %>% filter(expr_resolved_type == "LANGSXP")
 ```
 
 The following top level functions are used:
 
 ```{r top_level_function_resolved_expr}
-expr_resolved_call_arg %>% count(function_expr) %>% arrange(desc(n))
+expr_resolved_call_arg %>% count(expr_resolved_function) %>% arrange(desc(n))
 ```
 
 ```{r group_expr_resolved_functions}
 group_expr_resolved_functions <- expr_resolved_call_arg %>%
-                            mutate(function_expr2 = if_else(str_starts(function_expr, fixed("(function(")), "anonymous", function_expr)) %>%
+                            #mutate(function_expr2 = if_else(str_starts(expr_resolved_function, fixed("(function(")), "anonymous", expr_resolved_function)) %>%
+                            mutate(function_expr2 = groupify_function(expr_resolved_function)) %>%
                             mutate(group_function_expr = fct_collapse(function_expr2, 
                               assignment = c("<-", "[[<-", "[<-", "$<-", "<<-", "="),
                               read = c("[", "[[", "$"),
@@ -551,6 +575,7 @@ group_expr_resolved_functions <- expr_resolved_call_arg %>%
                               logical = c("<", ">", "is.element"),
                               choice = c("if"),
                               anonymous = c("anonymous"),
+                              primitive = c("primitive"),
                               function_meta = c("sys.calls", "function", "body", "missing"),
                               formula = c("~", "deriv", "D", "model.frame", "rootftfunc", "contest.lmerModLmerTest", "JacFunc", "gamlss.family", "contest1D.lmerModLmerTest", "contestMD.lmerModLmerTest", "reexpr"),                           
                               other_level = "other" ))
@@ -577,6 +602,31 @@ group_expr_functions %>% ggplot() +
   labs(title = "Category of calls", y = "n", x = "category" ) +
   facet_wrap(vars(eval_function))
 ```
+
+We also look at the arity of the top-level function:
+
+```{r arity_expr_resolved}
+expr_resolved_call_arg %>% count(expr_expression_args_num, sort = TRUE) %>% knitr::kable()
+```
+
+```{r arity_expr_resolved_plot}
+expr_resolved_call_arg %>% ggplot() + 
+  geom_bar(aes(x = expr_resolved_args_num)) +
+  scale_y_sqrt() +
+  coord_flip() + 
+  labs(title = "Arity of calls", x = "arity", y = "n")
+
+```
+
+```{r arity_expr_resolved_plot_per_eval}
+expr_resolved_call_arg %>% ggplot() + 
+  geom_bar(aes(x = expr_resolved_args_num)) + 
+  scale_y_sqrt() +
+  coord_flip() + 
+  labs(title = "Arity of calls", x = "arity", y = "n") +
+  facet_wrap(vars(eval_function))
+```
+
 
 ## Provenance
 
