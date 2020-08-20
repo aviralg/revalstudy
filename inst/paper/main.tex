@@ -102,6 +102,14 @@ Contributions:
 
 \section{The Design of Eval}
 
+There are four different kinds of \texttt{eval} in the \emph{base} package:  \texttt{eval}, \texttt{evalq}, \texttt{eval.parent},  \texttt{local}.
+The most important one is \texttt{eval}:
+
+
+
+- the four eval functions in base
+- the arguments, expr and envir, enclos
+- which expressions are evaluated, which ones are left unchanged
 
 \section{Infrastructure}
 
@@ -120,6 +128,8 @@ This section presents the results of our empirical study of eval in the R langua
 \subsection{How are they used}
 
 - classify evals based on what they can be replaced with
+
+
 
 \subsection{How to replace evals}
 
