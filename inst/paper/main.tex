@@ -93,39 +93,40 @@ Contributions:
 
 
 - cannot replace with (cite study of with construct).
+- 
 \textbf{*}
 
 \section{Background on R}
-\textbf{Aviral}
+- Talk about environments
+- How is it different from JS (takes language, env in R but string in JS).
 
 \section{The Design of Eval}
-\textbf{Aviral}
+
 
 \section{Infrastructure}
-\textbf{Aviral + Filip}
+
 
 \section{Corpus of R Programs}
-\textbf{Filip}
+
 
 \section{Threats to Validity}
-\textbf{Filip}
 
-\section{Analyzing Eval Usage Patterns}
+
+\section{Research Question}
 This section presents the results of our empirical study of eval in the R language.
 \subsection{How many evals}
-\textbf{Pierre}
+
 
 \subsection{How are they used}
-\textbf{Pierre}
+
 - classify evals based on what they can be replaced with
 
 \subsection{How to replace evals}
-\textbf{Aviral}
+
+
+\subsection{How dangerous is eval}
 
 \subsection{How many evals can be replaced}
-\textbf{Aviral}
-
-\section{Evaluation}
 
 \section{Related Work}
 eval has been widely discussed in the research literature for the challenges it
@@ -147,3 +148,45 @@ challenges for JavaScript.
 \section*{References}
 
 \end{document}
+
+
+
+
+Eval is evil, we would like to replace it.
+Research Questions
+How often is eval used? 
+How often it is used in base / other packages?
+blocking: cannot find out precisely what comes from base
+What is the source of evals?
+Provenance (source arguments to eval)
+How many evals are in libraries / vignettes
+What is eval used for?
+??Eval in the tidyverse
+TODO: Classification of evals in  packages (Pierre)
+TODO: look at the first function to get
+binary / unary / assignment / other function
+does it have {
+evals that do nothing (they get values)
+...
+TODO: In the case of base package (Filip)
+access default values of formals
+simply implementation
+weird replacement of calls (write.csv -> write.table)
+accessing variable from another environment (instead of get)
+evaling user input
+Change of caller pattern: 
+m <- match.call()
+ m$name <- NULL
+ m[[1L]] <- as.name("library")
+eval(m, .GlobalEnv)
+     - 	TODO: How dangerous is eval? (Aviral)
+Does eval generate new code (create new functions)?
+environment writes (reads)
+system environment variables
+connections
+random number generator - setting seed
+Does eval do dynamic code loading?
+Does eval argument reflect on the call stack?
+Calls to C Code
+TODO: Could the eval be made safer?
+TODO: Could some of the eval calls be replaced?
