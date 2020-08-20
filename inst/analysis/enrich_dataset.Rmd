@@ -10,8 +10,8 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  data_dirpath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.3/"
-  data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.3/calls.fst"
+  data_dirpath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.4/"
+  data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.4/calls.fst"
 knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "html") })
 ---
@@ -72,12 +72,11 @@ There are so many calls that are similar:
 eval_calls_base <- eval_calls_raw %>% filter(caller_function %in% eval_base_functions) 
 ```
 
-Let's remove the duplicate ones:
+Let's remove the duplicate ones (but keep:
 
 ```{r}
-eval_calls_base <- eval_calls_base %>% select(-eval_call_id, -starts_with("caller_stack")) %>% distinct()
-
-eval_calls <- eval_calls_base %>% select(-eval_call_id) %>% distinct()
+eval_calls_base <- eval_calls_base %>% count(across(c(-eval_call_id, -starts_with("caller_stack"))), name = "nb_eval_calls") 
+eval_calls <- eval_calls %>% count(across(c(-eval_call_id)), name = "nb_eval_calls")
 ```
 
 ```{r}
@@ -96,10 +95,6 @@ eval_calls <- eval_calls %>%
 ```
 
 
-```{r}
-# We are doing some work once again! Parsing what was deparsed previously...
-eval_calls <-  eval_calls %>% mutate(function_expr = if_else(expr_expression_type == "LANGSXP", map_chr(expr_expression, function_name), NA), function_expr_resolved = if_else(expr_resolved_type == "LANGSXP", map_chr(expr_resolved, function_name), NA))
-```
 
 ```{r}
 eval_calls <- eval_calls %>% mutate(parse_args = if_else(is.na(expr_parsed_expression), NA, map_chr(expr_parsed_expression, extract_args_parse)))
@@ -109,7 +104,7 @@ eval_calls <- eval_calls %>% mutate(parse_args = if_else(is.na(expr_parsed_expre
 ```{r write_back}
 write_fst(eval_calls, paste0(params$data_dirpath, "enriched_calls.fst"))
 
-write_dst(eval_calls_base, paste0(params$data_dirpath, "base_calls.fst"))
+write_fst(eval_calls_base, paste0(params$data_dirpath, "base_calls.fst"))
 ```
 
 
