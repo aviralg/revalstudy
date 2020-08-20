@@ -227,4 +227,13 @@ extract_package_name <- function(src_ref, file)
 }
 
 
+groupify_function <- function(expr_function)
+{
+  case_when(
+    str_starts(expr_function, fixed("(function(")) ~ "anonymous",
+    str_starts(expr_function, fixed(".Primitive(")) ~ "primitive",
+    TRUE ~ expr_function
+  )
+}
+
 

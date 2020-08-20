@@ -444,7 +444,8 @@ We can distinguish a few groups:
 
 ```{r group_expr_functions}
 group_expr_functions <- expr_call_arg %>%
-                            mutate(function_expr2 = if_else(str_starts(expr_expression_function, fixed("(function(")), "anonymous", expr_expression_function))
+                            #mutate(function_expr2 = if_else(str_starts(expr_expression_function, fixed("(function(")), "anonymous", expr_expression_function))
+                            mutate(function_expr2 = groupify_function(expr_expression_function)) %>%
   
 group_expr_functions <-  group_expr_functions %>% 
                               mutate(group_function_expr = fct_collapse(function_expr2, 
@@ -496,7 +497,8 @@ expr_call_arg %>% count(expr_expression_args_num, sort = TRUE) %>% knitr::kable(
 
 ```{r arity_expr_expression_plot}
 expr_call_arg %>% ggplot() + 
-  geom_bar(aes(x = fct_rev(fct_infreq(expr_expression_args_num)))) +
+  geom_bar(aes(x = expr_expression_args_num)) +
+  scale_y_sqrt() +
   coord_flip() + 
   labs(title = "Arity of calls", x = "arity", y = "n")
 
@@ -504,7 +506,8 @@ expr_call_arg %>% ggplot() +
 
 ```{r arity_expr_expression_plot_per_eval}
 expr_call_arg %>% ggplot() + 
-  geom_bar(aes(x = fct_rev(fct_infreq(expr_expression_args_num)))) +
+  geom_bar(aes(x = expr_expression_args_num)) +
+  scale_y_sqrt() +
   coord_flip() + 
   labs(title = "Arity of calls", x = "arity", y = "n") +
   facet_wrap(vars(eval_function))
@@ -556,7 +559,8 @@ expr_resolved_call_arg %>% count(expr_resolved_function) %>% arrange(desc(n))
 
 ```{r group_expr_resolved_functions}
 group_expr_resolved_functions <- expr_resolved_call_arg %>%
-                            mutate(function_expr2 = if_else(str_starts(expr_resolved_function, fixed("(function(")), "anonymous", expr_resolved_function)) %>%
+                            #mutate(function_expr2 = if_else(str_starts(expr_resolved_function, fixed("(function(")), "anonymous", expr_resolved_function)) %>%
+                            mutate(function_expr2 = groupify_function(expr_resolved_function)) %>%
                             mutate(group_function_expr = fct_collapse(function_expr2, 
                               assignment = c("<-", "[[<-", "[<-", "$<-", "<<-", "="),
                               read = c("[", "[[", "$"),
@@ -571,6 +575,7 @@ group_expr_resolved_functions <- expr_resolved_call_arg %>%
                               logical = c("<", ">", "is.element"),
                               choice = c("if"),
                               anonymous = c("anonymous"),
+                              primitive = c("primitive"),
                               function_meta = c("sys.calls", "function", "body", "missing"),
                               formula = c("~", "deriv", "D", "model.frame", "rootftfunc", "contest.lmerModLmerTest", "JacFunc", "gamlss.family", "contest1D.lmerModLmerTest", "contestMD.lmerModLmerTest", "reexpr"),                           
                               other_level = "other" ))
@@ -606,7 +611,8 @@ expr_resolved_call_arg %>% count(expr_expression_args_num, sort = TRUE) %>% knit
 
 ```{r arity_expr_resolved_plot}
 expr_resolved_call_arg %>% ggplot() + 
-  geom_bar(aes(x = fct_rev(fct_infreq(expr_resolved_args_num)))) +
+  geom_bar(aes(x = expr_resolved_args_num)) +
+  scale_y_sqrt() +
   coord_flip() + 
   labs(title = "Arity of calls", x = "arity", y = "n")
 
@@ -614,7 +620,8 @@ expr_resolved_call_arg %>% ggplot() +
 
 ```{r arity_expr_resolved_plot_per_eval}
 expr_resolved_call_arg %>% ggplot() + 
-  geom_bar(aes(x = fct_rev(fct_infreq(expr_resolved_args_num)))) +
+  geom_bar(aes(x = expr_resolved_args_num)) + 
+  scale_y_sqrt() +
   coord_flip() + 
   labs(title = "Arity of calls", x = "arity", y = "n") +
   facet_wrap(vars(eval_function))
