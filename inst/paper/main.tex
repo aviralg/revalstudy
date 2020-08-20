@@ -129,6 +129,10 @@ This section presents the results of our empirical study of eval in the R langua
 
 - classify evals based on what they can be replaced with
 
+\subsubsection{A taxonomy of \texttt{eval}}
+
+We first classify \texttt{eval} depending on the resolved expression, \emph{i.e.} the first argument of \texttt{eval} after all possible function calls and symbol resolution in it have been executed.
+
 
 
 \subsection{How to replace evals}
@@ -137,6 +141,10 @@ This section presents the results of our empirical study of eval in the R langua
 \subsection{How dangerous is eval}
 
 \subsection{How many evals can be replaced}
+
+\section{Case studies}
+
+\subsection{\texttt{base}}
 
 \section{Related Work}
 eval has been widely discussed in the research literature for the challenges it
