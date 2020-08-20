@@ -8,8 +8,8 @@ DOCKER_IMAGE_NAME := prlprg/project-evalr
 # and makefile, there are number of things which could have been
 # simplified into macros
 # TODO rename it
-TOOLING_GIT_BRANCH := project-evalR
-RUNR_GITHUB_URL := https://raw.githubusercontent.com/PRL-PRG/runr/$(TOOLING_GIT_BRANCH)
+RUNR_GIT_BRANCH := project-evalR
+RUNR_GITHUB_URL := https://raw.githubusercontent.com/PRL-PRG/runr/$(RUNR_GIT_BRANCH)
 
 CRAN_MIRROR     ?= cran.r-project.org
 CRAN_MIRROR_URL ?= https://$(CRAN_MIRROR)

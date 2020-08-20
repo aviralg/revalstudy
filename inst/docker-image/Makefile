@@ -7,11 +7,12 @@ latest_commit = $(shell curl -s https://api.github.com/repos/PRL-PRG/$(1)/commit
 INJECTR_VERSION     ?= $(call latest_commit,injectr,master)
 INSTRUMENTR_VERSION ?= $(call latest_commit,instrumentr,master)
 EVIL_VERSION        ?= $(call latest_commit,evil,master)
-RUNR_VERSION        ?= $(call latest_commit,runr,$(TOOLING_GIT_BRANCH))
+RUNR_VERSION        ?= $(call latest_commit,runr,$(RUNR_GIT_BRANCH))
 
 image:
 	docker build \
     --rm \
+    --build-arg CRAN_MIRROR=$(CRAN_MIRROR) \
     --build-arg INJECTR_VERSION=$(INJECTR_VERSION) \
     --build-arg INSTRUMENTR_VERSION=$(INSTRUMENTR_VERSION) \
     --build-arg EVIL_VERSION=$(EVIL_VERSION) \
