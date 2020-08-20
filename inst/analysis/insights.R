@@ -226,5 +226,38 @@ extract_package_name <- function(src_ref, file)
   )
 }
 
+replaceable_functions <- c("+", "*", "/", "-", "%%", 
+                           "<-", "[[<-", "[<-", "$<-", "<<-", "=",
+                           "[", "[[", "$",
+                           "@<-",
+                           "slot", "@",
+                           "<", ">", "==", "<-", ">=",
+                           "if")
+
+
+is_replaceable <- function(expr)
+{
+  # We are going to traverse the ast recursively
+  # We cannot replace in 2 cases: the function name in a call is too complex (we could do a do.call though), it is bytecode
+  if(is.call(expr))
+  {
+    function_name <- expr[[1]]
+    function_args <- expr[-1]
+    return(as.character(function_name) %in% replaceable_functions && every(function_args, is_replaceable))
+    
+  }
+  else if(is.expression(expr))
+  {
+    return(every(expr, is_replaceable))
+  }
+  else if(typeof(expr) == "bytecode")
+  {
+    return(FALSE)
+  }
+  else # Symbols, promises, vector types, closure and builtins, S4 objects. There should not be "..." here
+  {
+    return(TRUE)
+  }
+}
 
 
