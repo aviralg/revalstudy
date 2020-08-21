@@ -17,14 +17,20 @@
 }  
 \maketitle
 
-\renewcommand{\c}[1]{{\small\sf{#1}}\xspace}
+\renewcommand{\c}[1]{{\texttt{#1}}\xspace}
+\newcommand{\miss}[1]{{\textcolor{red}{#1}}\xspace}
 
 \begin{abstract}
-  The eval function turns text into code and thus causes difficulties for
-  reasoning about the behavior of software that uses it. This paper is a
-  study of the usage of eval in R, a widely used data science programming
-  language. We combine static and dynamic analysis on a large and
-  representative corpus of R programs. Our results show...
+  The \c{eval} function turns text into code. The widespread use of that
+  capability hinders the static reasoning about software systems. This paper
+  is a large-scale study of a corpus of \miss{3} million lines of R code.
+  We performed static and dynamic analysis of our corpus and report that
+  usage of \c{eval} is indeed wide spread. It is used by expert core
+  developers of the language, experienced library developers, and end-users
+  alike. The patterns of usage range from meta-programming to
+  misunderstandings of what \c{eval} is good for. Case studies give example
+  use-cases and some evidence that automated tools could be used to refactor
+  some of the uses of \c{eval}.
 \end{abstract}
 
 \section{Introduction}
@@ -80,9 +86,12 @@ data, and code will be submitted to artifact evaluation.
 
 Previous work looked at eval in JavaScript
 
-There is some work on 
+Othere languages
 
-\section{Shade of Eval}
+Dynamic analysis
+
+
+\section{Shades of Eval}
 
 - Talk about environments
 - How is it different from JS (takes language, env in R but string in JS).
