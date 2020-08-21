@@ -1,14 +1,16 @@
+DATA_DIR  <- path(params$base_dir, "data")
+PAPER_DIR <- path(params$base_dir, "paper")
+TAGS_DIR  <- path(PAPER_DIR, "tags")
+
 ## INPUTs
 
-PACKAGE_METADATA     <- path(params$data_dir, "metadata.csv")
-PACKAGE_SLOC         <- path(params$data_dir, "sloc.csv")
+PACKAGE_METADATA     <- path(DATA_DIR, "metadata.csv")
+PACKAGE_SLOC         <- path(DATA_DIR, "sloc.csv")
 
 ## OUTPUTs
 
-## corpus only
-CORPUS_FILE                  <- path(params$output_dir, "corpus.txt")
-CORPUS_REVDEPS               <- path(params$output_dir, "corpus-revdeps.csv")
-CORPUS_REVDEPS_FILE          <- path(params$output_dir, "corpus-revdeps.txt")
-CORPUS_ALL_PACKAGES_FILE     <- path(params$output_dir, "corpus-all.txt")
+CORPUS_FILE                  <- path(DATA_DIR, "corpus.txt")
+CORPUS_REVDEPS               <- path(DATA_DIR, "corpus-revdeps.csv")
+CORPUS_REVDEPS_FILE          <- path(DATA_DIR, "corpus-revdeps.txt")
+CORPUS_ALL_PACKAGES_FILE     <- path(DATA_DIR, "corpus-all.txt")
 
-TAGS_DIR <- params$output_dir
