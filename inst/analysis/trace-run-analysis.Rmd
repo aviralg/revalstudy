@@ -1,0 +1,102 @@
+---
+title: "Trace run analysis"
+output: 
+  html_document: 
+    theme: united
+    toc: yes
+    toc_float: yes
+editor_options: 
+  chunk_output_type: console
+params:
+  data_dir: /var/lib/R/project-evalR/run/package-evals-traced-corpus.3
+  output_dir: /var/lib/R/project-evalR/revalstudy/data
+  paper_dir: /var/lib/R/project-evalR/revalstudy/inst/paper
+  base_url: http://prl3:8003/file_show?path=
+---
+
+```{r setup, include=FALSE}
+for (x in c(
+  "dplyr", 
+  "DT", 
+  "fs", 
+  "purrr",
+  "readr",
+  "runr",
+  "stringr"
+  )) {
+  suppressPackageStartupMessages(library(x, character.only=TRUE))
+}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+# TODO: move into the package
+source("inc/paths.R")
+source("inc/setup.R")
+source("inc/latextags.R")
+
+create_tags(path(TAGS_DIR, "trace-run.tex"), prefix="TC", default=TRUE)
+
+PARALLEL_LOG_FILE <- path(params$data_dir, "parallel.log")
+```
+
+## Description
+
+The aim of this notebook is to analyze the run of the tracer.
+
+### Output
+
+- ``r PARALLEL_LOG_FILE`` - GNU parallel log file
+
+## Load data
+
+```{r}
+parallel_log <- 
+  read_parallel_log(PARALLEL_LOG_FILE) %>%
+  mutate(command=str_replace(command, ".*/(.*)$", "\\1")) %>%
+  select(package=command, everything()) %>%
+  select(-seq, -host, -send, -receive)
+```
+
+## Overview
+
+```{r}
+failed_packages <- filter(parallel_log, exitval != 0)
+errored_packages <- filter(parallel_log, exitval == 1)
+timeouted_packages <- filter(parallel_log, exitval == -1)
+
+overview_table(
+  r("Run packages", parallel_log),
+  r("Succeeded packages", filter(parallel_log, exitval == 0)),
+  r("Failed packages",    failed_packages),
+  r("Failed packages ratio", ratio(failed_packages, parallel_log)),
+  r("Timeouted packages", timeouted_packages),
+  r("Errored packages", errored_packages),
+  r("Other errored packages",   filter(parallel_log, !(exitval %in% c(-1, 0, 1)))),
+  r("Duration", max(parallel_log$starttime + parallel_log$jobruntime) - min(parallel_log$starttime))
+)
+```
+
+## Failed packages
+
+### Errored packages
+
+Running tracer on these packages resulted in exit code `1`.
+
+```{r}
+errored_packages %>%
+  mutate(
+    stdout=paste("<a href=", URLencode(file.path(params$base_url, params$data_dir, package, "stdout")), ">stdout</a>"),
+    stderr=paste("<a href=", URLencode(file.path(params$base_url, params$data_dir, package, "stderr")), ">stderr</a>")
+  ) %>%
+  my_datatable(escape=FALSE)
+```
+
+### Timeouted packages
+
+The GNU parallel killed the tracing process.
+
+```{r}
+timeouted_packages %>%
+  my_datatable()
+```
+
