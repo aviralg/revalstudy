@@ -10,8 +10,8 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  data_dirpath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.4/"
-  data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.4/calls.fst"
+  data_dirpath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.5/"
+  data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.5/calls.fst"
 knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "html") })
 ---
@@ -74,10 +74,6 @@ eval_calls_base <- eval_calls_raw %>% filter(caller_function %in% eval_base_func
 
 Let's remove the duplicate ones (but keep their numbers):
 
-```{r}
-eval_calls_base <- eval_calls_base %>% count(across(c(-eval_call_id, -starts_with("caller_stack"))), name = "nb_eval_calls") 
-eval_calls <- eval_calls %>% count(across(c(-eval_call_id)), name = "nb_eval_calls")
-```
 
 ```{r}
 eval_calls_base <- eval_calls_base %>% 
@@ -85,9 +81,26 @@ eval_calls_base <- eval_calls_base %>%
     resolve_sexp_name(expr_resolved_type) %>%
     resolve_sexp_name(enclos_type) %>%
     resolve_sexp_name(envir_type)
+```
 
-eval_calls <- eval_calls %>% 
-    mutate(eval_call_package = extract_package_name(eval_call_srcref, file)) %>% 
+
+
+```{r}
+eval_calls_base <- eval_calls_base %>% count(across(c(-eval_call_id, -starts_with("caller_stack"))), name = "nb_eval_calls") 
+eval_calls_dedup <- eval_calls %>% count(across(c(-eval_call_id)), name = "nb_eval_calls")
+eval_calls_dedup_more <- eval_calls %>% count(across(c(-eval_call_id, -starts_with("caller_stack"))), name = "nb_eval_calls") 
+```
+
+```{r}
+eval_calls <- eval_calls_dedup_more %>% mutate(parse_args = if_else(is.na(expr_parsed_expression), NA, map_chr(expr_parsed_expression, extract_args_parse)))
+```
+
+```{r}
+eval_calls_dedup_more <- eval_calls_dedup_more %>% mutate(eval_call_package = map2_chr(eval_call_srcref, file, extract_package_name)) 
+```
+
+```{r}
+eval_calls_dedup_more <- eval_calls_dedup_more %>% 
     resolve_sexp_name(expr_expression_type) %>%
     resolve_sexp_name(expr_resolved_type) %>%
     resolve_sexp_name(enclos_type) %>%
@@ -96,15 +109,14 @@ eval_calls <- eval_calls %>%
 
 
 
-```{r}
-#eval_calls <- eval_calls %>% mutate(parse_args = if_else(is.na(expr_parsed_expression), NA, map_chr(expr_parsed_expression, extract_args_parse)))
-```
-
-
 ```{r write_back}
-write_fst(eval_calls, paste0(params$data_dirpath, "deduplicated_calls.fst"))
+write_fst(eval_calls_dedup, paste0(params$data_dirpath, "deduplicated_calls.fst"))
+
+write_fst(eval_calls_dedup_more, paste0(params$data_dirpath, "deduplicated_more_calls.fst"))
 
 write_fst(eval_calls_base, paste0(params$data_dirpath, "base_calls.fst"))
+
+write_fst(eval_calls, paste0(params$data_dirpath, "enriched_calls.fst"))
 ```
 
 
