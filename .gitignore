@@ -436,3 +436,4 @@ TSWLatexianTemp*
 # Uncomment the next line to have this generated file ignored.
 #*Notes.bib
 /inst/run/
+inst/paper/main.pdf
