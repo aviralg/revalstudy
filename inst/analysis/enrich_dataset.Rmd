@@ -86,13 +86,13 @@ eval_calls_base <- eval_calls_base %>%
 
 
 ```{r}
-eval_calls_base <- eval_calls_base %>% count(across(c(-eval_call_id, -starts_with("caller_stack"))), name = "nb_eval_calls") 
+eval_calls_base <- eval_calls_base %>% count(across(c(-eval_call_id, -starts_with("caller_stack"))), name = "nb_ev_calls") 
 eval_calls_dedup <- eval_calls %>% count(across(c(-eval_call_id)), name = "nb_eval_calls")
-eval_calls_dedup_more <- eval_calls %>% count(across(c(-eval_call_id, -starts_with("caller_stack"))), name = "nb_eval_calls") 
+eval_calls_dedup_more <- eval_calls %>% count(across(c(-eval_call_id, -starts_with("caller_stack"))), name = "nb_ev_calls") 
 ```
 
 ```{r}
-eval_calls <- eval_calls_dedup_more %>% mutate(parse_args = if_else(is.na(expr_parsed_expression), NA, map_chr(expr_parsed_expression, extract_args_parse)))
+eval_calls_dedup_more <- eval_calls_dedup_more %>% mutate(parse_args = map(expr_parsed_expression, function(e) { if(!is.na(e) && str_starts(e, "(parse|str2lang|str2expression)\\("))   extract_args_parse(e) else list() }))  %>% unnest_wider(parse_args)
 ```
 
 ```{r}
@@ -107,6 +107,10 @@ eval_calls_dedup_more <- eval_calls_dedup_more %>%
     resolve_sexp_name(envir_type)
 ```
 
+```{r}
+eval_calls <- eval_calls %>% select(-ends_with("_type")) %>% left_join(eval_calls_dedup_more)
+eval_calls_dedup <- eval_calls_dedup %>% select(-ends_with("_type"))%>% left_join(eval_calls_dedup_more)
+```
 
 
 ```{r write_back}

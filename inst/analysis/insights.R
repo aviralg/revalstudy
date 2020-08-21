@@ -71,12 +71,13 @@ extract_args_parse <- function(eval_call)
   exp <- get_expr(eval_call)
   exp <- tryCatch(call_standardise(exp),
                   error = function(c) 
-                    if(exp[[2]] == "...") { names (exp)[[2]] <- "dots" ; return(exp)}
+                    if(length(exp) >= 2 && exp[[2]] == "...") { names(exp)[[2]] <- "dots" ; return(exp)}
                     else stop(paste0("extract_arg failed with: ", eval_call))
   )
   args <- map_chr(as.list(exp[-1]), function(chr) { paste(deparse(chr), collapse = "\n")})
+  names(args) <- map_chr(names(args), function(chr) paste0("parse_args_", chr))
   
-  return(args[str_detect(names(args), "file|text|n|s|keep.source|srcfile|dots")])# "file|text|n|s|prompt|keep.source|srcfile|code"
+  return(args[str_detect(names(args), "^parse_args_(file_name|text|n|s|keep\\.source|srcfile|dots)$")])# "file|text|n|s|prompt|keep.source|srcfile|code"
 }
 
 # See extract_inner_exp which takes a str
@@ -213,6 +214,30 @@ resolve_sexp_name <- function(df, var) {
     rename(!!en_var:=name)
 }
 
+R_LIB_SRC <- "/var/lib/R/project-evalR/R-4.0.2/src/library"
+CORE_PACKAGES <- c(
+  "compiler",
+  "graphics",
+  "grDevices",
+  "grid",
+  "methods",
+  "parallel",
+  "profile",
+  "splines",
+  "stats",
+  "stats4",
+  "tcltk",
+  "tools",
+  "utils"
+)
+core_package_files <- map_dfr(CORE_PACKAGES, function(x) {
+  p <- file.path(R_LIB_SRC, x, "R")
+  f <- list.files(p, pattern="\\.R$", recursive=FALSE)
+  f <- f[!str_ends(f, "all\\.R")]
+  f <- file.path("./R", f)
+  tibble(package=x, file=f)
+})
+
 
 extract_package_name <- function(src_ref, file)
 {
@@ -224,12 +249,12 @@ extract_package_name <- function(src_ref, file)
   # - /testit/... or /testthat/... : it is the testit or testthat packages
   # - :/R : extract the package name from the file path in the column path
   case_when(
-    is.na(src_ref) ~ "base",
-    str_starts(src_ref, fixed("./R/")) ~ str_match(file, "[^/]*/[^/]*/([^/]*)/.*")[[2]],
+    is.na(src_ref) ~ "base?",
+    str_starts(src_ref, fixed("./R/")) ~ "core",
     str_starts(src_ref, fixed("/tmp/")) ~ str_match(src_ref, "/tmp/Rtmp[^/]*/R\\.INSTALL[^/]*/([^/]+)/.*")[[2]],
-    str_starts(src_ref, fixed("/mnt/nvme0/")) ~ str_match(src_ref, "/mnt/nvme0/R/project-evalR/library/4.0/instrumentr/srcref/([^/]*)/.*")[[2]],
+    str_starts(src_ref, fixed("/mnt/nvme0/")) ~ "base",
     str_starts(src_ref, fixed("test")) ~ str_match(src_ref, "([^/]*)/.*")[[2]],
-    str_starts(src_ref, fixed(":/")) ~ str_match(file, "[^/]*/[^/]*/([^/]*)/.*")[[2]],
+    str_starts(src_ref, fixed("/:")) ~ str_match(file, "[^/]*/[^/]*/([^/]*)/.*")[[2]],
     TRUE ~ "unknown"
   )
 }
