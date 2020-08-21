@@ -15,12 +15,12 @@
 
 \lstset{ 
 	language=R,                     % the language of the code
-	basicstyle=\tiny\ttfamily, % the size of the fonts that are used for the code
+	basicstyle=\ttfamily, % the size of the fonts that are used for the code
 	numbers=left,                   % where to put the line-numbers
-	numberstyle=\tiny\color{Blue},  % the style that is used for the line-numbers
+	numberstyle=\color{Blue},  % the style that is used for the line-numbers
 	stepnumber=1,                   % the step between two line-numbers. If it is 1, each line
 	% will be numbered
-	numbersep=5pt,                  % how far the line-numbers are from the code
+	numbersep=2pt,                  % how far the line-numbers are from the code
 	backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
 	showspaces=false,               % show spaces adding particular underscores
 	showstringspaces=false,         % underline spaces within strings
@@ -44,8 +44,9 @@
 }  
 \maketitle
 
-\renewcommand{\c}[1]{{\texttt{#1}}\xspace}
+\renewcommand{\c}[1]{\lstinline{#1}\xspace}
 \newcommand{\miss}[1]{{\textcolor{red}{#1}}\xspace}
+\newcommand{\eval}{\c{eval}}
 
 \begin{abstract}
   The \c{eval} function turns text into code. The widespread use of that
@@ -125,11 +126,32 @@ Dynamic analysis
 
 \section{The Design of Eval}
 
-There are four different kinds of \c{eval} in the \emph{base} package:  \c{eval}, \c{evalq}, \c{eval.parent},  \c{local}.
-The most important one is \c{eval}: \lstinline|eval(expr, envir, enclos)|
+There are four different kinds of \eval in the \emph{base} package:  \c{eval}, \c{evalq}, \c{eval.parent},  \c{local}.
+The most important one is \eval: 
+
+\begin{lstlisting}
+eval <- function (expr, envir = parent.frame(), enclos = if (is.list(envir) || 
+is.pairlist(envir)) parent.frame() else baseenv()) 
+.Internal(eval(expr, envir, enclos))
+\end{lstlisting}
 
 
-- the four eval functions in base
+
+
+The three other functions are defined using \lstinline|eval|.
+
+\begin{lstlisting}
+evalq <- function (expr, envir = parent.frame(), enclos = if (is.list(envir) || 	is.pairlist(envir)) parent.frame() else baseenv()) 
+	.Internal(eval(substitute(expr), envir, enclos))
+	
+eval.parent <- function (expr, n = 1) 
+{
+p <- parent.frame(n + 1)
+eval(expr, p)
+}
+
+local <- function (expr, envir = new.env()) eval.parent(substitute(eval(quote(expr), envir)))
+\end{lstlisting}
 
 
 - the arguments, expr and envir, enclos
