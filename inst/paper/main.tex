@@ -11,9 +11,8 @@
 \usepackage{xcolor,xspace}
 \begin{document}
 
-\title{A Study of the Usage of Eval in R}
-
-\author{\IEEEauthorblockN{For double blind review}%
+\title{A Large-Scale Study of the Use of Eval in R}
+\author{\vspace{-.8cm}\IEEEauthorblockN{\it\Large The Eval that Data Scientist Do}%
   %\IEEEauthorblockA{ dept} \\ \and
 }  
 \maketitle
@@ -21,14 +20,58 @@
 \renewcommand{\c}[1]{{\small\sf{#1}}\xspace}
 
 \begin{abstract}
-
+  The eval function turns text into code and thus causes difficulties for
+  reasoning about the behavior of software that uses it. This paper is a
+  study of the usage of eval in R, a widely used data science programming
+  language. We combine static and dynamic analysis on a large and
+  representative corpus of R programs. Our results show...
 \end{abstract}
 
 \section{Introduction}
 
 The \c{eval} function has a bad reputation. This function, under one name or
 another and with various exact semantics, is available in many dynamic
-languages. It is used to transform text into code and execute that code.
+languages. It is used to transform text into code and execute that code.  It
+earned its reputation because of the challenges it poses for reasoning about
+code that uses it.  The problem with eval is that the behavior of a system
+departs from the source text of the program and becomes dependent on the
+program's inputs. This brings challenge to program analysis and security.
+
+While the worst case is indeed pretty bad, previous work has found that
+in many cases eval can be fairly inoccuous or at least much less dangerous
+that the worst case.
+
+There has been research in understanding the behavior of eval in the context
+of web programming and in particular the JavaScript language.
+
+This paper looks at eval in the context of data science. We look at the use
+of eval in the R programming language. And in particular we look at its use
+in three different contexts.  The first context is the implementation of the
+language, how is eval used by the core developers of R in the packages that
+are part of the R virtual machine.  The secoond context is how it is used in
+libraries. And the third context is how it is used by end users of the
+language.
+
+There are reasons to believe that usage patterns may be different. The core
+R code is extremely stable, it has only been maintained for the last 20
+years with very few far reaching changes. The libraries represent a more
+lively ecosystem with new libraries added each day. Typically they are
+developped by experience R developer.  Finally, end user code is often
+written by non-programmers, data scientists who may or may not understand R.
+
+To set up our experiements we have created a corpus composed of three
+distinct data sets.  We have set out the 8 packages that are included with
+the R virtual machine and refer to these as `` base'' packages.  We have
+selected the 400 most widely included libraries and obtained a number of
+client programs to exercises them.  Finally we have obtained 400 end users
+programs from the Kaggle competition.
+
+To understand the behavior of eval we perform a combination of static
+analysis, dynamic analysis and manual inspection. The results presented
+here summarize our findings.
+
+Our infrastructure is publicly available, released in open source, and our
+data, and code will be submitted to artifact evaluation.
 
 
 - Why eval is used in R
@@ -42,11 +85,6 @@ for consumption by the users of the language?
 - We only permit transformations that preserve code behavior?
 - Do we accept overly complex code as the output?
 
-Why do we do this dynamically? Because it raises a chicken-and-egg problem,
-doing it statically would require us to reason about eval based code which may
-not be possible in general.
-
-
 What are the challenges? Why is it not trivial?
 - Do we handle aliasing of eval?
 - Simple cases can be subtle? (laziness for ex.
@@ -59,14 +97,15 @@ Contributions:
 - Describe the use of eval in R
 - Develop a tool to replace evals guided by dynamic traces
 
-
 - cannot replace with (cite study of with construct).
-- 
-\textbf{*}
 
 \section{Related Work}
 
-\section{Eval in R}
+Previous work looked at eval in JavaScript
+
+
+\section{Shade of Eval}
+
 - Talk about environments
 - How is it different from JS (takes language, env in R but string in JS).
 
