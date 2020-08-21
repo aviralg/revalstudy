@@ -14,6 +14,10 @@ nb_eval_call_sites <- function(eval_calls)
 
 get_expr <- function(eval_call)
 {
+  if(is.na(eval_call))
+  {
+    return(NA)
+  }
   # Special case for expressions starting with _ (such as _inherit in ggproto)
   escaped_eval_call <- if(startsWith(eval_call, "_"))
   {
@@ -65,10 +69,14 @@ parse_all <- function(x, filename,allow_error) {}
 extract_args_parse <- function(eval_call) 
 {
   exp <- get_expr(eval_call)
-  exp <- call_standardise(exp)
+  exp <- tryCatch(call_standardise(exp),
+                  error = function(c) 
+                    if(exp[[2]] == "...") { names (exp)[[2]] <- "dots" ; return(exp)}
+                    else stop(paste0("extract_arg failed with: ", eval_call))
+  )
   args <- map_chr(as.list(exp[-1]), function(chr) { paste(deparse(chr), collapse = "\n")})
   
-  return(args[str_detect(names(args), "file|text|n|s|keep.source|srcfile")])# "file|text|n|s|prompt|keep.source|srcfile|code"
+  return(args[str_detect(names(args), "file|text|n|s|keep.source|srcfile|dots")])# "file|text|n|s|prompt|keep.source|srcfile|code"
 }
 
 # See extract_inner_exp which takes a str
@@ -217,11 +225,11 @@ extract_package_name <- function(src_ref, file)
   # - :/R : extract the package name from the file path in the column path
   case_when(
     is.na(src_ref) ~ "base",
-    str_starts(src_ref, fixed("./R/")) ~ "core",
+    str_starts(src_ref, fixed("./R/")) ~ str_match(file, "[^/]*/[^/]*/([^/]*)/.*")[[2]],
     str_starts(src_ref, fixed("/tmp/")) ~ str_match(src_ref, "/tmp/Rtmp[^/]*/R\\.INSTALL[^/]*/([^/]+)/.*")[[2]],
     str_starts(src_ref, fixed("/mnt/nvme0/")) ~ str_match(src_ref, "/mnt/nvme0/R/project-evalR/library/4.0/instrumentr/srcref/([^/]*)/.*")[[2]],
     str_starts(src_ref, fixed("test")) ~ str_match(src_ref, "([^/]*)/.*")[[2]],
-    str_starts(src_ref, ":/") ~ str_match(file, "[^/]*/[^/]*/([^/]*)/.*")[[2]],
+    str_starts(src_ref, fixed(":/")) ~ str_match(file, "[^/]*/[^/]*/([^/]*)/.*")[[2]],
     TRUE ~ "unknown"
   )
 }
@@ -231,7 +239,7 @@ replaceable_functions <- c("+", "*", "/", "-", "%%",
                            "[", "[[", "$",
                            "@<-",
                            "slot", "@",
-                           "<", ">", "==", "<-", ">=",
+                           "<", ">", "==", "<-", ">=", "!=",
                            "if")
 
 
@@ -258,6 +266,36 @@ is_replaceable <- function(expr)
   {
     return(TRUE)
   }
+}
+
+
+
+is_replaceable_str <- function(expr)
+{
+  e <- get_expr(expr)
+  return(is_replaceable(e))
+}
+
+expr_depth <- function(expr) 
+{
+  if(is.call(expr))
+  {
+    return(1L + max(map_int(expr[-1], expr_depth)))
+  }
+  else if(is.expression(expr))
+  {
+    return(max(map_int(expr, expr_depth)))
+  }
+  else
+  {
+    return(1L)
+  }
+}
+
+expr_depth_str <- function(expr)
+{
+  e <- get_expr(expr)
+  return(expr_depth(e))
 }
 
 groupify_function <- function(expr_function)
