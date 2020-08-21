@@ -130,9 +130,8 @@ There are four different kinds of \eval in the \emph{base} package:  \c{eval}, \
 The most important one is \eval: 
 
 \begin{lstlisting}
-eval <- function (expr, envir = parent.frame(), enclos = if (is.list(envir) || 
-is.pairlist(envir)) parent.frame() else baseenv()) 
-.Internal(eval(expr, envir, enclos))
+eval <- function (expr, envir = parent.frame(), enclos = if (is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv())  
+	.Internal(eval(expr, envir, enclos))
 \end{lstlisting}
 
 
@@ -141,23 +140,36 @@ is.pairlist(envir)) parent.frame() else baseenv())
 The three other functions are defined using \lstinline|eval|.
 
 \begin{lstlisting}
-evalq <- function (expr, envir = parent.frame(), enclos = if (is.list(envir) || 	is.pairlist(envir)) parent.frame() else baseenv()) 
+evalq <- function (expr, envir = parent.frame(), enclos = if (is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv())  
 	.Internal(eval(substitute(expr), envir, enclos))
 	
 eval.parent <- function (expr, n = 1) 
 {
-p <- parent.frame(n + 1)
-eval(expr, p)
+	p <- parent.frame(n + 1)
+	eval(expr, p)
 }
 
 local <- function (expr, envir = new.env()) eval.parent(substitute(eval(quote(expr), envir)))
 \end{lstlisting}
 
 
-- the arguments, expr and envir, enclos
+\c{expr} is the expression to be evaluated. It is not a string as in javascript. In order to evaluate a string, it should be first parsed using \c(parse(text = str)) to get an expression.
 
+\eval makes it possible to specify the environment in which to evaluate the expression. \c{enclos} is an additional environment used for lookup when \c{envir} is a list, a pairlist or a dataframe. In that case, \c{envir} is copied into a temporary environment enclosed in \c{enclos}.
 
-- which expressions are evaluated, which ones are left unchanged
+The \c{expr} argument of \eval is first evaluated in the current scope, then passed to the \eval. Quoting that argument prevents if from being evaluated in the current environment. \c{evalq} is a shortcut for \c{eval(quote(expr), ...)}. In the following code snippet, variable \c{r} is first looked up in the current scope with \eval whereas it is looked up in \c{env} with \c{evalq}.
+
+\begin{lstlisting}
+> r <- 5
+> env <- new.env()
+> env$r <- 9
+> eval(r, env)
+[1] 5
+> evalq(r, envir = env)
+[1] 9
+\end{lstlisting}
+
+\eval will return unchanged basic types such as vectors, functions, strings and environments. Promises are forced by \eval. Symbols are looked up in the current environment. Calls and expressions are evaluated. 
 
 \section{Infrastructure}
 
