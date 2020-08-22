@@ -130,26 +130,16 @@ often have only a cursory knowledge of the language.\footnote{To illustrate
   other hand, tend to know about laziness and program defensively around
   it.}  Thus, our corpus distinguished between \emph{core packages} (there
 are \miss{8} such packages that are loaded together with the R virtual
-machine), \emph{CRAN packages} (these are curated packages that pass
-stringent community quality checks and are equipped with tests and sample
-data), \emph{scripts} (end-user written code that performs a particular
-machine learning or data analysis task).
-
-
-
-There are reasons to believe that usage patterns may be different. The core
-R code is extremely stable, it has only been maintained for the last 20
+machine), \emph{CRAN packages} (we selected \miss{500} curated packages that
+pass stringent community quality checks and are equipped with tests and
+sample data), \emph{scripts} (we used \miss{400} end-user written programs
+that performs a particular data analysis task).  There are reasons to
+believe that \eval usage patterns may differ between these datasets. The
+core R code is extremely stable, it has only been maintained for the last 20
 years with very few far reaching changes. The libraries represent a more
-lively ecosystem with new libraries added each day. Typically they are
-developped by experience R developer.  Finally, end user code is often
-written by non-programmers, data scientists who may or may not understand R.
+lively ecosystem with new libraries added each day.  Finally, end user code
+is often one-use scripts thrown together and sometimes never revisited.
 
-To set up our experiements we have created a corpus composed of three
-distinct data sets.  We have set out the 8 packages that are included with
-the R virtual machine and refer to these as `` base'' packages.  We have
-selected the 400 most widely included libraries and obtained a number of
-client programs to exercises them.  Finally we have obtained 400 end users
-programs from the Kaggle competition.
 
 To understand the behavior of eval we perform a combination of static
 analysis, dynamic analysis and manual inspection. The results presented
