@@ -44,21 +44,27 @@
 }  
 \maketitle
 
+\newcommand{\eval}{\texttt{eval}\xspace}
+  
 \renewcommand{\c}[1]{\lstinline{#1}\xspace}
 \newcommand{\miss}[1]{{\textcolor{red}{#1}}\xspace}
-\newcommand{\eval}{\c{eval}}
 
 \begin{abstract}
-  The \c{eval} function turns text into code. The widespread use of that
-  capability hinders the static reasoning about software systems. This paper
-  is a large-scale study of a corpus of \miss{3} million lines of R code.
-  We performed static and dynamic analysis of our corpus and report that
-  usage of \c{eval} is indeed wide spread. It is used by expert core
-  developers of the language, experienced library developers, and end-users
-  alike. The patterns of usage range from meta-programming to
-  misunderstandings of what \c{eval} is good for. Case studies give example
-  use-cases and some evidence that automated tools could be used to refactor
-  some of the uses of \c{eval}.
+  The \eval function turns text into code. From the point of view of
+  reasoning about software system, uses of \eval turn the program's code
+  from a statically known quantity that can be reasoned about and analyzed
+  into one of the inputs to the program. Thus, widespread use of \eval
+  hinders our ability to provide safety and security guarantees for
+  software. Understanding how \eval is used in practice is key to finding
+  ways to mitigate its damage. One question that has not been studied is
+  whether the usage of \eval is dependent on the application domain or other
+  features of the language. This paper is a large-scale study of a corpus of
+  \miss{3} million lines of data science libraries and end-user written in
+  the R language. We performed a simple static analysis and more
+  sophisticated dynamic analysis to confirm that \eval is indeed in wide
+  spread use, and to categorized patters of usage. We found that \eval in
+  this code base is more dangerous in some ways, and safer in others, than
+  what was previously reported for JavaScript.
 \end{abstract}
 
 \section{Introduction}
