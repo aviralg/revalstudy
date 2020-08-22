@@ -17,6 +17,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
       libreadline-dev \
       libxml2-dev \
       rsync \
+      texlive-latex-extra \
       tree \
       vim \
       x11-utils \
