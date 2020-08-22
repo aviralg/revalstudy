@@ -4,31 +4,51 @@ FROM rocker/rstudio:4.0.2
 RUN DEBIAN_FRONTEND=noninteractive \
     apt-get update -yqq && \
     apt-get install -yqq \
-      aptitude \
       build-essential \
+      bwidget \
+      cargo \
       cloc \
       curl \
       default-jdk \
+      flex \
+      jags \
+      libavfilter-dev \
       libbz2-dev \
       libcairo2-dev \
+      libfftw3-dev \
+      libgdal-dev \
+      libglpk-dev \
+      libglu1-mesa-dev \
+      libgmp3-dev \
+      libgsl-dev \
+      libhiredis-dev \
+      libjpeg-dev \
       liblzma-dev \
+      libmagick++-dev \
+      libmysqlclient-dev \
+      libmpfr-dev \
       libpcre2-dev \
       libpcre3-dev \
+      libpoppler-cpp-dev \
+      libpq-dev \
       libreadline-dev \
+      librsvg2-dev \
+      libsodium-dev \
+      libudunits2-dev \
+      libv8-dev \
+      libwebp-dev \
       libxml2-dev \
       rsync \
       texlive-latex-extra \
+      tk-dev \
       tree \
+      unixodbc-dev \
       vim \
+      wget \
       x11-utils \
       xorg-dev \
       xvfb \
       zlib1g-dev
-
-ADD system-requirements.txt .
-RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get -yqq remove libcurl4-openssl-dev && \
-    cat system-requirements.txt | grep "^apt-get" | sed 's/^apt-get install -y \(.*\)/\1/' | sort | uniq | xargs aptitude install -y
 
 WORKDIR /R
 
@@ -59,28 +79,19 @@ RUN curl "$RUNR_GITHUB_URL/inst/install-r.sh" | bash -s -- -d "$R_DIR" -v "$R_VE
 
 env PATH=$R_DIR/bin:$PATH
 
-# CRAN packages
-RUN mkdir -p "$PACKAGES_ZIP_DIR" && \
-    rsync \
-      -rtlzv \
-      --delete \
-      --include='*.tar.gz' \
-      --include='PACKAGES*' \
-      --exclude='*/*' \
-      "${CRAN_MIRROR}::CRAN/src/contrib/" "$PACKAGES_ZIP_DIR"
-
-RUN mkdir -p "$R_LIBS" && \
-    mkdir -p "$PACKAGES_ZIP_DIR"
-
-RUN nohup Xvfb :6 -screen 0 1280x1024x24 >/dev/null 2>&1 & \
-    export DISPLAY=:6 && \
-    R --slave -e \
-      "source('$RUNR_GITHUB_URL/inst/install-cran-packages.R'); \
-       install_cran_packages(mirror='$CRAN_MIRROR_LOCAL_URL', lib='$R_LIBS');" \
-      2>&1 | tee "$R_LIBS/install.log"
+# CRAN mirror
+ADD CRAN-packages.txt /tmp
+RUN curl -s -O "$RUNR_GITHUB_URL/inst/create-cran-snapshot.R" && \
+    Rscript ./create-cran-snapshot.R "$PACKAGES_ZIP_DIR" /tmp/CRAN-packages.txt
 
 RUN mkdir -p "$PACKAGES_SRC_DIR" && \
     ls -1 "$PACKAGES_ZIP_DIR"/*.tar.gz | xargs -L 1 tar -C "$PACKAGES_SRC_DIR" -xzf
+
+
+ADD install-cran-packages.sh .
+RUN nohup Xvfb :6 -screen 0 1280x1024x24 >/dev/null 2>&1 & \
+    export DISPLAY=:6 && \
+    ls -1 "$PACKAGES_SRC_DIR" | ./install-cran-packages.sh -l $R_LIBS -m "$CRAN_MIRROR_LOCAL_URL" -f -
 
 # ## The following are dependencies that are too outdated in the package repository
 
