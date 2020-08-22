@@ -124,20 +124,18 @@ experience and keen understanding of the language semantics, library
 implementers, developers with some programming experience and a working
 knowledge of R, and end-users, who are typically not expert programmers and
 often have only a cursory knowledge of the language.\footnote{To illustrate
-  the above, R is a lazy language, like Haskell, the authors have informally
-  surveyed end-users, some of them computer scientists, and did not find a
-  single one aware of that fact. Library developers, on the other hand, tend
-  to know about laziness and program defensively around it.} Thus, our
-corpus distinguished between ,....
+  the above consider that R uses lazy evaluation like Haskell. The authors
+  have informally surveyed end-users, some of them computer scientists, and
+  did not find a single one aware of that fact. Library developers, on the
+  other hand, tend to know about laziness and program defensively around
+  it.}  Thus, our corpus distinguished between \emph{core packages} (there
+are \miss{8} such packages that are loaded together with the R virtual
+machine), \emph{CRAN packages} (these are curated packages that pass
+stringent community quality checks and are equipped with tests and sample
+data), \emph{scripts} (end-user written code that performs a particular
+machine learning or data analysis task).
 
 
-This paper looks at eval in the context of data science. We look at the use
-of eval in the R programming language. And in particular we look at its use
-in three different contexts.  The first context is the implementation of the
-language, how is eval used by the core developers of R in the packages that
-are part of the R virtual machine.  The secoond context is how it is used in
-libraries. And the third context is how it is used by end users of the
-language.
 
 There are reasons to believe that usage patterns may be different. The core
 R code is extremely stable, it has only been maintained for the last 20
