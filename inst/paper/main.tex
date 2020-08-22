@@ -45,7 +45,6 @@
 \maketitle
 
 \newcommand{\eval}{\texttt{eval}\xspace}
-  
 \renewcommand{\c}[1]{\lstinline{#1}\xspace}
 \newcommand{\miss}[1]{{\textcolor{red}{#1}}\xspace}
 
@@ -69,13 +68,48 @@
 
 \section{Introduction}
 
-The \c{eval} function has a bad reputation. This function, under one name or
-another and with various exact semantics, is available in many dynamic
-languages. It is used to transform text into code and execute that code.  It
-earned its reputation because of the challenges it poses for reasoning about
-code that uses it.  The problem with eval is that the behavior of a system
-departs from the source text of the program and becomes dependent on the
-program's inputs. This brings challenge to program analysis and security.
+Traditional program analysis techniques are based on sound reasoning about
+program behavior, a program analyzer computes an over-approximation of the
+set of possible operations performed by the system being
+analyzed~\cite{cc77}.  This is predicated on knowing the program's code, and
+computing that code's behavior for all possible inputs. The presence of
+\eval entails that the program's input, any string variable, may be
+reflected into its code giving rise to \emph{any} behavior allowed by the
+language semantics. In many dynamic languages, \eval can redefine most
+user-defined and built-in functions resulting in a complete loss of
+precision for any operation following \eval. A group of influential
+resaerchers argued to give up on soundness and, instead, to
+under-approximate dynamic features~\cite{soundy} In their words ``a
+practical analysis, therefore, may pretend that \eval does nothing, unless
+it can precisely resolve its string argument at compile time.''  Assuming
+that \eval does not have side-effects may be too optimistic. We rather
+propose to study what \eval does in practice, in real-world code, so as to
+give researchers data about how to better under-approximate uses of that
+feature.
+
+While there has been previous work investigating the usage of \eval in web
+programming and JavaScript, there are no other studies that shed light on
+the usage of \eval in other programming languages and application domains.
+It is thus reasonable to wonder if the results from previous work can be
+carried over to other contexts. For this paper, we have picked the data
+science language R~\cite{r} as our object of study. R is both different from
+JavaScript in linguistic terms and in terms of its user base. JavaScript was
+designed to run untrusted code in browser, while R was design for
+statistical computing on a desktop. JavaScript is used as a general purpose
+language by a wide community of programmers; while R is used for scientific
+computing by data scientist and domain experts with, often, limited
+programming experience.
+
+This paper sets out to highlight the differences in usage patterns between
+these two languages and user communities. Our results are broadly applicable
+as they increase our understanding of the range of uses of \eval, present
+new patterns, and hopefully provide insights into reasonable
+under-approximations of \eval. More narrowly, for researchers interested in
+static analysis of data science code, we provide a publicly available corpus
+of programs and a toolchain that can be customized to deliver different
+types of information about the behavior of \eval.
+
+
 
 While the worst case is indeed pretty bad, previous work has found that
 in many cases eval can be fairly inoccuous or at least much less dangerous
