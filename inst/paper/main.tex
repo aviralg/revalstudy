@@ -88,35 +88,48 @@ give researchers data about how to better under-approximate uses of that
 feature.
 
 While there has been previous work investigating the usage of \eval in web
-programming and JavaScript, there are no other studies that shed light on
-the usage of \eval in other programming languages and application domains.
-It is thus reasonable to wonder if the results from previous work can be
-carried over to other contexts. For this paper, we have picked the data
-science language R~\cite{r} as our object of study. R is both different from
-JavaScript in linguistic terms and in terms of its user base. JavaScript was
-designed to run untrusted code in browser, while R was design for
-statistical computing on a desktop. JavaScript is used as a general purpose
-language by a wide community of programmers; while R is used for scientific
-computing by data scientist and domain experts with, often, limited
-programming experience.
+programming and JavaScript~\cite{ecoop11}, there are no other studies that
+shed light on the usage of \eval in other programming languages and
+application domains.  It is thus reasonable to wonder if the results from
+previous work can be carried over to other contexts. For this paper, we have
+picked the data science language R~\cite{r} as our object of study. R is
+both different from JavaScript in linguistic terms and in terms of its user
+base. JavaScript was designed to run untrusted code in browser, while R was
+design for statistical computing on a desktop. JavaScript is used as a
+general purpose language by a wide community of programmers; while R is used
+for scientific computing by data scientist and domain experts with, often,
+limited programming experience.
 
-This paper sets out to highlight the differences in usage patterns between
-these two languages and user communities. Our results are broadly applicable
-as they increase our understanding of the range of uses of \eval, present
-new patterns, and hopefully provide insights into reasonable
-under-approximations of \eval. More narrowly, for researchers interested in
-static analysis of data science code, we provide a publicly available corpus
-of programs and a toolchain that can be customized to deliver different
-types of information about the behavior of \eval.
+This paper sets out to highlight the differences in usage patterns of \eval
+between these two languages and user communities. Our results are broadly
+applicable as they increase our understanding of the range of uses of \eval,
+present new use-cases, and, hopefully, provide insights into reasonable
+under-approximations. More narrowly, for researchers interested in static
+analysis of data science code, we provide a publicly available corpus of
+programs and a toolchain that can be customized to deliver fine-grained
+information about the usage and impact of \eval.
 
+Our methodology for this work bows to the fact that static analysis of R is
+difficult, instead we focus on dynamic analysis. To observe \eval we have
+built a two-level monitoring infrastructure: we are able to monitor R
+programs by instrumentation -- this gives us access to many user-visible
+properties of R programs -- and we also can monitor the inner working of the
+R interpreter -- this allows us to capture details of execution that are not
+exposed at the source level.
 
+Our corpus has been constructed to reflect the different level of
+sophistication in the R community. We distinguish between the core
+implementers of the language, developers with both extensive programming
+experience and keen understanding of the language semantics, library
+implementers, developers with some programming experience and a working
+knowledge of R, and end-users, who are typically not expert programmers and
+often have only a cursory knowledge of the language.\footnote{To illustrate
+  the above, R is a lazy language, like Haskell, the authors have informally
+  surveyed end-users, some of them computer scientists, and did not find a
+  single one aware of that fact. Library developers, on the other hand, tend
+  to know about laziness and program defensively around it.} Thus, our
+corpus distinguished between ,....
 
-While the worst case is indeed pretty bad, previous work has found that
-in many cases eval can be fairly inoccuous or at least much less dangerous
-that the worst case.
-
-There has been research in understanding the behavior of eval in the context
-of web programming and in particular the JavaScript language.
 
 This paper looks at eval in the context of data science. We look at the use
 of eval in the R programming language. And in particular we look at its use
