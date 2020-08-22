@@ -12,6 +12,7 @@
 \usepackage[usenames,dvipsnames]{xcolor} 
 \usepackage{xspace} 
 
+\graphicspath{{img/}}
 
 \lstset{ 
 	language=R,                     % the language of the code
@@ -256,8 +257,15 @@ resolution in it have been executed.
 
 
 
+
 \subsection{How to replace evals}
 
+We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \emph{i.e.} how many different types of the resolved \c{expr} there are per call sites, in Figure~\ref{fig:polymorphism}. 89\% of the call sites are \emph{monomorphic}.
+
+\begin{figure}
+    \includegraphics[width=\columnwidth]{polymorphism-1}
+    \caption{Degree of polymorphism of \c{expr} per call sites.} \label{fig:polymorphism}
+\end{figure}
 
 \subsection{How dangerous is eval}
 
