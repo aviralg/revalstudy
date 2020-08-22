@@ -8,9 +8,10 @@ output:
 editor_options: 
   chunk_output_type: console
 params:
-  data_dir: /var/lib/R/project-evalR/revalstudy/data
+  base_dir: /home/rstudio/evalR
+  hostname: prl2
+  port: 8788
   num_packages: 500
-  output_dir: /var/lib/R/project-evalR/revalstudy/data
   which_dependencies:
     - Depends
     - Imports
@@ -51,11 +52,21 @@ The aim of this notebook is to prepare the corpus of R packages to be included i
 
 We are interested in TOP `r params$num_packages` packages based on the number of reverse dependencies.
 
+```{r package blacklist}
+blacklist <- tribble(
+  ~package,
+  "ggm",      # requires bioc
+  "shinyBS"   # runs shiny server as part of its tests
+)
+```
+
 ```{r get all available packages}
 # TODO this should be installed.packages() once they are installed
-cran_packages_raw <- available.packages()
+#cran_packages_raw <- available.packages()
+cran_packages_raw <- installed.packages()
 cran_packages <- as_tibble(cran_packages_raw) %>%
-  select(package=Package, version=Version)
+  select(package=Package, version=Version) %>%
+  anti_join(blacklist, by="package")
 ```
 
 ### Package reverse dependencies
@@ -121,8 +132,7 @@ pkgs_top_revdeps %>%
 ```{r write down corpus}
 pkgs_revdeps
 
-write_lines(pkgs_top_revdeps$package, CORPUS_FILE)
+write_lines(sort(pkgs_top_revdeps$package), CORPUS_FILE)
 write_csv(pkgs_revdeps, CORPUS_REVDEPS)
-write_lines(unique(pkgs_revdeps_raw$revdep), CORPUS_REVDEPS_FILE)
-write_lines(unique(), CORPUS_ALL_PACKAGES_FILE)
+write_lines(sort(unique(pkgs_revdeps_raw$revdep)), CORPUS_REVDEPS_FILE)
 ```
