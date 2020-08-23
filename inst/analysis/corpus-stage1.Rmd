@@ -1,58 +1,50 @@
 ---
-title: "Corpus Creation"
-output: 
-  html_document: 
-    theme: united
-    toc: yes
-    toc_float: yes
+title: "Corpus Stage 1"
+output: html_document
+params:
+  base_dir: /var/lib/R/project-evalR
 editor_options: 
   chunk_output_type: console
-params:
-  data_dir: /var/lib/R/project-evalR/revalstudy/data
-  num_packages: 500
-  output_dir: /var/lib/R/project-evalR/revalstudy/data
-  which_dependencies:
-    - Depends
-    - Imports
 ---
 
 ```{r setup, include=FALSE}
-for (x in c(
+local(for (x in c(
   "dplyr", 
   "DT", 
   "fs", 
+  "fst",
   "readr",
   "purrr"
   )) {
   suppressPackageStartupMessages(library(x, character.only=TRUE))
-}
+})
 
 knitr::opts_chunk$set(echo = TRUE)
 
-# TODO: move into the package
 source("inc/paths.R")
 source("inc/setup.R")
 source("inc/latextags.R")
-
-create_tags(path(TAGS_DIR, "corpus.tex"), prefix="", default=TRUE)
 ```
 
 ## Description
 
-The aim of this notebook is to prepare the corpus of R packages to be included in the paper.
+This notebook selects TOP `r fmt(CORPUS_S1_NUM_PKGS)` packages into `r CORPUS_S1_FILE` based on the number of reverse dependencies.
+We then run all the tasks on this set.
+Finally, we select TOP `r fmt(CORPUS_NUM_PKGS)` packages for the paper for the packages that ran successfully.
+The reason is that not all the code in packages is runnable in all environments.
+Especially, the way `covr` runs to get code coverage does not work on all.
 
 ### Output
 
-- ``r CORPUS_FILE`` - the corpus in the corpus file (one package file line)
-- ``r CORPUS_REVDEPS`` - CSV of package / reverse dependency pairs
-- ``r CORPUS_REVDEPS_FILE`` - all unique reverse dependencies in the corpus file format
+- ``r CORPUS_S1_FILE`` - selected packages based on 
 
 ## Prepare the corpus
 
-We are interested in TOP `r params$num_packages` packages based on the number of reverse dependencies.
+```{r set local mirror}
+options(repos=CRAN_MIRROR_LOCAL_URL)
+```
 
 ```{r get all available packages}
-# TODO this should be installed.packages() once they are installed
 cran_packages_raw <- available.packages()
 cran_packages <- as_tibble(cran_packages_raw) %>%
   select(package=Package, version=Version)
@@ -68,7 +60,7 @@ pkgs_revdeps_raw <-
   tools::package_dependencies(
     cran_packages$package,
     db=cran_packages_raw,
-    which=params$which_dependencies,
+    which=WHICH_DEPENDENCIES,
     reverse=TRUE,
     recursive=FALSE
   ) %>% 
@@ -85,11 +77,11 @@ pkgs_revdeps <-
 ```{r compute TOP n packages}
 pkgs_top_revdeps <-
   pkgs_revdeps %>%
-  top_n(n = params$num_packages, wt=revdeps) %>%
+  top_n(n = CORPUS_S1_NUM_PKGS, wt=revdeps) %>%
   arrange(desc(revdeps))
 
 # cup the number of reverse dependencies to the required number
-pkgs_top_revdeps <- head(pkgs_top_revdeps, min(nrow(pkgs_top_revdeps), params$num_packages))
+pkgs_top_revdeps <- head(pkgs_top_revdeps, min(nrow(pkgs_top_revdeps), CORPUS_S1_NUM_PKGS))
 ```
 
 ### Missing packages from TOP 100 downloads
@@ -111,18 +103,20 @@ missing_revdeps %>%
 
 Putting it all together and outputting the results.
 
-```{r render selected packages}
-pkgs_top_revdeps %>%
+```{r corpus s1}
+corpus_s1 <- 
+  pkgs_top_revdeps %>%
   left_join(pkgs_top_downloaded, by="package") %>%
-  arrange(desc(revdeps)) %>%
+  arrange(desc(revdeps))
+```
+
+
+```{r render selected packages}
+corpus_s1 %>%
   datatable()
 ```
 
 ```{r write down corpus}
-pkgs_revdeps
-
-write_lines(pkgs_top_revdeps$package, CORPUS_FILE)
-write_csv(pkgs_revdeps, CORPUS_REVDEPS)
-write_lines(unique(pkgs_revdeps_raw$revdep), CORPUS_REVDEPS_FILE)
-write_lines(unique(), CORPUS_ALL_PACKAGES_FILE)
+write_lines(corpus_s1$package, CORPUS_S1_FILE)
+write_fst(select(corpus_s1, package, revdeps, rank), CORPUS_S1_DETAILS_FILE)
 ```

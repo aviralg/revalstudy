@@ -1,60 +1,78 @@
-include Makevars
+MAKEFLAGS += --no-builtin-rules
 
-JOBS          ?= 70
-PACKAGES_FILE ?= data/corpus.txt
-TIMEOUT       ?= 30m
+.SUFFIXES:
+.PHONY: data
 
-RUNR_DIR           := $(R_PROJECT_BASE_DIR)/runr
-RUNR_TASKS_DIR     := $(RUNR_DIR)/inst/tasks
+ANALYSIS_DIR := analysis
+DATA_DIR     := data
+RUN_DIR      := ../../run
 
-ON_EACH_PACKAGE := $(MAKE) on-each-package
-MERGE_CSV := $(RUNR_DIR)/inst/merge-csv.R
-MERGE_FST := $(RUNR_DIR)/inst/merge-fst.R
+RUN_PACKAGE_METADATA_DIR      := $(RUN_DIR)/package-metadata
+RUN_PACKAGE_COVERAGE_DIR      := $(RUN_DIR)/package-coverage
+RUN_KAGGLE_DIR                := $(RUN_DIR)/kaggle-run
+RUN_PACKAGE_EVALS_DIR         := $(RUN_DIR)/package-evals-static
+RUN_PACKAGE_TRACE_DIR         := $(RUN_DIR)/package-evals-traced
+RUN_PACKAGE_RUNNABLE_CODE_DIR := $(RUN_DIR)/package-runnable-code
+RUN_PACKAGE_RUNS_DIR          := $(RUN_DIR)/run-extracted-code
 
-RUN_DIR := $(CURDIR)/run
-TRACE_EVAL_DIR := $(RUN_DIR)/trace-eval
+PACKAGE_EVALS_FILE         := $(DATA_DIR)/evals.fst
+PACKAGE_COVERAGE_FILE      := $(DATA_DIR)/coverage.fst
+PACKAGE_METADATA_FILE      := $(DATA_DIR)/metadata.fst
+PACKAGE_SLOC_FILE          := $(DATA_DIR)/sloc.fst
+PACKAGE_REVDEPS_FILE       := $(DATA_DIR)/revdeps.fst
+PACKAGE_FUNCTIONS_FILE     := $(DATA_DIR)/functions.fst
+PACKAGE_RUNNABLE_CODE_FILE := $(DATA_DIR)/runnable-code-metadata.fst
+PACKAGE_RUNS_FILE          := $(DATA_DIR)/run.fst
+PACKAGE_TRACE_RUNS_FILE    := $(DATA_DIR)/run-trace.fst
+PACKAGE_TRACE_LOG_FILE     := $(DATA_DIR)/parallel-trace.fst
 
-# runs
-CALLS_FST := $(TRACE_EVAL_DIR)/calls.fst
+KAGGLE_LOG_FILE     := $(DATA_DIR)/parallel-kaggle.fst
+KAGGLE_KERNELS_FILE := $(DATA_DIR)/kaggle-kernels.fst
 
-.PHONY: trace-eval
+R := R --silent --no-save -e
 
-EVAL_CODE_CSV    := $(RUN_DIR)/eval-code/runnable-code.csv
-EVAL_RUN_CSV     := $(RUN_DIR)/eval-run/run.csv
+all: data
 
-$(EVAL_CODE_CSV): export OUTPUT_DIR=$(@D)
-$(EVAL_CODE_CSV):
-	$(ON_EACH_PACKAGE) TASK=$(RUNR_TASKS_DIR)/package-runnable-code-eval.R
-	$(MERGE_CSV) "$(OUTPUT_DIR)" $(@F) runnable-code-metadata.csv
+$(PACKAGE_EVALS_FILE): $(RUN_PACKAGE_EVALS_DIR)/package-evals.csv
 
-$(CALLS_FST): $(EVAL_CODE_CSV)
-$(CALLS_FST): export OUTPUT_DIR=$(@D)
-$(CALLS_FST): export START_XVFB=1
-$(CALLS_FST):
-	$(ON_EACH_PACKAGE) TASK=$(RUNR_TASKS_DIR)/run-extracted-code.R ARGS="$(dir $(EVAL_CODE_CSV))/{1/}"
-	$(MERGE_FST) "$(OUTPUT_DIR)" $(@F)
+# TODO: why $(RUN_PACKAGE_COVERAGE_DIR)/$(@F) does not work?
+$(PACKAGE_COVERAGE_FILE): $(RUN_PACKAGE_COVERAGE_DIR)/coverage.csv
 
-eval-code: $(EVAL_CODE_CSV)
-trace-eval: $(CALLS_FST)
+$(PACKAGE_METADATA_FILE): $(RUN_PACKAGE_METADATA_DIR)/metadata.csv
 
-on-each-package:
-	@[ "$(TASK)" ] || ( echo "*** Undefined TASK"; exit 1 )
-	@[ -x "$(TASK)" ] || ( echo "*** $(TASK): no such file"; exit 1 )
-	@[ "$(OUTPUT_DIR)" ] || ( echo "*** Undefined OUTPUT_DIR"; exit 1 )
+$(PACKAGE_SLOC_FILE): $(RUN_PACKAGE_METADATA_DIR)/sloc.csv
 
-	-mkdir -p "$(OUTPUT_DIR)"
-	-if [ -z "$(START_XVFB)" ]; then  \
-     nohup Xvfb :6 -screen 0 1280x1024x24 >/dev/null 2>&1 & \
-     export DISPLAY=:6; \
-  fi; \
-  parallel \
-    -a $(PACKAGES_FILE) \
-    --bar \
-    --env PATH \
-    --jobs $(JOBS) \
-    --results "$(OUTPUT_DIR)/parallel.csv" \
-    --tagstring "$(notdir $(TASK)) - {/}" \
-    --timeout $(TIMEOUT) \
-    --workdir "$(OUTPUT_DIR)/{/}/" \
-    $(RUNR_DIR)/inst/run-task.sh \
-      $(TASK) "$(PACKAGES_SRC_DIR)/{1/}" $(ARGS)
+$(PACKAGE_REVDEPS_FILE): $(RUN_PACKAGE_METADATA_DIR)/revdeps.csv
+
+$(PACKAGE_FUNCTIONS_FILE): $(RUN_PACKAGE_METADATA_DIR)/functions.csv
+
+$(PACKAGE_RUNNABLE_CODE_FILE): $(RUN_PACKAGE_RUNNABLE_CODE_DIR)/runnable-code-metadata.csv
+
+$(PACKAGE_RUNS_FILE): $(RUN_PACKAGE_RUNS_DIR)/run.csv
+
+$(PACKAGE_TRACE_RUNS_FILE): $(RUN_PACKAGE_TRACE_DIR)/run.csv
+
+$(PACKAGE_TRACE_LOG_FILE): $(RUN_PACKAGE_TRACE_DIR)/parallel.log
+	$(R) 'fst::write_fst(readr::read_tsv("$<"), "$@", compress=100)'
+
+$(KAGGLE_LOG_FILE): $(RUN_KAGGLE_DIR)/parallel.csv
+
+$(KAGGLE_KERNELS_FILE): $(RUN_KAGGLE_DIR)/kernels.csv
+
+data/%.fst: 
+	$(R) 'fst::write_fst(readr::read_csv("$<"), "$@", compress=100)'
+
+
+data: \
+  $(PACKAGE_EVALS_FILE) \
+  $(PACKAGE_COVERAGE_FILE) \
+  $(PACKAGE_METADATA_FILE) \
+  $(PACKAGE_SLOC_FILE) \
+  $(PACKAGE_REVDEPS_FILE) \
+  $(PACKAGE_FUNCTIONS_FILE) \
+  $(PACKAGE_RUNNABLE_CODE_FILE) \
+  $(PACKAGE_RUNS_FILE) \
+  $(PACKAGE_TRACE_RUNS_FILE) \
+  $(PACKAGE_TRACE_LOG_FILE) \
+  $(KAGGLE_LOG_FILE) \
+  $(KAGGLE_KERNELS_FILE)
