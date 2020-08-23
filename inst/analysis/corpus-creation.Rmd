@@ -38,6 +38,27 @@ source("inc/latextags.R")
 create_tags(path(TAGS_DIR, "corpus.tex"), prefix="", default=TRUE)
 ```
 
+```{r consts}
+BASE_PACKAGES <- tribble(
+  ~package,
+  "base",
+  "compiler",
+  "datasets",
+  "graphics",
+  "grDevices",
+  "grid",
+  "methods",
+  "parallel",
+  "splines",
+  "stats",
+  "stats4",
+  "tcltk",
+  "tools",
+  "utils"
+)
+```
+
+
 ## Description
 
 The aim of this notebook is to prepare the corpus of R packages to be included in the paper.
@@ -55,8 +76,11 @@ We are interested in TOP `r params$num_packages` packages based on the number of
 ```{r package blacklist}
 blacklist <- tribble(
   ~package,
-  "ggm",      # requires bioc
-  "shinyBS"   # runs shiny server as part of its tests
+  "ggm",       # requires bioc
+  "future",    # does not work with OMP thread setting
+  "shinyBS",   # runs shiny server as part of its tests
+  "spatstat",  # takes too long
+  "survival"   # takes too long
 )
 ```
 
@@ -66,7 +90,8 @@ blacklist <- tribble(
 cran_packages_raw <- installed.packages()
 cran_packages <- as_tibble(cran_packages_raw) %>%
   select(package=Package, version=Version) %>%
-  anti_join(blacklist, by="package")
+  anti_join(blacklist, by="package") %>%
+  anti_join(BASE_PACKAGES, by="package")
 ```
 
 ### Package reverse dependencies
@@ -105,12 +130,12 @@ pkgs_top_revdeps <- head(pkgs_top_revdeps, min(nrow(pkgs_top_revdeps), params$nu
 
 ### Missing packages from TOP 100 downloads
 
-```{r get last month most downloaded packages}
+```{r get last month most downloaded packages, eval=F}
 pkgs_top_downloaded <-
   cranlogs::cran_top_downloads("last-month", 100)
 ```
 
-```{r compute missing packages from the most downloaded ones}
+```{r compute missing packages from the most downloaded ones, eval=F}
 missing <- setdiff(pkgs_top_downloaded$package, pkgs_top_revdeps$package)
 missing_revdeps <- filter(pkgs_revdeps, package %in% missing)
 missing_revdeps %>%

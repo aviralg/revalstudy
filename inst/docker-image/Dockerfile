@@ -80,18 +80,25 @@ RUN curl "$RUNR_GITHUB_URL/inst/install-r.sh" | bash -s -- -d "$R_DIR" -v "$R_VE
 env PATH=$R_DIR/bin:$PATH
 
 # CRAN mirror
-ADD CRAN-packages.txt /tmp
-RUN curl -s -O "$RUNR_GITHUB_URL/inst/create-cran-snapshot.R" && \
-    Rscript ./create-cran-snapshot.R "$PACKAGES_ZIP_DIR" /tmp/CRAN-packages.txt
+#ADD CRAN-packages.txt /tmp
+#RUN curl -s -O "$RUNR_GITHUB_URL/inst/create-cran-snapshot.R" && \
+#    Rscript ./create-cran-snapshot.R "$PACKAGES_ZIP_DIR" /tmp/CRAN-packages.txt
+
+ADD install-cran-packages.sh .
+
+# install our package dependencies
+ADD our-packages-dependencies.txt /tmp
+RUN nohup Xvfb :6 -screen 0 1280x1024x24 >/dev/null 2>&1 & \
+    export DISPLAY=:6 && \
+    ./install-cran-packages.sh -l $R_LIBS -m "https://$CRAN_MIRROR" -d $PACKAGES_ZIP_DIR -f /tmp/our-packages-dependencies.txt
+
+ADD packages.txt /tmp
+RUN nohup Xvfb :6 -screen 0 1280x1024x24 >/dev/null 2>&1 & \
+    export DISPLAY=:6 && \
+    ./install-cran-packages.sh -l $R_LIBS -m "https://$CRAN_MIRROR" -d $PACKAGES_ZIP_DIR -f /tmp/packages.txt
 
 RUN mkdir -p "$PACKAGES_SRC_DIR" && \
     ls -1 "$PACKAGES_ZIP_DIR"/*.tar.gz | xargs -L 1 tar -C "$PACKAGES_SRC_DIR" -xzf
-
-
-ADD install-cran-packages.sh .
-RUN nohup Xvfb :6 -screen 0 1280x1024x24 >/dev/null 2>&1 & \
-    export DISPLAY=:6 && \
-    ls -1 "$PACKAGES_SRC_DIR" | ./install-cran-packages.sh -l $R_LIBS -m "$CRAN_MIRROR_LOCAL_URL" -f -
 
 # ## The following are dependencies that are too outdated in the package repository
 

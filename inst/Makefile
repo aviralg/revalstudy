@@ -23,7 +23,7 @@ PACKAGE_COVERAGE_DIR      := $(RUN_DIR)/package-coverage
 PACKAGE_EVAL_CALLS_DIR    := $(RUN_DIR)/package-eval-calls
 PACKAGE_EVALS_DIR         := $(RUN_DIR)/package-evals
 PACKAGE_METADATA_DIR      := $(RUN_DIR)/package-metadata
-PACAKGE_RUNNABLE_CODE_DIR := $(RUN_DIR)/package-runnable-code
+PACKAGE_RUNNABLE_CODE_DIR := $(RUN_DIR)/package-runnable-code
 
 # tasks result
 PACKAGE_COVERAGE_CSV      := $(PACKAGE_COVERAGE_DIR)/coverage.csv
@@ -78,12 +78,19 @@ $(PACKAGE_EVALS_CSV):
 	$(ON_EACH_PACKAGE) TASK=$(RUNR_TASKS_DIR)/package-evals-statis.R
 
 .PHONY: \
+  data \
   on-each-package \
   package-coverage \
   package-eval-calls \
   package-evals \
   package-metadata \
   package-runnable-code
+
+data: $(PACKAGE_COVERAGE_CSV) \
+      $(PACKAGE_METADATA_CSV) \
+      $(PACKAGE_FUNCTIONS_CSV) \
+      $(PACKAGE_REVDEPS_CSV)
+	cp $^ $(DATA_DIR)
 
 package-coverage: $(PACKAGE_COVERAGE_CSV)
 package-eval-calls: $(PACKAGE_EVAL_CALLS_FST)
@@ -97,10 +104,16 @@ on-each-package:
 	@[ "$(OUTPUT_DIR)" ] || ( echo "*** Undefined OUTPUT_DIR"; exit 1 )
 
 	-mkdir -p "$(OUTPUT_DIR)"
-	-if [ -z "$(START_XVFB)" ]; then  \
+	-if [ -n "$(START_XVFB)" ]; then  \
      nohup Xvfb :6 -screen 0 1280x1024x24 >/dev/null 2>&1 & \
      export DISPLAY=:6; \
   fi; \
+  export R_TESTS=""; \
+  export R_BROWSER="false"; \
+  export R_PDFVIEWER="false"; \
+  export R_BATCH=1; \
+  export NOT_CRAN="true"; \
+	echo "X11 display=$$DISPLAY"; \
   parallel \
     -a $(PACKAGES_FILE) \
     --bar \

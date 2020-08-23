@@ -46,7 +46,9 @@ docker run \
   -p "$port:8787" \
   -v "$(pwd):/home/rstudio/evalR" \
   "$DOCKER_IMAGE_NAME" \
-  bash -c "source /etc/cont-init.d/userconf && exec /usr/lib/rstudio-server/bin/rserver --auth-none 1 --auth-timeout-minutes 0 --www-port 8787 --server-daemonize 0"
+  $cmd
+
+  #bash -c "source /etc/cont-init.d/userconf && exec /usr/lib/rstudio-server/bin/rserver --auth-none 1 --auth-timeout-minutes 0 --www-port 8787 --server-daemonize 0"
 
   # -v "$(pwd)/README.Rmd:/home/rstudio/README.Rmd" \
   # -v "$(pwd)/README.html:/home/rstudio/README.html" \

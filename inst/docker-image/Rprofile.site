@@ -6,4 +6,3 @@ options(
   keep.source.pkgs=TRUE
 )
 .libPaths(c(.libPaths(), "/R/library/4.0.2"))
-setwd("/home/rstudio/evalR/")

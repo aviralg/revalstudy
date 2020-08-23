@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-options(repos=Sys.getenv("CRAN_LOCAL_MIRROR", "https://cloud.r-project.org"))
+options(repos="https://cloud.r-project.org")
 
 # pins the current version of the corpus packages as well as
 # their dependencies
@@ -26,7 +26,13 @@ packages_kaggle <- readLines("kaggle-dependencies.txt")
 packages_base <- readLines("our-packages-dependencies.txt")
 packages <- unique(c(packages_corpus, packages_kaggle, packages_base))
 
-dependencies <- unlist(tools::package_dependencies(packages, recursive=T))
+dependencies <- unlist(
+  tools::package_dependencies(
+    packages,
+    which = c("Depends", "Imports", "LinkingTo", "Suggests"),
+    recursive=T
+  )
+)
 packages <- unique(c(packages, dependencies))
 packages <- sort(setdiff(packages, BASE_PACKAGES))
 

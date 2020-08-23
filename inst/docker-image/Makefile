@@ -9,7 +9,12 @@ INSTRUMENTR_VERSION ?= $(call latest_commit,instrumentr,master)
 EVIL_VERSION        ?= $(call latest_commit,evil,master)
 RUNR_VERSION        ?= $(call latest_commit,runr,$(RUNR_GIT_BRANCH))
 
-image:
+all: image
+
+packages.txt:
+	cat ../data/corpus.txt kaggle-dependencies.txt | sort | uniq > packages.txt
+
+image: packages.txt
 	docker build \
     --rm \
     --build-arg CRAN_MIRROR=$(CRAN_MIRROR) \

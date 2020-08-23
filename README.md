@@ -16,3 +16,8 @@ To clean build artifacts, run the following command:
 make clean
 ```
 
+## Running local webserver
+
+``` sh
+docker run --rm -dit --name evalr-httpd -p 8788:80 -v $(pwd):/usr/local/apache2/htdocs/home/rstudio/evalR httpd:2.4
+```
