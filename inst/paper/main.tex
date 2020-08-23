@@ -339,39 +339,32 @@ This section presents the results of our empirical study of eval in the R langua
 
 In our corpus eval is called \AllAllCallCountRnd{} times out of \missingNumber
 total calls to all R functions. This is merely \missingPercentage of the total
-number of calls. \missingTable breaks down the number of calls and callsites for
-the four kinds of eval functions from the three source; core R, packages and
-Kaggle code.
-
-
-\begin{tabular}{c|c|c|c|c|c}
-  Function  & Core & Packages & Kaggle & All \\
-  eval & \CoreEvalCallCountRnd & \PackageEvalCallCountRnd & \KaggleEvalCallCountRnd & \AllEvalCallCountRnd \\
-  evalParent & \CoreEvalParentCallCountRnd & \PackageEvalParentCallCountRnd & \KaggleEvalParentCallCountRnd & \AllEvalParentCallCountRnd \\
-  evalq & \CoreEvalqCallCountRnd & \PackageEvalqCallCountRnd & \KaggleEvalqCallCountRnd & \AllEvalqCallCountRnd \\
-  local & \CoreLocalCallCountRnd & \PackageLocalCallCountRnd & \KaggleLocalCallCountRnd & \AllLocalCallCountRnd \\
-  all & \CoreAllCallCountRnd & \PackageAllCallCountRnd & \KaggleAllCallCountRnd & \AllAllCallCountRnd
-\end{tabular}
-
-
-
-\begin{tabular}{c|c|c|c|c|c}
-  Function  & Core & Packages & Kaggle & All \\
-  eval & \CoreEvalSiteCountRnd & \PackageEvalSiteCountRnd & \KaggleEvalSiteCountRnd & \AllEvalSiteCountRnd \\
-  evalParent & \CoreEvalParentSiteCountRnd & \PackageEvalParentSiteCountRnd & \KaggleEvalParentSiteCountRnd & \AllEvalParentSiteCountRnd \\
-  evalq & \CoreEvalqSiteCountRnd & \PackageEvalqSiteCountRnd & \KaggleEvalqSiteCountRnd & \AllEvalqSiteCountRnd \\
-  local & \CoreLocalSiteCountRnd & \PackageLocalSiteCountRnd & \KaggleLocalSiteCountRnd & \AllLocalSiteCountRnd \\
-  all & \CoreAllSiteCountRnd & \PackageAllSiteCountRnd & \KaggleAllSiteCountRnd & \AllAllSiteCountRnd
-\end{tabular}
-
+number of calls. Table \ref{table:eval-count-summary} shows the number of
+calls and callsites for the four kinds of eval functions from core and packages.
 The core R packages are the biggest consumers of eval. Majority of calls,
 \CoreAllCallCountRnd, originate from the core R packages. Kaggle code, which is
 end-user code, has merely \KaggleAllCallCountRnd calls to eval.
 
-Of the \missingNumber packages in our corpus, only \missingNumber packages call
-eval. \missingTable shows the number of calls to eval made by the ten most
-frequent callers to eval. \missingNumber packages account for over
-\missingPercentage calls to eval.
+\begin{table}[ht]
+  \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{l|rr|r||rr|r}
+      \hline
+      \multicolumn{1}{c}{Function}& \multicolumn{3}{c}{Calls} & \multicolumn{3}{c}{Callsites}\\
+      \cline{1-1} \cline{2-4} \cline{5-7}
+                                  & Core & Packages & Total & Core & Packages & Total\\
+      \hline
+      \c{eval} & \CoreEvalCallCountRnd & \PackageEvalCallCountRnd  & \AllEvalCallCountRnd & \CoreEvalSiteCountRnd & \PackageEvalSiteCountRnd &  \AllEvalSiteCountRnd\\
+      \c{eval.parent} & \CoreEvalParentCallCountRnd & \PackageEvalParentCallCountRnd  & \AllEvalParentCallCountRnd & \CoreEvalParentSiteCountRnd & \PackageEvalParentSiteCountRnd & \AllEvalParentSiteCountRnd\\
+      \c{evalq} & \CoreEvalqCallCountRnd & \PackageEvalqCallCountRnd  & \AllEvalqCallCountRnd & \CoreEvalqSiteCountRnd & \PackageEvalqSiteCountRnd & \AllEvalqSiteCountRnd \\
+      \c{local} & \CoreLocalCallCountRnd & \PackageLocalCallCountRnd  & \AllLocalCallCountRnd & \CoreLocalSiteCountRnd & \PackageLocalSiteCountRnd & \AllLocalSiteCountRnd \\
+      \hline
+      Total & \CoreAllCallCountRnd & \PackageAllCallCountRnd  & \AllAllCallCountRnd & \CoreAllSiteCountRnd & \PackageAllSiteCountRnd & \AllAllSiteCountRnd \\
+      \hline
+    \end{tabular}
+  }
+  \label{table:eval-count-summary}
+  \caption{Distribution of eval calls and callsites in the corpus}
+\end{table}
 
 All the \TotalFileCount files in our corpus call eval. \CoreEvalFileCount
 (\CoreEvalFilePerc) call only core evals, \AllEvalFileCount (\AllEvalFilePerc)
