@@ -10,8 +10,8 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  data_dirpath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.5/"
-  data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.5/calls.fst"
+  data_dirpath: "/var/lib/R/project-evalR/run/package-evals-traced/"
+  data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced/calls-final.fst"
   data_kagglepath: "/var/lib/R/project-evalR/kaggle-korpus/run/titanic/calls.fst"
 knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "html") })

@@ -7,6 +7,7 @@ output:
         gallery: false
         df_print: paged
         toc_depth: 3
+        self_contained: no
 date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
@@ -38,7 +39,7 @@ library(fs)
 source("insights.R", local = knitr::knit_global())
 
 source("inc/latextags.R")
-create_tags(path("/var/lib/R/project-evalR/revalstudy/data", "analysisStable.tex"), prefix="", default=TRUE)
+create_tags(path("/var/lib/R/project-evalR/revalstudy/inst/data", "analysisStable.tex"), prefix="", default=TRUE)
 ```
 
 # Data
@@ -437,21 +438,20 @@ We can distinguish a few groups:
 group_expr_resolved_functions <- expr_resolved_call_arg %>%
                             mutate(function_expr2 = groupify_function(expr_resolved_function)) %>%
                             mutate(group_function_expr = fct_collapse(function_expr2, 
-                              assignment = c("<-", "[[<-", "[<-", "$<-", "<<-", "="),
-                              read = c("[", "[[", "$"),
+                              assignment = c("<-", "[[<-", "[<-", "$<-", "<<-", "=", "@<-"),
+                              slot_access = c("[", "[[", "$", "slot", "@", "::", ":::"),
                               parsing = c("parse", "str2lang", "str2expression", "parse_only", "base::parse"),
                               defusing = c("quote", "substitute", "bquote", "expr", "quo"),
                               expressions = c("as.list", "expression", "as.name", "as.expression", "list", "c", "as.data.frame", "as.character", "{", "modify_lang"),
                               calling = c("call", "as.call", "do.call"),
                               environment = c("environment", "as.environment"),
-                              classAssign = c("@<-"),
-                              classRead = c("slot", "@"),
-                              classDef = c(".Primitive(\"class\")"),
-                              logical = c("<", ">", "is.element"),
+                              logical = c("!", "&", "|", "&&", "||"),
+                              relation = c("<", ">", "is.element", "<=", "=>", "!="),
                               choice = c("if"),
                               anonymous = c("anonymous"),
                               primitive = c("primitive"),
                               function_meta = c("sys.calls", "function", "body", "missing"),
+                              arithmetic = c("+", "-", "*", "/", "%%", "^"),
                               formula = c("~", "deriv", "D", "model.frame", "rootftfunc", "contest.lmerModLmerTest", "JacFunc", "gamlss.family", "contest1D.lmerModLmerTest", "contestMD.lmerModLmerTest", "reexpr"),                           
                               other_level = "other" ))
 ```
@@ -507,14 +507,26 @@ Another interesting figure is the degreee of polymorphism of the `expr` argument
 ```{r polymorphism_callsite}
 expr_resolved_polymorphism <- eval_calls %>% group_by(eval_call_srcref) %>%
         summarise(polym_degree = vec_unique_count(expr_resolved_type))
+
+expr_resolved_monomorphic <- expr_resolved_polymorphism %>% filter(polym_degree == 1)
+nb_monomorphic <- expr_resolved_monomorphic %>% nrow()
 ```
 
 
-```{r}
+```{r polymorphism}
 expr_resolved_polymorphism %>% ggplot() +
   geom_bar(aes(x = polym_degree)) +
   scale_x_continuous(breaks=c(0, 1, 5, 10)) +
   labs(title = "Degree of polymorphism", x = "degree", y = "n") 
+```
+
+
+`r nb_monomorphic` call sites are not polymorphic, which represents `r nb_monomorphic / nb_call_sites * 100`% of the call sites.
+
+From the monomorphic functions, we can deduce how many are _replaceable_:
+
+```{r}
+expr_resolved_replaceable <- expr_resolved_monomorphic %>% left_join(eval_calls) %>% mutate(can_replace = map_lgl(expr_resolved,  is_replaceable_str))
 ```
 
 
