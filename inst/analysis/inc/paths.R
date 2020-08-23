@@ -5,8 +5,8 @@
 DATA_DIR  <- path(params$base_dir, "revalstudy", "inst", "data")
 PAPER_DIR <- path(params$base_dir, "revalstudy", "inst", "paper")
 RUN_DIR   <- path(params$base_dir, "run")
-PLOT_DIR  <- path(PAPER_DIR, "imgs")
-TAGS_DIR  <- path(PAPER_DIR, "tags")
+PLOT_DIR  <- path(PAPER_DIR, "img")
+TAGS_DIR  <- path(PAPER_DIR, "tag")
 
 if (!dir_exists(PLOT_DIR)) dir_create(PLOT_DIR)
 if (!dir_exists(TAGS_DIR)) dir_create(TAGS_DIR)
@@ -63,4 +63,4 @@ WHICH_DEPENDENCIES <- c("Depends", "Imports")
 # local cran mirror
 CRAN_MIRROR_LOCAL_URL <- paste0("file://", params$base_dir, "/CRAN")
 # size of a package to be considered as outlier
-PACKAGE_SIZE_OUTLIER <- 5000
+PACKAGE_SIZE_OUTLIER <- 50000
