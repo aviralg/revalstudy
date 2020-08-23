@@ -1,0 +1,225 @@
+---
+title: "Kaggle"
+output: html_document
+params:
+  base_dir: /var/lib/R/project-evalR
+  hostname: prl3
+  port: 8788
+  competitions:
+    - titanic
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+for (x in c(
+  "callr",
+  "dplyr", 
+  "DT", 
+  "fs",
+  "fst",
+  "knitr",
+  "purrr",
+  "readr",
+  "rjson",
+  "rmarkdown",
+  "runr",
+  "stringr",
+  "tibble"
+  )) {
+  suppressPackageStartupMessages(library(x, character.only=TRUE))
+}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+# TODO: move into the package
+source("inc/paths.R")
+source("inc/setup.R")
+source("inc/latextags.R")
+```
+
+```{r consts}
+KAGGLE_KERNELS_DIR  <- path(RUN_DIR, "kaggle-kernels", "notebooks", "r", "kernels")
+KAGGLE_DATASETS_DIR <- path(RUN_DIR, "kaggle-datasets")
+KAGGLE_RUN_DIR      <- path(RUN_DIR, "kaggle-run")
+
+KERNELS_FILE      <- path(KAGGLE_RUN_DIR, "kernels.csv")
+SCRIPTS_FILE      <- path(KAGGLE_RUN_DIR, "scripts.txt")
+PARALLEL_LOG_FILE <- path(KAGGLE_RUN_DIR, "parallel.log")
+```
+
+```{r check}
+stopifnot(dir_exists(KAGGLE_KERNELS_DIR))
+stopifnot(dir_exists(path(KAGGLE_DATASETS_DIR, params$competitions)))
+```
+
+```{r aux functions}
+wrap <- function(file, body) {
+  str_glue(
+    "evil::write_eval_traces(",
+    "  evil::trace_eval(",
+    "    quote = TRUE,",
+    "    code = {{",
+    "      {gsub('\n', '\n      ', body)}",
+    "    }}",
+    "  ),",
+    "  datadir=getwd()",
+    ")",
+    .sep = "\n"
+  )
+}
+
+extract_kernel_code <- function(path, code_file, competition) {
+  run_path <- path(KAGGLE_RUN_DIR, competition, basename(path))
+  code_file <- path(path, "script", code_file)
+  run_code_file <- path(run_path, "run.R")
+
+  if (!dir_exists(run_path)) dir_create(run_path)
+
+  if (str_ends(code_file, "\\.[rR]$")) {
+    file_copy(code_file, run_code_file, overwrite=TRUE)
+  } else if (str_ends(code_file, "\\.Rmd")) {
+    knitr::purl(code_file, run_code_file, quiet=TRUE)
+  } else if (str_ends(code_file, "\\.irnb") || str_ends(code_file, "\\.ipynb")) {
+    tmp <- tempfile(fileext = "Rmd")
+    rmarkdown:::convert_ipynb(code_file, tmp)
+    knitr::purl(tmp, run_code_file, quiet=TRUE)
+  }
+  
+  if (file_exists(run_code_file)) {
+    tmp <- read_file(run_code_file)
+    tmp <- wrap(run_code_file, tmp)
+    write_file(tmp, run_code_file)
+  }
+  
+  run_code_file
+}
+```
+
+## Description
+
+This notebook prepares the kaggle kernels to be run with the eval tracing framework.
+
+### Input
+
+- `r KAGGLE_DATASETS_DIR` - directory with kaggle datasets
+- `r KAGGLE_KERNELS_DIR` - directory with kaggle kernels
+
+### Output
+
+- `r KAGGLE_RUN_DIR` - directory with prepared kernels to be run
+- command to run the datasets
+
+### Load kernels
+
+```{r load kaggle metadata}
+files <- list.files(KAGGLE_KERNELS_DIR, "kernel-metadata\\.json$", full.names=TRUE, recursive=TRUE)
+
+metadata_json <- map(files, ~fromJSON(file = .))
+metadata <- map_dfr(
+  metadata_json, 
+  ~tibble(id=str_replace(.$id, "/", "-"), language=.$language, kernel_type=.$kernel_type, competition=.$competition_sources, code_file=.$code_file)
+)
+
+kernels <- 
+  metadata %>%
+  mutate(
+    path=path(KAGGLE_KERNELS_DIR, id)
+  ) %>% 
+  filter(dir_exists(path))
+```
+
+```{r filter known competitions}
+known_competitions <- semi_join(kernels, tibble(competition=params$competitions), by="competition")
+```
+
+```{r delete run dir}
+if (dir_exists(KAGGLE_RUN_DIR)) {
+  warning("*** ", KAGGLE_RUN_DIR, " exists")
+}
+```
+
+```{r extract kernels}
+extraction_lst <- pbapply::pbapply(known_competitions, 1, cl=16, function(x) {
+    tryCatch({
+      tibble(id=x["id"], run_file=extract_kernel_code(x["path"], x["code_file"], x["competition"]))
+    }, error=function(e) {
+      tibble(id=x["id"], error=e$message)
+    })
+})
+extraction <- bind_rows(extraction_lst)
+```
+
+## Prepare for run
+
+```{r make a kernels_supported set}
+kernels_supported <- 
+  known_competitions %>%
+  left_join(extraction, by="id") %>%
+  filter(file_exists(run_file))
+```
+
+```{r compute sloc}
+sloc <- map_dfr(path(KAGGLE_RUN_DIR, params$competitions), function(x) {
+  out <- system2("cloc", c("--include-lang=R", "--by-file-by-lang", "-q", "--csv", shQuote(x)), stdout = TRUE)  
+  out_r <- out[startsWith(out, "R,")]
+  out_csv <- c("language,filename,blank,comment,code", out_r)
+  df <- read_csv(out_csv)
+}) %>%
+  mutate(
+    kernel=basename(dirname(filename))
+  ) %>%
+  select(kernel, code)
+
+stopifnot(any(!duplicated(sloc$kernel)))
+```
+
+```{r add sloc to the kernels_supported set}
+kernels_supported <- 
+  kernels_supported %>%
+  left_join(sloc, by=c("id"="kernel")) %>%
+  mutate(runnable=ifelse(is.na(code), FALSE, code > 0))
+```
+
+```{r display duplicated or empty kernels}
+filter(kernels_supported, !runnable) %>% 
+  mutate(
+    code_file=show_url(file.path(KAGGLE_KERNELS_DIR, id, "script", code_file)),
+    path=show_url(path),
+    run_file=show_url(run_file)
+  ) %>%
+  select(id, competition, path, code, run_file, language, code_file) %>%
+  my_datatable(escape=FALSE)
+```
+
+```{r}
+kernels_runnable <- filter(kernels_supported, runnable)
+write_csv(kernels_supported, KERNELS_FILE)
+write_lines(dirname(kernels_runnable$run_file), SCRIPTS_FILE)
+```
+
+```{r}
+count(kernels_supported, runnable)
+```
+
+## Run
+
+Run the following command from the `r params$base_dir` directory:
+
+```{r}
+cat("cd", shQuote(params$base_dir))
+
+cat("parallel",
+    "-a", shQuote(SCRIPTS_FILE),
+    "--bar",
+    "--jobs", parallel::detectCores(),
+    "--results", shQuote(PARALLEL_LOG_FILE),
+    "--tagstring", shQuote("{/}"),
+    "--timeout", "1h",
+    "--workdir", shQuote("{1}/"),
+    path(R_DIR, "bin", "R"), "CMD", "BATCH", shQuote("{1}/run.R"), shQuote("{1}/run.R.out"), 
+    "\n"
+)
+
+cat("runr/inst/merge-fst.R", "run/kaggle-run", "calls.fst", "ERROR.fst", "\n")
+```

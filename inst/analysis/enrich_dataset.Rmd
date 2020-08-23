@@ -10,9 +10,7 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  data_dirpath: "/var/lib/R/project-evalR/run/package-evals-traced/"
-  data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced/calls-final.fst"
-  data_kagglepath: "/var/lib/R/project-evalR/kaggle-korpus/run/titanic/calls.fst"
+  base_dir: /var/lib/R/project-evalR
 knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "html") })
 ---
@@ -32,34 +30,28 @@ library(DT)
 library(fst)
 library(fs)
 
+source("inc/paths.R")
 source("insights.R", local = knitr::knit_global())
-
 source("preprocess.R", local = knitr::knit_global())
 ```
 
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-
 # Data
 
-The analysis is being performed on a dataset read from file `r params$data_filepath`.
+The analysis is being performed on a dataset read from file `r CALLS_FINAL_FILE`.
 
 ```{r file-info, echo=FALSE}
-file_info(params$data_filepath)
+file_info(CALLS_FINAL_FILE)
 ```
 
 
 ```{r load-data, echo=FALSE}
 eval_calls_raw <-
-    read_fst(params$data_filepath) %>%
+    read_fst(CALLS_FINAL_FILE) %>%
     as_tibble() %>%
     mutate(corpus = "cran")
 
 eval_calls_kaggle_raw <- 
-  read_fst(params$data_kagglepath) %>%
+  read_fst(KAGGLE_CALLS_FINAL_FILE) %>%
   as_tibble() %>% 
   mutate(corpus = "kaggle")
 
@@ -98,13 +90,13 @@ eval_calls_raw <- eval_calls_raw %>% select(-ends_with("_type")) %>% left_join(e
 
 
 ```{r write_back}
-write_fst(eval_calls, paste0(params$data_dirpath, "raws.fst"))
+write_fst(eval_calls, EVALS_RAW_FILE)
 
-write_fst(eval_calls_core, paste0(params$data_dirpath, "summarized-core.fst"))
+write_fst(eval_calls_core, EVALS_SUM_CORE_FILE)
 
-write_fst(eval_calls_packages, paste0(params$data_dirpath, "summarized-packages.fst"))
+write_fst(eval_calls_packages, EVALS_SUM_PKGS_FILE)
 
-write_fst(eval_calls_kaggle, paste0(params$data_dirpath, "summarized-kaggle.fst"))
+write_fst(eval_calls_kaggle, EVALS_SUM_KAGGLE_FILE)
 ```
 
 

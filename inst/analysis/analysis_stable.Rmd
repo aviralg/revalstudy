@@ -12,9 +12,7 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-    data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-corpus.5/summarized-packages.fst"
-    #data_filepath: "/var/lib/R/project-evalR/run/package-evals-traced-all.1/calls.fst"
-    # The trace data on all CRAN does not have all the columns of the smaller corpus. The analysis will fail for the big corpus.
+  base_dir: /var/lib/R/project-evalR
 
 # This makes it possible to generate the html file in the html subfolder
 knit: (function(inputFile, encoding) {
@@ -38,21 +36,27 @@ library(fs)
 
 source("insights.R", local = knitr::knit_global())
 
+source("inc/paths.R")
 source("inc/latextags.R")
-create_tags(path("/var/lib/R/project-evalR/revalstudy/inst/data", "analysisStable.tex"), prefix="", default=TRUE)
+create_tags(path(TAGS_DIR, "analysisStable.tex"), prefix="", default=TRUE)
+
+
+data_filepath <- EVALS_SUM_PKGS_FILE
+#data_filepath <- "/var/lib/R/project-evalR/run/package-evals-traced-all.1/calls.fst"
+# The trace data on all CRAN does not have all the columns of the smaller corpus. The analysis will fail for the big corpus.
 ```
 
 # Data
 
-The analysis is being performed on dataset read from file `r params$data_filepath`.
+The analysis is being performed on dataset read from file `r data_filepath`.
 
 ```{r file-info, echo=FALSE}
-file_info(params$data_filepath)
+file_info(data_filepath)
 ```
 
 ```{r load-data, echo=FALSE}
 eval_calls <-
-    read_fst(params$data_filepath) %>%
+    read_fst(data_filepath) %>%
     as_tibble() %>%
     mutate(eval_call_package = extract_package_name(eval_call_srcref, file)) 
 

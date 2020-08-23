@@ -1,11 +1,13 @@
 MAKEFLAGS += --no-builtin-rules
 
 .SUFFIXES:
-.PHONY: data
+.PHONY: calls corpus kaggle enrich analysis
 
 ANALYSIS_DIR := analysis
+HTML_DIR     := $(ANALYSIS_DIR)/html
 DATA_DIR     := data
-RUN_DIR      := ../../run
+BASE_DIR     := ../..
+RUN_DIR      := $(BASE_DIR)/run
 
 RUN_PACKAGE_METADATA_DIR      := $(RUN_DIR)/package-metadata
 RUN_PACKAGE_COVERAGE_DIR      := $(RUN_DIR)/package-coverage
@@ -15,23 +17,58 @@ RUN_PACKAGE_TRACE_DIR         := $(RUN_DIR)/package-evals-traced
 RUN_PACKAGE_RUNNABLE_CODE_DIR := $(RUN_DIR)/package-runnable-code
 RUN_PACKAGE_RUNS_DIR          := $(RUN_DIR)/run-extracted-code
 
+RUN_PACKAGE_TRACE_RUNS_FILE := $(RUN_PACKAGE_TRACE_DIR)/run.csv
+RUN_PACKAGE_TRACE_LOG_FILE  := $(RUN_PACKAGE_TRACE_DIR)/parallel.log
+RUN_CALLS_FILE              := $(RUN_PACKAGE_TRACE_DIR)/calls.fst
+RUN_CALLS_FINAL_FILE        := $(RUN_PACKAGE_TRACE_DIR)/calls-final.fst
+
 PACKAGE_EVALS_FILE         := $(DATA_DIR)/evals.fst
 PACKAGE_COVERAGE_FILE      := $(DATA_DIR)/coverage.fst
 PACKAGE_METADATA_FILE      := $(DATA_DIR)/metadata.fst
 PACKAGE_SLOC_FILE          := $(DATA_DIR)/sloc.fst
-PACKAGE_REVDEPS_FILE       := $(DATA_DIR)/revdeps.fst
 PACKAGE_FUNCTIONS_FILE     := $(DATA_DIR)/functions.fst
 PACKAGE_RUNNABLE_CODE_FILE := $(DATA_DIR)/runnable-code-metadata.fst
 PACKAGE_RUNS_FILE          := $(DATA_DIR)/run.fst
 PACKAGE_TRACE_RUNS_FILE    := $(DATA_DIR)/run-trace.fst
 PACKAGE_TRACE_LOG_FILE     := $(DATA_DIR)/parallel-trace.fst
+CORPUS_FILE                := $(DATA_DIR)/corpus.fst
 
-KAGGLE_LOG_FILE     := $(DATA_DIR)/parallel-kaggle.fst
+# kaggle corpus
 KAGGLE_KERNELS_FILE := $(DATA_DIR)/kaggle-kernels.fst
+KAGGLE_LOG_FILE     := $(DATA_DIR)/parallel-kaggle.fst
 
-R := R --silent --no-save -e
+# kaggle input - manually - cannot redistribute kaggle stuff
+# this is here just to raise error when missing
+KAGGLE_KERNELS_DIR  := $(RUN_DIR)/kaggle-kernels
+KAGGLE_DATASET_DIR  := $(RUN_DIR)/kaggle-datasets
 
-all: data
+# kaggle runtime artifacts
+RUN_KAGGLE_LOG_FILE         := $(RUN_KAGGLE_DIR)/parallel.log
+RUN_KAGGLE_CALLS_FILE       := $(RUN_KAGGLE_DIR)/calls.fst
+RUN_KAGGLE_CALLS_FINAL_FILE := $(RUN_KAGGLE_DIR)/calls-final.fst
+RUN_KAGGLE_SCRIPTS_FILE     := $(RUN_KAGGLE_DIR)/scripts.txt
+RUN_KAGGLE_KERNEL_FILE      := $(RUN_KAGGLE_DIR)/kernels.csv
+
+R_DIR        := $(realpath $(BASE_DIR))/R-4.0.2
+R_BIN        := $(R_DIR)/bin/R
+R_SCRIPT_BIN := $(R_DIR)/bin/Rscript
+R            := $(R_BIN) --silent --no-save -e
+
+MERGE_FST  := $(R_SCRIPT_BIN) $(BASE_DIR)/runr/inst/merge-fst.R
+MERGE_CSV  := $(R_SCRIPT_BIN) $(BASE_DIR)/runr/inst/merge-csv.R
+TSV_TO_FST  = $(R) 'fst::write_fst(readr::read_tsv("$<"), "$@", compress=100)'
+RENDER_RMD  = $(R) 'rmarkdown::render("$(1)", output_dir="$(HTML_DIR)")'
+
+all: calls
+
+################################################################################
+## CORPUS
+################################################################################
+
+# TODO: add all steps for package-evals
+# TODO: add all steps for metadata
+# TODO: add all steps for runnable code
+# TODO: add all steps for runs
 
 $(PACKAGE_EVALS_FILE): $(RUN_PACKAGE_EVALS_DIR)/package-evals.csv
 
@@ -42,33 +79,26 @@ $(PACKAGE_METADATA_FILE): $(RUN_PACKAGE_METADATA_DIR)/metadata.csv
 
 $(PACKAGE_SLOC_FILE): $(RUN_PACKAGE_METADATA_DIR)/sloc.csv
 
-$(PACKAGE_REVDEPS_FILE): $(RUN_PACKAGE_METADATA_DIR)/revdeps.csv
-
 $(PACKAGE_FUNCTIONS_FILE): $(RUN_PACKAGE_METADATA_DIR)/functions.csv
 
 $(PACKAGE_RUNNABLE_CODE_FILE): $(RUN_PACKAGE_RUNNABLE_CODE_DIR)/runnable-code-metadata.csv
 
 $(PACKAGE_RUNS_FILE): $(RUN_PACKAGE_RUNS_DIR)/run.csv
 
-$(PACKAGE_TRACE_RUNS_FILE): $(RUN_PACKAGE_TRACE_DIR)/run.csv
+$(PACKAGE_TRACE_RUNS_FILE): $(RUN_PACKAGE_TRACE_RUNS_FILE)
 
-$(PACKAGE_TRACE_LOG_FILE): $(RUN_PACKAGE_TRACE_DIR)/parallel.log
-	$(R) 'fst::write_fst(readr::read_tsv("$<"), "$@", compress=100)'
+$(PACKAGE_TRACE_LOG_FILE): $(RUN_PACKAGE_TRACE_LOG_FILE)
+	$(TSV_TO_FST)
 
-$(KAGGLE_LOG_FILE): $(RUN_KAGGLE_DIR)/parallel.csv
-
-$(KAGGLE_KERNELS_FILE): $(RUN_KAGGLE_DIR)/kernels.csv
-
+# TODO can there be a rule from csv to fst and from tsv to fst?
 data/%.fst: 
 	$(R) 'fst::write_fst(readr::read_csv("$<"), "$@", compress=100)'
 
-
-data: \
+$(CORPUS_FILE): \
   $(PACKAGE_EVALS_FILE) \
   $(PACKAGE_COVERAGE_FILE) \
   $(PACKAGE_METADATA_FILE) \
   $(PACKAGE_SLOC_FILE) \
-  $(PACKAGE_REVDEPS_FILE) \
   $(PACKAGE_FUNCTIONS_FILE) \
   $(PACKAGE_RUNNABLE_CODE_FILE) \
   $(PACKAGE_RUNS_FILE) \
@@ -76,3 +106,67 @@ data: \
   $(PACKAGE_TRACE_LOG_FILE) \
   $(KAGGLE_LOG_FILE) \
   $(KAGGLE_KERNELS_FILE)
+
+	$(call RENDER_RMD,$(ANALYSIS_DIR)/corpus-stage2.Rmd)
+
+corpus: $(CORPUS_FILE)
+
+################################################################################
+## CALLS
+################################################################################
+
+$(RUN_PACKAGE_TRACE_RUNS_FILE):
+	$(MERGE_CSV) $(RUN_PACKAGE_TRACE_DIR) $(@F)
+
+$(RUN_CALLS_FILE):
+	$(MERGE_FST) $(RUN_PACKAGE_TRACE_DIR) $(@F) ERROR.fst
+
+# FIXME: this is pretty horrible, but `R -e` does not understand \ like all the
+#        other REPLS !?!?
+$(RUN_CALLS_FINAL_FILE): $(RUN_CALLS_FILE) $(CORPUS_FILE)
+	$(R) 'fst::write_fst(dplyr::semi_join(dplyr::mutate(fst::read_fst("$(RUN_CALLS_FILE)"), package=basename(dirname(dirname(file)))), fst::read_fst("$(CORPUS_FILE)"), by="package"), "$(RUN_CALLS_FINAL_FILE)");'
+
+calls: $(RUN_CALLS_FINAL_FILE)
+
+# TODO iterate results
+enrich: $(RUN_CALLS_FINAL_FILE) $(RUN_KAGGLE_CALLS_FINAL_FILE)
+	$(call RENDER_RMD,$(ANALYSIS_DIR)/enrich_dataset.Rmd)
+
+# TODO iterate dependencies
+analysis: enrich
+	$(call RENDER_RMD,$(ANALYSIS_DIR)/analysis_stable.Rmd)
+
+################################################################################
+## KAGGLE
+################################################################################
+
+$(KAGGLE_LOG_FILE): $(RUN_KAGGLE_LOG_FILE)
+	$(TSV_TO_FST)
+
+$(KAGGLE_KERNELS_FILE): $(RUN_KAGGLE_KERNEL_FILE)
+
+# FIXME: this was supposed to be the kaggle.Rmd, but I cannot call rmarkdown
+#        from rmarkdown
+$(RUN_KAGGLE_SCRIPTS_FILE) (RUN_KAGGLE_KERNEL_FILE): $(KAGGLE_KERNELS_DIR) $(KAGGLE_DATASET_DIR)
+	cd $(ANALYSIS_DIR) && $(R_SCRIPT_BIN) kaggle.R $(realpath $(BASE_DIR))
+
+$(RUN_KAGGLE_LOG_FILE): $(RUN_KAGGLE_SCRIPTS_FILE)
+	-parallel \
+    -a $(RUN_KAGGLE_SCRIPTS_FILE) \
+    --bar \
+    --joblog $(RUN_KAGGLE_LOG_FILE) \
+    --jobs 50 \
+    --results '{1}/' \
+    --tagstring '{/}' \
+    --timeout 1h \
+    --workdir '{1}/' \
+    $(realpath $(R_BIN)) CMD BATCH '{1}/run.R' '{1}/run.R.out'
+
+$(RUN_KAGGLE_CALLS_FILE): $(RUN_KAGGLE_LOG_FILE)
+	$(MERGE_FST) $(RUN_KAGGLE_DIR) calls.fst ERROR.fst
+
+# this is to make the same filename as in the case of CRAN packages
+$(RUN_KAGGLE_CALLS_FINAL_FILE): $(RUN_KAGGLE_CALLS_FILE)
+	cp $< $@
+
+kaggle: $(RUN_KAGGLE_CALLS_FINAL_FILE)

@@ -1,17 +1,147 @@
 ---
 title: "Corpus Analysis"
-output: 
-  rmdformats::readthedown:
-        code_folding: hide
-        lightbox: true
-        gallery: false
-        df_print: paged
-        toc_depth: 3
-date: "`r Sys.Date()`"
+output: html_document
+params:
+  base_dir: /var/lib/R/project-evalR
 editor_options: 
   chunk_output_type: console
-params:
-knit: (function(inputFile, encoding) {
-  rmarkdown::render(inputFile, encoding = encoding, output_dir = "html") })
 ---
 
+```{r setup, include=FALSE}
+for (x in c(
+  "dplyr", 
+  "DT",
+  "fs",
+  "fst",
+  "lubridate",
+  "readr",
+  "purrr",
+  "stringr",
+  "tidyr"
+  )) {
+  suppressPackageStartupMessages(library(x, character.only=TRUE))
+}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+# TODO: move into the package
+source("inc/paths.R")
+source("inc/setup.R")
+source("inc/latextags.R")
+
+create_tags(path(TAGS_DIR, "corpus.tex"), prefix="", default=TRUE)
+```
+
+## Load data
+
+```{r}
+
+```
+
+## Corpus Overview
+
+### Table
+
+```{r summary}
+overview_table(
+  r("corpus", corpus),
+  r("runnable code",        sum(corpus$runnable_code, na.rm=T)),
+  r("examples code",        sum(corpus$runnable_code_examples, na.rm=T)),
+  r("tests code",           sum(corpus$runnable_code_tests, na.rm=T)),
+  r("vignettes code",       sum(corpus$runnable_code_vignettes , na.rm=T)),
+  r("mean expr coverage",   percent(mean(corpus$coverage_expr))),
+  r("median expr coverage", percent(median(corpus$coverage_expr))),
+  r("with R code",          filter(corpus, package_r_code > 0)),
+  r("R code",               sum(corpus$package_r_code, na.rm=T)),
+  r("with native code",     filter(corpus, package_native_code > 0)),
+  r("native code",          sum(corpus$package_native_code, na.rm=T)),
+  r("functions",            sum(corpus$funs, na.rm=T)),
+  r("public functions",     sum(corpus$funs_public, na.rm=T)),
+  r("private functions",    sum(corpus$funs_private, na.rm=T)),
+  r("revdes",               sum(corpus$revdeps)),
+  r("mean revdes",          mean(corpus$revdeps)),
+  r("median revdes",        median(corpus$revdeps)),
+  r("runtime",              as.duration(sum(corpus$runnable_time))),
+  r("mean runtime",         as.duration(mean(corpus$runnable_time))),
+  r("median runtime",       as.duration(median(corpus$runnable_time)))
+)
+```
+
+### Plots
+
+```{r plot corpus}
+coverage_mean <- mean(df$coverage_expr)
+coverage_median <- median(df$coverage_expr)
+revdeps_mean <- mean(df$revdeps)
+revdeps_median <- median(df$revdeps)
+  
+df %>%
+  mutate(
+    outlier=package_code > PACKAGE_SIZE_OUTLIER,
+    label=if_else(outlier, str_glue("{package}"), as.character(NA))
+  ) %>%
+  ggplot(
+    aes(
+      x=coverage_expr, 
+      y=revdeps,
+      label=label,
+      size=package_code
+    )
+  ) +
+  geom_point(alpha=.6) +
+  geom_text(size=3, check_overlap = T, vjust=1.5, na.rm = TRUE) + 
+  
+  geom_hline(aes(yintercept=revdeps_mean), linetype="dashed", color="red", size=0.2) +
+  geom_vline(aes(xintercept=coverage_mean), linetype="dashed", color="red", size=0.2) +
+
+  scale_x_continuous(limits = c(params$min_coverage, 1), labels = scales::percent) + 
+  scale_y_log10(labels = scales::comma) +
+  scale_size(range = c(.1, 3), labels = scales::comma) +
+    theme(
+    legend.position=c(0.2, 0.85),
+    legend.box="horizontal",
+    legend.box.background = element_rect(fill="white", size=0.1)
+  ) +
+  labs(
+    x="Code coverage", 
+    y="Number of reverse dependencies (log)", 
+    size="Code size",
+    linetype=""
+  ) +
+  guides(
+    size=guide_legend(order=1),
+    color=guide_legend(order=2),
+    linetype=F
+  )
+
+ggsave(CORPUS_PLOT)
+```
+
+### List of corpus packages
+
+```{r list of packages, eval=FALSE}
+datatable(
+  corpus, 
+  filter="top", 
+  options=list(
+    pageLength=50,
+    autoWidth=TRUE
+  )
+)
+```
+
+
+
+
+## Kaggle
+
+```{r, eval=FALSE}
+parallel_log <- 
+  read_csv(PARALLEL_LOG_FILE)
+
+parallel_log %>%
+  mutate(
+    output=show_url(path(V1, "run.R.out"))
+  ) %>%
+  my_datatable(escape=FALSE)
+```
