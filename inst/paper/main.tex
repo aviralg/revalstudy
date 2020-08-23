@@ -374,6 +374,33 @@ call both package and core evals; and, \PackageEvalFileCount
 \EightyCoreEvalFilePerc (\EightyCoreEvalFileCount) files make over 80\% eval
 calls to core evals.
 
+Of the \missingNumber packages in our corpus, only \missingNumber packages call
+eval. \ref{table:top-ten-package-summary} shows the number of calls to eval made
+by the ten most frequent callers to eval. These packages together have
+\missingNumber callsites and account for \missingPercentage calls to eval.
+Furthermore, the top ten callsites account for \missingPercentage of package
+eval calls. A single callsite of \TopTenPackageNameA accounts for over
+\missingPercentage calls to eval.
+
+\begin{table}[ht]
+  \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{l|rr||l|rr}
+      \hline
+      \multicolumn{3}{c}{}& \multicolumn{3}{c}{} \\
+      \cline{1-3} \cline{4-6}
+      Package & Callsites & Calls & Package & Callsites & Call\\
+      \hline
+      \TopTenPackageNameA & \TopTenPackageCallsiteCountA & \TopTenPackageCallCountA (\TopTenPackageCallPercA) & \TopTenPackageNameF & \TopTenPackageCallsiteCountF & \TopTenPackageCallCountF (\TopTenPackageCallPercF) \\
+      \TopTenPackageNameB & \TopTenPackageCallsiteCountB & \TopTenPackageCallCountB (\TopTenPackageCallPercB) & \TopTenPackageNameG & \TopTenPackageCallsiteCountG & \TopTenPackageCallCountG (\TopTenPackageCallPercG) \\
+      \TopTenPackageNameC & \TopTenPackageCallsiteCountC & \TopTenPackageCallCountC (\TopTenPackageCallPercC) & \TopTenPackageNameH & \TopTenPackageCallsiteCountH & \TopTenPackageCallCountH (\TopTenPackageCallPercH) \\
+      \TopTenPackageNameD & \TopTenPackageCallsiteCountD & \TopTenPackageCallCountD (\TopTenPackageCallPercD) & \TopTenPackageNameI & \TopTenPackageCallsiteCountI & \TopTenPackageCallCountI (\TopTenPackageCallPercI) \\
+      \TopTenPackageNameE & \TopTenPackageCallsiteCountE & \TopTenPackageCallCountE (\TopTenPackageCallPercE) & \TopTenPackageNameJ & \TopTenPackageCallsiteCountJ & \TopTenPackageCallCountJ (\TopTenPackageCallPercJ) \\
+      \hline
+    \end{tabular}
+  }
+  \label{table:top-ten-package-summary}
+  \caption{Distribution of eval calls and callsites in the top ten packages}
+\end{table}
 
 
 \missingGraph shows the distribution of number of callsites to eval across these
