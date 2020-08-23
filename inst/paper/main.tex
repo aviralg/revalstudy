@@ -15,26 +15,28 @@
 \graphicspath{{img/}}
 
 \lstset{ 
-	language=R,                     % the language of the code
-	basicstyle=\ttfamily, % the size of the fonts that are used for the code
-	numbers=left,                   % where to put the line-numbers
-	numberstyle=\color{Blue},  % the style that is used for the line-numbers
-	stepnumber=1,                   % the step between two line-numbers. If it is 1, each line
-	% will be numbered
-	numbersep=2pt,                  % how far the line-numbers are from the code
-	backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
-	showspaces=false,               % show spaces adding particular underscores
-	showstringspaces=false,         % underline spaces within strings
-	showtabs=false,                 % show tabs within strings adding particular underscores
-	%frame=single,                   % adds a frame around the code
-	rulecolor=\color{black},        % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. commens (green here))
-	tabsize=2,                      % sets default tabsize to 2 spaces
-	captionpos=b,                   % sets the caption-position to bottom
-	breaklines=true,                % sets automatic line breaking
-	breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
-	keywordstyle=\color{RoyalBlue},      % keyword style
-	commentstyle=\color{YellowGreen},   % comment style
-	stringstyle=\color{ForestGreen}      % string literal style
+ language=R,              % the language of the code
+ basicstyle=\small\ttfamily,    % the size of the fonts
+% numbers=left,            % where to put the line-numbers
+ numberstyle=\color{Blue},% the style that is used for the line-numbers
+ stepnumber=1,            % the step between two line-numbers. If it is 1,
+                          % each line will be numbered
+ numbersep=2pt,           % how far the line-numbers are from the code
+ backgroundcolor=\color{white},  % choose the background color.
+ showspaces=false,        % show spaces adding particular underscores
+ showstringspaces=false,  % underline spaces within strings
+ showtabs=false,          % show tabs within strings adding particular 
+%frame=single,            % adds a frame around the code
+ rulecolor=\color{black}, % if not set, the frame-color may be changed on
+                          % line-breaks within not-black text (e.g. commens
+                          % (green here))
+ tabsize=2,               % sets default tabsize to 2 spaces
+ captionpos=b,            % sets the caption-position to bottom
+ breaklines=true,         % sets automatic line breaking
+ breakatwhitespace=false, % sets if automatic breaks should only happen at 
+ keywordstyle=\color{Blue},    % keyword style
+ commentstyle=\color{YellowGreen},  % comment style
+ stringstyle=\color{ForestGreen}    % string literal style
 } 
 \begin{document}
 
@@ -126,20 +128,20 @@ implementers, developers with some programming experience and a working
 knowledge of R, and end-users, who are typically not expert programmers and
 often have only a cursory knowledge of the language.\footnote{To illustrate
   the above consider that R uses lazy evaluation like Haskell. The authors
-  have informally surveyed end-users, some of them computer scientists, and
-  did not find a single one aware of that fact. Library developers, on the
-  other hand, tend to know about laziness and program defensively around
-  it.}  Thus, our corpus distinguished between \emph{core packages} (there
-are \miss{8} such packages that are loaded together with the R virtual
-machine), \emph{CRAN packages} (we selected \miss{500} curated packages that
-pass stringent community quality checks and are equipped with tests and
-sample data), \emph{scripts} (we used \miss{400} end-user written programs
-that performs a particular data analysis task).  There are reasons to
-believe that \eval usage patterns may differ between these datasets. The
-core R code is extremely stable, it has only been maintained for the last 20
-years with very few far reaching changes. The libraries represent a more
-lively ecosystem with new libraries added each day.  Finally, end user code
-is often one-use scripts thrown together and sometimes never revisited.
+  have informally surveyed end-users, including computer scientists, and did
+  not find a single one aware of this fact. Library developers, on the other
+  hand, know about laziness and program defensively around it.}  Thus, our
+corpus distinguished between \emph{core packages} (there are \miss{8} such
+packages that are loaded together with the R virtual machine), \emph{CRAN
+  packages} (we selected \miss{500} curated packages that pass stringent
+community quality checks and are equipped with tests and sample data),
+\emph{scripts} (we used \miss{400} end-user written programs that performs a
+particular data analysis task).  There are reasons to believe that \eval
+usage patterns may differ between these datasets. The core R code is
+extremely stable, it has only been maintained for the last 20 years with
+very few far reaching changes. The libraries represent a more lively
+ecosystem with new libraries added each day.  Finally, end user code is
+often one-use scripts thrown together and sometimes never revisited.
 
 
 To understand the behavior of eval we perform a combination of static
