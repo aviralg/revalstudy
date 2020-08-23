@@ -286,6 +286,7 @@ Kaggle code.
 \end{tabular}
 
 
+
 \begin{tabular}{c|c|c|c|c|c}
   Function  & Core & Packages & Kaggle & All \\
   eval & \CoreEvalSiteCountRnd & \PackageEvalSiteCountRnd & \KaggleEvalSiteCountRnd & \AllEvalSiteCountRnd \\
@@ -303,6 +304,16 @@ Of the \missingNumber packages in our corpus, only \missingNumber packages call
 eval. \missingTable shows the number of calls to eval made by the ten most
 frequent callers to eval. \missingNumber packages account for over
 \missingPercentage calls to eval.
+
+All the \TotalFileCount files in our corpus call eval. \CoreEvalFileCount
+(\CoreEvalFilePerc) call only core evals, \AllEvalFileCount (\AllEvalFilePerc)
+call both package and core evals; and, \PackageEvalFileCount
+(\PackageEvalFilePerc) call only package evals. Of the \AllEvalFileCount
+(\AllEvalFilePerc) files that call both package and base eval,
+\EightyCoreEvalFilePerc (\EightyCoreEvalFileCount) files make over 80\% eval
+calls to core evals.
+
+
 
 \missingGraph shows the distribution of number of callsites to eval across these
 packages. \missingNumber packages have a single eval callsite.
