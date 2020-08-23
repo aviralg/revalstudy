@@ -41,10 +41,7 @@
 \begin{document}
 
 \title{A Large-Scale Study of the Use of Eval in R}
-\author{\vspace{-.8cm}\IEEEauthorblockN{
-    \it\Large The Eval that Data Scientists Do}%
-  %\IEEEauthorblockA{ dept} \\ \and
-}  
+\author{\vspace{-.8cm}\IEEEauthorblockN{~}} %\IEEEauthorblockA{ dept} \\ \and
 \maketitle
 
 \newcommand{\eval}{\texttt{eval}\xspace}
@@ -152,9 +149,46 @@ Our infrastructure is publicly available, released in open source, and our
 data, and code will be submitted to artifact evaluation.
 
 
-\section{Related Work}
+\section{Background and Related Work}
 
-\cite{ecoop11}
+The origins of \eval go back to the first implementation of the Lisp
+programming language~\cite{lisp}. Over the years, \eval has been included in
+many dynamic languages, with some variability in expressive power and
+nomenclature. In all of its incarnation \eval allow developpers to
+dynamically extend the code of their program at run-time.  Originally, \eval
+was limited to interpreted languages, but with the advent of just-in-time
+compilation this restriction was gradually lifted.
+
+Some languages have chosen to restrict \eval. The essential difference
+between languages relates to scoping of variables that can be accessed from
+code executed by \eval.  Java and Julia are among the more restrictive
+languages. In Java, \eval must be synthesized as a combination dynamic
+loading and reflection.\footnote{While Java does not have \eval built in,
+  one can take the input to \eval, wrap it in a static method of an
+  anonymous class, generate bytecode for that class, invoke the Java class
+  loader to dynamically install it, and then use reflection to call the new
+  method.} Julia provides \eval more directly but limits its scope to top
+level variables and methods. JavaScript support both a, so-called, global
+\eval, and a local \eval. Where the latter has acces to local variables of
+the function being executed (as well as variables of lexically enclosing
+scopes). Finally languages such as R allow \eval to manipulate variables
+defined in the caller environment of the function in which \eval is invoked.
+
+The difference between these design choices has an impact on the ability of
+compilers to optimize, and of analysis tools to reason about, code. The
+impact of a top level \eval is that any global definition may be affected
+but the current function can continue to execute unchanged. A local \eval
+may change the value of local variables, their types, or even their
+presence. This is a much more invasive change for reasoning about code and
+may invalidate common optimizations such as constant folding or copy
+propagation. The designers of Julia were aware of this difference and chose
+to restrict \eval to preserve their ability to compile
+code~\cite{oopsla18a}. They even added a versioning mechanism to function
+definitions to ensure that new code added during an \eval would not
+invalidate optimizations such as inlining.  R's ability to affect any one of
+the callers of a function is even more invasive as the impact of \eval is
+non-local. Such unfettered power is difficult to deal with.
+
 
 Previous work looked at eval in JavaScript
 
@@ -162,19 +196,15 @@ Othere languages
 
 Dynamic analysis
 
-
-\section{Shades of Eval}
-
-- Talk about environments
-- How is it different from JS (takes language, env in R but string in JS).
-
 \section{The Design of Eval}
 
-There are four different kinds of \eval in the \emph{base} package:  \c{eval}, \c{evalq}, \c{eval.parent},  \c{local}.
-The most important one is \eval: 
+There are four different kinds of \eval in the \emph{base} package:
+\c{eval}, \c{evalq}, \c{eval.parent}, \c{local}.  The most important one is
+\eval:
 
 \begin{lstlisting}
-eval <- function (expr, envir = parent.frame(), enclos = if (is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv())  
+  eval <- function(expr, envir=parent.frame(),
+                   enclos=if (is.list(envir)||is.pairlist(envir)) parent.frame() else baseenv())  
 	.Internal(eval(expr, envir, enclos))
 \end{lstlisting}
 
