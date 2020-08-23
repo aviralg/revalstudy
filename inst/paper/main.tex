@@ -10,7 +10,9 @@
 \newcommand{\missingTable}{\textcolor{red}{XXTable}\xspace}
 \newcommand{\missingGraph}{\textcolor{red}{XXGraph}\xspace}
 \usepackage[usenames,dvipsnames]{xcolor} 
-\usepackage{xspace} 
+\usepackage{xspace}
+
+\input{counts.tex}
 
 \graphicspath{{img/}}
 
@@ -267,11 +269,18 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 This section presents the results of our empirical study of eval in the R language.
 \subsection{How many evals}
 
-In our corpus eval is called \missingNumber times out of \missingNumber
+In our corpus eval is called \AllAllCallCountRnd{} times out of \missingNumber
 total calls to all R functions. This is merely \missingPercentage of the total
 number of calls. \missingTable breaks down the number of calls and callsites for
 the four kinds of eval functions from the three source; core R, packages and
 Kaggle code.
+
+
+\begin{tabular}{c|c|c|c|c|c}
+  Corpus  & eval & evalq & evalParent & local & all \\
+  Core & \CoreEvalCallCountRnd & \CoreEvalqCallCountRnd & \CoreEvalParentCallCountRnd & \CoreLocalCallCountRnd & \CoreAllCallCountRnd \\
+  Package & \PackageEvalCallCountRnd & \PackageEvalqCallCount & \PackageEvalParentCallCountRnd & \PackageLocalCallCountRnd & \PackageAllCallCountRnd \\
+\end{tabular}
 
 The core R packages are the biggest consumers of eval. Majority of calls,
 \missingPercentage, originate from the core R packages. Kaggle code, which is
