@@ -189,6 +189,15 @@ invalidate optimizations such as inlining.  R's ability to affect any one of
 the callers of a function is even more invasive as the impact of \eval is
 non-local. Such unfettered power is difficult to deal with.
 
+The intuition behind the soundiness manifesto~\cite{soundy} is that while
+the use of a single \eval may invalidate every single invariant computed by
+a static analysis or optimizer, this worst case usually does not happen.  In
+many cases, \eval is used carefully and has limited effect. This is a
+hypothesis that must be validated and, to be useful, we should have the
+means to provide some reasonable guesses as to which side-effects will
+result from any particular \eval call.
+
+
 
 Previous work looked at eval in JavaScript
 
