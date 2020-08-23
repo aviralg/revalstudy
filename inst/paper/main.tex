@@ -277,14 +277,27 @@ Kaggle code.
 
 
 \begin{tabular}{c|c|c|c|c|c}
-  Corpus  & eval & evalq & evalParent & local & all \\
-  Core & \CoreEvalCallCountRnd & \CoreEvalqCallCountRnd & \CoreEvalParentCallCountRnd & \CoreLocalCallCountRnd & \CoreAllCallCountRnd \\
-  Package & \PackageEvalCallCountRnd & \PackageEvalqCallCount & \PackageEvalParentCallCountRnd & \PackageLocalCallCountRnd & \PackageAllCallCountRnd \\
+  Function  & Core & Packages & Kaggle & All \\
+  eval & \CoreEvalCallCountRnd & \PackageEvalCallCountRnd & \KaggleEvalCallCountRnd & \AllEvalCallCountRnd \\
+  evalParent & \CoreEvalParentCallCountRnd & \PackageEvalParentCallCountRnd & \KaggleEvalParentCallCountRnd & \AllEvalParentCallCountRnd \\
+  evalq & \CoreEvalqCallCountRnd & \PackageEvalqCallCountRnd & \KaggleEvalqCallCountRnd & \AllEvalqCallCountRnd \\
+  local & \CoreLocalCallCountRnd & \PackageLocalCallCountRnd & \KaggleLocalCallCountRnd & \AllLocalCallCountRnd \\
+  all & \CoreAllCallCountRnd & \PackageAllCallCountRnd & \KaggleAllCallCountRnd & \AllAllCallCountRnd
+\end{tabular}
+
+
+\begin{tabular}{c|c|c|c|c|c}
+  Function  & Core & Packages & Kaggle & All \\
+  eval & \CoreEvalSiteCountRnd & \PackageEvalSiteCountRnd & \KaggleEvalSiteCountRnd & \AllEvalSiteCountRnd \\
+  evalParent & \CoreEvalParentSiteCountRnd & \PackageEvalParentSiteCountRnd & \KaggleEvalParentSiteCountRnd & \AllEvalParentSiteCountRnd \\
+  evalq & \CoreEvalqSiteCountRnd & \PackageEvalqSiteCountRnd & \KaggleEvalqSiteCountRnd & \AllEvalqSiteCountRnd \\
+  local & \CoreLocalSiteCountRnd & \PackageLocalSiteCountRnd & \KaggleLocalSiteCountRnd & \AllLocalSiteCountRnd \\
+  all & \CoreAllSiteCountRnd & \PackageAllSiteCountRnd & \KaggleAllSiteCountRnd & \AllAllSiteCountRnd
 \end{tabular}
 
 The core R packages are the biggest consumers of eval. Majority of calls,
-\missingPercentage, originate from the core R packages. Kaggle code, which is
-end-user code, has merely \missingNumber calls to eval.
+\CoreAllCallCountRnd, originate from the core R packages. Kaggle code, which is
+end-user code, has merely \AllKaggleCallCountRnd calls to eval.
 
 Of the \missingNumber packages in our corpus, only \missingNumber packages call
 eval. \missingTable shows the number of calls to eval made by the ten most
