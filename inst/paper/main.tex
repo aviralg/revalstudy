@@ -271,12 +271,11 @@ We have selected \CorpusPackages packages consisting of \CorpusRCodeRnd
 lines of R code and \CorpusNativeCodeRnd lines of native code
 (C/C++/Fortran).  Figure~\ref{fig:corpus} shows these packages, the size of
 the dots reflects the project's size in lines of code including both R and
-native code\footnote{Lines of source code reported excludes comments and
-  blank lines, counted by \emph{cloc}, \cf
-  \url{https://github.com/AlDanial/cloc}}, the x-axis indicates the
-expression code coverage in percents and the y-axis gives the number of
-reverse dependencies in log scale. Dotted lines indicate means. Large and
-popular packages are annotated.
+native code\footnote{Excluding comments and blank lines,
+  \url{github.com/AlDanial/cloc}}, the x-axis indicates the expression code
+coverage in percents and the y-axis gives the number of reverse dependencies
+in log scale. Dotted lines indicate means. Large and popular packages are
+annotated.
 
 \begin{figure*}[!tb]\centering\includegraphics[width=.9\linewidth]
   {corpus.pdf}\caption{Corpus}\label{fig:corpus}
@@ -336,7 +335,10 @@ tested and only a successfully running package is admitted in the archive.
 This section presents an overiew of the usage of \eval in our corpus.
 Previous work reported that 82\% of JavaScript-enabled web pages used
 \eval~\cite{ecoop11}, the case for R is more striking at \miss{100\%} of the
-programs use that feature.
+programs use that feature. In this section, a call to \eval denotes a call
+to any one of the functions that provide \eval-like
+functionality.\footnote{These include \c{eval}, \c{eval.parent}, \c{evalq}
+  and \c{local}.}
 
 This strikingly high number is due to the fact that the language
 implementation, the core packages, use \eval extensively. So, in our
@@ -345,34 +347,22 @@ analysis, we differentiate \eval based on where they originate from. A {\bf
   dependent} \eval is one that occurs in a package that was included by the
 target package. An {\bf own} \eval is one that occurs in the source code of
 the target package. We label an \eval occurence as {\bf unknown} when we are
-not able to deterimine its origin.\footnote{One source of unknown evals is
-  when the \eval function passed as an argument to a higher-order function
-  such as \c{lapply}, another is when the code lacks source references.}
+not able to deterimine its origin.\footnote{A source of unknowns is when the
+  \eval function is passed as an argument to a function such as \c{lapply},
+  another is when the code lacks source references.}
 
 Over all, we observed \AllAllCallCountRnd call to \eval in \miss{3,000} runs
 of our corpus. The mean number of calls per run was \miss{20} (with a min of
-\c{1} and a max of \c{10,000}). Table~\ref{A} details the usage of \eval
-across the corpus.  The format is T (m/M/x) where T is the total number of
-calls observed for all runs of the corpus, m and x are the minimum and
-maximum number of calls for any given run, and A is the mean number of calls
-per run.  We can observe \miss{???}. {\bf <The following is a place
+\miss{1} and a max of \miss{10,000}). Table~\ref{A} details the usage of
+\eval across the corpus.  The format is T (m/M/x) where T is the total
+number of calls observed for all runs of the corpus, m and x are the minimum
+and maximum number of calls for any given run, and A is the mean number of
+calls per run.  We can observe \miss{???}. {\bf <The following is a place
   holder. Real text will come once we have the table.>} The majority of
 calls come from the core packages.  Kaggle does not have any own calls, any
-\eval in those happens in dependent packages and core.  {\bf <The following
-  will be changed. The file level stuff is less useful than package level.>}
-All the \TotalFileCount files in our corpus call eval. \CoreEvalFileCount
-(\CoreEvalFilePerc) call only core evals, \AllEvalFileCount
-(\AllEvalFilePerc) call both package and core evals; and,
-\PackageEvalFileCount (\PackageEvalFilePerc) call only package evals. Of the
-\AllEvalFileCount (\AllEvalFilePerc) files that call both package and base
-eval, \EightyCoreEvalFilePerc (\EightyCoreEvalFileCount) files make over
-80\% eval calls to core evals. Of the \missingNumber packages in our corpus,
-only \missingNumber packages call eval. \ref{table:top-ten-package-summary}
-shows the number of calls to eval made by the ten most frequent callers to
-eval. These packages together have \missingNumber callsites and account for
-\missingPercentage calls to eval.  Furthermore, the top ten callsites
-account for \missingPercentage of package eval calls. A single callsite of
-\TopTenPackageNameA accounts for over \missingPercentage calls to eval.
+\eval in those happens in dependent packages and core.  Of the
+\missingNumber packages in our corpus, only \missingNumber packages call
+eval.
 
 
 \begin{verbatim}
@@ -412,6 +402,12 @@ The following table will be replaced. {\bf <At this point separating between
   \caption{Distribution of eval calls and callsites in the corpus}
 \end{table}
 
+\ref{table:top-ten-package-summary} shows the number of calls to eval
+made by the ten most frequent callers to eval. These packages together have
+\missingNumber callsites and account for \missingPercentage calls to eval.
+Furthermore, the top ten callsites account for \missingPercentage of package
+eval calls. A single callsite of \TopTenPackageNameA accounts for over
+\missingPercentage calls to eval.
 
 \begin{table}[ht]
   \resizebox{\columnwidth}{!}{%
