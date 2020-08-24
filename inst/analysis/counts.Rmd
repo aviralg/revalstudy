@@ -1,0 +1,236 @@
+---
+title: "Empirical Evaluation of eval in R"
+output:
+  rmdformats::readthedown:
+        code_folding: hide
+        lightbox: true
+        gallery: false
+        df_print: paged
+        toc_depth: 3
+date: "`r Sys.Date()`"
+editor_options: 
+  chunk_output_type: console
+params:
+    base_dir: /home/aviral/projects/revalstudy2
+    kaggle_datafile: "summarized-kaggle.fst"
+    core_datafile: "summarized-core.fst"
+    packages_datafile: "summarized-packages.fst"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.align = "center",
+                      fig.retina = 2,
+                      fig.width = 10,
+                      cache.lazy = FALSE)
+
+library(tidyverse)
+library(stringr)
+library(viridis)
+library(vctrs)
+library(DT)
+library(fst)
+library(fs)
+library(purrr)
+library(readr)
+library(xtable)
+
+source("inc/paths.R")
+source("inc/setup.R")
+source("inc/latextags.R")
+create_tags(path("../paper/tag", "counts.tex"), prefix="", default=TRUE)
+```
+
+```{r eval=TRUE}
+core_data <- read_fst(params$core_datafile)
+packages_data <- 
+    read_fst(params$packages_datafile) %>%
+    mutate(eval_source_type = "package")
+kaggle_data <- 
+    read_fst(params$kaggle_datafile)
+    #mutate(eval_source_type == "core")
+
+all_data <- bind_rows(core_data, packages_data, kaggle_data)
+all_data <-
+    all_data %>%
+    mutate(eval_call_srcref = 
+          coalesce(eval_call_srcref, 
+                   str_c("missing", "::", caller_package, "::", caller_function)))
+
+count_summary <-
+    all_data %>%
+    group_by(eval_source_type, eval_function) %>%
+    summarize(call_count = sum(nb_ev_calls),
+              site_count = length(unique(eval_call_srcref))) %>%
+    ungroup() %>%
+    add_row(eval_source_type = "kaggle", eval_function = "eval", call_count = 0, site_count = 0) %>%
+    add_row(eval_source_type = "kaggle", eval_function = "eval.parent", call_count = 0, site_count = 0) %>%
+    add_row(eval_source_type = "kaggle", eval_function = "evalq", call_count = 0, site_count = 0) %>%
+    add_row(eval_source_type = "kaggle", eval_function = "local", call_count = 0, site_count = 0)
+
+eval_source_type_all_summary <-
+    count_summary %>%
+    group_by(eval_source_type) %>%
+    summarize(call_count = sum(call_count),
+              site_count = sum(site_count)) %>%
+    ungroup() %>%
+    mutate(eval_function = "all")
+    
+all_eval_function_summary <-
+    count_summary %>%
+    group_by(eval_function) %>%
+    summarize(call_count = sum(call_count),
+              site_count = sum(site_count)) %>%
+    ungroup() %>%
+    mutate(eval_source_type = "all")
+    
+all_all_summary <- tibble(
+    eval_source_type = "all",
+    eval_function = "all",
+    call_count = sum(count_summary$call_count),
+    site_count = sum(count_summary$site_count)
+)
+
+count_summary <-
+    bind_rows(count_summary, 
+              eval_source_type_all_summary, 
+              all_eval_function_summary, 
+              all_all_summary)
+
+print(count_summary)
+
+count_summary %>%
+pmap_dfr(function(eval_source_type, eval_function, call_count, site_count) {
+    eval_function <- str_replace(eval_function, "\\.", " ")
+    name <- str_c(eval_source_type, " ", eval_function, " ", "call count")
+    r(name, call_count)
+    name <- str_c(eval_source_type, " ", eval_function, " ", "site count")
+    r(name, site_count)
+})
+```
+
+```{r run-data, eval=TRUE}
+run_eval_proportion <-
+    all_data %>%
+    group_by(file, eval_source_type) %>%
+    summarize(eval_count = sum(nb_ev_calls)) %>%
+    ungroup() %>%
+    pivot_wider(names_from = "eval_source_type", values_from = "eval_count", values_fill = 0) %>%
+    mutate(all = core + package)
+
+total_file_count <- length(unique(run_eval_proportion$file))
+
+no_eval_file_count <-
+    run_eval_proportion %>%
+    filter(core == 0 & package == 0)
+
+core_eval_file_count <-
+    run_eval_proportion %>%
+    filter(core != 0 & package == 0)
+    
+package_eval_file_count <-
+    run_eval_proportion %>%
+    filter(core == 0 & package != 0)
+    
+all_eval_file_count <-
+    run_eval_proportion %>%
+    filter(core != 0 & package != 0)
+    
+r("total file count", total_file_count)
+r("no eval file count", no_eval_file_count)
+r("no eval file perc", ratio(no_eval_file_count, total_file_count))
+r("core eval file count", core_eval_file_count)
+r("core eval file perc", ratio(core_eval_file_count, total_file_count))
+r("package eval file count", package_eval_file_count)
+r("package eval file perc", ratio(package_eval_file_count, total_file_count))
+r("all eval file count", all_eval_file_count)
+r("all eval file perc", ratio(all_eval_file_count, total_file_count))
+    
+run_eval_proportion <-
+    run_eval_proportion %>%
+    filter(core != 0 & package != 0) %>%
+    mutate(core_perc = round(core * 100 / all)) %>%
+    group_by(core_perc) %>%
+    summarize(file_count = n()) %>%
+    ungroup() %>%
+    arrange(desc(core_perc)) %>%
+    mutate(file_perc = round(100 * file_count / sum(file_count), 1)) %>%
+    mutate(cumsum_file_perc = cumsum(file_perc)) %>%
+    mutate(cumsum_file_count = cumsum(file_count))
+
+eighty_core_eval_file_count <-
+    run_eval_proportion %>%
+    filter(core_perc == 80) %>%
+    pull(cumsum_file_count)
+    
+r("eighty core eval file count", eighty_core_eval_file_count)
+r("eighty core eval file perc", ratio(eighty_core_eval_file_count, all_eval_file_count))
+
+run_eval_proportion
+```
+
+```{r package-counts, eval=TRUE}
+package_calls <-
+    packages_data %>%
+    filter(eval_source != "base?") %>%
+    group_by(eval_source) %>%
+    summarize(site_count = length(unique(eval_call_srcref)), 
+              call_count = sum(nb_ev_calls)) %>%
+    ungroup() %>%
+    arrange(desc(call_count)) %>%
+    mutate(call_perc = round(100 * call_count / sum(call_count), 1)) %>%
+    mutate(cumsum_call_perc = cumsum(call_perc))
+    
+top_ten_package_calls <-
+    package_calls %>%
+    slice(n = 1:10)
+
+datatable(top_ten_package_calls)
+
+top_ten_package_call_count <- sum(top_ten_package_calls$call_count)
+top_ten_package_site_count <- sum(top_ten_package_calls$site_count)
+total_package_call_count <- sum(package_calls$call_count)
+
+r("top ten package call count", top_ten_package_call_count)
+r("top ten package call perc", ratio(top_ten_package_call_count, total_package_call_count))
+
+r("top ten package site count", top_ten_package_site_count)
+r("top ten package site perc", ratio(top_ten_package_site_count, sum(package_calls$site_count)))
+
+top_ten_package_calls %>%
+add_column(index = toupper(letters)[1:nrow(top_ten_package_calls)]) %>%
+pmap_dfr(function(eval_source, site_count, call_count, call_perc, cumsum_call_perc, index) {
+    r(str_c("top ten package name ", index), eval_source)
+    r(str_c("top ten package callsite count ", index), site_count)
+    r(str_c("top ten package call count ", index), call_count)
+    r(str_c("top ten package call perc ", index), ratio(call_count, total_package_call_count))
+})
+```
+
+```{r callsite-distribution, eval=TRUE}
+```{r call-site-table}
+eval_callsite_table <-
+    package_calls %>%
+    mutate(site_count = if_else(site_count <= 10, as.character(site_count), 
+                        if_else(site_count <= 50, "11--50",
+                        if_else(site_count <= 100, "51--100",
+                        if_else(site_count <= 150, "101--150",
+                        if_else(site_count <= 200, "151--200",
+                        "> 200")))))) %>%
+    group_by(site_count) %>%
+    summarize(package_count = n()) %>%
+    ungroup() %>%
+    arrange(match(site_count, c(1:10,"11-50", "51-100", "101-150", "151-200")))
+    
+    
+    
+datatable(eval_callsite_table)
+
+eval_callsite_table %>%
+add_column(index = toupper(letters)[1:nrow(eval_callsite_table)]) %>%
+pmap_dfr(function(site_count, package_count, index) {
+    r(str_c("site summary site count ", index), site_count)
+    r(str_c("site summary package count ", index), package_count)
+})
+```
+

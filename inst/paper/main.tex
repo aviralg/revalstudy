@@ -13,7 +13,7 @@
 \usepackage{xspace}
 \usepackage{url}
 
-\input{counts.tex}
+\input{tag/counts.tex}
 \input{tag/corpus.tex}
 
 \graphicspath{{img/}}
@@ -384,17 +384,17 @@ eval calls. A single callsite of \TopTenPackageNameA accounts for over
 
 \begin{table}[ht]
   \resizebox{\columnwidth}{!}{%
-    \begin{tabular}{l|rr||l|rr}
+    \begin{tabular}{l|rrr||l|rrr}
       \hline
-      \multicolumn{3}{c}{}& \multicolumn{3}{c}{} \\
-      \cline{1-3} \cline{4-6}
-      Package & Callsites & Calls & Package & Callsites & Call\\
+      \multicolumn{4}{c}{}& \multicolumn{4}{c}{} \\
+      \cline{1-4} \cline{5-8}
+      Package & Callsites & Calls & Calls \% & Package & Callsites & Calls & Calls \%\\
       \hline
-      \TopTenPackageNameA & \TopTenPackageCallsiteCountA & \TopTenPackageCallCountA (\TopTenPackageCallPercA) & \TopTenPackageNameF & \TopTenPackageCallsiteCountF & \TopTenPackageCallCountF (\TopTenPackageCallPercF) \\
-      \TopTenPackageNameB & \TopTenPackageCallsiteCountB & \TopTenPackageCallCountB (\TopTenPackageCallPercB) & \TopTenPackageNameG & \TopTenPackageCallsiteCountG & \TopTenPackageCallCountG (\TopTenPackageCallPercG) \\
-      \TopTenPackageNameC & \TopTenPackageCallsiteCountC & \TopTenPackageCallCountC (\TopTenPackageCallPercC) & \TopTenPackageNameH & \TopTenPackageCallsiteCountH & \TopTenPackageCallCountH (\TopTenPackageCallPercH) \\
-      \TopTenPackageNameD & \TopTenPackageCallsiteCountD & \TopTenPackageCallCountD (\TopTenPackageCallPercD) & \TopTenPackageNameI & \TopTenPackageCallsiteCountI & \TopTenPackageCallCountI (\TopTenPackageCallPercI) \\
-      \TopTenPackageNameE & \TopTenPackageCallsiteCountE & \TopTenPackageCallCountE (\TopTenPackageCallPercE) & \TopTenPackageNameJ & \TopTenPackageCallsiteCountJ & \TopTenPackageCallCountJ (\TopTenPackageCallPercJ) \\
+      \TopTenPackageNameA & \TopTenPackageCallsiteCountA & \TopTenPackageCallCountA &\TopTenPackageCallPercA & \TopTenPackageNameF & \TopTenPackageCallsiteCountF & \TopTenPackageCallCountF & \TopTenPackageCallPercF \\
+      \TopTenPackageNameB & \TopTenPackageCallsiteCountB & \TopTenPackageCallCountB &\TopTenPackageCallPercB & \TopTenPackageNameG & \TopTenPackageCallsiteCountG & \TopTenPackageCallCountG & \TopTenPackageCallPercG \\
+      \TopTenPackageNameC & \TopTenPackageCallsiteCountC & \TopTenPackageCallCountC &\TopTenPackageCallPercC & \TopTenPackageNameH & \TopTenPackageCallsiteCountH & \TopTenPackageCallCountH & \TopTenPackageCallPercH \\
+      \TopTenPackageNameD & \TopTenPackageCallsiteCountD & \TopTenPackageCallCountD &\TopTenPackageCallPercD & \TopTenPackageNameI & \TopTenPackageCallsiteCountI & \TopTenPackageCallCountI & \TopTenPackageCallPercI \\
+      \TopTenPackageNameE & \TopTenPackageCallsiteCountE & \TopTenPackageCallCountE &\TopTenPackageCallPercE & \TopTenPackageNameJ & \TopTenPackageCallsiteCountJ & \TopTenPackageCallCountJ & \TopTenPackageCallPercJ \\
       \hline
     \end{tabular}
   }
@@ -405,6 +405,26 @@ eval calls. A single callsite of \TopTenPackageNameA accounts for over
 
 \missingGraph shows the distribution of number of callsites to eval across these
 packages. \missingNumber packages have a single eval callsite.
+
+
+\begin{table}[ht]
+  \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{rr|rr|rr}
+      \hline
+      Callsites & Packages & Callsites & Packages & Callsites & Packages \\
+      \hline
+      \SiteSummarySiteCountA & \SiteSummaryPackageCountA & \SiteSummarySiteCountF & \SiteSummaryPackageCountF & \SiteSummarySiteCountK & \SiteSummaryPackageCountK \\
+      \SiteSummarySiteCountB & \SiteSummaryPackageCountB & \SiteSummarySiteCountG & \SiteSummaryPackageCountG & \SiteSummarySiteCountL & \SiteSummaryPackageCountL \\
+      \SiteSummarySiteCountC & \SiteSummaryPackageCountC & \SiteSummarySiteCountH & \SiteSummaryPackageCountH & \SiteSummarySiteCountM & \SiteSummaryPackageCountM \\
+      \SiteSummarySiteCountD & \SiteSummaryPackageCountD & \SiteSummarySiteCountI & \SiteSummaryPackageCountI & \SiteSummarySiteCountN & \SiteSummaryPackageCountN \\
+      \SiteSummarySiteCountE & \SiteSummaryPackageCountE & \SiteSummarySiteCountJ & \SiteSummaryPackageCountJ & \SiteSummarySiteCountO & \SiteSummaryPackageCountO \\ 
+      \hline
+    \end{tabular}
+  }
+  \label{table:site-package-summary}
+  \caption{Distribution of callsites across packages}
+\end{table}
+
 
 
 \subsection{How are they used}
