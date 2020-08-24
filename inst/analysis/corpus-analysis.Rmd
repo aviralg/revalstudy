@@ -124,7 +124,11 @@ overview_table(
   
   r("code",                 sum(corpus$package_code)),
   r("R code",               sum(corpus$package_r_code)),
+  r("R code mean",          mean(corpus$package_r_code)),
+  r("R code median",        median(corpus$package_r_code)),
   r("native code",          sum(corpus$package_native_code)),
+  r("native code mean",     mean(corpus$package_native_code)),
+  r("native code median",   median(corpus$package_native_code)),
   
   r("functions",            sum(corpus$funs_public+corpus$funs_private)),
   r("function with eval",   sum(corpus$funs_with_eval)),
@@ -143,7 +147,9 @@ overview_table(
 ```{r generals}
 overview_table(
   r("all cran", dim(available.packages())[1]),
-  r("core packages", length(CORE_PACKAGES))
+  r("core packages", length(CORE_PACKAGES)),
+  r("most downloaded treshold", MOST_DOWNLOADED),
+  r("large package treshold", PACKAGE_SIZE_OUTLIER)
 )
 ```
 
@@ -158,7 +164,7 @@ revdeps_median  <- median(corpus$revdeps)
 corpus %>%
   mutate(
     outlier=package_code > PACKAGE_SIZE_OUTLIER,
-    label=ifelse(rank <= 25 | outlier, package, NA)  #if_else(outlier, str_glue("{package}"), as.character(NA))
+    label=ifelse(rank <= MOST_DOWNLOADED | outlier, package, NA)  #if_else(outlier, str_glue("{package}"), as.character(NA))
   ) %>%
   ggplot(
     aes(
@@ -212,7 +218,7 @@ datatable(
 
 ## Kaggle
 
-```{r}
+```{r kaggle summary}
 kaggle_runnable <- filter(kaggle, runnable)
 kaggle_finished <- filter(kaggle, exitval==0)
 kaggle_code     <- kaggle_finished$code
@@ -233,15 +239,15 @@ overview_table(
 
 ## Combined
 
-```{r}
+```{r all summary}
 overview_table(
   r("all programs", nrow(kaggle_finished) + sum(corpus_programs_files)),
   r("all runnbale code", sum(kaggle_code) + sum(runnable_code)),
-  r("all code", sum(kaggle_code) + sum(corpus_code) + sum(runnable_code))
+  r("all code", sum(kaggle_code) + sum(corpus$package_code) + sum(runnable_code))
 )
 ```
 
-```{r}
+```{r compute programs}
 corpus_programs <-
   left_join(
     filter(runs, exitval==0) %>% select(package, file, time), 
