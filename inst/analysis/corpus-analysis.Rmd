@@ -19,7 +19,8 @@ for (x in c(
   "readr",
   "purrr",
   "stringr",
-  "tidyr"
+  "tidyr",
+  "viridis"
   )) {
   suppressPackageStartupMessages(library(x, character.only=TRUE))
 }
@@ -43,56 +44,116 @@ create_tags(path(TAGS_DIR, "corpus.tex"), prefix="Corpus", default=TRUE)
 
 ## Load data
 
-```{r}
-corpus <- as_tibble(read_fst(CORPUS_DETAILS_FILE))
+```{r load corpus}
+corpus <- 
+  read_fst(CORPUS_DETAILS_FILE) %>%
+  as_tibble() %>%
+  mutate_at(
+    vars(
+      starts_with("runnable_code"),
+      starts_with("runnable_files"),
+      starts_with("package_"),
+      starts_with("funs_"),
+    ), 
+    replace_na, 
+    0
+  )
 ```
 
-## Corpus Overview
+```{r load kaggle}
+kaggle_kernels <- as_tibble(read_fst(KAGGLE_KERNELS_FILE))
+kaggle_log <- as_tibble(read_fst(KAGGLE_LOG_FILE)) %>%
+  transmute(
+    id=str_replace(Command, ".*/kaggle-run/[^/]+/([^/]+)/.*", "\\1"),
+    exitval=Exitval,
+    runtime=as.duration(JobRuntime)
+  )
 
-### Table
+kaggle <- left_join(
+  kaggle_kernels,
+  kaggle_log,
+  by="id"
+)
+```
+
+```{r load runnable code metadata}
+runnable_code_metadata <- read_fst(PACKAGE_RUNNABLE_CODE_FILE) %>%
+  as_tibble() %>%
+  mutate(package=basename(package)) %>%
+  select(package, file=filename, code)
+
+# TODO semi_join with traced-programs.fst
+```
+
+```{r load run metadata}
+runs <- read_fst(PACKAGE_RUNS_FILE) %>%
+  as_tibble() %>%
+  mutate(
+    package=basename(package),
+    file=as.character(path("./", basename(dirname(file)), basename(file)))
+  ) %>%
+  semi_join(corpus, by="package")
+```
+
+
+## CRAN packages
 
 ```{r summary}
+corpus_runtime  <- corpus$runnable_time / corpus$runnable_files
+runnable_code   <- corpus$runnable_code
+corpus_programs_files <- corpus$runnable_files
+
 overview_table(
   r("packages",             corpus),
-  r("runnable code",        sum(corpus$runnable_code, na.rm=T)),
-  r("examples code",        sum(corpus$runnable_code_examples, na.rm=T)),
-  r("tests code",           sum(corpus$runnable_code_tests, na.rm=T)),
-  r("vignettes code",       sum(corpus$runnable_code_vignettes , na.rm=T)),
+  r("in cranlogs",          filter(corpus, !is.na(rank))),
+  r("package programs",     sum(corpus_programs_files)),
+
+  r("runnable code",        sum(runnable_code)),
+  r("runnable code mean",   mean(runnable_code)),
+  r("runnable code median", median(runnable_code)),
+  
+  r("examples code",        sum(corpus$runnable_code_examples)),
+  r("tests code",           sum(corpus$runnable_code_tests)),
+  r("vignettes code",       sum(corpus$runnable_code_vignettes)),
+  
   r("mean expr coverage",   percent(mean(corpus$coverage_expr))),
   r("median expr coverage", percent(median(corpus$coverage_expr))),
+  
   r("with R code",          filter(corpus, package_r_code > 0)),
-  r("R code",               sum(corpus$package_r_code, na.rm=T)),
   r("with native code",     filter(corpus, package_native_code > 0)),
-  r("native code",          sum(corpus$package_native_code, na.rm=T)),
-  r("functions",            sum(corpus$funs_public+corpus$funs_private, na.rm=T)),
-  r("public functions",     sum(corpus$funs_public, na.rm=T)),
-  r("private functions",    sum(corpus$funs_private, na.rm=T)),
-  r("ranked in cranlogs",   filter(corpus, !is.na(rank))),
+  
+  r("code",                 sum(corpus$package_code)),
+  r("R code",               sum(corpus$package_r_code)),
+  r("native code",          sum(corpus$package_native_code)),
+  
+  r("functions",            sum(corpus$funs_public+corpus$funs_private)),
+  r("function with eval",   sum(corpus$funs_with_eval)),
+  r("public functions",     sum(corpus$funs_public)),
+  r("private functions",    sum(corpus$funs_private)),
+  
   r("mean revdes",          mean(corpus$revdeps)),
   r("median revdes",        median(corpus$revdeps)),
+  
   r("runtime",              as.duration(sum(corpus$runnable_time))),
-  r("mean runtime",         as.duration(mean(corpus$runnable_time))),
-  r("median runtime",       as.duration(median(corpus$runnable_time))),
-  r("function with eval",   sum(corpus$funs_with_eval, na.rm=T))
+  r("mean runtime",         as.duration(mean(corpus_runtime))),
+  r("median runtime",       as.duration(median(corpus_runtime)))
 )
 ```
 
-### CRAN
-
-```{r}
+```{r generals}
 overview_table(
-  r("all cran", dim(available.packages())[1])
+  r("all cran", dim(available.packages())[1]),
+  r("core packages", length(CORE_PACKAGES))
 )
 ```
 
-
-### Plots
+### Plot
 
 ```{r plot corpus}
-coverage_mean <- mean(corpus$coverage_expr)
+coverage_mean   <- mean(corpus$coverage_expr)
 coverage_median <- median(corpus$coverage_expr)
-revdeps_mean <- mean(corpus$revdeps)
-revdeps_median <- median(corpus$revdeps)
+revdeps_mean    <- mean(corpus$revdeps)
+revdeps_median  <- median(corpus$revdeps)
   
 corpus %>%
   mutate(
@@ -149,18 +210,99 @@ datatable(
 )
 ```
 
-
-
-
 ## Kaggle
 
-```{r, eval=FALSE}
-parallel_log <- 
-  read_csv(PARALLEL_LOG_FILE)
+```{r}
+kaggle_runnable <- filter(kaggle, runnable)
+kaggle_finished <- filter(kaggle, exitval==0)
+kaggle_code     <- kaggle_finished$code
+kaggle_runtime  <- kaggle_finished$runtime
 
-parallel_log %>%
-  mutate(
-    output=show_url(path(V1, "run.R.out"))
-  ) %>%
-  my_datatable(escape=FALSE)
+overview_table(
+  r("kaggle",                 kaggle),
+  r("runnable kaggle",        kaggle_runnable),
+  r("finished kaggle",        kaggle_finished),
+  r("finished kaggle code",   sum(kaggle_code)),
+  r("finished kaggle mean",   mean(kaggle_code)),
+  r("finished kaggle median", median(kaggle_code)),
+  r("kaggle runtime",         as.duration(sum(kaggle_runtime))),
+  r("kaggle mean",            as.duration(mean(kaggle_runtime))),
+  r("kaggle median",          as.duration(median(kaggle_runtime)))
+)
 ```
+
+## Combined
+
+```{r}
+overview_table(
+  r("all programs", nrow(kaggle_finished) + sum(corpus_programs_files)),
+  r("all runnbale code", sum(kaggle_code) + sum(runnable_code))
+)
+```
+
+```{r}
+corpus_programs <-
+  left_join(
+    filter(runs, exitval==0) %>% select(package, file, time), 
+    runnable_code_metadata %>% select(package, file, code),
+    by=c("package", "file")
+  ) %>%
+  transmute(id=paste(package, ":", file), code, runtime=time, corpus="packages")
+
+kaggle_programs <-
+  kaggle %>%
+  filter(exitval==0) %>%
+  transmute(id, code, runtime=as.numeric(runtime, units="seconds"), corpus="kaggle")
+
+programs <- bind_rows(corpus_programs, kaggle_programs)
+```
+
+```{r}
+programs %>%
+  ggplot(aes(y=code, x=corpus, fill=corpus)) + 
+  geom_flat_violin(trim=FALSE, width=.5) +
+  geom_dotplot(
+    binaxis="y", 
+    dotsize=0.1, 
+    stackdir="down", 
+    binwidth=0.01, 
+    position=position_nudge(-0.025)) +
+  scale_y_log10(labels = scales::comma) +
+  scale_x_discrete(labels=c("kaggle"="Kaggle", "packages"="Packages")) +
+  scale_fill_viridis(discrete = TRUE) +
+  guides(fill = FALSE) +
+  labs(y="Code size (log)") +
+  theme(
+    legend.box="horizontal",
+    axis.title.x=element_blank()
+  )
+
+ggsave(path(PLOT_DIR, "programs-code.pdf"), width=7, height=5.5)
+```
+
+```{r}
+programs %>%
+  ggplot(aes(y=runtime, x=corpus, fill=corpus)) + 
+  geom_flat_violin(trim=FALSE, width=.5) +
+  geom_dotplot(
+    binaxis="y", 
+    dotsize=0.1, 
+    stackdir="down", 
+    binwidth=0.01, 
+    position=position_nudge(-0.025)) +
+  scale_y_log10(labels = function(x, ...) {
+    min <- as.integer(x/60L)
+    sec <- as.integer(x%%60L)
+    sprintf("%.2d:%.2d", min, sec)
+  }) +
+  scale_x_discrete(labels=c("kaggle"="Kaggle", "packages"="Packages")) +
+  scale_fill_viridis(discrete = TRUE) +
+  guides(fill = FALSE) +
+  labs(y="Running time [mm:ss] (log)") +
+  theme(
+    legend.box="horizontal",
+    axis.title.x=element_blank()
+  )
+ggsave(path(PLOT_DIR, "programs-runtime.pdf"), width=3.5, height=5.0)
+```
+

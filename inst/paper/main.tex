@@ -267,6 +267,8 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 
 \section{Corpus of R Programs}
 
+We have assembled a corpus that consists of \CorpusPackages R packages and user programs.
+
 We have selected \CorpusPackages packages consisting of \CorpusRCodeRnd
 lines of R code and \CorpusNativeCodeRnd lines of native code
 (C/C++/Fortran).  Figure~\ref{fig:corpus} shows these packages, the size of
@@ -290,6 +292,14 @@ package must abide to a number of well-formedness rules that are automatically
 checked asserting certain quality. Most relevant for this work is that all of
 the runnable code (including code snippets from examples and vignettes) is
 tested and only a successfully running package is admitted in the archive.
+
+\begin{figure}[!tb]\centering\includegraphics[width=.9\linewidth]
+  {programs-code.pdf}\caption{Corpus}\label{fig:corpus}
+\end{figure}
+\begin{figure}[!tb]\centering\includegraphics[width=.9\linewidth]
+  {programs-runtime.pdf}\caption{Corpus}\label{fig:corpus}
+\end{figure}
+
 
 % FILIP: WIP
 % We have downloaded and installed all available CRAN packages. Out of the
