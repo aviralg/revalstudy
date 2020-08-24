@@ -66,7 +66,7 @@
   ways to mitigate its damage. One question that has not been studied is
   whether the usage of \eval is dependent on the application domain or other
   features of the language. This paper is a large-scale study of a corpus of
-  \miss{3} million lines of data science libraries and end-user written in
+  \CorpusAllCodeRnd lines of data science libraries and end-user written in
   the R language. We performed a simple static analysis and more
   sophisticated dynamic analysis to confirm that \eval is indeed in wide
   spread use, and to categorized patters of usage. We found that \eval in
@@ -136,12 +136,12 @@ often have only a cursory knowledge of the language.\footnote{To illustrate
   have informally surveyed end-users, including computer scientists, and did
   not find a single one aware of this fact. Library developers, on the other
   hand, know about laziness and program defensively around it.}  Thus, our
-corpus distinguished between \emph{core packages} (there are \miss{8} such
-packages that are loaded together with the R virtual machine), \emph{CRAN
-  packages} (we selected \miss{500} curated packages that pass stringent
+corpus distinguished between \emph{core packages} (there are \CorpusCorePackages such
+packages that are distributed together with the R virtual machine), \emph{CRAN
+  packages} (we selected \CorpusPackages curated packages that pass stringent
 community quality checks and are equipped with tests and sample data),
-\emph{scripts} (we used \miss{400} end-user written programs that performs a
-particular data analysis task).  There are reasons to believe that \eval
+\emph{Kaggle scripts} (we used \CorpusFinishedKaggle end-user written programs that performs a
+particular data analysis task). There are reasons to believe that \eval
 usage patterns may differ between these datasets. The core R code is
 extremely stable, it has only been maintained for the last 20 years with
 very few far reaching changes. The libraries represent a more lively
@@ -361,18 +361,17 @@ not able to deterimine its origin.\footnote{A source of unknowns is when the
   \eval function is passed as an argument to a function such as \c{lapply},
   another is when the code lacks source references.}
 
-Over all, we observed \AllAllCallCountRnd call to \eval in \miss{3,000} runs
-of our corpus. The mean number of calls per run was \miss{20} (with a min of
-\miss{1} and a max of \miss{10,000}). Table~\ref{A} details the usage of
-\eval across the corpus.  The format is T (m/M/x) where T is the total
-number of calls observed for all runs of the corpus, m and x are the minimum
-and maximum number of calls for any given run, and A is the mean number of
-calls per run.  We can observe \miss{???}. {\bf <The following is a place
-  holder. Real text will come once we have the table.>} The majority of
-calls come from the core packages.  Kaggle does not have any own calls, any
-\eval in those happens in dependent packages and core.  Of the
-\missingNumber packages in our corpus, only \missingNumber packages call
-eval.
+Over all, we observed \AllAllCallCountRnd call to \eval in \CorpusAllProgramsRnd
+programs in our corpus. The mean number of calls per run was \miss{20} (with a
+min of \miss{1} and a max of \miss{10,000}). Table~\ref{A} details the usage of
+\eval across the corpus. The format is T (m/M/x) where T is the total number of
+calls observed for all runs of the corpus, m and x are the minimum and maximum
+number of calls for any given run, and A is the mean number of calls per run. We
+can observe \miss{???}. {\bf <The following is a place holder. Real text will
+  come once we have the table.>} The majority of calls come from the core
+packages. Kaggle does not have any own calls, any \eval in those happens in
+dependent packages and core. Of the \missingNumber packages in our corpus, only
+\missingNumber packages call eval.
 
 
 \begin{verbatim}

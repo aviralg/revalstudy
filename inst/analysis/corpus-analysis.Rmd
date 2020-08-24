@@ -236,7 +236,8 @@ overview_table(
 ```{r}
 overview_table(
   r("all programs", nrow(kaggle_finished) + sum(corpus_programs_files)),
-  r("all runnbale code", sum(kaggle_code) + sum(runnable_code))
+  r("all runnbale code", sum(kaggle_code) + sum(runnable_code)),
+  r("all code", sum(kaggle_code) + sum(corpus_code) + sum(runnable_code))
 )
 ```
 
