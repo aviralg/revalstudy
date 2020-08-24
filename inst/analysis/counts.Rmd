@@ -216,11 +216,13 @@ eval_callsite_table <-
                         if_else(site_count <= 100, "51--100",
                         if_else(site_count <= 150, "101--150",
                         if_else(site_count <= 200, "151--200",
-                        "> 200")))))) %>%
+                        if_else(site_count <= 250, "201--250",
+                        if_else(site_count <= 300, "251--300",
+                        "> 300")))))))) %>%
     group_by(site_count) %>%
     summarize(package_count = n()) %>%
     ungroup() %>%
-    arrange(match(site_count, c(1:10,"11-50", "51-100", "101-150", "151-200")))
+    arrange(match(site_count, c(1:10,"11--50", "51--100", "101--150", "151--200", "201--250", "251--300", "> 300")))
     
     
     
@@ -232,5 +234,10 @@ pmap_dfr(function(site_count, package_count, index) {
     r(str_c("site summary site count ", index), site_count)
     r(str_c("site summary package count ", index), package_count)
 })
+```
+
+
+```{r core-dependent-own-eval}
+
 ```
 
