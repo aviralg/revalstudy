@@ -436,7 +436,13 @@ trace_log_raw     &lt;- read_parallel_log(PACKAGE_TRACE_LOG_FILE)</code></pre>
 <pre class="r"><code>runnable_code &lt;- 
   runnable_code_raw %&gt;%
   filter(language==&quot;R&quot;) %&gt;%
-  select(package, path, code, files) %&gt;%
+  mutate(path=case_when(
+    str_starts(filename, &quot;./examples&quot;) ~ &quot;examples&quot;,
+    str_starts(filename, &quot;./tests&quot;) ~ &quot;tests&quot;,
+    str_starts(filename, &quot;./vignettes&quot;) ~ &quot;vignettes&quot;
+  )) %&gt;%
+  group_by(package, path) %&gt;%
+  summarise(files=n(), code=sum(code)) %&gt;%
   pivot_wider(
     names_from=path, 
     values_from=c(code, files), 
@@ -461,6 +467,7 @@ trace_log_raw     &lt;- read_parallel_log(PACKAGE_TRACE_LOG_FILE)</code></pre>
     runnable_files,
     everything()
   )</code></pre>
+<pre><code>## `summarise()` regrouping output by 'package' (override with `.groups` argument)</code></pre>
 </div>
 <div id="coverage" class="section level3">
 <h3>Coverage</h3>

@@ -115,7 +115,13 @@ We extract this code and run it to narrow down the list of packages that can be 
 runnable_code <- 
   runnable_code_raw %>%
   filter(language=="R") %>%
-  select(package, path, code, files) %>%
+  mutate(path=case_when(
+    str_starts(filename, "./examples") ~ "examples",
+    str_starts(filename, "./tests") ~ "tests",
+    str_starts(filename, "./vignettes") ~ "vignettes"
+  )) %>%
+  group_by(package, path) %>%
+  summarise(files=n(), code=sum(code)) %>%
   pivot_wider(
     names_from=path, 
     values_from=c(code, files), 
