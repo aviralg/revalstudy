@@ -374,6 +374,20 @@ CRAN   10M?(1/2/3) 1M?(1/2/3) 1K?(1/2/3)
 Kaggle 2K?(1/2/3)  1K?(1/2/3) 0 (0/0/0)
 \end{verbatim}
 
+\begin{table}[ht]
+  \resizebox{\columnwidth}{!}{%
+    \begin{tabular}{r|rrr|}
+      \hline
+      Source & Core & Dependent & Own \\
+      \hline
+      CRAN & \CranCoreTotalEvalCallsRnd (\CranCoreMinEvalCallsRnd/\CranCoreAvgEvalCallsRnd/\CranCoreMaxEvalCallsRnd) & \CranDependentTotalEvalCallsRnd (\CranDependentMinEvalCallsRnd/\CranDependentAvgEvalCallsRnd/\CranDependentMaxEvalCallsRnd) & \CranOwnTotalEvalCallsRnd (\CranOwnMinEvalCallsRnd/\CranOwnAvgEvalCallsRnd/\CranOwnMaxEvalCallsRnd) \\
+      Kaggle & \KaggleCoreTotalEvalCallsRnd (\KaggleCoreMinEvalCallsRnd/\KaggleCoreAvgEvalCallsRnd/\KaggleCoreMaxEvalCallsRnd) & \KaggleDependentTotalEvalCallsRnd (\KaggleDependentMinEvalCallsRnd/\KaggleDependentAvgEvalCallsRnd/\KaggleDependentMaxEvalCallsRnd) & 0(0/0/0) \\
+      \hline
+    \end{tabular}
+  }
+  \label{table:source-eval-summary}
+  \caption{Distribution of eval calls in CRAN and Kaggle}
+\end{table}
 
 
 

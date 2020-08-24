@@ -238,6 +238,38 @@ pmap_dfr(function(site_count, package_count, index) {
 
 
 ```{r core-dependent-own-eval}
+all_data <-
+    bind_rows(core_data, packages_data, kaggle_data)
+    ##filter(is.na(eval_call_srcref))
 
+all_data$package <- map_chr(path_split(all_data$file), function(l) l[[length(l) - 2]])
+
+all_data <-
+    all_data %>%
+    mutate(core_own_dependent = if_else(eval_source == "core", "core",
+                                if_else(eval_source == "base", "core",
+                                if_else(package == caller_package, "own",
+                                        "dependent"))),
+          eval_source)
+
+core_own_dependent <-
+    all_data %>%
+        group_by(file, core_own_dependent) %>%
+        summarize(corpus = first(corpus), eval_calls = sum(nb_ev_calls)) %>%
+        ungroup() %>%
+        group_by(corpus, core_own_dependent) %>%
+        summarize(total_eval_calls = sum(eval_calls),
+                  max_eval_calls = max(eval_calls),
+                  min_eval_calls = min(eval_calls),
+                  avg_eval_calls = mean(eval_calls))
+
+core_own_dependent %>%
+pmap_dfr(function(corpus, core_own_dependent, total_eval_calls, max_eval_calls, min_eval_calls, avg_eval_calls) {
+    r(str_c(corpus, " ", core_own_dependent, " total eval calls"), total_eval_calls)
+    r(str_c(corpus, " ", core_own_dependent, " max eval calls"), max_eval_calls)
+    r(str_c(corpus, " ", core_own_dependent, " min eval calls"), min_eval_calls)
+    r(str_c(corpus, " ", core_own_dependent, " avg eval calls"), avg_eval_calls)
+})
+
+datatable(core_own_dependent)
 ```
-
