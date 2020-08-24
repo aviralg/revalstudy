@@ -358,7 +358,22 @@ maximum number of calls for any given run, and A is the mean number of calls
 per run.  We can observe \miss{???}. {\bf <The following is a place
   holder. Real text will come once we have the table.>} The majority of
 calls come from the core packages.  Kaggle does not have any own calls, any
-\eval in those happens in dependent packages and core.
+\eval in those happens in dependent packages and core.  {\bf <The following
+  will be changed. The file level stuff is less useful than package level.>}
+All the \TotalFileCount files in our corpus call eval. \CoreEvalFileCount
+(\CoreEvalFilePerc) call only core evals, \AllEvalFileCount
+(\AllEvalFilePerc) call both package and core evals; and,
+\PackageEvalFileCount (\PackageEvalFilePerc) call only package evals. Of the
+\AllEvalFileCount (\AllEvalFilePerc) files that call both package and base
+eval, \EightyCoreEvalFilePerc (\EightyCoreEvalFileCount) files make over
+80\% eval calls to core evals. Of the \missingNumber packages in our corpus,
+only \missingNumber packages call eval. \ref{table:top-ten-package-summary}
+shows the number of calls to eval made by the ten most frequent callers to
+eval. These packages together have \missingNumber callsites and account for
+\missingPercentage calls to eval.  Furthermore, the top ten callsites
+account for \missingPercentage of package eval calls. A single callsite of
+\TopTenPackageNameA accounts for over \missingPercentage calls to eval.
+
 
 \begin{verbatim}
 Table A
@@ -370,7 +385,11 @@ Kaggle 2K?(1/2/3)  1K?(1/2/3) 0 (0/0/0)
 \end{verbatim}
 
 
-The following table will be split up:
+
+
+The following table will be replaced. {\bf <At this point separating between
+  the different kinds of evals is distracting. We have not argued why it is
+  important.>}
 
 \begin{table}[ht]
   \resizebox{\columnwidth}{!}{%
@@ -393,21 +412,6 @@ The following table will be split up:
   \caption{Distribution of eval calls and callsites in the corpus}
 \end{table}
 
-All the \TotalFileCount files in our corpus call eval. \CoreEvalFileCount
-(\CoreEvalFilePerc) call only core evals, \AllEvalFileCount (\AllEvalFilePerc)
-call both package and core evals; and, \PackageEvalFileCount
-(\PackageEvalFilePerc) call only package evals. Of the \AllEvalFileCount
-(\AllEvalFilePerc) files that call both package and base eval,
-\EightyCoreEvalFilePerc (\EightyCoreEvalFileCount) files make over 80\% eval
-calls to core evals.
-
-Of the \missingNumber packages in our corpus, only \missingNumber packages call
-eval. \ref{table:top-ten-package-summary} shows the number of calls to eval made
-by the ten most frequent callers to eval. These packages together have
-\missingNumber callsites and account for \missingPercentage calls to eval.
-Furthermore, the top ten callsites account for \missingPercentage of package
-eval calls. A single callsite of \TopTenPackageNameA accounts for over
-\missingPercentage calls to eval.
 
 \begin{table}[ht]
   \resizebox{\columnwidth}{!}{%
