@@ -213,6 +213,12 @@ latex_escape <- function(s) {
     stringr::str_replace_all("-", "")
 }
 
+latex_escape_value <- function(s) {
+  s %>%
+    stringr::str_replace_all("\\%", "\\\\%") %>%
+    stringr::str_replace_all("_", "\\_")
+}
+
 generate_latex_command_name <- function(name, prefix="") {
   name <- latex_command_name(name)
   name <- latex_escape(name)
@@ -225,7 +231,7 @@ generate_latex_command <- function(command_name, value) {
   stopifnot(length(command_name) == length(value))
   
   stringr::str_c(
-    "\\newcommand{\\", command_name, "}{", latex_escape(value), "\\xspace}"
+    "\\newcommand{\\", command_name, "}{", latex_escape_value(value), "\\xspace}"
   )
 }
 
