@@ -267,13 +267,14 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 
 \section{Corpus of R Programs}
 
-We have selected \CorpusPackages packages consisting of \CorpusRCodeRnd lines of
-R code and \CorpusNativeCodeRnd lines of native code (C/C++/Fortran).
-Figure~\ref{fig:corpus} shows these packages, the size of the dots reflects the
-project's size in lines of code including both R and native code\footnote{Lines
-  of source code reported excludes comments and blank lines, counted by
-  \emph{cloc}, \cf \url{https://github.com/AlDanial/cloc}}, the x-axis indicates
-the expression code coverage in percents and the y-axis gives the number of
+We have selected \CorpusPackages packages consisting of \CorpusRCodeRnd
+lines of R code and \CorpusNativeCodeRnd lines of native code
+(C/C++/Fortran).  Figure~\ref{fig:corpus} shows these packages, the size of
+the dots reflects the project's size in lines of code including both R and
+native code\footnote{Lines of source code reported excludes comments and
+  blank lines, counted by \emph{cloc}, \cf
+  \url{https://github.com/AlDanial/cloc}}, the x-axis indicates the
+expression code coverage in percents and the y-axis gives the number of
 reverse dependencies in log scale. Dotted lines indicate means. Large and
 popular packages are annotated.
 
@@ -330,20 +331,46 @@ tested and only a successfully running package is admitted in the archive.
 % metadata using builtin function.
 
 
-\section{Threats to Validity}
+\section{Usage Metrics}
+
+This section presents an overiew of the usage of \eval in our corpus.
+Previous work reported that 82\% of JavaScript-enabled web pages used
+\eval~\cite{ecoop11}, the case for R is more striking at \miss{100\%} of the
+programs use that feature.
+
+This strikingly high number is due to the fact that the language
+implementation, the core packages, use \eval extensively. So, in our
+analysis, we differentiate \eval based on where they originate from. A {\bf
+  core} \eval is one that occurs in the code of a core package.  A {\bf
+  dependent} \eval is one that occurs in a package that was included by the
+target package. An {\bf own} \eval is one that occurs in the source code of
+the target package. We label an \eval occurence as {\bf unknown} when we are
+not able to deterimine its origin.\footnote{One source of unknown evals is
+  when the \eval function passed as an argument to a higher-order function
+  such as \c{lapply}, another is when the code lacks source references.}
+
+Over all, we observed \AllAllCallCountRnd call to \eval in \miss{3,000} runs
+of our corpus. The mean number of calls per run was \miss{20} (with a min of
+\c{1} and a max of \c{10,000}). Table~\ref{A} details the usage of \eval
+across the corpus.  The format is T (m/M/x) where T is the total number of
+calls observed for all runs of the corpus, m and x are the minimum and
+maximum number of calls for any given run, and A is the mean number of calls
+per run.  We can observe \miss{???}. {\bf <The following is a place
+  holder. Real text will come once we have the table.>} The majority of
+calls come from the core packages.  Kaggle does not have any own calls, any
+\eval in those happens in dependent packages and core.
+
+\begin{verbatim}
+Table A
+
+         core      dependent   own
+----------------------------------------
+CRAN   10M?(1/2/3) 1M?(1/2/3) 1K?(1/2/3)
+Kaggle 2K?(1/2/3)  1K?(1/2/3) 0 (0/0/0)
+\end{verbatim}
 
 
-\section{Research Question}
-This section presents the results of our empirical study of eval in the R language.
-\subsection{How many evals}
-
-In our corpus eval is called \AllAllCallCountRnd{} times out of \missingNumber
-total calls to all R functions. This is merely \missingPercentage of the total
-number of calls. Table \ref{table:eval-count-summary} shows the number of
-calls and callsites for the four kinds of eval functions from core and packages.
-The core R packages are the biggest consumers of eval. Majority of calls,
-\CoreAllCallCountRnd, originate from the core R packages. Kaggle code, which is
-end-user code, has merely \KaggleAllCallCountRnd calls to eval.
+The following table will be split up:
 
 \begin{table}[ht]
   \resizebox{\columnwidth}{!}{%
@@ -457,6 +484,7 @@ We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \emph{i
 
 \subsection{base}
 
+\section{Threats to Validity}
 
 \section{Conclusion}
 
@@ -464,43 +492,3 @@ We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \emph{i
 \bibliography{bib/bibliography,bib/jv}
 
 \end{document}
-
-
-Eval is evil, we would like to replace it.
-Research Questions
-How often is eval used? 
-How often it is used in base / other packages?
-blocking: cannot find out precisely what comes from base
-What is the source of evals?
-Provenance (source arguments to eval)
-How many evals are in libraries / vignettes
-What is eval used for?
-??Eval in the tidyverse
-TODO: Classification of evals in  packages (Pierre)
-TODO: look at the first function to get
-binary / unary / assignment / other function
-does it have {
-evals that do nothing (they get values)
-...
-TODO: In the case of base package (Filip)
-access default values of formals
-simply implementation
-weird replacement of calls (write.csv -> write.table)
-accessing variable from another environment (instead of get)
-evaling user input
-Change of caller pattern: 
-m <- match.call()
- m$name <- NULL
- m[[1L]] <- as.name("library")
-eval(m, .GlobalEnv)
-     - 	TODO: How dangerous is eval? (Aviral)
-Does eval generate new code (create new functions)?
-environment writes (reads)
-system environment variables
-connections
-random number generator - setting seed
-Does eval do dynamic code loading?
-Does eval argument reflect on the call stack?
-Calls to C Code
-TODO: Could the eval be made safer?
-TODO: Could some of the eval calls be replaced?
