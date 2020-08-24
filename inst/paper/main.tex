@@ -453,6 +453,19 @@ packages. \missingNumber packages have a single eval callsite.
 \end{table}
 
 
+\subsubsection{The size of \eval}
+
+In Figure~\ref{fig:ast-size}, we look at the the size of the AST, in number of nodes, of the \c(expr) argument of \eval, after it is resolved.
+
+
+\begin{figure}[htbp]
+	\includegraphics[width=\columnwidth]{ast_sizes}
+	\caption{Size of the \c{expr} argument of \eval in terms of AST nodes, for the \emph{core} dataset and the \emph{packages} dataset.} \label{fig:ast-size}
+\end{figure}
+
+Most of these expressions have very few nodes and about 50\% have only one. It is because \c{expr} is often reduced to just a value or a symbol.
+
+\miss{This is on a random sample of 10000 unique rows of the summarized data set as ST size takes a lof of time to compute. To update when it finishes computing...}
 
 \subsection{How are they used}
 
@@ -465,14 +478,18 @@ the first argument of \c{eval} after all possible function calls and symbol
 resolution in it have been executed.
 
 
+\subsubsection{\eval and environments}
 
+One of the main differences of the R \eval with the javascript one is how it interacts with \emph{scope}, or environments in R. In Javascript, \c{eval} can access the local scope and the global scope. In R, \c{eval} has an argument \c{envir} to indicate in which environment its first argument, after being resolved, must be evaluated.
+
+By default, it is equal to \c{parent.frame()}, which is the parent environment of the \c{eval} call.
 
 \subsection{How to replace evals}
 
-We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \emph{i.e.} how many different types of the resolved \c{expr} there are per call sites, in Figure~\ref{fig:polymorphism}. 89\% of the call sites are \emph{monomorphic}.
+We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie how many different types of the resolved \c{expr} there are per call sites, in Figure~\ref{fig:polymorphism}. \DegreeMonomorphism of the call sites are \emph{monomorphic}.
 
 \begin{figure}
-    \includegraphics[width=\columnwidth]{polymorphism-1}
+    \includegraphics[width=\columnwidth]{polymorphism}
     \caption{Degree of polymorphism of \c{expr} per call sites.} \label{fig:polymorphism}
 \end{figure}
 
