@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2020-08-25T20:53:22.097Z" agent="5.0 (X11)" etag="viYNcbAK8-BTE9_Q6s3M" version="13.6.5" type="github">
+<mxfile host="app.diagrams.net" modified="2020-08-25T20:54:33.036Z" agent="5.0 (X11)" etag="nkAR8ewOLO6G-xUUitOV" version="13.6.5" type="github">
   <diagram id="F0AHolVVesLSMNE4kyMN" name="Page-1">
     <mxGraphModel dx="1422" dy="812" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -91,7 +91,7 @@
         <mxCell id="XyMEwlzETBZZqd7nD72x-20" value="1h" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="165" y="45" width="40" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="XyMEwlzETBZZqd7nD72x-21" value="Duration:" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" vertex="1" parent="1">
+        <mxCell id="XyMEwlzETBZZqd7nD72x-21" value="Duration" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" vertex="1" parent="1">
           <mxGeometry x="66.00000000000006" y="45" width="50" height="20" as="geometry" />
         </mxCell>
         <mxCell id="XyMEwlzETBZZqd7nD72x-22" value="6h&lt;font color=&quot;#FF0000&quot;&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
