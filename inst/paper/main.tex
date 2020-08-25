@@ -285,9 +285,10 @@ We have selected the TOP \CorpusPackages packages based on the number of reverse
 dependencies, \ie how many other packages depend on them\footnote{Extracted from
   package metadata using builtin function}. Using this criterion helps us to
 choose popular packages which in general should be of a better quality and
-should have better code coverage. The resulting set has \summary{CorpusRevdeps}
-reverse dependencies (min / mean / max) and consists of \CorpusRCodeRnd lines of
-R code and \CorpusNativeCodeRnd lines of native code (C/C++/Fortran).
+should have better code coverage. The resulting set has
+\summary{CorpusRevdeps}\footnote{Such triples represent ($min$ / $mean$ /
+  $max$)} reverse dependencies and consists of \CorpusRCodeRnd lines of R code
+and \CorpusNativeCodeRnd lines of native code (C/C++/Fortran).
 Figure~\ref{fig:corpus} shows these packages, the size of the dots reflects the
 project's size in lines of code including both R and native code, the x-axis
 indicates the expression code coverage in percents and the y-axis gives the
@@ -306,23 +307,28 @@ admitted in the archive. This is important as we use this runnable code for the
 dynamic analysis of eval calls.
 
 There are three sources of runnable code in a R package. Next to the package
-\emph{tests}, there are: \emph{examples} and \emph{vignettes}. Examples are R
-code snippets extracted from package documentation into scripts file. Vignettes
-are long-form guides into package functionality written using
+\emph{tests}, there are also \emph{examples} and \emph{vignettes}. Examples are
+R code snippets extracted from package documentation into scripts file.
+Vignettes are long-form description of package functionality written using
 literate-programming style in \LaTeX\xspace or Rmarkdown with chunks of R code
 that can be similarly extracted into R scripts. R provides builtin functions for
 tangling the embedded code into files.
 
 The selected packages contain \CorpusPackagePrograms programs with
-\CorpusPackageProgramsCodeRnd lines of R code. Most programs are examples
-(\CorpusExamplesPrograms) with \CorpusExamplesCodeRnd lines of code, followed by
-tests (\CorpusTestsPrograms) with \CorpusTestsCodeRnd lines of code and
-vignettes (\CorpusVignettesPrograms) with \CorpusVignettesCodeRnd lines of code.
+\CorpusPackageProgramsCodeRnd lines of R code:
+%
+\begin{compactitem}[$-$]
+  \item \CorpusExamplesProgramsRnd examples with \CorpusExamplesCodeRnd
+  \summaryrnd{CorpusExamplesCode} lines of code,
+  \item \CorpusTestsProgramsRnd tests with \CorpusTestsCodeRnd
+  \summaryrnd{CorpusTestsCode} lines of code, and
+  \item \CorpusVignettesProgramsRnd vignettes with \CorpusVignettesCodeRnd
+  \summaryrnd{CorpusVignettesCode} lines of code.
+\end{compactitem}
 
 Running this code results on average in \CorpusMeanExprCoverage package code
 coverage. The code coverage was computed for each package using
 Covr\footnote{\url{ https://github.com/r-lib/covr}}, the R code coverage tool.
-
 
 \subsection{Kaggle Scripts}
 
