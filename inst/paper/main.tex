@@ -265,11 +265,16 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 \section{Infrastructure}
 
 
+\begin{figure*}[!tb]\centering\includegraphics[width=.8\linewidth]
+  {corpus.pdf}\caption{Corpus}\label{fig:corpus}
+\end{figure*}
+
 \section{Corpus of R Programs}
 
 We have assembled a corpus of \CorpusPackages R packages and
 \CorpusFinishedKaggle user-written data-analysis scripts. Together it contains
 \CorpusAllCodeRnd lines of source code\footnote{Excluding comments and blank lines using \url{github.com/AlDanial/cloc}}.
+
 
 \subsection{CRAN Packages}
 
@@ -286,9 +291,13 @@ code, the x-axis indicates the expression code coverage in percents and the
 y-axis gives the number of reverse dependencies in log scale. Dotted lines
 indicate means. Large (over \CorpusLargePackageTresholdRnd lines of code) and popular (in \CorpusMostDownloadedTreshold most downloaded) packages are annotated.
 
-\begin{figure*}[!tb]\centering\includegraphics[width=.9\linewidth]
-  {corpus.pdf}\caption{Corpus}\label{fig:corpus}
-\end{figure*}
+\begin{figure}[!htb]\centering\includegraphics[width=.9\linewidth]
+  {programs-code.pdf}\caption{Programs code size}\label{fig:programs-code}
+\end{figure}
+
+\begin{figure}[!htb]\centering\includegraphics[width=.9\linewidth]
+  {programs-runtime.pdf}\caption{Programs execution time}\label{fig:programs-runtime}
+\end{figure}
 
 These packages come from the Comprehensive R Archive Network
 (CRAN\footnote{\url{http://cran.r-project.org}}), the largest repository of R
@@ -313,12 +322,6 @@ vignettes (\CorpusVignettesCodeRnd). Running this code results on average in
 \CorpusMeanExprCoverage package code coverage. The code coverage was computed
 for each package using
 
-\begin{figure}[!tb]\centering\includegraphics[width=.9\linewidth]
-  {programs-code.pdf}\caption{Programs code size}\label{fig:programs-code}
-\end{figure}
-\begin{figure}[!tb]\centering\includegraphics[width=.9\linewidth]
-  {programs-runtime.pdf}\caption{Programs execution time}\label{fig:programs-runtime}
-\end{figure}
 
 \subsection{Kaggle sripts}
 % contrast to CRAN - duplication
@@ -328,141 +331,112 @@ for each package using
 
 This section presents an overiew of the usage of \eval in our corpus.
 Previous work reported that 82\% of JavaScript-enabled web pages used
-\eval~\cite{ecoop11}, the case for R is more striking at \miss{100\%} of the
-programs use that feature. In this section, a call to \eval denotes a call
-to any one of the functions that provide \eval-like
-functionality.\footnote{These include \c{eval}, \c{eval.parent}, \c{evalq}
-  and \c{local}.}
+\eval~\cite{ecoop11}. The case for R is more striking with 100\% of the
+programs using that \eval.\footnote{In this section, we combine calls to
+  \c{eval}, \c{eval.parent}, \c{evalq} and \c{local}.}  This high number is
+explained by the fact that the R implementation, its core packages, use
+\eval extensively. In our analysis, we differentiate uses of \eval based on
+where they originate from. A {\bf core} \eval is one that occurs in the code
+of a core package.  A {\bf dependent} \eval is one that occurs in a package
+that was included by the target package. An {\bf own} \eval is one that
+occurs in the source code of the target package.
 
-This strikingly high number is due to the fact that the language
-implementation, the core packages, use \eval extensively. So, in our
-analysis, we differentiate \eval based on where they originate from. A {\bf
-  core} \eval is one that occurs in the code of a core package.  A {\bf
-  dependent} \eval is one that occurs in a package that was included by the
-target package. An {\bf own} \eval is one that occurs in the source code of
-the target package. We label an \eval occurence as {\bf unknown} when we are
-not able to deterimine its origin.\footnote{A source of unknowns is when the
-  \eval function is passed as an argument to a function such as \c{lapply},
-  another is when the code lacks source references.}
+Over all, we observed \AllAllCallCountRnd calls to \eval in the
+\CorpusAllProgramsRnd programs in our corpus.  Table~\ref{A} details this
+run-time information. The format is T (m/M/x) where T is the total number of
+calls observed for all runs of the corpus, m and x are the minimum and
+maximum number of calls for any given run, and M is the mean number of calls
+per run. We can observe that an average run of CRAN package will trigger 581
+{\eval}s in core package, 532 in dependent packages and 292 in the package
+itself.  The Kaggle data set has small programs, and, these programs only
+trigger \eval in core and dependent packages. Thus, an average Kaggle run
+has 412 core calls, 96 dependent calls, and no own calls.
 
-Over all, we observed \AllAllCallCountRnd call to \eval in \CorpusAllProgramsRnd
-programs in our corpus. The mean number of calls per run was \miss{20} (with a
-min of \miss{1} and a max of \miss{10,000}). Table~\ref{A} details the usage of
-\eval across the corpus. The format is T (m/M/x) where T is the total number of
-calls observed for all runs of the corpus, m and x are the minimum and maximum
-number of calls for any given run, and A is the mean number of calls per run. We
-can observe \miss{???}. {\bf <The following is a place holder. Real text will
-  come once we have the table.>} The majority of calls come from the core
-packages. Kaggle does not have any own calls, any \eval in those happens in
-dependent packages and core. Of the \missingNumber packages in our corpus, only
-\missingNumber packages call eval.
-
-
-\begin{verbatim}
-Table A
-
-         core      dependent   own
-----------------------------------------
-CRAN   10M?(1/2/3) 1M?(1/2/3) 1K?(1/2/3)
-Kaggle 2K?(1/2/3)  1K?(1/2/3) 0 (0/0/0)
-\end{verbatim}
 
 \begin{table}[ht]
-  \resizebox{\columnwidth}{!}{%
-    \begin{tabular}{r|rrr|}
-      \hline
-      Source & Core & Dependent & Own \\
-      \hline
-      CRAN & \CranCoreTotalEvalCallsRnd (\CranCoreMinEvalCallsRnd/\CranCoreAvgEvalCallsRnd/\CranCoreMaxEvalCallsRnd) & \CranDependentTotalEvalCallsRnd (\CranDependentMinEvalCallsRnd/\CranDependentAvgEvalCallsRnd/\CranDependentMaxEvalCallsRnd) & \CranOwnTotalEvalCallsRnd (\CranOwnMinEvalCallsRnd/\CranOwnAvgEvalCallsRnd/\CranOwnMaxEvalCallsRnd) \\
-      Kaggle & \KaggleCoreTotalEvalCallsRnd (\KaggleCoreMinEvalCallsRnd/\KaggleCoreAvgEvalCallsRnd/\KaggleCoreMaxEvalCallsRnd) & \KaggleDependentTotalEvalCallsRnd (\KaggleDependentMinEvalCallsRnd/\KaggleDependentAvgEvalCallsRnd/\KaggleDependentMaxEvalCallsRnd) & 0(0/0/0) \\
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}r|ccc@{}} \hline
+Source & Core & Dependent & Own \\\hline
+      %      CRAN & \CranCoreTotalEvalCallsRnd (\CranCoreMinEvalCallsRnd/\CranCoreAvgEvalCallsRnd/\CranCoreMaxEvalCallsRnd) & \CranDependentTotalEvalCallsRnd (\CranDependentMinEvalCallsRnd/\CranDependentAvgEvalCallsRnd/\CranDependentMaxEvalCallsRnd) & \CranOwnTotalEvalCallsRnd (\CranOwnMinEvalCallsRnd/\CranOwnAvgEvalCallsRnd/\CranOwnMaxEvalCallsRnd) \\
+CRAN & \CranCoreTotalEvalCallsRnd (1 / 581 / 416K)  & \CranDependentTotalEvalCallsRnd (1 / 532 / 183K) & \CranOwnTotalEvalCallsRnd (1 / 292 / 144K)\\
+Kaggle & \KaggleCoreTotalEvalCallsRnd (1 / 412 / 2.8K) & \KaggleDependentTotalEvalCallsRnd (3 / 96 / 1.1K) & 0 (0 / 0 / 0) \\
+%      Kaggle & \KaggleCoreTotalEvalCallsRnd (\KaggleCoreMinEvalCallsRnd/\KaggleCoreAvgEvalCallsRnd/\KaggleCoreMaxEvalCallsRnd) & \KaggleDependentTotalEvalCallsRnd (\KaggleDependentMinEvalCallsRnd/\KaggleDependentAvgEvalCallsRnd/\KaggleDependentMaxEvalCallsRnd) & 0(0/0/0) \\
       \hline
     \end{tabular}
   }
-  \label{table:source-eval-summary}
-  \caption{Distribution of eval calls in CRAN and Kaggle}
+  \label{A}
+  \caption{Eval calls in CRAN and Kaggle}
 \end{table}
 
 
 
-The following table will be replaced. {\bf <At this point separating between
-  the different kinds of evals is distracting. We have not argued why it is
-  important.>}
+%% The following table will be replaced. {\bf <At this point separating between
+%%   the different kinds of evals is distracting. We have not argued why it is
+%%   important.>}
 
-\begin{table}[ht]
-  \resizebox{\columnwidth}{!}{%
-    \begin{tabular}{l|rr|r||rr|r}
-      \hline
-      \multicolumn{1}{c}{Function}& \multicolumn{3}{c}{Calls} & \multicolumn{3}{c}{Callsites}\\
-      \cline{1-1} \cline{2-4} \cline{5-7}
-                                  & Core & Packages & Total & Core & Packages & Total\\
-      \hline
-      \c{eval} & \CoreEvalCallCountRnd & \PackageEvalCallCountRnd  & \AllEvalCallCountRnd & \CoreEvalSiteCountRnd & \PackageEvalSiteCountRnd &  \AllEvalSiteCountRnd\\
-      \c{eval.parent} & \CoreEvalParentCallCountRnd & \PackageEvalParentCallCountRnd  & \AllEvalParentCallCountRnd & \CoreEvalParentSiteCountRnd & \PackageEvalParentSiteCountRnd & \AllEvalParentSiteCountRnd\\
-      \c{evalq} & \CoreEvalqCallCountRnd & \PackageEvalqCallCountRnd  & \AllEvalqCallCountRnd & \CoreEvalqSiteCountRnd & \PackageEvalqSiteCountRnd & \AllEvalqSiteCountRnd \\
-      \c{local} & \CoreLocalCallCountRnd & \PackageLocalCallCountRnd  & \AllLocalCallCountRnd & \CoreLocalSiteCountRnd & \PackageLocalSiteCountRnd & \AllLocalSiteCountRnd \\
-      \hline
-      Total & \CoreAllCallCountRnd & \PackageAllCallCountRnd  & \AllAllCallCountRnd & \CoreAllSiteCountRnd & \PackageAllSiteCountRnd & \AllAllSiteCountRnd \\
-      \hline
-    \end{tabular}
-  }
-  \label{table:eval-count-summary}
-  \caption{Distribution of eval calls and callsites in the corpus}
-\end{table}
+%% \begin{table}[ht]\resizebox{\columnwidth}{!}{\begin{tabular}{l|rr|r||rr|r}\hline
+%% \multicolumn{1}{c}{Function}& \multicolumn{3}{c}{Calls} & \multicolumn{3}{c}{Callsites}\\
+%% \cline{1-1} \cline{2-4} \cline{5-7}
+%% & Core & Packages & Total & Core & Packages & Total\\\hline
+%% \c{eval} & \CoreEvalCallCountRnd & \PackageEvalCallCountRnd  & \AllEvalCallCountRnd & \CoreEvalSiteCountRnd & \PackageEvalSiteCountRnd &  \AllEvalSiteCountRnd\\
+%% \c{eval.parent} & \CoreEvalParentCallCountRnd & \PackageEvalParentCallCountRnd  & \AllEvalParentCallCountRnd & \CoreEvalParentSiteCountRnd & \PackageEvalParentSiteCountRnd & \AllEvalParentSiteCountRnd\\
+%% \c{evalq} & \CoreEvalqCallCountRnd & \PackageEvalqCallCountRnd  & \AllEvalqCallCountRnd & \CoreEvalqSiteCountRnd & \PackageEvalqSiteCountRnd & \AllEvalqSiteCountRnd \\
+%% \c{local} & \CoreLocalCallCountRnd & \PackageLocalCallCountRnd  & \AllLocalCallCountRnd & \CoreLocalSiteCountRnd & \PackageLocalSiteCountRnd & \AllLocalSiteCountRnd \\\hline
+%% Total & \CoreAllCallCountRnd & \PackageAllCallCountRnd  & \AllAllCallCountRnd & \CoreAllSiteCountRnd & \PackageAllSiteCountRnd & \AllAllSiteCountRnd \\  \hline
+%% \end{tabular} } \label{table:eval-count-summary}
+%%  \caption{Distribution of eval calls and callsites in the corpus}
+%% \end{table}
 
-\ref{table:top-ten-package-summary} shows the number of calls to eval
-made by the ten most frequent callers to eval. These packages together have
-\missingNumber callsites and account for \missingPercentage calls to eval.
-Furthermore, the top ten callsites account for \missingPercentage of package
-eval calls. A single callsite of \TopTenPackageNameA accounts for over
-\missingPercentage calls to eval.
+%% \ref{table:top-ten-package-summary} shows the number of calls to eval
+%% made by the ten most frequent callers to eval. These packages together have
+%% \missingNumber callsites and account for \missingPercentage calls to eval.
+%% Furthermore, the top ten callsites account for \missingPercentage of package
+%% eval calls. A single callsite of \TopTenPackageNameA accounts for over
+%% \missingPercentage calls to eval.
 
-\begin{table}[ht]
-  \resizebox{\columnwidth}{!}{%
-    \begin{tabular}{l|rrr||l|rrr}
-      \hline
-      \multicolumn{4}{c}{}& \multicolumn{4}{c}{} \\
-      \cline{1-4} \cline{5-8}
-      Package & Callsites & Calls & Calls \% & Package & Callsites & Calls & Calls \%\\
-      \hline
-      \TopTenPackageNameA & \TopTenPackageCallsiteCountA & \TopTenPackageCallCountA &\TopTenPackageCallPercA & \TopTenPackageNameF & \TopTenPackageCallsiteCountF & \TopTenPackageCallCountF & \TopTenPackageCallPercF \\
-      \TopTenPackageNameB & \TopTenPackageCallsiteCountB & \TopTenPackageCallCountB &\TopTenPackageCallPercB & \TopTenPackageNameG & \TopTenPackageCallsiteCountG & \TopTenPackageCallCountG & \TopTenPackageCallPercG \\
-      \TopTenPackageNameC & \TopTenPackageCallsiteCountC & \TopTenPackageCallCountC &\TopTenPackageCallPercC & \TopTenPackageNameH & \TopTenPackageCallsiteCountH & \TopTenPackageCallCountH & \TopTenPackageCallPercH \\
-      \TopTenPackageNameD & \TopTenPackageCallsiteCountD & \TopTenPackageCallCountD &\TopTenPackageCallPercD & \TopTenPackageNameI & \TopTenPackageCallsiteCountI & \TopTenPackageCallCountI & \TopTenPackageCallPercI \\
-      \TopTenPackageNameE & \TopTenPackageCallsiteCountE & \TopTenPackageCallCountE &\TopTenPackageCallPercE & \TopTenPackageNameJ & \TopTenPackageCallsiteCountJ & \TopTenPackageCallCountJ & \TopTenPackageCallPercJ \\
-      \hline
-    \end{tabular}
-  }
-  \label{table:top-ten-package-summary}
-  \caption{Distribution of eval calls and callsites in the top ten packages}
-\end{table}
+%% \begin{table}[ht]
+%%   \resizebox{\columnwidth}{!}{%
+%%     \begin{tabular}{l|rrr||l|rrr}
+%%       \hline
+%%       \multicolumn{4}{c}{}& \multicolumn{4}{c}{} \\
+%%       \cline{1-4} \cline{5-8}
+%%       Package & Callsites & Calls & Calls \% & Package & Callsites & Calls & Calls \%\\
+%%       \hline
+%%       \TopTenPackageNameA & \TopTenPackageCallsiteCountA & \TopTenPackageCallCountA &\TopTenPackageCallPercA & \TopTenPackageNameF & \TopTenPackageCallsiteCountF & \TopTenPackageCallCountF & \TopTenPackageCallPercF \\
+%%       \TopTenPackageNameB & \TopTenPackageCallsiteCountB & \TopTenPackageCallCountB &\TopTenPackageCallPercB & \TopTenPackageNameG & \TopTenPackageCallsiteCountG & \TopTenPackageCallCountG & \TopTenPackageCallPercG \\
+%%       \TopTenPackageNameC & \TopTenPackageCallsiteCountC & \TopTenPackageCallCountC &\TopTenPackageCallPercC & \TopTenPackageNameH & \TopTenPackageCallsiteCountH & \TopTenPackageCallCountH & \TopTenPackageCallPercH \\
+%%       \TopTenPackageNameD & \TopTenPackageCallsiteCountD & \TopTenPackageCallCountD &\TopTenPackageCallPercD & \TopTenPackageNameI & \TopTenPackageCallsiteCountI & \TopTenPackageCallCountI & \TopTenPackageCallPercI \\
+%%       \TopTenPackageNameE & \TopTenPackageCallsiteCountE & \TopTenPackageCallCountE &\TopTenPackageCallPercE & \TopTenPackageNameJ & \TopTenPackageCallsiteCountJ & \TopTenPackageCallCountJ & \TopTenPackageCallPercJ \\
+%%       \hline
+%%     \end{tabular}
+%%   }
+%%   \label{table:top-ten-package-summary}
+%%   \caption{Distribution of eval calls and callsites in the top ten packages}
+%% \end{table}
 
 
-\missingGraph shows the distribution of number of callsites to eval across these
-packages. \missingNumber packages have a single eval callsite.
+Table \ref{table:site-package-summary} shows the results of static analysis
+for the CRAN packages in our corpus. 89 packages have a single call site,
+and one package has \miss{252} call sites of \eval. \miss{XXX} packages have
+no calls to \eval. The core packages have \miss{41} callsites of eval and
+Kaggle has none. These static numbers are under approximations as \eval may
+be called reflectively, through aliases, or passed to a higher-order function.
 
-
-\begin{table}[ht]
-  \resizebox{\columnwidth}{!}{%
-    \begin{tabular}{rr|rr|rr}
-      \hline
-      Callsites & Packages & Callsites & Packages & Callsites & Packages \\
-      \hline
-      \SiteSummarySiteCountA & \SiteSummaryPackageCountA & \SiteSummarySiteCountF & \SiteSummaryPackageCountF & \SiteSummarySiteCountK & \SiteSummaryPackageCountK \\
-      \SiteSummarySiteCountB & \SiteSummaryPackageCountB & \SiteSummarySiteCountG & \SiteSummaryPackageCountG & \SiteSummarySiteCountL & \SiteSummaryPackageCountL \\
-      \SiteSummarySiteCountC & \SiteSummaryPackageCountC & \SiteSummarySiteCountH & \SiteSummaryPackageCountH & \SiteSummarySiteCountM & \SiteSummaryPackageCountM \\
-      \SiteSummarySiteCountD & \SiteSummaryPackageCountD & \SiteSummarySiteCountI & \SiteSummaryPackageCountI & \SiteSummarySiteCountN & \SiteSummaryPackageCountN \\
-      \SiteSummarySiteCountE & \SiteSummaryPackageCountE & \SiteSummarySiteCountJ & \SiteSummaryPackageCountJ & \SiteSummarySiteCountO & \SiteSummaryPackageCountO \\ 
-      \hline
-    \end{tabular}
-  }
-  \label{table:site-package-summary}
-  \caption{Distribution of callsites across packages}
+\begin{table}[ht]\resizebox{\columnwidth}{!}{%
+\begin{tabular}{rr|rr|rr}\hline
+Callsites & Packages & Callsites & Packages & Callsites & Packages \\ \hline
+\SiteSummarySiteCountA & \SiteSummaryPackageCountA & \SiteSummarySiteCountF & \SiteSummaryPackageCountF & \SiteSummarySiteCountK & \SiteSummaryPackageCountK \\
+\SiteSummarySiteCountB & \SiteSummaryPackageCountB & \SiteSummarySiteCountG & \SiteSummaryPackageCountG & \SiteSummarySiteCountL & \SiteSummaryPackageCountL \\
+\SiteSummarySiteCountC & \SiteSummaryPackageCountC & \SiteSummarySiteCountH & \SiteSummaryPackageCountH & \SiteSummarySiteCountM & \SiteSummaryPackageCountM \\
+\SiteSummarySiteCountD & \SiteSummaryPackageCountD & \SiteSummarySiteCountI & \SiteSummaryPackageCountI & \SiteSummarySiteCountN & \SiteSummaryPackageCountN \\
+      \SiteSummarySiteCountE & \SiteSummaryPackageCountE & \SiteSummarySiteCountJ & \SiteSummaryPackageCountJ & \SiteSummarySiteCountO & \SiteSummaryPackageCountO \\    \hline
+\end{tabular}} \label{table:site-package-summary}
+\caption{Distribution of callsites in CRAN}
 \end{table}
 
 
-\subsubsection{The size of \eval}
-
-In Figure~\ref{fig:ast-size}, we look at the the size of the AST, in number of nodes, of the \c(expr) argument of \eval, after it is resolved.
+In Figure~\ref{fig:ast-size}, we look at the the size of the AST, in number
+of nodes, of the \c(expr) argument of \eval, after it is resolved.
 
 
 \begin{figure}[htbp]
