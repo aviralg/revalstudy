@@ -435,20 +435,34 @@ Callsites & Packages & Callsites & Packages & Callsites & Packages \\ \hline
 \end{table}
 
 
-In Figure~\ref{fig:ast-size}, we look at the the size of the AST, in number
-of nodes, of the \c(expr) argument of \eval, after it is resolved.
-
+To estimate the complexity of the code being evaluated,
+Fig.~\ref{fig:ast-size} shows the distribution of the abstract syntax tree
+size of the \c{expr} argument to \eval. The majority of inputs across core
+and packages (\miss{XX}\%) is 1. That is to say, the code being evaluated
+consists of a single variable name or constant. A function call needs at
+least three nodes. Inputs smaller than \c{X} nodes account for 95\% of all
+calls. Sizes are roughly similar between core and packages.
 
 \begin{figure}[htbp]
-	\includegraphics[width=\columnwidth]{ast_sizes}
-	\caption{Size of the \c{expr} argument of \eval in terms of AST nodes, for the \emph{core} dataset and the \emph{packages} dataset.} \label{fig:ast-size}
+\includegraphics[width=\columnwidth]{ast_sizes}
+\caption{Input sizes} \label{fig:ast-size}
 \end{figure}
 
-Most of these expressions have very few nodes and about 50\% have only one. It is because \c{expr} is often reduced to just a value or a symbol.
+\medskip\noindent\emph{Discussion:} Comparing the use of \eval in R and JavaScript is
+instructive. The use of \eval is more widespread in data science code than
+it was in JavaScript. Any run of an R program seems to trigger \eval, more
+over package programmers use \eval liberally. On the other hand, the authors
+of Kaggle packages do not use the feature at all.  This point to a
+bifurcated user community, experts who write package know how to use \eval
+while end-users do not. An alternative explanation is that end-users do not
+need \eval for simple data analysis tasks. This bifurcation was not observed
+in the JavaScript community, but this may have changed with the advent of
+Node.js ecosystem.  The distribution of input sizes is similar to that found
+in JavaScript, the majority of inputs being rather small.
 
-\miss{This is on a random sample of 10000 unique rows of the summarized data set as ST size takes a lof of time to compute. To update when it finishes computing...}
 
 \subsection{How are they used}
+
 
 - classify evals based on what they can be replaced with
 
@@ -469,7 +483,7 @@ By default, it is equal to \c{parent.frame()}, which is the parent environment o
 
 We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie how many different types of the resolved \c{expr} there are per call sites, in Figure~\ref{fig:polymorphism}. \DegreeMonomorphism of the call sites are \emph{monomorphic}.
 
-\begin{figure}
+\begin{figure}[!h]
     \includegraphics[width=\columnwidth]{polymorphism}
     \caption{Degree of polymorphism of \c{expr} per call sites.} \label{fig:polymorphism}
 \end{figure}
