@@ -1,18 +1,11 @@
 ---
 title: "Enrich the datasets with new columns."
-output:
-  rmdformats::readthedown:
-        lightbox: true
-        gallery: false
-        df_print: paged
-        toc_depth: 3
+output: html_document
 date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
   base_dir: /var/lib/R/project-evalR
-knit: (function(inputFile, encoding) {
-  rmarkdown::render(inputFile, encoding = encoding, output_dir = "html") })
 ---
 
 ```{r setup, include=FALSE}
@@ -29,6 +22,7 @@ library(vctrs)
 library(DT)
 library(fst)
 library(fs)
+library(parallel)
 
 source("inc/paths.R")
 source("insights.R", local = knitr::knit_global())
@@ -74,6 +68,14 @@ eval_calls <- eval_calls %>% add_eval_source() %>% add_eval_source_type()
 
 ```{r parse_args}
 eval_calls <- eval_calls %>% add_parse_args()
+```
+
+```{r ast_size}
+eval_calls <- eval_calls %>% add_ast_size()
+```
+
+```{r add_package}
+eval_calls <- eval_calls %>% add_package()
 ```
 
 

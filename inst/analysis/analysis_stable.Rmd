@@ -15,8 +15,8 @@ params:
   base_dir: /var/lib/R/project-evalR
 
 # This makes it possible to generate the html file in the html subfolder
-knit: (function(inputFile, encoding) {
-  rmarkdown::render(inputFile, encoding = encoding, output_dir = "html") })
+# knit: (function(inputFile, encoding) {
+#   rmarkdown::render(inputFile, encoding = encoding, output_dir = "html") })
 ---
 
 ```{r setup, include=FALSE}
@@ -33,33 +33,46 @@ library(vctrs)
 library(DT)
 library(fst)
 library(fs)
+library(ggthemes)
 
 source("insights.R", local = knitr::knit_global())
 
 source("inc/paths.R")
 source("inc/latextags.R")
+source("inc/setup.R")
+theme_set(theme_minimal())
 create_tags(path(TAGS_DIR, "analysisStable.tex"), prefix="", default=TRUE)
 
 
-data_filepath <- EVALS_SUM_PKGS_FILE
-#data_filepath <- "/var/lib/R/project-evalR/run/package-evals-traced-all.1/calls.fst"
-# The trace data on all CRAN does not have all the columns of the smaller corpus. The analysis will fail for the big corpus.
+packages_filepath <- EVALS_SUM_PKGS_FILE
+core_filepath <- EVALS_SUM_CORE_FILE
 ```
 
 # Data
 
-The analysis is being performed on dataset read from file `r data_filepath`.
+The analysis is being performed on dataset read from files `r packages_filepath` and `core_filepath`.
 
-```{r file-info, echo=FALSE}
-file_info(data_filepath)
+```{r file-info-packages, echo=FALSE}
+file_info(packages_filepath)
+```
+
+```{r file-info-core, echo=FALSE}
+file_info(core_filepath)
 ```
 
 ```{r load-data, echo=FALSE}
-eval_calls <-
-    read_fst(data_filepath) %>%
-    as_tibble() %>%
-    mutate(eval_call_package = extract_package_name(eval_call_srcref, file)) 
+eval_calls_packages <-
+    read_fst(packages_filepath) %>%
+    as_tibble()  %>% 
+    mutate(dataset = "packages")
 
+eval_call_core <- 
+  read_fst(packages_filepath) %>%
+  as_tibble() %>%
+  mutate(dataset = "core")
+
+
+eval_calls <- bind_rows(eval_calls_packages, eval_call_core)
 
 # A flexible way to document the dataset: it is quick and easy to document a new column
 c_names <- names(eval_calls)
@@ -311,17 +324,19 @@ We reckon that `eval` in *base* should be considered apart from the other `eval`
 
 
 ```{r parse_in_base}
-parsed_base <- eval_calls %>% filter(!is.na(expr_parsed_expression), eval_call_package == "base")
+parsed_base <- eval_calls %>% filter(!is.na(expr_parsed_expression), eval_source == "base")
 
 nb_call_site_parse_base <-  nb_eval_call_sites(parsed_base)
 ```
 
-There are `r count(parsed_base, wt = nb_ev_calls)` `eval` calls with `parse` in *base*, which is `r count(parsed_base, wt = nb_ev_calls) / count(filter(eval_calls, eval_call_package == "base"), wt=nb_ev_calls)`%. 
+There are `r count(parsed_base, wt = nb_ev_calls)` `eval` calls with `parse` in *base*, which is `r count(parsed_base, wt = nb_ev_calls) / count(filter(eval_calls, eval_source == "base"), wt=nb_ev_calls)`%. 
 
 
 
 ## Size of expressions as arguments to `eval`
 
+
+### String size
 
 ```{r}
 eval_calls %>% ggplot() +
@@ -356,6 +371,48 @@ If we look at the maxima, the largest ones are in *base*:
 eval_calls %>% group_by(caller_package) %>% summarize(max_expr_size = max(expr_expression_length, na.rm = TRUE)) %>% arrange(desc(max_expr_size))
 ```
 
+### AST size
+
+```{r}
+ast_sizes <- eval_calls %>% slice_sample(n=10000) %>% mutate(expr_resolved_ast_size = map_int(expr_resolved, expr_size_str))
+```
+
+
+```{r}
+# ast_sizes %>% ggplot(aes(x = expr_resolved_ast_size, weight = nb_ev_calls, group = dataset)) +
+#   geom_histogram(aes(y = stat(width*density)), na.rm = TRUE, binwidth = 0.1) +
+#   scale_x_log10() +  scale_y_sqrt(labels=scales::percent) +
+#   labs(x = "AST size", y = "relative frequencies") 
+
+# ast_sizes %>% 
+#   ggplot(aes(x = dataset, y = expr_resolved_ast_size, fill = dataset, weight = nb_ev_calls)) +
+#   geom_flat_violin(trim=FALSE, width=.5) +
+#   geom_dotplot(
+#     binaxis="y", 
+#     dotsize=0.01, 
+#     stackdir="down", 
+#     binwidth=0.01, 
+#     position=position_nudge(-0.025)) +
+#   scale_y_log10(labels = scales::comma) +
+#   labs(y="AST size (log)") +
+#   theme(
+#     legend.box="horizontal",
+#     axis.title.x=element_blank()
+#   )
+
+ast_sizes %>%
+  ggplot(aes(x = dataset, y = expr_resolved_ast_size, fill = dataset, weight = nb_ev_calls)) +
+  geom_violin(trim = FALSE, width=.5)+
+  geom_boxplot(width=.05) +
+  scale_y_log10(labels = scales::comma) +
+  labs(y="AST size (log)") +
+  theme(
+    legend.box="horizontal",
+    axis.title.x=element_blank()
+  )
+
+ggsave(path(PLOT_DIR, "ast_sizes.pdf"))
+```
 
 
 ## Amount of computations performed in `eval`
@@ -368,6 +425,37 @@ eval_calls %>% group_by(caller_package) %>% summarize(max_expr_size = max(expr_e
 ## The operation mix
 
 ## Scope (environments)
+
+One of the main differences of the R \eval with the javascript one is how it interacts with \emph{scope}, or environments in R. In Javascript, \c{eval} can access the local scope and the global scope. In R, \c{eval} has an argument \c{envir} to indicate in which environment its first argument, after being resolved, must be evaluated.
+
+By default, it is equal to \c{parent.frame()}, which is the parent environment of the \c{eval} call.
+
+```{r default_environment}
+default_envir <- eval_calls %>% filter(is.na(envir_expression)) 
+nb_default_envir <- default_envir %>% count(wt = nb_ev_calls)
+nb_call_sites_default_envir <- nb_eval_call_sites(default_envir)
+```
+
+`r ratio(nb_default_envir, nb_eval_calls)`% of the calls use the default environment, which corresponds to `r ratio(nb_call_sites_default_envir, nb_call_sites)`% of the call sites.
+
+
+We also classify environments in the following way:
+
+- `base`: environment of a primitive function of *base* package
+- `empty`: empty environment
+- `callee`: same environment (it seems it only happens with `local` )
+- `global`: ` .GlobalEnv` 
+- `package:package_name`: package environment
+- `loop`: there was a loop in the frame
+
+
+```{r environment_hierarchy}
+# classified_envir <- eval_calls %>% filter(!is.na(envir_expression)) %>%
+#       mutate(env_class = pmap(list(environment_class, envir_type, envir_expression), extract_envir)) %>% 
+#       unnest_wider(env_class)
+
+#TODO
+```
 
 
 ## Patterns
@@ -514,6 +602,9 @@ expr_resolved_polymorphism <- eval_calls %>% group_by(eval_call_srcref) %>%
 
 expr_resolved_monomorphic <- expr_resolved_polymorphism %>% filter(polym_degree == 1)
 nb_monomorphic <- expr_resolved_monomorphic %>% nrow()
+
+r("nb monomorphic", nb_monomorphic)
+r("percent monomorphic", ratio(nb_monomorphic, nb_call_sites))
 ```
 
 
@@ -522,6 +613,8 @@ expr_resolved_polymorphism %>% ggplot() +
   geom_bar(aes(x = polym_degree)) +
   scale_x_continuous(breaks=c(0, 1, 5, 10)) +
   labs(title = "Degree of polymorphism", x = "degree", y = "n") 
+
+ggsave(path(PLOT_DIR, "polymorphism.pdf"))
 ```
 
 
@@ -541,19 +634,22 @@ Some `eval` result from parsing text (directly or through a file) with `parse`.
 ```{r eval_from_parse}
 parsed_evals <- eval_calls %>% filter(!is.na(expr_parsed_expression))
 nb_parsed_evals <- parsed_evals %>% count(wt = nb_ev_calls)
+
+r("percent parsed evals",  ratio(nb_parsed_evals, nb_eval_calls))
 ```
 
 There are `r nb_parsed_evals` such calls, `r nb_parsed_evals / nb_eval_calls * 100`%.
 
 ```{r, echo = FALSE}
 nb_parsed_call_sites <- nb_eval_call_sites(parsed_evals)
+
+r("percent parsed call sites", ratio(nb_parsed_call_sites, nb_call_sites))
 ```
 
 In terms of call sites, there are `r nb_parsed_call_sites` i.e. `r nb_parsed_call_sites / nb_call_sites * 100`%.
 
   
-  We can differentiate further the provenance, i.e. whether the evaluated string comes from `file` or from `text`. However, we can only do it for `parse`, `str2lang` and `str2expression` at the top level of `expr_expression`, not buried in a function call.
-
+  We can differentiate further the provenance, i.e. whether the evaluated string comes from `file` or from `text`. 
 
 ```{r}
 if("parse_args_file" %in% names(parsed_evals))
@@ -578,6 +674,19 @@ nb_text_call_sites <- nb_eval_call_sites(parsed_texts)
 There are `r nb_file` calls with the `file` argument, and `r nb_text` with the `text` argument, i.e. `r  nb_file / nb_parsed_evals * 100`%, and `r nb_text / nb_parsed_evals *100`% respectively.
 
 There are `r nb_file_call_sites` call sites with the `file` argument, and `r nb_text_call_sites` with the `text` argument, i.e. `r  nb_file_call_sites / nb_parsed_call_sites * 100`%, and `r nb_text_call_sites / nb_parsed_call_sites *100`% respectively.
+
+We also look to the occurences of `paste` and `str_c` in the `parse` argument. It is an indication that meta-pogramming happens.
+
+```{r parse_meta_prog}
+meta_parsed <- parsed_texts %>% filter(str_detect(expr_parsed_expression, "paste|str_c"))
+
+nb_meta_parsed <- meta_parsed %>% count(wt = nb_ev_calls)
+nb_meta_parsed_call_sites <- nb_eval_call_sites(meta_parsed)
+
+r("paste parsed evals", ratio(nb_meta_parsed, nb_parsed_evals))
+r("paste parsed call site", ratio(nb_meta_parsed_call_sites, nb_parsed_call_sites))
+```
+
 
 
 ## Consistence

@@ -11,6 +11,9 @@
 
 source("insights.R")
 
+library(fs)
+library(multidplyr)
+
 deduplicate <- function(dataset)
 {
   return(dataset %>% count(across(c(-eval_call_id, -starts_with("caller_stack"))), name = "nb_ev_calls"))
@@ -36,7 +39,7 @@ add_parse_args <- function(dataset)
 eval_base_functions <- c("autoload", "autoloader", "bquote", "by.default", "by.data.frame", "invokeRestartInteractively", "Ops.data.frame", "dget", 
                          "eval", "eval.parent", "evalq", "local", "with.default", "within.data.frame", "within.list", "replicate", "subset.data.frame",
                          "subset.matrix", "transform.data.frame", "match.arg", "char.expand", "max.col", "parseNamespaceFile", "source", "sys.source",
-                         "stopfinot", "as.data.frane.table", "match.fun", "trace", "untrace", ".doTrace")
+                         "stopfinot", "as.data.frane.table", "match.fun", "trace", "untrace", ".doTrace", "Vectorize")
 
 # TODO: add support for package name extraction from caller_stack_expression for when 
 # eval_call_srcref is NA
@@ -63,3 +66,25 @@ add_eval_source_type <- function(dataset)
                                                TRUE ~ "package" )))
 }
 
+
+add_ast_size <- function(dataset)
+{
+  cluster <- new_cluster(parallel::detectCores() - 10)
+  cluster_copy(cluster, "get_expr")
+  cluster_copy(cluster, "expr_size")
+  cluster_copy(cluster, "expr_size_str")
+  cluster_library(cluster, "tidyverse")
+  dataset_c <- dataset %>% group_by(eval_call_srcref) %>% partition(cluster)
+  return(dataset_c %>% 
+           mutate(expr_resolved_ast_size = map_int(expr_resolved, expr_size_str)) %>%
+           collect()
+         )
+}
+
+add_package <- function(dataset)
+{
+  mutate(
+    dataset, 
+    package = basename(dirname(dirname(file)))
+  )
+}

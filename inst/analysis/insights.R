@@ -325,6 +325,28 @@ expr_depth_str <- function(expr)
   return(expr_depth(e))
 }
 
+expr_size <- function(expr)
+{
+  if(is.call(expr))
+  {
+    return(1L + sum(map_int(expr[-1], expr_size)))
+  }
+  else if(is.expression(expr))
+  {
+    return(sum(map_int(expr, expr_size)))
+  }
+  else
+  {
+    return(1L)
+  }
+}
+
+expr_size_str <- function(expr)
+{
+  e <- get_expr(expr)
+  return(expr_size(e))
+}
+
 groupify_function <- function(expr_function)
 {
   case_when(
@@ -334,4 +356,25 @@ groupify_function <- function(expr_function)
   )
 }
 
+extract_write_envir <- function(env_class)
+{
+  return(str_split(env_class, fixed("+"), n = 2)[[1]])
+}
+
+extract_envir <- function(env_class, envir_type, envir_expression)
+{
+  # First element is write, second is read
+  case_when(
+    is.na(env_class) && envir_type == "VECSXP" ~ c("list", "enclos"),
+    is.na(env_class) && envir_type == "NILSXP" ~ c("NULL", "enclos"),
+    is.na(env_class) && envir_type == "INTSXP" ~ {e <- paste0("sys.call(", envir_expression, ")"); c(e, e)},
+    str_ends(env_class, fixed("global")) ~ c(extract_write_envir(env_class), "global"),
+    str_ends(env_class, fixed("base")) ~ c(extract_write_envir(env_class), "base"),
+    str_ends(env_class, fixed("callee")) ~ c(extract_write_envir(env_class), "callee"),
+    str_ends(env_class, fixed("empty")) ~ c(extract_write_envir(env_class), "empty"),
+    str_ends(env_class, "caller-.*") ~ c(extract_write_envir(env_class), str_extract(env_class, "caller-[0-9]*")), 
+    str_ends(env_class, "loop") ~ c("loop", "loop"),
+    str_ends(env_class, "package:.*") ~ c(extract_write_envir(env_class), str_extract(env_class, "package:.*"))
+  )
+}
 
