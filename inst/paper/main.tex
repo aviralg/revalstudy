@@ -15,6 +15,7 @@
 
 \input{tag/counts.tex}
 \input{tag/corpus.tex}
+\input{tag/analysisStable.tex}
 
 \graphicspath{{img/}}
 
@@ -262,6 +263,7 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 
 \eval will return unchanged basic types such as vectors, functions, strings and environments. Promises are forced by \eval. Symbols are looked up in the current environment. Calls and expressions are evaluated. 
 
+
 \section{Infrastructure}
 
 
@@ -474,6 +476,12 @@ resolution in it have been executed.
 
 Here we should show some information about what happens during an eval. What kinds of operations...
 
+
+
+\subsection{Scope}
+
+Here we talk about scopes and envs
+
 One of the main differences of the R \eval with the javascript one is how it
 interacts with \emph{scope}, or environments in R. In Javascript, \c{eval}
 can access the local scope and the global scope. In R, \c{eval} has an
@@ -483,17 +491,18 @@ after being resolved, must be evaluated.
 By default, it is equal to \c{parent.frame()}, which is the parent
 environment of the \c{eval} call.
 
-\subsection{Scope}
-
-Here we talk about scopes and envs
-
 \subsection{Patterns}
 
 Here we categorize evals in some common groups
 
 \subsection{Provenance}
 
-Here we talk about where the input of an eval comes from
+Here we talk about where the input of an eval comes from.
+
+Although \c{eval} takes an R expression, it can evaluate a string if this string is first parsed with \c{parse}, \c{str2expression} or \c{str2lang}. This happens for \PercentParsedEvals of the eval calls, and \PercentParsedCallSites of the call sites.
+
+This corresponds to strings loaded from a file or to metaprogramming, \ie building new variables or functions by concatenating strings together. To detect this kind of metaprogramming, we look at the usage of the main concatenating functions in R, \c{paste}, \c{paste0} and \c{str_c}, and \PasteParsedEvals of the evals and \PasteParsedCallSite of the call sites using a parse function actually call a concatenating function.
+
 
 \subsection{Consistency}
 
@@ -503,7 +512,7 @@ Here we talk about whether the same call site sees the same pattern
 
 We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie
 how many different types of the resolved \c{expr} there are per call sites,
-in Figure~\ref{fig:polymorphism}. \DegreeMonomorphism of the call sites are
+in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
 \emph{monomorphic}.
 
 \begin{figure}[!h]
