@@ -212,7 +212,8 @@ overview_table(
   r("all cran", dim(available.packages())[1]),
   r("core packages", length(CORE_PACKAGES)),
   r("most downloaded treshold", MOST_DOWNLOADED),
-  r("large package treshold", PACKAGE_SIZE_OUTLIER)
+  r("large package treshold", PACKAGE_SIZE_OUTLIER),
+  r("evals package treshold", PACKAGE_EVALS_OUTLIER)
 )
 ```
 
@@ -231,8 +232,8 @@ size_bins_lasb  <- c("< 1000", "1,000 - 4,999", "5,000 - 9,999", "10,000 - 49,99
 
 corpus %>%
   mutate(
-    outlier=funs_with_eval > 30 | package_r_code > PACKAGE_SIZE_OUTLIER,
-    label=ifelse(rank <= MOST_DOWNLOADED | outlier, package, NA),
+    outlier=evals > PACKAGE_EVALS_OUTLIER,# | package_r_code > PACKAGE_SIZE_OUTLIER,
+    label=ifelse(outlier, package, NA),
     code_size=cut(package_r_code, size_bins, labels=size_bins_lasb, include.lowest=TRUE)
   ) %>%
   ggplot(
@@ -303,14 +304,12 @@ kaggle_runtime  <- kaggle_programs$runtime
 
 overview_table(
   r("kaggle",                 kaggle),
+  r("duplicated kaggle",      nrow(kaggle)-nrow(filter(kaggle, runnable))),
   r("runnable kaggle",        filter(kaggle, runnable)),
   r("finished kaggle",        kaggle_programs),
-  r("finished kaggle code",   sum(kaggle_code)),
-  r("finished kaggle mean",   mean(kaggle_code)),
-  r("finished kaggle median", median(kaggle_code)),
-  r("kaggle runtime",         as.duration(sum(kaggle_runtime))),
-  r("kaggle mean",            as.duration(mean(kaggle_runtime))),
-  r("kaggle median",          as.duration(median(kaggle_runtime)))
+  r("failed kaggle",          nrow(filter(kaggle, runnable))-nrow(kaggle_programs)),
+  rs("finished kaggle code",   kaggle_code),
+  rs("kaggle runtime",         as.duration(kaggle_runtime)),
 )
 ```
 
@@ -322,7 +321,6 @@ programs <- bind_rows(
   kaggle_programs %>% mutate(corpus="kaggle") %>% select(code, runtime, corpus)
 )
 ```
-
 
 ```{r all summary}
 overview_table(

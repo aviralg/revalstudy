@@ -54,6 +54,7 @@
 \newcommand{\ie}{\emph{i.e.},\xspace}
 \newcommand{\cf}{\emph{cf.}\xspace}
 \newcommand{\summary}[1]{({\csname #1Min\endcsname} / {\csname #1Mean\endcsname} / {\csname #1Max\endcsname})}
+\newcommand{\summaryrnd}[1]{({\csname #1MinRnd\endcsname} / {\csname #1MeanRnd\endcsname} / {\csname #1MaxRnd\endcsname})}
 
 \newcommand{\eval}{\texttt{eval}\xspace}
 \renewcommand{\c}[1]{\lstinline{#1}\xspace}
@@ -290,11 +291,10 @@ R code and \CorpusNativeCodeRnd lines of native code (C/C++/Fortran).
 Figure~\ref{fig:corpus} shows these packages, the size of the dots reflects the
 project's size in lines of code including both R and native code, the x-axis
 indicates the expression code coverage in percents and the y-axis gives the
-number of reverse dependencies in log scale. Dotted lines indicate means. Large
-(over \CorpusLargePackageTresholdRnd lines of code) and popular (in
-\CorpusMostDownloadedTreshold most downloaded) packages are annotated.
+number of reverse dependencies in log scale. Dotted lines indicate means.
+Packages with over \CorpusEvalsPackageTreshold eval call sites are annotated.
 
-These packages come from the Comprehensive R Archive Network
+All included packages come from the Comprehensive R Archive Network
 (CRAN\footnote{\url{http://cran.r-project.org}}), the largest repository of R
 code with over \CorpusAllCranRnd packages\footnote{CRAN receives about 6 new
   package submissions a day~\cite{Ligges2017}}. Unlike other open code
@@ -324,9 +324,34 @@ coverage. The code coverage was computed for each package using
 Covr\footnote{\url{ https://github.com/r-lib/covr}}, the R code coverage tool.
 
 
-\subsection{Kaggle sripts}
-% contrast to CRAN - duplication
+\subsection{Kaggle Scripts}
 
+To represent user-written code in the corpus, we truned to
+Kaggle\footnote{\url{https://www.kaggle.com}}, an online platform for
+data-science and machine-learning practitioner. Among others, the website allow
+people to share data-science competitions, a data-analysis problem together with
+data, for which users try to find the best solution. The solutions, called
+\emph{kernels}, are then shared back to the platform in the form of either plain
+scripts or as Rmarkdown / Jupyter notebooks written in either Julia, Python, R
+or SQLite.
+
+One of the most popular competition is about predicting passenger survival on
+Titanic\footnote{\url{https://www.kaggle.com/c/titanic}} with \CorpusKaggle
+kernels in R (over 1/4 of all available R kernels) which we used for our corpus.
+
+Unlike CRAN, Kaggle is not a curated repository and therefore there are no
+guarantees about the quality of the code. After downloading all of the
+\CorpusKaggle kernels and extracting the R code from the various
+formats\footnote{We use \texttt{rmarkdown} package to convert from Jupyer
+  notebook to Rmarkdown as well as to convert from Rmarkdown to plain R}, we
+found that \CorpusDuplicatedKaggle were whole-file duplicates. From
+\CorpusRunnableKaggle kernels, \CorpusFailedKaggle failed to execute. Next to
+various runtime exceptions, common problems were parse errors and misspelled
+package names.
+
+The final set contains \CorpusFinishedKaggle kernels with
+\CorpusFinishedKaggleCodeRnd \summaryrnd{CorpusFinishedKaggleCode} lines of R
+code.
 
 \section{Usage Metrics}
 

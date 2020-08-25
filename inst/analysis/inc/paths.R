@@ -64,7 +64,7 @@ WHICH_DEPENDENCIES <- c("Depends", "Imports")
 CRAN_MIRROR_LOCAL_URL <- paste0("file://", params$base_dir, "/CRAN")
 # size of a package to be considered as outlier
 PACKAGE_SIZE_OUTLIER <- 50000
-# 
+PACKAGE_EVALS_OUTLIER <- 50
 MOST_DOWNLOADED <- 25
 # R packages distributed with vanilla R
 CORE_PACKAGES <- c(
