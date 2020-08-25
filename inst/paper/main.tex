@@ -269,33 +269,39 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 
 \section{Infrastructure}
 
+This section describes the infrastructure we used to run the dynamic program
+analysis to record the calls to evals.
+
 \begin{figure*}[!tb]\centering\includegraphics[width=\linewidth]
-  {corpus.pdf}\caption{Corpus}\label{fig:corpus}
+  {pipeline.pdf}\caption{Pipeline}\label{fig:pipeline}
 \end{figure*}
 
 \section{Corpus}
 
-We now describe the corpus used in this study.
+The corpus for this study includes R programs extracted from popular R packages
+as well as complete user-written data-analysis scripts. In this section we
+describe the methodology used to collect them.
 
-\begin{figure*}[!tb]\centering\includegraphics[width=\linewidth]
-  {corpus.pdf}\caption{CRAN packages}\label{fig:corpus}
-\end{figure*}
-
-\subsection{CRAN Packages}
+\subsection{CRAN Packages}\label{sec:corpus}
 
 We have selected the TOP \CorpusPackages packages based on the number of reverse
 dependencies, \ie how many other packages depend on them\footnote{Extracted from
   package metadata using builtin function}. Using this criterion helps us to
-choose popular packages which in general should be of a better quality and
-should have better code coverage. The resulting set has
+choose popular packages which in general should be of a better quality and have
+better code coverage and therefore more code to run. The resulting set has
 \summary{CorpusRevdeps}\footnote{Such triples represent ($min$ / $mean$ /
   $max$)} reverse dependencies and consists of \CorpusRCodeRnd lines of R code
-and \CorpusNativeCodeRnd lines of native code (C/C++/Fortran)\footnote{Excluding comments and blank lines using \url{github.com/AlDanial/cloc}}.
+and \CorpusNativeCodeRnd lines of native code (C/C++/Fortran)\footnote{Excluding
+  comments and blank lines using \url{github.com/AlDanial/cloc}}.
 Figure~\ref{fig:corpus} shows these packages, the size of the dots reflects the
 project's size in lines of code including both R and native code, the x-axis
 indicates the expression code coverage in percents and the y-axis gives the
 number of reverse dependencies in log scale. Dotted lines indicate means.
 Packages with over \CorpusEvalsPackageTreshold eval call sites are annotated.
+
+\begin{figure*}[!tb]\centering\includegraphics[width=\linewidth]
+  {corpus.pdf}\caption{CRAN packages}\label{fig:corpus}
+\end{figure*}
 
 All included packages come from the Comprehensive R Archive Network
 (CRAN\footnote{\url{http://cran.r-project.org}}), the largest repository of R
