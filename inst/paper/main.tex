@@ -435,7 +435,7 @@ Callsites & Packages & Callsites & Packages & Callsites & Packages \\ \hline
 \end{table}
 
 
-To estimate the complexity of the code being evaluated,
+To roughly estimate the complexity of the code being evaluated,
 Fig.~\ref{fig:ast-size} shows the distribution of the abstract syntax tree
 size of the \c{expr} argument to \eval. The majority of inputs across core
 and packages (\miss{XX}\%) is 1. That is to say, the code being evaluated
@@ -448,49 +448,69 @@ calls. Sizes are roughly similar between core and packages.
 \caption{Input sizes} \label{fig:ast-size}
 \end{figure}
 
-\medskip\noindent\emph{Discussion:} Comparing the use of \eval in R and JavaScript is
-instructive. The use of \eval is more widespread in data science code than
-it was in JavaScript. Any run of an R program seems to trigger \eval, more
-over package programmers use \eval liberally. On the other hand, the authors
-of Kaggle packages do not use the feature at all.  This point to a
-bifurcated user community, experts who write package know how to use \eval
-while end-users do not. An alternative explanation is that end-users do not
-need \eval for simple data analysis tasks. This bifurcation was not observed
-in the JavaScript community, but this may have changed with the advent of
-Node.js ecosystem.  The distribution of input sizes is similar to that found
-in JavaScript, the majority of inputs being rather small.
+\medskip\noindent\emph{Discussion:} Comparing the use of \eval in R and
+JavaScript is instructive. The use of \eval is more widespread in data
+science code than it was in JavaScript. Any run of an R program seems to
+trigger \eval, more over package programmers use \eval liberally. On the
+other hand, the authors of Kaggle packages do not use the feature at all.
+This point to a bifurcated user community, experts who write package know
+how to use \eval while end-users do not. An alternative explanation is that
+end-users do not need \eval for simple data analysis tasks. This bifurcation
+was not observed in the JavaScript community, but this may have changed with
+the advent of Node.js ecosystem.  The distribution of input sizes is similar
+to that found in JavaScript, the majority of inputs being rather small.
 
 
-\subsection{How are they used}
+{\bf Missing from this section is the measure of the number of events
+  happening in an eval}
 
-
-- classify evals based on what they can be replaced with
-
-\subsubsection{A taxonomy of \c{eval}}
+\section{A taxonomy of eval}
 
 We first classify \c{eval} depending on the resolved expression, \emph{i.e.}
 the first argument of \c{eval} after all possible function calls and symbol
 resolution in it have been executed.
 
+\subsection{Operation mix}
 
-\subsubsection{\eval and environments}
+Here we should show some information about what happens during an eval. What kinds of operations...
 
-One of the main differences of the R \eval with the javascript one is how it interacts with \emph{scope}, or environments in R. In Javascript, \c{eval} can access the local scope and the global scope. In R, \c{eval} has an argument \c{envir} to indicate in which environment its first argument, after being resolved, must be evaluated.
+One of the main differences of the R \eval with the javascript one is how it
+interacts with \emph{scope}, or environments in R. In Javascript, \c{eval}
+can access the local scope and the global scope. In R, \c{eval} has an
+argument \c{envir} to indicate in which environment its first argument,
+after being resolved, must be evaluated.
 
-By default, it is equal to \c{parent.frame()}, which is the parent environment of the \c{eval} call.
+By default, it is equal to \c{parent.frame()}, which is the parent
+environment of the \c{eval} call.
 
-\subsection{How to replace evals}
+\subsection{Scope}
 
-We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie how many different types of the resolved \c{expr} there are per call sites, in Figure~\ref{fig:polymorphism}. \DegreeMonomorphism of the call sites are \emph{monomorphic}.
+Here we talk about scopes and envs
+
+\subsection{Patterns}
+
+Here we categorize evals in some common groups
+
+\subsection{Provenance}
+
+Here we talk about where the input of an eval comes from
+
+\subsection{Consistency}
+
+Here we talk about whether the same call site sees the same pattern
+
+{\bf Polymorphic may not be the right word.}
+
+We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie
+how many different types of the resolved \c{expr} there are per call sites,
+in Figure~\ref{fig:polymorphism}. \DegreeMonomorphism of the call sites are
+\emph{monomorphic}.
 
 \begin{figure}[!h]
     \includegraphics[width=\columnwidth]{polymorphism}
     \caption{Degree of polymorphism of \c{expr} per call sites.} \label{fig:polymorphism}
 \end{figure}
 
-\subsection{How dangerous is eval}
-
-\subsection{How many evals can be replaced}
 
 \section{Case studies}
 
