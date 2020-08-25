@@ -504,9 +504,11 @@ Although \c{eval} takes an R expression, it can evaluate a string if this string
 This corresponds to strings loaded from a file or to metaprogramming, \ie building new variables or functions by concatenating strings together, as in Listing~\ref{code:parsepaste}. To detect this kind of metaprogramming, we look at the usage of the main concatenating functions in R, \c{paste}, \c{paste0} and \c{str_c}, and \PasteParsedEvals of the evals and \PasteParsedCallSite of the call sites using a parse function actually call a concatenating function.
 
 
-\begin{lstlisting}[caption={Using \c{eval} and \c{parse} to do meta-programming in package \emph{data.table}, to build the options at load time.}, label=code:parsepaste]
+\begin{lstlisting}[caption={Using \c{eval} and \c{parse} to do meta-programming in package \emph{data.table}, to build the options at load time (in \emph{onLoad.R}).}, label=code:parsepaste]
 eval(parse(text=paste0("options(",i,"=",opts[i],")")))
 \end{lstlisting}
+
+\textbf{What about a table of packages ranked by usage of parse (and/or paste...)?}
 
 
 \subsection{Consistency}
