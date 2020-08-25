@@ -633,9 +633,9 @@ Some `eval` result from parsing text (directly or through a file) with `parse`.
 
 ```{r eval_from_parse}
 parsed_evals <- eval_calls %>% filter(!is.na(expr_parsed_expression))
-nb_parsed_evals <- parsed_evals %>% count(wt = nb_ev_calls)
+nb_parsed_evals <- parsed_evals %>% count(wt = nb_ev_calls) 
 
-r("percent parsed evals",  ratio(nb_parsed_evals, nb_eval_calls))
+r("percent parsed evals",  ratio(nb_parsed_evals$n, nb_eval_calls))
 ```
 
 There are `r nb_parsed_evals` such calls, `r nb_parsed_evals / nb_eval_calls * 100`%.
@@ -683,8 +683,8 @@ meta_parsed <- parsed_texts %>% filter(str_detect(expr_parsed_expression, "paste
 nb_meta_parsed <- meta_parsed %>% count(wt = nb_ev_calls)
 nb_meta_parsed_call_sites <- nb_eval_call_sites(meta_parsed)
 
-r("paste parsed evals", ratio(nb_meta_parsed, nb_parsed_evals))
-r("paste parsed call site", ratio(nb_meta_parsed_call_sites, nb_parsed_call_sites))
+r("paste parsed evals", ratio(nb_meta_parsed$n,  nb_parsed_evals$n))
+r("paste parsed call site", ratio(nb_meta_parsed_call_sites,  nb_parsed_call_sites))
 ```
 
 
