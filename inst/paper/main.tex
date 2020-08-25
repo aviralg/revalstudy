@@ -531,7 +531,7 @@ Here we talk about where the input of an eval comes from.
 
 Although \c{eval} takes an R expression, it can evaluate a string if this string is first parsed with \c{parse}, \c{str2expression} or \c{str2lang}. This happens for \PercentParsedEvals of the eval calls, and \PercentParsedCallSites of the call sites.
 
-This corresponds to strings loaded from a file or to metaprogramming, \ie building new variables or functions by concatenating strings together, as in Listing~\ref{code:parsepaste}. To detect this kind of metaprogramming, we look at the usage of the main concatenating functions in R, \c{paste}, \c{paste0} and \c{str_c}, and \PasteParsedEvals of the evals and \PasteParsedCallSite of the call sites using a parse function actually call a concatenating function.
+This corresponds to strings loaded from a file or to metaprogramming, \ie building new variables or functions by concatenating strings together, as in Listing~\ref{code:parsepaste}. To detect this kind of metaprogramming, we look at the usage of the main concatenating functions in R, \c{paste}, \c{paste0}, \c{glue} and \c{str_c}, and \PasteParsedEvals of the evals and \PasteParsedCallSite of the call sites using a parse function actually call a concatenating function.
 
 
 \begin{lstlisting}[caption={Using \c{eval} and \c{parse} to do meta-programming in package \emph{data.table}, to build the options at load time (in \emph{onLoad.R}).}, label=code:parsepaste]
