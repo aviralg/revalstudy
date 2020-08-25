@@ -8,7 +8,7 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-for (x in c(
+local(for (x in c(
   "dplyr", 
   "DT",
   "fs",
@@ -23,7 +23,7 @@ for (x in c(
   "viridis"
   )) {
   suppressPackageStartupMessages(library(x, character.only=TRUE))
-}
+})
 
 knitr::opts_chunk$set(
   echo = TRUE,
@@ -54,6 +54,7 @@ corpus <-
       starts_with("runnable_files"),
       starts_with("package_"),
       starts_with("funs_"),
+      "evals"
     ), 
     replace_na, 
     0
@@ -98,49 +99,111 @@ runs <- read_fst(PACKAGE_RUNS_FILE) %>%
 
 ## CRAN packages
 
+```{r compute corpus programs}
+corpus_programs <-
+  left_join(
+    filter(runs, exitval==0) %>% select(package, file, time), 
+    runnable_code_metadata %>% select(package, file, code),
+    by=c("package", "file")
+  ) %>%
+  transmute(
+    package,
+    file,
+    type=basename(dirname(file)),
+    code, 
+    runtime=time
+  )
+```
+
+There will be some programs that were not strictly part of examples, tests or vignettes, or they do not have
+counts for code size or for execution time.
+
+```{r compute program inconsistencies}
+corpus_programs_inconsistent <-
+  corpus_programs %>%
+  filter(
+    !(type %in% c("examples", "tests", "vignettes")) |
+    is.na(code) | 
+    is.na(runtime) |
+    code == 0
+  )
+
+corpus_programs_inconsistent %>% 
+    my_datatable()
+```
+
+Since, there are just a few of them, we ignore them.
+
+```{r filter out inconsistent programs}
+corpus_programs <- anti_join(corpus_programs, corpus_programs_inconsistent, by=c("package", "file"))
+```
+
 ```{r summary}
-corpus_runtime  <- corpus$runnable_time / corpus$runnable_files
-runnable_code   <- corpus$runnable_code
-corpus_programs_files <- corpus$runnable_files
+runnable_code <- 
+  corpus_programs %>%
+  mutate(files=1) %>%
+  pivot_wider(names_from=type, values_from=c(files, code)) %>%
+  select(-file) %>%
+  group_by(package) %>%
+  summarise_all(sum, na.rm=TRUE) %>%
+  group_by(package) %>%
+  mutate(
+    files=files_examples + files_tests + files_vignettes,
+    code=code_examples + code_tests + code_vignettes
+  )
+
+rs <- function(name, value) {
+  stopifnot(is.numeric(value))
+  bind_rows(
+    r(name, sum(value)),
+    r(paste(name, "mean"), mean(value)),
+    r(paste(name, "median"), median(value)),
+    r(paste(name, "min"), min(value)),
+    r(paste(name, "max"), max(value))
+  )
+}
+
+corpus_program_examples <- filter(corpus_programs, type=="examples")
+corpus_programs_tests <- filter(corpus_programs, type=="tests")
+corpus_programs_vignettes <- filter(corpus_programs, type=="vignettes")
 
 overview_table(
-  r("packages",             corpus),
-  r("in cranlogs",          filter(corpus, !is.na(rank))),
-  r("package programs",     sum(corpus_programs_files)),
-
-  r("runnable code",        sum(runnable_code)),
-  r("runnable code mean",   mean(runnable_code)),
-  r("runnable code median", median(runnable_code)),
+  r("packages",    corpus),
+  rs("revdeps", corpus$revdeps),
+  r("in cranlogs", filter(corpus, !is.na(rank))),
   
-  r("examples code",        sum(corpus$runnable_code_examples)),
-  r("tests code",           sum(corpus$runnable_code_tests)),
-  r("vignettes code",       sum(corpus$runnable_code_vignettes)),
+  rs("package programs",         runnable_code$files),
+  rs("package programs code",    runnable_code$code),
+  rs("package programs runtime", as.duration(runnable_code$runtime)),
+  
+  rs("examples programs",  runnable_code$files_examples),
+  rs("tests programs",     runnable_code$files_tests),
+  rs("vignettes programs", runnable_code$files_vignettes),
+  
+  rs("examples code",  corpus_program_examples$code),
+  rs("tests code",     corpus_programs_tests$code),
+  rs("vignettes code", corpus_programs_vignettes$code),
+
+  rs("examples runtime",  corpus_program_examples$runtime),
+  rs("tests runtime",     corpus_programs_tests$runtime),
+  rs("vignettes runtime", corpus_programs_vignettes$runtime),
   
   r("mean expr coverage",   percent(mean(corpus$coverage_expr))),
   r("median expr coverage", percent(median(corpus$coverage_expr))),
   
-  r("with R code",          filter(corpus, package_r_code > 0)),
-  r("with native code",     filter(corpus, package_native_code > 0)),
+  r("with R code",      filter(corpus, package_r_code > 0)),
+  r("with native code", filter(corpus, package_native_code > 0)),
   
-  r("code",                 sum(corpus$package_code)),
-  r("R code",               sum(corpus$package_r_code)),
-  r("R code mean",          mean(corpus$package_r_code)),
-  r("R code median",        median(corpus$package_r_code)),
-  r("native code",          sum(corpus$package_native_code)),
-  r("native code mean",     mean(corpus$package_native_code)),
-  r("native code median",   median(corpus$package_native_code)),
+  rs("code",        corpus$package_code),
+  rs("R code",      corpus$package_r_code),
+  rs("native code", corpus$package_native_code),
+
+  rs("functions",          corpus$funs_public + corpus$funs_private),
+  rs("function with eval", corpus$funs_with_eval),
+  rs("public functions",   corpus$funs_public),
+  rs("private functions",  corpus$funs_private),
   
-  r("functions",            sum(corpus$funs_public+corpus$funs_private)),
-  r("function with eval",   sum(corpus$funs_with_eval)),
-  r("public functions",     sum(corpus$funs_public)),
-  r("private functions",    sum(corpus$funs_private)),
-  
-  r("mean revdes",          mean(corpus$revdeps)),
-  r("median revdes",        median(corpus$revdeps)),
-  
-  r("runtime",              as.duration(sum(corpus$runnable_time))),
-  r("mean runtime",         as.duration(mean(corpus_runtime))),
-  r("median runtime",       as.duration(median(corpus_runtime)))
+  rs("revdes", corpus$revdeps)
 )
 ```
 
@@ -160,29 +223,34 @@ coverage_mean   <- mean(corpus$coverage_expr)
 coverage_median <- median(corpus$coverage_expr)
 revdeps_mean    <- mean(corpus$revdeps)
 revdeps_median  <- median(corpus$revdeps)
-  
+funs_with_eval_mean    <- mean(corpus$funs_with_eval)
+funs_with_eval_median  <- median(corpus$funs_with_eval)
+
+size_bins       <- c(0L, 1e3L, 5e3L, 1e4L, 5e4L, 1e5L)
+size_bins_lasb  <- c("< 1000", "1,000 - 4,999", "5,000 - 9,999", "10,000 - 49,999", "> 50,000")
+
 corpus %>%
   mutate(
-    outlier=package_code > PACKAGE_SIZE_OUTLIER,
-    label=ifelse(rank <= MOST_DOWNLOADED | outlier, package, NA)  #if_else(outlier, str_glue("{package}"), as.character(NA))
+    outlier=funs_with_eval > 30 | package_r_code > PACKAGE_SIZE_OUTLIER,
+    label=ifelse(rank <= MOST_DOWNLOADED | outlier, package, NA),
+    code_size=cut(package_r_code, size_bins, labels=size_bins_lasb, include.lowest=TRUE)
   ) %>%
   ggplot(
     aes(
       x=coverage_expr, 
-      y=revdeps,
+#      y=funs_with_eval,
+      y=evals,
       label=label,
-      size=package_code
+      size=code_size
     )
   ) +
-  geom_point(alpha=.6) +
-  geom_text(size=2, check_overlap = T, vjust=1.5, na.rm = TRUE) + 
-  
-  geom_hline(aes(yintercept=revdeps_mean), linetype="dashed", color="red", size=0.2) +
+  geom_point(alpha=.4) +
+  geom_text(size=3, check_overlap = T, vjust=-1.5, na.rm = TRUE) + 
+  geom_hline(aes(yintercept=funs_with_eval_mean), linetype="dashed", color="red", size=0.2) +
   geom_vline(aes(xintercept=coverage_mean), linetype="dashed", color="red", size=0.2) +
-
   scale_x_continuous(labels = scales::percent) + 
-  scale_y_log10(labels = scales::comma) +
-  scale_size(range = c(.1, 3), labels = scales::comma) +
+  scale_y_continuous(trans=scales::pseudo_log_trans(), breaks=c(0, 1, 2, 5, 10, 20, 50, 100, 200, 500)) +
+  scale_size_discrete(range = c(1, 6)) +
   theme(
     legend.position=c(0.2, 0.85),
     legend.box="horizontal",
@@ -190,14 +258,14 @@ corpus %>%
   ) +
   labs(
     x="Code coverage", 
-    y="Number of reverse dependencies (log)", 
-    size="Code size (R + native)",
+    y="Number of eval call sites", 
+    size="Lines of R code",
     linetype=""
   ) +
   guides(
     size=guide_legend(order=1),
-    color=guide_legend(order=2),
-    linetype=F
+    color=FALSE,
+    linetype=FALSE
   )
 
 ggsave(CORPUS_PLOT)
@@ -218,16 +286,25 @@ datatable(
 
 ## Kaggle
 
+```{r compute kaggle programs}
+kaggle_programs <-
+  kaggle %>%
+  filter(exitval==0) %>%
+  transmute(
+    id, 
+    code, 
+    runtime=as.numeric(runtime, units="seconds")
+  )
+```
+
 ```{r kaggle summary}
-kaggle_runnable <- filter(kaggle, runnable)
-kaggle_finished <- filter(kaggle, exitval==0)
-kaggle_code     <- kaggle_finished$code
-kaggle_runtime  <- kaggle_finished$runtime
+kaggle_code     <- kaggle_programs$code
+kaggle_runtime  <- kaggle_programs$runtime
 
 overview_table(
   r("kaggle",                 kaggle),
-  r("runnable kaggle",        kaggle_runnable),
-  r("finished kaggle",        kaggle_finished),
+  r("runnable kaggle",        filter(kaggle, runnable)),
+  r("finished kaggle",        kaggle_programs),
   r("finished kaggle code",   sum(kaggle_code)),
   r("finished kaggle mean",   mean(kaggle_code)),
   r("finished kaggle median", median(kaggle_code)),
@@ -239,41 +316,26 @@ overview_table(
 
 ## Combined
 
-```{r all summary}
-overview_table(
-  r("all programs", nrow(kaggle_finished) + sum(corpus_programs_files)),
-  r("all runnbale code", sum(kaggle_code) + sum(runnable_code)),
-  r("all code", sum(kaggle_code) + sum(corpus$package_code) + sum(runnable_code))
+```{r compute programs}
+programs <- bind_rows(
+  corpus_programs %>% mutate(corpus="packages") %>% select(code, runtime, corpus),
+  kaggle_programs %>% mutate(corpus="kaggle") %>% select(code, runtime, corpus)
 )
 ```
 
-```{r compute programs}
-corpus_programs <-
-  left_join(
-    filter(runs, exitval==0) %>% select(package, file, time), 
-    runnable_code_metadata %>% select(package, file, code),
-    by=c("package", "file")
-  ) %>%
-  transmute(id=paste(package, ":", file), code, runtime=time, corpus="packages")
 
-kaggle_programs <-
-  kaggle %>%
-  filter(exitval==0) %>%
-  transmute(id, code, runtime=as.numeric(runtime, units="seconds"), corpus="kaggle")
-
-programs <- bind_rows(corpus_programs, kaggle_programs)
+```{r all summary}
+overview_table(
+  r("all programs",      nrow(kaggle_programs) + nrow(corpus_programs)),
+  r("all runnbale code", sum(kaggle_code) + sum(runnable_code$code)),
+  r("all code",          sum(kaggle_code) + sum(corpus$package_code) + sum(runnable_code$code))
+)
 ```
 
-```{r}
+```{r programs-code, eval=F}
 programs %>%
   ggplot(aes(y=code, x=corpus, fill=corpus)) + 
-  geom_flat_violin(trim=FALSE, width=.5) +
-  geom_dotplot(
-    binaxis="y", 
-    dotsize=0.1, 
-    stackdir="down", 
-    binwidth=0.01, 
-    position=position_nudge(-0.025)) +
+  geom_violin() +
   scale_y_log10(labels = scales::comma) +
   scale_x_discrete(labels=c("kaggle"="Kaggle", "packages"="Packages")) +
   scale_fill_viridis(discrete = TRUE) +
@@ -287,7 +349,7 @@ programs %>%
 ggsave(path(PLOT_DIR, "programs-code.pdf"), width=7, height=5.5)
 ```
 
-```{r}
+```{r programs-runtime, eval=F}
 programs %>%
   ggplot(aes(y=runtime, x=corpus, fill=corpus)) + 
   geom_flat_violin(trim=FALSE, width=.5) +
