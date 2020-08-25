@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2020-08-25T20:54:33.036Z" agent="5.0 (X11)" etag="nkAR8ewOLO6G-xUUitOV" version="13.6.5" type="github">
+<mxfile host="app.diagrams.net" modified="2020-08-25T20:55:57.372Z" agent="5.0 (X11)" etag="DocGpPXxW1NsYRkKGI9B" version="13.6.5" type="github">
   <diagram id="F0AHolVVesLSMNE4kyMN" name="Page-1">
     <mxGraphModel dx="1422" dy="812" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -13,8 +13,8 @@
         <mxCell id="XyMEwlzETBZZqd7nD72x-3" value="Extract&lt;br&gt;metadata &lt;br&gt;&lt;span style=&quot;font-weight: normal ; font-size: 10px&quot;&gt;- code size&lt;br&gt;- code coverage&lt;br&gt;&lt;/span&gt;" style="whiteSpace=wrap;html=1;rounded=1;shadow=1;fontStyle=1" vertex="1" parent="1">
           <mxGeometry x="287" y="82" width="113" height="98" as="geometry" />
         </mxCell>
-        <mxCell id="XyMEwlzETBZZqd7nD72x-4" value="Extract &lt;br&gt;programs" style="whiteSpace=wrap;html=1;rounded=1;shadow=1;fontStyle=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
-          <mxGeometry x="440" y="92" width="107" height="78" as="geometry" />
+        <mxCell id="XyMEwlzETBZZqd7nD72x-4" value="Extract programs&lt;br&gt;&lt;div style=&quot;font-size: 11px&quot;&gt;&lt;span style=&quot;font-weight: normal&quot;&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;- examples&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 11px&quot;&gt;&lt;span style=&quot;font-weight: normal&quot;&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;-tests&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 11px&quot;&gt;&lt;span style=&quot;font-weight: normal&quot;&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;-vignettes&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 11px&quot;&gt;&lt;span style=&quot;font-weight: normal&quot;&gt;&lt;font style=&quot;font-size: 11px&quot;&gt;- scripts&lt;/font&gt;&lt;/span&gt;&lt;br&gt;&lt;/div&gt;" style="whiteSpace=wrap;html=1;rounded=1;shadow=1;fontStyle=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="440" y="86" width="107" height="90" as="geometry" />
         </mxCell>
         <mxCell id="XyMEwlzETBZZqd7nD72x-5" value="Run &lt;br&gt;dynamic&lt;br&gt;analysis" style="whiteSpace=wrap;html=1;rounded=1;shadow=1;fontStyle=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
           <mxGeometry x="581" y="92" width="108" height="78" as="geometry" />
