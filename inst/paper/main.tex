@@ -59,6 +59,8 @@
 \newcommand{\summaryrnd}[1]{({\csname #1MinRnd\endcsname} / {\csname #1MeanRnd\endcsname} / {\csname #1MaxRnd\endcsname})}
 
 \newcommand{\eval}{\texttt{eval}\xspace}
+\newcommand{\parse}{\texttt{parse}\xspace}
+\newcommand{\source}{\texttt{source}\xspace}
 \renewcommand{\c}[1]{\lstinline{#1}\xspace}
 \newcommand{\miss}[1]{{\textcolor{red}{#1}}\xspace}
 \newcommand{\evil}{\emph{evil}\xspace}
@@ -644,6 +646,12 @@ in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
   the expression can reflectively access any environment in the call stack or use
   the super assignment operator(\c{<<-}) to write to parent scope. The \c{local}
   function which is part of Core R is an example of this usage pattern.
+
+  \subsubsection{Dynamic Code Loading} The combination of \parse and \eval is
+  used to parse text from string or file and evaluate in a custom environment.
+  This pattern is used by the \source Core R function to load R code from a file
+  in the current workspace. This is quite useful for loading functions for
+  interactive data analysis.
 
 \item Assembling call strings from components passed by callers: eval(substitute(f(x, y, z)))
 \item Convenience: 
