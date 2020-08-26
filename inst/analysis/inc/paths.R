@@ -27,10 +27,12 @@ PACKAGE_RUNNABLE_CODE_FILE <- path(DATA_DIR, "runnable-code-metadata.fst")
 PACKAGE_RUNS_FILE          <- path(DATA_DIR, "run.fst")
 PACKAGE_TRACE_RUNS_FILE    <- path(DATA_DIR, "run-trace.fst")
 PACKAGE_TRACE_LOG_FILE     <- path(DATA_DIR, "parallel-trace.fst")
+CRAN_PROGRAMS_FILE         <- path(DATA_DIR, "cran-programs.fst")
 
 KAGGLE_DEPENDENCIES_FILE <- path(DATA_DIR, "kaggle-dependencies.txt")
-KAGGLE_KERNELS_FILE <- path(DATA_DIR, "kaggle-kernels.fst")
-KAGGLE_LOG_FILE     <- path(DATA_DIR, "parallel-kaggle.fst")
+KAGGLE_KERNELS_FILE      <- path(DATA_DIR, "kaggle-kernels.fst")
+KAGGLE_LOG_FILE          <- path(DATA_DIR, "parallel-kaggle.fst")
+KAGGLE_PROGRAMS_FILE     <- path(DATA_DIR, "kaggle-programs.fst")
 
 RUN_TRACE_DIR  <- path(RUN_DIR, "package-evals-traced")
 RUN_KAGGLE_DIR <- path(RUN_DIR, "kaggle-run")
@@ -53,6 +55,7 @@ EVALS_RAW_FILE        <- path(RUN_TRACE_DIR, "raws.fst")
 EVALS_SUM_CORE_FILE   <- path(RUN_TRACE_DIR, "summarized-core.fst")
 EVALS_SUM_PKGS_FILE   <- path(RUN_TRACE_DIR, "summarized-packages.fst")
 EVALS_SUM_KAGGLE_FILE <- path(RUN_TRACE_DIR, "summarized-kaggle.fst")
+EVALS_SUM_EXTERNALS_FILE <- path(RUN_TRACE_DIR, "summarized-externals.fst")
 
 ################################################################################
 # GLOBALS

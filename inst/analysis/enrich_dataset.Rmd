@@ -70,10 +70,6 @@ eval_calls <- eval_calls %>% add_types()
 eval_calls <- eval_calls %>% add_eval_source(eval_calls_raw) %>% add_eval_source_type()
 ```
 
-```{r shrink_to_corpus}
-corpus_files <- read_lines(CORPUS_FILE)
-eval_calls <- eval_calls %>% keep_only_corpus(corpus_files)
-```
 
 
 ```{r fake_srcref}
@@ -94,14 +90,20 @@ eval_calls <- eval_calls %>% add_parse_args()
 eval_calls <- eval_calls %>% add_package()
 ```
 
+```{r shrink_to_corpus}
+corpus_files <- read_lines(CORPUS_FILE)
+eval_calls_corpus <- eval_calls %>% keep_only_corpus(corpus_files)
+
+eval_calls_externals <- eval_calls %>% get_externals(corpus_files)
+```
 
 
-There are `r nrow(eval_calls)` unique rows.
+There are `r nrow(eval_calls)` unique rows. The file with dependent packages has `r nrow(eval_calls_externals)` rows and the one with only the packages in the corpus, `r nrow(eval_calls_corpus)`.
 
 ```{r separate_datasets}
-eval_calls_core <- eval_calls %>% filter(eval_source_type == "core")
-eval_calls_packages <- eval_calls %>% filter(eval_source_type == "package" )
-eval_calls_kaggle <- eval_calls %>% filter(eval_source_type == "kaggle")
+eval_calls_core <- eval_calls_corpus %>% filter(eval_source_type == "core")
+eval_calls_packages <- eval_calls_corpus %>% filter(eval_source_type == "package" )
+eval_calls_kaggle <- eval_calls_corpus %>% filter(eval_source_type == "kaggle")
 ```
 
 The core dataset has `r nrow(eval_calls_core)` unique calls, the packages dataset, `r nrow(eval_calls_packages)` and the kaggle one, `r nrow(eval_calls_kaggle)`.
@@ -123,11 +125,16 @@ undefined_evals <- eval_calls %>% filter(eval_source_type == "<undefined>")
 
 nb_undefined <- undefined_evals %>% count(wt = nb_ev_calls)
 
+nb_out_corpus <- undefined_evals %>% semi_join(eval_calls_externals) %>%
+    count(wt = nb_ev_calls)
+
 nb_different_call_expr <- undefined_evals %>% select(eval_call_expression) %>% n_distinct()
 
 r("undefined evals", nb_undefined$n)
 r("percent undefined eval", ratio(nb_undefined$n, nb_eval_calls))
 r("undefined eval expressions", nb_different_call_expr)
+r("undefined out of corpus", nb_out_corpus)
+r("undefined out of coprus percent", ratio(nb_out_corpus, nb_undefined))
 ```
 
 
@@ -155,6 +162,8 @@ write_fst(eval_calls_core, EVALS_SUM_CORE_FILE)
 write_fst(eval_calls_packages, EVALS_SUM_PKGS_FILE)
 
 write_fst(eval_calls_kaggle, EVALS_SUM_KAGGLE_FILE)
+
+write_fst(eval_calls_externals, EVALS_SUM_EXTERNALS_FILE)
 ```
 
 

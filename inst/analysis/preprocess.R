@@ -147,3 +147,9 @@ keep_only_corpus <- function(dataset, corpus_files)
            filter(eval_source %in% c(corpus_files, "core", "base", "base?")))
 }
 
+get_externals <- function(dataset, corpus_files)
+{
+  return(dataset %>% 
+           filter(!eval_source %in% c(corpus_files, "core", "base", "base?")))
+}
+

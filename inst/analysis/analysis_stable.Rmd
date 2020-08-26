@@ -446,21 +446,21 @@ ast_sizes %>%
 ggsave(path(PLOT_DIR, "ast_sizes.pdf"))
 
 ast_sizes_prop <- ast_sizes %>% count(expr_resolved_ast_size, wt = nb_eval_calls) %>%
-                      arrange(desc(expr_resolved_ast_size)) %>% 
-                      mutate(proportion = n / nb_eval_calls) %>% 
+                      mutate(proportion = n / sum(n)) %>% 
+                      arrange(expr_resolved_ast_size) %>% 
                       mutate(cumulative = cumsum(proportion))
   
 
 ast_size_one <- ast_sizes %>% filter(expr_resolved_ast_size == 1) 
 nb_ast_size_one <- count(ast_size_one, wt = nb_ev_calls)$n
 nb_ast_size_one_call_sites <- nb_eval_call_sites(ast_size_one)
-r("nb ast one percent", ratio(nb_ast_size_one, nb_eval_calls))
-r("nb ast one call site percent", ratio(nb_ast_size_one_call_sites, nb_call_sites))
+r("nb ast one percent", ratio(nb_ast_size_one, sum(ast_sizes_prop$n)))
+r("nb ast one call site percent", ratio(nb_ast_size_one_call_sites, nb_eval_call_sites(ast_sizes)))
 
 nb_nodes_many <- ast_sizes_prop %>% filter(cumulative >= 95) %>% .[1,] 
 
-r("ast size 95", nb_nodes_many$expr_resolved_ast_size)
-r("ast size 95 exact percent", percent(nb_nodes_many$proportion))
+r("ast size nine five", nb_nodes_many$expr_resolved_ast_size)
+r("ast size nine five exact percent", percent(nb_nodes_many$proportion))
 
 ```
 
