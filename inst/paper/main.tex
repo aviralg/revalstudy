@@ -278,11 +278,13 @@ analysis to record the calls to evals.
 
 \section{Corpus}
 
-The corpus for this study includes R programs extracted from popular R packages
-as well as complete user-written data-analysis scripts. In this section we
-describe the methodology used to collect them.
+In this study, we report on eval usage in a corpus of \CorpusCorePackages R core
+and \CorpusPackages popular CRAN packages. To quantify the eval use, we run
+\CorpusAllProgramsRnd of R programs that are extracted form those packages as
+well as from the user-written data-analyses shared on the Kaggle platform. In
+this section we describe this corpus and methodology used to assemble it.
 
-\subsection{CRAN Packages}\label{sec:corpus}
+\subsection{CRAN Packages}
 
 We have selected the TOP \CorpusPackages packages based on the number of reverse
 dependencies, \ie how many other packages depend on them\footnote{Extracted from
@@ -340,7 +342,7 @@ average, across the \CorpusPackages packages, it is \CorpusMeanExprCoverage.
 
 \subsection{Kaggle Scripts}
 
-To represent user-written code in the corpus, we truned to
+To represent user-written code in the corpus, we turned to
 Kaggle\footnote{\url{https://www.kaggle.com}}, an online platform for
 data-science and machine-learning practitioner. Among others, the website allow
 people to share data-science competitions, a data-analysis problem together with
@@ -412,8 +414,8 @@ Kaggle & \KaggleCoreTotalEvalCallsRnd (1 / 412 / 2.8K) & \KaggleDependentTotalEv
       \hline
     \end{tabular}
   }
-  \label{A}
   \caption{Eval calls in CRAN and Kaggle}
+  \label{A}
 \end{table}
 
 
@@ -584,6 +586,17 @@ in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
 
 
 \section{Case studies}
+
+\begin{itemize}
+\item Escape Hatch: \c{eval(unlock_binding ... )} to prevent R CMD check warnings
+\item Accessing data frame columns like local variables: \c{eval(x + y + z, data.frame(x, y z))}
+\item Poor man's sandboxing: local function
+\item Assembling call strings from components passed by callers: eval(substitute(f(x, y, z)))
+\item Convenience: 
+\item Dynamic code loading: \c{eval(parse(...))}. The textual input in parse can come from three places: a string, a file or in interactive R sessions directly from user input. Next to \c{parse}, there are also \c{str2expression} and \c{str2lang} which are a specialized versions of parse that do not keep source references and thus are a bit faster.
+\item bypassing R CMD check in the case one accesses dangerous functions such as unlockBinding or private symbols.
+\item evaling recorded calls in model-fitting functions or passing most of the current call to another function. Both ``patterns'' use the \c{match.call} to capture current call. The latter is just for laziness as it is the same as calling the new function with explicitly selecting the arguments.
+\end{itemize}
 
 \subsection{base}
 

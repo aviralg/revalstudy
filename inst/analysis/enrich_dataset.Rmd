@@ -10,10 +10,11 @@ params:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,
-                      fig.align = "center",
                       fig.retina = 2,
                       fig.width = 10,
                       cache.lazy = FALSE)
+
+now <- Sys.time() 
 
 library(tidyverse)
 library(stringr)
@@ -61,7 +62,7 @@ eval_calls <- eval_calls %>% add_types()
 ```
 
 ```{r add_source}
-eval_calls <- eval_calls %>% add_eval_source() %>% add_eval_source_type()
+eval_calls <- eval_calls %>% add_eval_source(eval_calls_raw) %>% add_eval_source_type()
 ```
 
 
@@ -71,7 +72,7 @@ eval_calls <- eval_calls %>% add_parse_args()
 ```
 
 ```{r ast_size}
-eval_calls <- eval_calls %>% add_ast_size()
+#eval_calls <- eval_calls %>% add_ast_size()
 ```
 
 ```{r add_package}
@@ -79,12 +80,15 @@ eval_calls <- eval_calls %>% add_package()
 ```
 
 
+There are `r nrow(eval_calls)` unique rows.
+
 ```{r separate_datasets}
 eval_calls_core <- eval_calls %>% filter(eval_source_type == "core")
 eval_calls_packages <- eval_calls %>% filter(eval_source_type %in% c("package", "<undefined>") )
 eval_calls_kaggle <- eval_calls %>% filter(eval_source_type == "kaggle")
 ```
 
+The core dataset has `r nrow(eval_calls_core)` unique calls, the packages dataset, `r nrow(eval_calls_packages)` and the kaggle one, `r nrow(eval_calls_kaggle)`.
 
 ```{r}
 eval_calls_raw <- eval_calls_raw %>% select(-ends_with("_type")) %>% left_join(eval_calls)
@@ -102,3 +106,4 @@ write_fst(eval_calls_kaggle, EVALS_SUM_KAGGLE_FILE)
 ```
 
 
+Notebook execution was `r difftime(Sys.time(), now)`.

@@ -22,6 +22,11 @@ RUN_PACKAGE_TRACE_LOG_FILE  := $(RUN_PACKAGE_TRACE_DIR)/parallel.log
 RUN_CALLS_FILE              := $(RUN_PACKAGE_TRACE_DIR)/calls.fst
 RUN_CALLS_FINAL_FILE        := $(RUN_PACKAGE_TRACE_DIR)/calls-final.fst
 
+RUN_SUM_CORE_FILE    := $(RUN_PACKAGE_TRACE_DIR)/summarized-core.fst
+RUN_SUM_KAGGLE_FILE  := $(RUN_PACKAGE_TRACE_DIR)/summarized-kaggle.fst
+RUN_SUM_PKGS_FILE    := $(RUN_PACKAGE_TRACE_DIR)/summarized-packages.fst
+RUN_RAW_FILE         := $(RUN_PACKAGE_TRACE_DIR)/raw.fst
+
 PACKAGE_EVALS_FILE         := $(DATA_DIR)/evals.fst
 PACKAGE_COVERAGE_FILE      := $(DATA_DIR)/coverage.fst
 PACKAGE_METADATA_FILE      := $(DATA_DIR)/metadata.fst
@@ -128,12 +133,12 @@ $(RUN_CALLS_FINAL_FILE): $(RUN_CALLS_FILE) $(CORPUS_FILE)
 
 calls: $(RUN_CALLS_FINAL_FILE)
 
-# TODO iterate results
-enrich: $(RUN_CALLS_FINAL_FILE) $(RUN_KAGGLE_CALLS_FINAL_FILE)
+$(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE) $(RUN_RAW_FILE): $(RUN_CALLS_FINAL_FILE) $(RUN_KAGGLE_CALLS_FINAL_FILE)
 	$(call RENDER_RMD,$(ANALYSIS_DIR)/enrich_dataset.Rmd)
 
-# TODO iterate dependencies
-analysis: enrich
+enrich: $(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE) $(RUN_RAW_FILE)
+
+analysis: $(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE)
 	$(call RENDER_RMD,$(ANALYSIS_DIR)/analysis_stable.Rmd)
 
 ################################################################################
