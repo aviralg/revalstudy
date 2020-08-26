@@ -278,11 +278,13 @@ analysis to record the calls to evals.
 
 \section{Corpus}
 
-The corpus for this study includes R programs extracted from popular R packages
-as well as complete user-written data-analysis scripts. In this section we
-describe the methodology used to collect them.
+In this study, we report on eval usage in a corpus of \CorpusCorePackages R core
+and \CorpusPackages popular CRAN packages. To quantify the eval use, we run
+\CorpusAllProgramsRnd of R programs that are extracted form those packages as
+well as from the user-written data-analyses shared on the Kaggle platform. In
+this section we describe this corpus and methodology used to assemble it.
 
-\subsection{CRAN Packages}\label{sec:corpus}
+\subsection{CRAN Packages}
 
 We have selected the TOP \CorpusPackages packages based on the number of reverse
 dependencies, \ie how many other packages depend on them\footnote{Extracted from
@@ -340,7 +342,7 @@ average, across the \CorpusPackages packages, it is \CorpusMeanExprCoverage.
 
 \subsection{Kaggle Scripts}
 
-To represent user-written code in the corpus, we truned to
+To represent user-written code in the corpus, we turned to
 Kaggle\footnote{\url{https://www.kaggle.com}}, an online platform for
 data-science and machine-learning practitioner. Among others, the website allow
 people to share data-science competitions, a data-analysis problem together with
@@ -412,8 +414,8 @@ Kaggle & \KaggleCoreTotalEvalCallsRnd (1 / 412 / 2.8K) & \KaggleDependentTotalEv
       \hline
     \end{tabular}
   }
-  \label{A}
   \caption{Eval calls in CRAN and Kaggle}
+  \label{A}
 \end{table}
 
 

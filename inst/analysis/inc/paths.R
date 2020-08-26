@@ -28,6 +28,7 @@ PACKAGE_RUNS_FILE          <- path(DATA_DIR, "run.fst")
 PACKAGE_TRACE_RUNS_FILE    <- path(DATA_DIR, "run-trace.fst")
 PACKAGE_TRACE_LOG_FILE     <- path(DATA_DIR, "parallel-trace.fst")
 
+KAGGLE_DEPENDENCIES_FILE <- path(DATA_DIR, "kaggle-dependencies.txt")
 KAGGLE_KERNELS_FILE <- path(DATA_DIR, "kaggle-kernels.fst")
 KAGGLE_LOG_FILE     <- path(DATA_DIR, "parallel-kaggle.fst")
 
