@@ -634,7 +634,7 @@ We classify the environment from two points of view:
   various limitations. For example, in \datatable package, \eval is used to modify
   a binding in the \base package of R. Bindings in the \base package are locked
   for modification and require explicit unlocking using \unlockBinding function.
-  However using this function directly triggers a warning during package building
+  However, directly using this function triggers a warning during package building
   process which statically analyzes the package for use of such restricted
   functions. The \datatable gets around this limitation by enclosing the call to
   \unlockBinding inside \eval.
