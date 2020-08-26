@@ -42,6 +42,9 @@ create_tags(path("../paper/tag", "counts.tex"), prefix="", default=TRUE)
 ```
 
 ```{r eval=TRUE}
+run_trace_data <- read_fst(PACKAGE_TRACE_RUNS_FILE)
+parallel_kaggle_data <- read_fst(KAGGLE_LOG_FILE)
+
 core_data <- read_fst(params$core_datafile)
 packages_data <- 
     read_fst(params$packages_datafile) %>%
@@ -248,12 +251,38 @@ all_data <-
     all_data %>%
     mutate(core_own_dependent = if_else(eval_source == "core", "core",
                                 if_else(eval_source == "base", "core",
-                                if_else(package == caller_package, "own",
+                                if_else(package == eval_source, "own",
                                         "dependent"))),
           eval_source)
 
+
+#all_package_programs <- 
+#    run_trace_data %>%
+#    filter(Exitval != 0)
+#    
+#
+#all_kaggle_programs <-
+#    parallel_kaggle_data %>% 
+#    filter(Exitval == 0) %>% 
+#    pull(Command) %>% 
+#    map_chr(function(str) { 
+#        script <- str_split(str, " ")[[1]][4]; 
+#        comps <- path_split(script)[[1]]; 
+#        str_c(comps[8], "/", comps[9]) 
+#    })
+#    
+#all_files <-
+#    rbind(tibble(file = run_trace_data$file, core_own_dependent = "core", corpus = "cran", nb_ev_calls = 0),
+#          tibble(file = run_trace_data$file, core_own_dependent = "own", corpus = "cran", nb_ev_calls = 0),
+#          tibble(file = run_trace_data$file, core_own_dependent = "dependent", corpus = "cran", nb_ev_calls = 0)) %>%
+#    rbind(tibble(file = all_kaggle_programs, core_own_dependent = "core", corpus = "kaggle", nb_ev_calls = 0),
+#          tibble(file = all_kaggle_programs, core_own_dependent = "own", corpus = "kaggle", nb_ev_calls = 0),
+#          tibble(file = all_kaggle_programs, core_own_dependent = "dependent", corpus = "kaggle", nb_ev_calls = 0))
+
 core_own_dependent <-
     all_data %>%
+#        rbind(all_files) %>%
+#        select(file, core_own_dependent, corpus, nb_ev_calls) %>%
         group_by(file, core_own_dependent) %>%
         summarize(corpus = first(corpus), eval_calls = sum(nb_ev_calls)) %>%
         ungroup() %>%
