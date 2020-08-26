@@ -59,7 +59,6 @@
 \newcommand{\summaryrnd}[1]{({\csname #1MinRnd\endcsname} / {\csname #1MeanRnd\endcsname} / {\csname #1MaxRnd\endcsname})}
 
 \newcommand{\eval}{\texttt{eval}\xspace}
-\newcommand{\substitute}{\texttt{substitute}\xspace}
 \newcommand{\parse}{\texttt{parse}\xspace}
 \newcommand{\source}{\texttt{source}\xspace}
 \newcommand{\substitute}{\texttt{substitute}\xspace}
@@ -615,9 +614,12 @@ We classify the environment from two points of view:
   in the current workspace. This is quite useful for loading functions for
   interactive data analysis.
 
-  \subsubsection{Metaprogramming} \eval in combination with \substitute is used
-  to
-  Assembling call strings from components passed by callers: eval(substitute(f(x, y, z)))
+  \subsubsection{Metaprogramming} The combination of \eval and \substitute is
+  used to do metaprogramming in R. \substitute can be used to synthesize ASTs by
+  stitching together user inputs. \substitute walks over its argument AST and
+  replaces the symbols with their bindings in the specified environment and
+  returns this new AST which can then be evaluated in custom environments using
+  \eval.
 
   \subsubsection{Escape Hatch}: \c{eval(unlock_binding ... )} to prevent R CMD check
   warnings
