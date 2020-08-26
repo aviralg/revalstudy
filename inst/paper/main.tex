@@ -270,7 +270,22 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 \section{Infrastructure}
 
 This section describes the infrastructure we used to run the dynamic program
-analysis to record the calls to evals.
+analysis to record the calls to evals. Our analysis pipeline starts with
+downloading and installing the open source R packages from CRAN. The Kaggle
+kernels are downloaded from Kaggle.com by a crawler and handled separately.
+Next, we extract code size and coverage metrics from the installed packages
+using the covr package.
+This is followed by extraction of runnable programs from R packages: tests,
+examples and vignettes. The extracted programs are then executed through our
+dynamic analyzer, instrumentr, which obtains relevant information from the
+program runs. instrumentr is an R package that enables us to write our tracing
+logic in R. It internally uses R-dyntrace which is a modified R interpreter that
+exposes hooks for events of interest. instrumentr provides an API to execute R
+callbacks from these hooks.
+Finally, we use RMarkdown notebooks to analyze and visualize this data.
+Our infrastructure contains three
+components:
+Figure~\ref{fig:pipeline} shows the main steps of our pipeline.
 
 \begin{figure*}[!tb]\centering\includegraphics[width=\linewidth]
   {pipeline.pdf}\caption{Pipeline}\label{fig:pipeline}
