@@ -621,20 +621,30 @@ in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
 \section{Case studies}
 
 \begin{itemize}
-\item Escape Hatch: \c{eval(unlock_binding ... )} to prevent R CMD check warnings
-  \subsubsection{Evaluation using Data Fields}
-  A common use of \eval is to evaluate expressions that access data frame
-columns or list (heterogeneous vectors) elements by name. Core R provides two
-functions, \c{with} and \c{within} that implement this pattern. These functions
-construct a temporary environment with data frame columns or list elements as
-the bindings. Side-effects performed by the evaluated expression take place in
-this temporary environment and are ignored by the \c{with} function. The
-\c{within} function copies these modifications to a local copy of the input data
-and returns it. This pattern is used quite often for statistical modeling. The
-modeling expressions is constructed from variable names whose values are
-supplied by a data frame or list.
+\item Escape Hatch: \c{eval(unlock_binding ... )} to prevent R CMD check
+  warnings
+  \subsubsection{Evaluation using Data Fields} A common use of \eval is to
+  evaluate expressions that access data frame columns or list (heterogeneous
+  vectors) elements by name. Core R provides two functions, \c{with} and
+  \c{within} that implement this pattern. These functions construct a temporary
+  environment with data frame columns or list elements as the bindings.
+  Side-effects performed by the evaluated expression take place in this temporary
+  environment and are ignored by the \c{with} function. The \c{within} function
+  copies these modifications to a local copy of the input data and returns it.
+  This pattern is used quite often for statistical modeling. The modeling
+  expressions is constructed from variable names whose values are supplied by a
+  data frame or list.
 
-\item Poor man's sandboxing: local function
+  \subsubsection{Sandboxing} The combination of \eval and first class
+  environments can be used to construct a sandbox for evaluating side-effecting
+  expressions. The newly constructed environment can use the current environment
+  for its lexical scope. This provides the evaluated expression access to all the
+  bindings in the current scope but restricts the side-effect to the newly
+  constructed throwaway environment. However, this sandboxing is limited because
+  the expression can reflectively access any environment in the call stack or use
+  the super assignment operator(\c{<<-}) to write to parent scope. The \c{local}
+  function which is part of Core R is an example of this usage pattern.
+
 \item Assembling call strings from components passed by callers: eval(substitute(f(x, y, z)))
 \item Convenience: 
 \item Dynamic code loading: \c{eval(parse(...))}. The textual input in parse can come from three places: a string, a file or in interactive R sessions directly from user input. Next to \c{parse}, there are also \c{str2expression} and \c{str2lang} which are a specialized versions of parse that do not keep source references and thus are a bit faster.
