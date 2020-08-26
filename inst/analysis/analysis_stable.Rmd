@@ -277,21 +277,6 @@ nb_eval_calls_per_package <- eval_calls %>% group_by(caller_package) %>% summari
 nb_eval_calls_per_package  %>% datatable()
 ```
 
-### Unknown evals
-
-Some `eval` do not have srcref information attached and are not in *base*. It is often because they are located in a function that is created by anotehr function.
-
-```{r unknown_evals}
-undefined_evals <- eval_calls %>% filter(eval_source_type == "<undefined>")
-
-nb_undefined <- undefined_evals %>% count(wt = nb_ev_calls)
-
-nb_different_call_expr <- undefined_evals %>% select(eval_call_expression) %>% n_distinct()
-
-r("undefined evals", nb_undefined$n)
-r("percent undefined eval", ratio(nb_undefined$n, nb_eval_calls))
-r("undefined eval expressions", nb_different_call_expr)
-```
 
 
 ### Excluding *base* from the data set

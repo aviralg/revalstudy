@@ -26,6 +26,11 @@ library(fs)
 library(parallel)
 
 source("inc/paths.R")
+source("inc/latextags.R")
+source("inc/setup.R")
+theme_set(theme_minimal())
+create_tags(path(TAGS_DIR, "enrichDataset.tex"), prefix="", default=TRUE)
+
 source("insights.R", local = knitr::knit_global())
 source("preprocess.R", local = knitr::knit_global())
 ```
@@ -65,6 +70,16 @@ eval_calls <- eval_calls %>% add_types()
 eval_calls <- eval_calls %>% add_eval_source(eval_calls_raw) %>% add_eval_source_type()
 ```
 
+```{r shrink_to_corpus}
+corpus_files <- read_lines(CORPUS_FILE)
+eval_calls <- eval_calls %>% keep_only_corpus(corpus_files)
+```
+
+
+```{r fake_srcref}
+eval_calls <- eval_calls %>% add_fake_srcref()
+```
+
 
 
 ```{r parse_args}
@@ -80,22 +95,59 @@ eval_calls <- eval_calls %>% add_package()
 ```
 
 
+
 There are `r nrow(eval_calls)` unique rows.
 
 ```{r separate_datasets}
 eval_calls_core <- eval_calls %>% filter(eval_source_type == "core")
-eval_calls_packages <- eval_calls %>% filter(eval_source_type %in% c("package", "<undefined>") )
+eval_calls_packages <- eval_calls %>% filter(eval_source_type == "package" )
 eval_calls_kaggle <- eval_calls %>% filter(eval_source_type == "kaggle")
 ```
 
 The core dataset has `r nrow(eval_calls_core)` unique calls, the packages dataset, `r nrow(eval_calls_packages)` and the kaggle one, `r nrow(eval_calls_kaggle)`.
 
 ```{r}
-eval_calls_raw <- eval_calls_raw %>% select(-ends_with("_type")) %>% left_join(eval_calls)
+#eval_calls_raw <- eval_calls_raw %>% select(-ends_with("_type")) %>% left_join(eval_calls)
+
+```
+
+# Unknown evals
+
+Some `eval` do not have srcref information attached and are not in *base*. It is often because they are located in a function that is created by another function.
+
+```{r unknown_evals}
+
+nb_eval_calls <- count(eval_calls, wt = nb_ev_calls)$n
+
+undefined_evals <- eval_calls %>% filter(eval_source_type == "<undefined>")
+
+nb_undefined <- undefined_evals %>% count(wt = nb_ev_calls)
+
+nb_different_call_expr <- undefined_evals %>% select(eval_call_expression) %>% n_distinct()
+
+r("undefined evals", nb_undefined$n)
+r("percent undefined eval", ratio(nb_undefined$n, nb_eval_calls))
+r("undefined eval expressions", nb_different_call_expr)
 ```
 
 
+How many different undefined eval call sites do we have per package run?
+
+```{r undefined_per_package}
+undefined_per_package <- undefined_evals %>% group_by(package) %>% summarize(n = n_distinct(eval_call_expression)) 
+known_packages <- setdiff(eval_calls$package, undefined_per_package$package) %>% as_tibble_col(column_name = "package")
+known_packages <- known_packages %>% mutate(n = 0)
+
+undefined_per_package <- bind_rows(undefined_per_package, known_packages) %>% arrange(desc(n))
+
+```
+
+
+# Write
+
 ```{r write_back}
+write_fst(undefined_per_package, PACKAGE_EVALS_DYNAMIC_FILE)
+
 write_fst(eval_calls, EVALS_RAW_FILE)
 
 write_fst(eval_calls_core, EVALS_SUM_CORE_FILE)
@@ -106,4 +158,10 @@ write_fst(eval_calls_kaggle, EVALS_SUM_KAGGLE_FILE)
 ```
 
 
-Notebook execution was `r difftime(Sys.time(), now)`.
+```{r}
+duration <- difftime(Sys.time(), now)
+```
+
+
+Notebook execution was `r duration` `r units(duration)`.
+

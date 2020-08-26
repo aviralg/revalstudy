@@ -12,7 +12,7 @@
 source("insights.R")
 
 library(fs)
-library(multidplyr)
+#library(multidplyr)
 
 deduplicate <- function(dataset)
 {
@@ -45,7 +45,7 @@ eval_base_functions <- c("autoload", "autoloader", "bquote", "by.default", "by.d
 find_package_name <- function(caller_function, caller_package, caller_expression, srcref, file)
 {
   if(caller_function %in% eval_base_functions)
-    return("base")
+    return("core") #"Actually base but we generalize
   else
   {
     tempPack <- extract_package_name(srcref, file)
@@ -102,6 +102,13 @@ add_eval_source_type <- function(dataset)
                                                TRUE ~ "package" )))
 }
 
+add_fake_srcref <- function(dataset)
+{
+  return(dataset %>%
+           mutate(eval_call_srcref = if_else(is.na(eval_call_srcref) & eval_source_type != "<undefined>", 
+                                             str_c(eval_source, caller_function, eval_call_expression, sep="::"), eval_call_srcref)))
+}
+
 
 add_ast_size <- function(dataset)
 {
@@ -131,3 +138,12 @@ add_package <- function(dataset)
     package = basename(dirname(dirname(file)))
   )
 }
+
+
+
+keep_only_corpus <- function(dataset, corpus_files)
+{
+  return(dataset %>% 
+           filter(eval_source %in% c(corpus_files, "core", "base", "base?")))
+}
+
