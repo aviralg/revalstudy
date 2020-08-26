@@ -59,9 +59,12 @@
 \newcommand{\summaryrnd}[1]{({\csname #1MinRnd\endcsname} / {\csname #1MeanRnd\endcsname} / {\csname #1MaxRnd\endcsname})}
 
 \newcommand{\eval}{\texttt{eval}\xspace}
-\newcommand{\substitute}{\texttt{substitute}\xspace}
 \newcommand{\parse}{\texttt{parse}\xspace}
 \newcommand{\source}{\texttt{source}\xspace}
+\newcommand{\unlockBinding}{\texttt{unlockBinding}\xspace}
+\newcommand{\substitute}{\texttt{substitute}\xspace}
+\newcommand{\datatable}{\texttt{data.table}\xspace}
+\newcommand{\base}{\texttt{base}\xspace}
 \renewcommand{\c}[1]{\lstinline{#1}\xspace}
 \newcommand{\miss}[1]{{\textcolor{red}{#1}}\xspace}
 \newcommand{\evil}{\emph{evil}\xspace}
@@ -415,7 +418,7 @@ scripts is the code that we run during the dynamic analysis.
 
 \section{Usage Metrics}
 
-This section presents an overiew of the usage of \eval in our corpus.
+This section presents an overview of the usage of \eval in our corpus.
 Previous work reported that 82\% of JavaScript-enabled web pages used
 \eval~\cite{ecoop11}. The case for R is more striking with 100\% of the
 programs using that \eval.\footnote{In this section, we combine calls to
@@ -614,15 +617,27 @@ We classify the environment from two points of view:
   in the current workspace. This is quite useful for loading functions for
   interactive data analysis.
 
-  \subsubsection{Metaprogramming} \eval in combination with \substitute is used
-  to
-  Assembling call strings from components passed by callers: eval(substitute(f(x, y, z)))
+  \subsubsection{Metaprogramming} The combination of \eval and \substitute is
+  used to do metaprogramming in R. \substitute can be used to synthesize ASTs by
+  stitching together user inputs. \substitute walks over its argument AST and
+  replaces the symbols with their bindings in the specified environment and
+  returns this new AST which can then be evaluated in custom environments using
+  \eval.
 
-  \subsubsection{Escape Hatch}: \c{eval(unlock_binding ... )} to prevent R CMD check
-  warnings
+  \subsubsection{Convenience}
+  evaling recorded calls in model-fitting functions or passing most of the
+  current call to another function. Both ``patterns'' use the \c{match.call} to
+  capture current call. The latter is just for laziness as it is the same as
+  calling the new function with explicitly selecting the arguments.
 
-  bypassing R CMD check in the case one accesses dangerous functions such as unlockBinding or private symbols.
- evaling recorded calls in model-fitting functions or passing most of the current call to another function. Both ``patterns'' use the \c{match.call} to capture current call. The latter is just for laziness as it is the same as calling the new function with explicitly selecting the arguments.
+  \subsubsection{Miscellaneous} \eval is also used in R packages to get around
+  various limitations. For example, in \datatable package, \eval is used to modify
+  a binding in the \base package of R. Bindings in the \base package are locked
+  for modification and require explicit unlocking using \unlockBinding function.
+  However, directly using this function triggers a warning during package building
+  process which statically analyzes the package for use of such restricted
+  functions. The \datatable gets around this limitation by enclosing the call to
+  \unlockBinding inside \eval.
 
 \subsection{Provenance}
 
