@@ -651,6 +651,15 @@ actual_type = match.arg(type, choices=c("examples", "tests", "vignettes"))
 \end{lstlisting}
 
 \section{Threats to Validity}
+The primary threat to validity is the issue of code coverage, a cause of concern
+for any dynamic approach. We mitigate this by including only those R packages in
+our corpus that have many reverse dependencies and thus high code coverage.
+Secondly, we turn off the bytecode compiler for this study. The bytecode
+compiler can also call eval. Thirdly, we do not get source locations for
+\missingNumber eval calls. These are the calls in which eval is passed as an
+argument to a higher-order functions and the R parser does not retain location
+information for them. However, this is a meager \missingPercentage of all eval
+calls and is unlikely to affect our analysis.
 
 \section{Conclusion}
 
