@@ -29,26 +29,6 @@ source("inc/paths.R")
 source("inc/setup.R")
 ```
 
-```{r aux functions}
-read_task_result <- function(path) {
-  read_fst(path) %>% as_tibble() %>% mutate(package=basename(package))
-}
-
-read_parallel_log <- function(path) {
-  read_fst(path) %>% 
-    as_tibble() %>% 
-    rename_all(tolower) %>%
-    mutate(
-      package=map_chr(command, ~basename(str_split(., " ")[[1]][2])),
-      starttime=as_datetime(starttime),
-      endtime=as_datetime(starttime + jobruntime),
-      runtime=endtime-starttime,
-      run_path=map_chr(command, ~dirname(str_split(., " ")[[1]][3]))
-    ) %>%
-    select(package, exitval, starttime, endtime, runtime, command, run_path)
-}
-```
-
 ## Load data
 
 ```{r loading raw data}
