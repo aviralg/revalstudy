@@ -602,7 +602,7 @@ in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
 
 There are 30 functions in \emph{base} that use \eval. Only five of them use \c{parse}, for legitimate reasons, such \c{source} and \c{sys.source} which load a file and then evaluate it, or \c{invokeRestartInteractively} which prompts the user for arguments to restart execution after an error.
 
-We endeavored  to write these functions without \eval. \c{match.arg} appears in 60.1\% of the eval calls. It is used to get the arguments, possibly abbreviated, of a function. With one argument, as \c{match.arg(arg)}, it uses \c{eval} to infer them from a parent function's formal arguments. We can rewrite it using its version with two arguments, \c{match.arg(arg, choices)} where \c{choices} are the possible formal arguments of the function, as shown in Listing~\ref{code:matcharg}.
+We endeavored  to write these functions without \eval. \c{match.arg} appears in \MatchArgPercent of the \eval calls. It is used to get the arguments, possibly abbreviated, of a function. With one argument, as \c{match.arg(arg)}, it uses \c{eval} to infer them from a parent function's formal arguments. We can rewrite it using its version with two arguments, \c{match.arg(arg, choices)} where \c{choices} are the possible formal arguments of the function, as shown in Listing~\ref{code:matcharg}.
 
 \begin{lstlisting}[caption={Rewriting \c{match.arg} without \eval}, label=code:matcharg]
 f <- function(type=c("examples", "tests", "vignettes")) {
