@@ -258,7 +258,7 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 > r <- 5
 > env <- new.env()
 > env$r <- 9
-> eval(r, env)
+> eval(r, envir = env)
 [1] 5
 > evalq(r, envir = env)
 [1] 9
@@ -278,11 +278,13 @@ analysis to record the calls to evals.
 
 \section{Corpus}
 
-The corpus for this study includes R programs extracted from popular R packages
-as well as complete user-written data-analysis scripts. In this section we
-describe the methodology used to collect them.
+In this study, we report on eval usage in a corpus of \CorpusCorePackages R core
+and \CorpusPackages popular CRAN packages. To quantify the eval use, we run
+\CorpusAllProgramsRnd of R programs that are extracted form those packages as
+well as from the user-written data-analyses shared on the Kaggle platform. In
+this section we describe this corpus and methodology used to assemble it.
 
-\subsection{CRAN Packages}\label{sec:corpus}
+\subsection{CRAN Packages}
 
 We have selected the TOP \CorpusPackages packages based on the number of reverse
 dependencies, \ie how many other packages depend on them\footnote{Extracted from
@@ -340,7 +342,7 @@ average, across the \CorpusPackages packages, it is \CorpusMeanExprCoverage.
 
 \subsection{Kaggle Scripts}
 
-To represent user-written code in the corpus, we truned to
+To represent user-written code in the corpus, we turned to
 Kaggle\footnote{\url{https://www.kaggle.com}}, an online platform for
 data-science and machine-learning practitioner. Among others, the website allow
 people to share data-science competitions, a data-analysis problem together with
@@ -412,8 +414,8 @@ Kaggle & \KaggleCoreTotalEvalCallsRnd (1 / 412 / 2.8K) & \KaggleDependentTotalEv
       \hline
     \end{tabular}
   }
-  \label{A}
   \caption{Eval calls in CRAN and Kaggle}
+  \label{A}
 \end{table}
 
 
@@ -532,10 +534,19 @@ One of the main differences of the R \eval with the javascript one is how it
 interacts with \emph{scope}, or environments in R. In Javascript, \c{eval}
 can access the local scope and the global scope. In R, \c{eval} has an
 argument \c{envir} to indicate in which environment its first argument,
-after being resolved, must be evaluated.
+after being resolved, must be evaluated. By default, it is equal to \c{parent.frame()}, which is the parent environment of the \c{eval} call.
 
-By default, it is equal to \c{parent.frame()}, which is the parent
-environment of the \c{eval} call.
+ This argument can also be \c{NULL}, a list or a dataframe. In that case, \c{eval} copies \c{envir} and encloses it the environment defined by \c{enclos}. Finally, the argument can also be a number $n$. It means that the environment in which the expressions is evaluated will be the results of \c{sys.call(n)} where $n$ refers to the $n$-th call frame after the global environment.
+
+\textbf{Do we speak more about what an environment is, \c{.GlobalEnv}, \c{emptyenv()}, environment navigation here, or in the Background section?}
+
+We classify the environment from two points of view:
+\begin{itemize}
+	\item in which environment \c{eval} writes new bindings 
+	\item in which \emph{existing} environment \c{eval} reads. It is the first non new environment. \c{eval} will also be able to read in all parent environment of that environment. 
+\end{itemize}
+
+% Variability: how many different envir class, and different envir expr, for one call site?
 
 \subsection{Patterns}
 
@@ -576,7 +587,34 @@ in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
 
 \section{Case studies}
 
+\begin{itemize}
+\item Escape Hatch: \c{eval(unlock_binding ... )} to prevent R CMD check warnings
+\item Accessing data frame columns like local variables: \c{eval(x + y + z, data.frame(x, y z))}
+\item Poor man's sandboxing: local function
+\item Assembling call strings from components passed by callers: eval(substitute(f(x, y, z)))
+\item Convenience: 
+\item Dynamic code loading: \c{eval(parse(...))}. The textual input in parse can come from three places: a string, a file or in interactive R sessions directly from user input. Next to \c{parse}, there are also \c{str2expression} and \c{str2lang} which are a specialized versions of parse that do not keep source references and thus are a bit faster.
+\item bypassing R CMD check in the case one accesses dangerous functions such as unlockBinding or private symbols.
+\item evaling recorded calls in model-fitting functions or passing most of the current call to another function. Both ``patterns'' use the \c{match.call} to capture current call. The latter is just for laziness as it is the same as calling the new function with explicitly selecting the arguments.
+\end{itemize}
+
 \subsection{base}
+
+There are 30 functions in \emph{base} that use \eval. Only five of them use \c{parse}, for legitimate reasons, such \c{source} and \c{sys.source} which load a file and then evaluate it, or \c{invokeRestartInteractively} which prompts the user for arguments to restart execution after an error.
+
+We endeavored  to write these functions without \eval. \c{match.arg} appears in 60.1\% of the eval calls. It is used to get the arguments, possibly abbreviated, of a function. With one argument, as \c{match.arg(arg)}, it uses \c{eval} to infer them from a parent function's formal arguments. We can rewrite it using its version with two arguments, \c{match.arg(arg, choices)} where \c{choices} are the possible formal arguments of the function, as shown in Listing~\ref{code:matcharg}.
+
+\begin{lstlisting}[caption={Rewriting \c{match.arg} without \eval}, label=code:matcharg]
+f <- function(type=c("examples", "tests", "vignettes")) {
+actual_type = match.arg(type)
+...
+}
+
+f <- function(type=c("examples", "tests", "vignettes")) {
+actual_type = match.arg(type, choices=c("examples", "tests", "vignettes"))
+...
+}
+\end{lstlisting}
 
 \section{Threats to Validity}
 

@@ -62,6 +62,7 @@ corpus <-
 ```
 
 ```{r load kaggle}
+kaggle_dependencies <- tibble(package=read_lines(KAGGLE_DEPENDENCIES_FILE))
 kaggle_kernels <- as_tibble(read_fst(KAGGLE_KERNELS_FILE))
 kaggle_log <- as_tibble(read_fst(KAGGLE_LOG_FILE)) %>%
   transmute(
@@ -312,6 +313,11 @@ overview_table(
   rs("kaggle runtime",         as.duration(kaggle_runtime)),
 )
 ```
+
+```{r}
+setdiff(kaggle_dependencies$package, corpus$package)
+```
+
 
 ## Combined
 
