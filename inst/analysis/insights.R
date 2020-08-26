@@ -155,22 +155,6 @@ check_call <- function(arg)
 }
 
 
-# Transforms a call in a character string in eval(parse(text = str)) into a do.call 
-text_call_to_do_call <- function(eval_call)
-{
-  exp <- get_expr(eval_call)
-  stopifnot(exp[[1]] == "eval")
-  args <- exp[-1]
-  stopifnot(is.call(args[[1]]) & args[[1]][[1]] == "parse")
-  text <- args[[1]]$text
-  
-  # TODO: handle environment
-
-  f_name <- function_name(text)
-  f_args <- function_arguments(text)
-  return(paste0("do.call(", f_name, ", list(", paste0(f_args, collapse = ","), "))"))
-}
-
 SEXP_TYPES <- tribble(~sexp_type, ~name,
                       0, "NILSXP",
                       1, "SYMSXP",
@@ -238,6 +222,28 @@ core_package_files <- map_dfr(CORE_PACKAGES, function(x) {
   tibble(package=x, file=f)
 })
 
+# match eval that are not called (but passed to a higher order function)
+is_eval <- function(s)
+{
+  return(!is.na(s) && str_detect(s, "(eval(q|\\.parent)?|local)[^\\(_\\.q]"))
+}
+
+# To use if srcref is NA and caller_function is not one of the base ones
+# Will not always work but should work for lapply ones
+package_name_from_call_stack <- function(caller_stack_expr, caller_stack_expr_srcref)
+{
+  stack_expr <- str_split(caller_stack_expr, fixed("\n"))
+  stack_srcref <- str_split(caller_stack_expr_srcref, fixed("\n"))
+  
+  eval_pos <- detect_index(stack_expr[[1]], is_eval)
+  if(eval_pos != 0)
+  {
+    srcref <- stack_srcref[[1]][[eval_pos]]
+    return(if(srcref == "NA") "base?" else srcref)
+  }
+  
+  return("base?")
+}
 
 extract_package_name <- function(src_ref, file)
 {
@@ -360,6 +366,7 @@ extract_write_envir <- function(env_class)
 {
   return(str_split(env_class, fixed("+"), n = 2)[[1]])
 }
+
 
 extract_envir <- function(env_class, envir_type, envir_expression)
 {

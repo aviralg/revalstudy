@@ -7,7 +7,6 @@ output:
         gallery: false
         df_print: paged
         toc_depth: 3
-        self_contained: no
 date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
@@ -67,12 +66,14 @@ eval_calls_packages <-
     mutate(dataset = "packages")
 
 eval_call_core <- 
-  read_fst(packages_filepath) %>%
+  read_fst(core_filepath) %>%
   as_tibble() %>%
   mutate(dataset = "core")
 
 
 eval_calls <- bind_rows(eval_calls_packages, eval_call_core)
+
+
 
 # A flexible way to document the dataset: it is quick and easy to document a new column
 c_names <- names(eval_calls)
@@ -110,10 +111,20 @@ column_names <- column_names %>%  rename("Description" = `1`) %>% filter(!is.na(
 ```
 
 
+```{r unique_calls}
+nb_unique_calls <- nrow(eval_calls)
+
+r("unique calls", nb_unique_calls)
+```
+
+There are `r nb_unique_calls` unique calls;
+
 The columns of the dataset are the following ones:
 ```{r column_names}
 column_names %>% knitr::kable()
 ```
+
+
 
 
 # Corpus
@@ -264,6 +275,22 @@ nb_eval_calls_per_package <- eval_calls %>% group_by(caller_package) %>% summari
   
 ```{r}
 nb_eval_calls_per_package  %>% datatable()
+```
+
+### Unknown evals
+
+Some `eval` do not have srcref information attached and are not in *base*. It is often because they are located in a function that is created by anotehr function.
+
+```{r unknown_evals}
+undefined_evals <- eval_calls %>% filter(eval_source_type == "<undefined>")
+
+nb_undefined <- undefined_evals %>% count(wt = nb_ev_calls)
+
+nb_different_call_expr <- undefined_evals %>% select(eval_call_expression) %>% n_distinct()
+
+r("undefined evals", nb_undefined$n)
+r("percent undefined eval", ratio(nb_undefined$n, nb_eval_calls))
+r("undefined eval expressions", nb_different_call_expr)
 ```
 
 
@@ -451,7 +478,7 @@ We also classify environments in the following way:
 
 ```{r environment_hierarchy}
 # classified_envir <- eval_calls %>% filter(!is.na(envir_expression)) %>%
-#       mutate(env_class = pmap(list(environment_class, envir_type, envir_expression), extract_envir)) %>% 
+#       mutate(env_class = pmap(list(environment_class, envir_type, envir_expression), extract_envir)) %>%
 #       unnest_wider(env_class)
 
 #TODO
@@ -675,16 +702,23 @@ There are `r nb_file` calls with the `file` argument, and `r nb_text` with the `
 
 There are `r nb_file_call_sites` call sites with the `file` argument, and `r nb_text_call_sites` with the `text` argument, i.e. `r  nb_file_call_sites / nb_parsed_call_sites * 100`%, and `r nb_text_call_sites / nb_parsed_call_sites *100`% respectively.
 
-We also look to the occurences of `paste` and `str_c` in the `parse` argument. It is an indication that meta-pogramming happens.
+We also look to the occurrences of `paste` (and `parse0`), `glue` and `str_c` in the `parse` argument. It is an indication that meta-pogramming happens.
 
 ```{r parse_meta_prog}
-meta_parsed <- parsed_texts %>% filter(str_detect(expr_parsed_expression, "paste|str_c"))
+meta_parsed <- parsed_texts %>% filter(str_detect(expr_parsed_expression, "paste|str_c|glue"))
 
 nb_meta_parsed <- meta_parsed %>% count(wt = nb_ev_calls)
 nb_meta_parsed_call_sites <- nb_eval_call_sites(meta_parsed)
 
 r("paste parsed evals", ratio(nb_meta_parsed$n,  nb_parsed_evals$n))
 r("paste parsed call site", ratio(nb_meta_parsed_call_sites,  nb_parsed_call_sites))
+```
+
+
+We can look at the most common meta-programming examples:
+
+```{r parse_meta_prog_ex}
+meta_parsed %>% count(expr_parsed_expression, wt = nb_ev_calls, sort = TRUE)
 ```
 
 
