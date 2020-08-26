@@ -578,6 +578,17 @@ in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
 
 \section{Case studies}
 
+\begin{itemize}
+\item Escape Hatch: \c{eval(unlock_binding ... )} to prevent R CMD check warnings
+\item Accessing data frame columns like local variables: \c{eval(x + y + z, data.frame(x, y z))}
+\item Poor man's sandboxing: local function
+\item Assembling call strings from components passed by callers: eval(substitute(f(x, y, z)))
+\item Convenience: 
+\item Dynamic code loading: \c{eval(parse(...))}. The textual input in parse can come from three places: a string, a file or in interactive R sessions directly from user input. Next to \c{parse}, there are also \c{str2expression} and \c{str2lang} which are a specialized versions of parse that do not keep source references and thus are a bit faster.
+\item bypassing R CMD check in the case one accesses dangerous functions such as unlockBinding or private symbols.
+\item evaling recorded calls in model-fitting functions or passing most of the current call to another function. Both ``patterns'' use the \c{match.call} to capture current call. The latter is just for laziness as it is the same as calling the new function with explicitly selecting the arguments.
+\end{itemize}
+
 \subsection{base}
 
 \section{Threats to Validity}
