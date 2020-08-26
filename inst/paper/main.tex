@@ -61,7 +61,10 @@
 \newcommand{\eval}{\texttt{eval}\xspace}
 \newcommand{\parse}{\texttt{parse}\xspace}
 \newcommand{\source}{\texttt{source}\xspace}
+\newcommand{\unlockBinding}{\texttt{unlockBinding}\xspace}
 \newcommand{\substitute}{\texttt{substitute}\xspace}
+\newcommand{\datatable}{\texttt{data.table}\xspace}
+\newcommand{\base}{\texttt{base}\xspace}
 \renewcommand{\c}[1]{\lstinline{#1}\xspace}
 \newcommand{\miss}[1]{{\textcolor{red}{#1}}\xspace}
 \newcommand{\evil}{\emph{evil}\xspace}
@@ -621,11 +624,20 @@ We classify the environment from two points of view:
   returns this new AST which can then be evaluated in custom environments using
   \eval.
 
-  \subsubsection{Escape Hatch}: \c{eval(unlock_binding ... )} to prevent R CMD check
-  warnings
+  \subsubsection{Convenience}
+  evaling recorded calls in model-fitting functions or passing most of the
+  current call to another function. Both ``patterns'' use the \c{match.call} to
+  capture current call. The latter is just for laziness as it is the same as
+  calling the new function with explicitly selecting the arguments.
 
-  bypassing R CMD check in the case one accesses dangerous functions such as unlockBinding or private symbols.
- evaling recorded calls in model-fitting functions or passing most of the current call to another function. Both ``patterns'' use the \c{match.call} to capture current call. The latter is just for laziness as it is the same as calling the new function with explicitly selecting the arguments.
+  \subsubsection{Miscellaneous} \eval is also used in R packages to get around
+  various limitations. For example, in \datatable package, \eval is used to modify
+  a binding in the \base package of R. Bindings in the \base package are locked
+  for modification and require explicit unlocking using \unlockBinding function.
+  However using this function directly triggers a warning during package building
+  process which statically analyzes the package for use of such restricted
+  functions. The \datatable gets around this limitation by enclosing the call to
+  \unlockBinding inside \eval.
 
 \subsection{Provenance}
 
