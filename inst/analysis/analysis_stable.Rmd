@@ -278,6 +278,26 @@ nb_eval_calls_per_package  %>% datatable()
 ```
 
 
+What are the most used caller functions?
+
+
+```{r caller_functions_used}
+caller_function_ranked <- eval_calls %>% count(caller_function, wt = nb_ev_calls, sort = TRUE) %>% mutate(proportion = n / sum(n))
+
+caller_function_ranked %>% datatable()
+
+```
+
+The most used function is `r caller_function_ranked[1, "caller_function"][[1]]`, as much as `r 100 * caller_function_ranked[1, "proportion"][[1]]`%.
+
+```{r match_arg}
+match_arg_r <- caller_function_ranked %>% filter(caller_function == "match.arg")
+
+r("match arg number", match_arg_r[1, "n"][[1]])
+r("match arg percent", percent(match_arg_r[1, "proportion"][[1]]))
+```
+
+
 
 ### Excluding *base* from the data set
 
@@ -424,6 +444,24 @@ ast_sizes %>%
   )
 
 ggsave(path(PLOT_DIR, "ast_sizes.pdf"))
+
+ast_sizes_prop <- ast_sizes %>% count(expr_resolved_ast_size, wt = nb_eval_calls) %>%
+                      arrange(desc(expr_resolved_ast_size)) %>% 
+                      mutate(proportion = n / nb_eval_calls) %>% 
+                      mutate(cumulative = cumsum(proportion))
+  
+
+ast_size_one <- ast_sizes %>% filter(expr_resolved_ast_size == 1) 
+nb_ast_size_one <- count(ast_size_one, wt = nb_ev_calls)$n
+nb_ast_size_one_call_sites <- nb_eval_call_sites(ast_size_one)
+r("nb ast one percent", ratio(nb_ast_size_one, nb_eval_calls))
+r("nb ast one call site percent", ratio(nb_ast_size_one_call_sites, nb_call_sites))
+
+nb_nodes_many <- ast_sizes_prop %>% filter(cumulative >= 95) %>% .[1,] 
+
+r("ast size 95", nb_nodes_many$expr_resolved_ast_size)
+r("ast size 95 exact percent", percent(nb_nodes_many$proportion))
+
 ```
 
 
