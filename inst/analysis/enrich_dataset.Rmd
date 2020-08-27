@@ -133,8 +133,8 @@ nb_different_call_expr <- undefined_evals %>% select(eval_call_expression) %>% n
 r("undefined evals", nb_undefined$n)
 r("percent undefined eval", ratio(nb_undefined$n, nb_eval_calls))
 r("undefined eval expressions", nb_different_call_expr)
-r("undefined out of corpus", nb_out_corpus)
-r("undefined out of coprus percent", ratio(nb_out_corpus, nb_undefined))
+r("undefined out of corpus", nb_out_corpus$n)
+r("undefined out of coprus percent", ratio(nb_out_corpus$n, nb_undefined$n))
 ```
 
 
