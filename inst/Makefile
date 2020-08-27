@@ -13,7 +13,7 @@ RUN_PACKAGE_METADATA_DIR      := $(RUN_DIR)/package-metadata
 RUN_PACKAGE_COVERAGE_DIR      := $(RUN_DIR)/package-coverage
 RUN_KAGGLE_DIR                := $(RUN_DIR)/kaggle-run
 RUN_PACKAGE_EVALS_DIR         := $(RUN_DIR)/package-evals-static
-RUN_PACKAGE_TRACE_DIR         := $(RUN_DIR)/package-evals-traced
+RUN_PACKAGE_TRACE_DIR         := $(RUN_DIR)/package-evals-traced.2
 RUN_PACKAGE_RUNNABLE_CODE_DIR := $(RUN_DIR)/package-runnable-code
 RUN_PACKAGE_RUNS_DIR          := $(RUN_DIR)/run-extracted-code
 
