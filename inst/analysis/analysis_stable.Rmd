@@ -36,6 +36,18 @@ library(fst)
 library(fs)
 library(ggthemes)
 
+save_table <- function(df, fname) {
+  df %>%
+    xtable::xtable(align="lXrrrr") %>%
+    print(
+      tabular.environment = "tabularx", 
+      width = "\\textwidth",
+      floating=F,
+      file=fname,
+      include.rownames=F
+    )
+}
+
 source("insights.R", local = knitr::knit_global())
 
 source("inc/paths.R")
@@ -541,10 +553,10 @@ classified_envir <- eval_calls %>% filter(!is.na(envir_expression)) %>%
 
 
 ```{r envirall}
-classified_envir %>% ggplot() +
+classified_envir %>% 
+  ggplot() +
   geom_bar(aes(x =fct_rev(fct_infreq(env_class)), weight = nb_ev_calls )) +
   coord_flip() +
-  scale_y_log10() +
   labs(x = "Environments") + 
   facet_wrap(~dataset)
 
@@ -555,11 +567,42 @@ ggsave(path(PLOT_DIR, "environments.pdf"))
 classified_envir %>% ggplot() +
   geom_bar(aes(x =fct_rev(fct_infreq(env_class_read)), weight = nb_ev_calls )) +
   coord_flip() +
-  scale_y_log10() +
   labs(x = "Environments") + 
   facet_wrap(~dataset)
 
 ggsave(path(PLOT_DIR, "environments-read.pdf"))
+```
+
+```{r}
+classified_envir_prop_core <- classified_envir %>% 
+  filter(dataset == "core") %>%
+  count(env_class, wt = nb_ev_calls, sort = TRUE) %>%
+  mutate(proportion = n / sum(n))
+
+classified_envir_prop_packages <- classified_envir %>% 
+  filter(dataset == "packages") %>%
+  count(env_class, wt = nb_ev_calls, sort = TRUE) %>%
+  mutate(proportion = n / sum(n))
+
+classified_envir_prop_core %>%
+  head(5) %>%
+  add_column(index = toupper(letters)[1:5]) %>%
+  pmap_dfr(function(env_class, n, proportion, index)
+  {
+    r(paste("core", "env class", index), env_class)
+    r(paste("core", "count", index), n)
+    r(paste("core", "proportion", index), percent(proportion))
+  })
+
+classified_envir_prop_packages %>%
+  head(5) %>%
+  add_column(index = toupper(letters)[1:5]) %>%
+  pmap_dfr(function(env_class, n, proportion, index)
+  {
+    r(paste("packages", "env class", index), env_class)
+    r(paste("packages", "count", index), n)
+    r(paste("packages", "proportion", index), percent(proportion))
+  })
 ```
 
 

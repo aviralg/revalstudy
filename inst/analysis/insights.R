@@ -1,6 +1,8 @@
 library(rlang)
 
 
+
+
 nb_eval_call_sites <- function(eval_calls)
 {
   # Two cases: with srcref, without srcref
@@ -365,7 +367,9 @@ groupify_function <- function(expr_function)
 build_env_rep <- function(env_class)
 {
   splitted <- str_split(env_class, fixed("+"))[[1]]
-  return(paste0(splitted[[length(splitted)]], if(length(splitted) > 1) "+" else ""))
+  env_cl <- splitted[[length(splitted)]]
+  env_cl <- replace_na(str_match(env_cl, "caller-([:digit:]+)")[[2]], env_cl)
+  return(paste0(env_cl, if(length(splitted) > 1) "+" else ""))
 }
 
 simplify_envir <- function(env_class, envir_type, envir_expression)
