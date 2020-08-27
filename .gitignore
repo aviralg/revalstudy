@@ -4,6 +4,8 @@
 inst/docker-image/CRAN
 inst/docker-image/library
 inst/docker-image/*.tar.gz
+inst/analysis/*.html
+inst/analysis/html/*.html
 
 ################################################################################
 ## R
