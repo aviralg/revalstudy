@@ -25,6 +25,8 @@ knitr::opts_chunk$set(echo = TRUE,
                       fig.width = 10,
                       cache.lazy = FALSE)
 
+now <- Sys.time() 
+
 library(tidyverse)
 library(stringr)
 library(viridis)
@@ -71,10 +73,19 @@ eval_call_core <-
   mutate(dataset = "core")
 
 
-eval_calls <- bind_rows(eval_calls_packages, eval_call_core)
+eval_calls_raw <- bind_rows(eval_calls_packages, eval_call_core)
+```
 
 
+We remove a few columns we do not need here and deduplicate.
+```{r deduplicate}
+eval_calls <- eval_calls_raw %>% count(across(-c(builtin:indirect_allocation)), name = "nb_ev_calls2") %>%
+    mutate(nb_ev_calls = nb_ev_calls * nb_ev_calls2) %>% 
+    select(-nb_ev_calls2)
+```
 
+
+```{r document}
 # A flexible way to document the dataset: it is quick and easy to document a new column
 c_names <- names(eval_calls)
 column_names <- setNames(data.frame(matrix(ncol = length(c_names), nrow = 0)), c_names)
@@ -406,18 +417,20 @@ eval_calls %>% group_by(caller_package) %>% summarize(max_expr_size = max(expr_e
 ### AST size
 
 ```{r}
-ast_sizes <- eval_calls %>% slice_sample(n=10000) %>% mutate(expr_resolved_ast_size = map_int(expr_resolved, expr_size_str))
+ast_sizes <- eval_calls %>% slice_sample(n=10000) %>% mutate(expr_resolved_nodes = map_int(expr_resolved, expr_size_str))
+# Now precomputed during the tracing
+#ast_sizes <- eval_calls
 ```
 
 
 ```{r}
-# ast_sizes %>% ggplot(aes(x = expr_resolved_ast_size, weight = nb_ev_calls, group = dataset)) +
+# ast_sizes %>% ggplot(aes(x = expr_resolved_nodes, weight = nb_ev_calls, group = dataset)) +
 #   geom_histogram(aes(y = stat(width*density)), na.rm = TRUE, binwidth = 0.1) +
 #   scale_x_log10() +  scale_y_sqrt(labels=scales::percent) +
 #   labs(x = "AST size", y = "relative frequencies") 
 
 # ast_sizes %>% 
-#   ggplot(aes(x = dataset, y = expr_resolved_ast_size, fill = dataset, weight = nb_ev_calls)) +
+#   ggplot(aes(x = dataset, y = expr_resolved_nodes, fill = dataset, weight = nb_ev_calls)) +
 #   geom_flat_violin(trim=FALSE, width=.5) +
 #   geom_dotplot(
 #     binaxis="y", 
@@ -433,7 +446,7 @@ ast_sizes <- eval_calls %>% slice_sample(n=10000) %>% mutate(expr_resolved_ast_s
 #   )
 
 ast_sizes %>%
-  ggplot(aes(x = dataset, y = expr_resolved_ast_size, fill = dataset, weight = nb_ev_calls)) +
+  ggplot(aes(x = dataset, y = expr_resolved_nodes, fill = dataset, weight = nb_ev_calls)) +
   geom_violin(trim = FALSE, width=.5)+
   geom_boxplot(width=.05) +
   scale_y_log10(labels = scales::comma) +
@@ -445,22 +458,22 @@ ast_sizes %>%
 
 ggsave(path(PLOT_DIR, "ast_sizes.pdf"))
 
-ast_sizes_prop <- ast_sizes %>% count(expr_resolved_ast_size, wt = nb_eval_calls) %>%
+ast_sizes_prop <- ast_sizes %>% count(expr_resolved_nodes, wt = nb_ev_calls) %>%
                       mutate(proportion = n / sum(n)) %>% 
-                      arrange(expr_resolved_ast_size) %>% 
+                      arrange(expr_resolved_nodes) %>% 
                       mutate(cumulative = cumsum(proportion))
   
 
-ast_size_one <- ast_sizes %>% filter(expr_resolved_ast_size == 1) 
+ast_size_one <- ast_sizes %>% filter(expr_resolved_nodes == 1) 
 nb_ast_size_one <- count(ast_size_one, wt = nb_ev_calls)$n
 nb_ast_size_one_call_sites <- nb_eval_call_sites(ast_size_one)
 r("nb ast one percent", ratio(nb_ast_size_one, sum(ast_sizes_prop$n)))
 r("nb ast one call site percent", ratio(nb_ast_size_one_call_sites, nb_eval_call_sites(ast_sizes)))
 
-nb_nodes_many <- ast_sizes_prop %>% filter(cumulative >= 95) %>% .[1,] 
+nb_nodes_many <- ast_sizes_prop %>% filter(cumulative >= 0.95) %>% .[1,] 
 
-r("ast size nine five", nb_nodes_many$expr_resolved_ast_size)
-r("ast size nine five exact percent", percent(nb_nodes_many$proportion))
+r("ast size nine five", nb_nodes_many$expr_resolved_nodes)
+r("ast size nine five exact percent", percent(nb_nodes_many$cumulative))
 
 ```
 
@@ -751,3 +764,11 @@ meta_parsed %>% count(expr_parsed_expression, wt = nb_ev_calls, sort = TRUE)
 # Other faces of `eval`
 
 # Case studies
+
+
+```{r}
+duration <- difftime(Sys.time(), now)
+```
+
+
+Notebook execution was `r duration` `r units(duration)`.

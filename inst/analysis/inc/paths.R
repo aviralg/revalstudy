@@ -34,7 +34,7 @@ KAGGLE_KERNELS_FILE      <- path(DATA_DIR, "kaggle-kernels.fst")
 KAGGLE_LOG_FILE          <- path(DATA_DIR, "parallel-kaggle.fst")
 KAGGLE_PROGRAMS_FILE     <- path(DATA_DIR, "kaggle-programs.fst")
 
-RUN_TRACE_DIR  <- path(RUN_DIR, "package-evals-traced")
+RUN_TRACE_DIR  <- path(RUN_DIR, "package-evals-traced.2")
 RUN_KAGGLE_DIR <- path(RUN_DIR, "kaggle-run")
 
 CALLS_FINAL_FILE        <- path(RUN_TRACE_DIR, "calls.fst")

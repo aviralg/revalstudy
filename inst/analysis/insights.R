@@ -77,7 +77,7 @@ extract_args_parse <- function(eval_call)
   args <- map_chr(as.list(exp[-1]), function(chr) { paste(deparse(chr), collapse = "\n")})
   names(args) <- map_chr(names(args), function(chr) paste0("parse_args_", chr))
   
-  return(args[str_detect(names(args), "^parse_args_(file_name|text|n|s|keep\\.source|srcfile|dots)$")])# "file|text|n|s|prompt|keep.source|srcfile|code"
+  return(args[str_detect(names(args), "^parse_args_(file|text|n|s|keep\\.source|srcfile|dots)$")])# "file|text|n|s|prompt|keep.source|srcfile|code"
 }
 
 # See extract_inner_exp which takes a str
