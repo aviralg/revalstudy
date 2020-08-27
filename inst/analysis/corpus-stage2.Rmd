@@ -202,10 +202,14 @@ write_fst(corpus, CORPUS_DETAILS_FILE)
 ```{r}
 package_runs <- trace_runs_raw %>%
   mutate(
-    dir=as.character(path("../../run/package-evals-traced", package, basename(file))),
+    dir=as.character(path("../../run/package-evals-traced.2", package, basename(file))),
     file=as.character(path("./", basename(dirname(file)), basename(file))),
   ) %>%
-  semi_join(corpus, by="package")
+  semi_join(corpus, by="package") %>%
+  mutate(
+    call_file=path(paste0(tools::file_path_sans_ext(out_file), ".R"), "calls.fst")
+  ) %>%
+  filter(file.exists(call_file))
 
 package_programs <-
   left_join(
@@ -247,9 +251,28 @@ package_programs <-
       code > 0 &
       is.na(error)
   )
+
+package_programs <-
+  package_programs %>%
+  filter(file_exists(path(params$base_dir, str_replace(file, fixed("../../"), ""))))
 ```
 
 ```{r}
 write_fst(package_programs, CRAN_PROGRAMS_FILE)
+```
+
+```{r remove tests, eval=FALSE}
+df <- read_csv(path(params$base_dir, "runnable-code-metadata.csv"))
+df <- mutate(df, file=path(params$base_dir, "run", "package-evals-traced.2", basename(package), basename(filename)), type=basename(dirname(filename)), file_e=dir.exists(file))
+df <- filter(df, !(type %in% c("examples", "vignettes")), file_e)
+```
+
+```{r sanity check, eval=FALSE}
+x <- read_fst("/var/lib/R/project-evalR/run/package-evals-traced.2/calls.fst")
+y <- x %>% mutate(package=basename(dirname(dirname(file)))) %>% semi_join(corpus, by="package")
+files <- count(as_tibble(y), file)
+a <- anti_join(files, package_programs, by="file")
+a
+a$file %>% str_replace(fixed("../.."), params$base_dir) %>% dirname() %>% dir_exists()
 ```
 

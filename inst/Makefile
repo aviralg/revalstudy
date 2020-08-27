@@ -53,6 +53,7 @@ RUN_KAGGLE_LOG_FILE         := $(RUN_KAGGLE_DIR)/parallel.log
 RUN_KAGGLE_CALLS_FILE       := $(RUN_KAGGLE_DIR)/calls.fst
 RUN_KAGGLE_SCRIPTS_FILE     := $(RUN_KAGGLE_DIR)/scripts.txt
 RUN_KAGGLE_KERNEL_FILE      := $(RUN_KAGGLE_DIR)/kernels.csv
+RUN_KAGGLE_PROGRAM_FILE     := $(RUN_KAGGLE_DIR)/program.fst
 
 R_DIR        := $(realpath $(BASE_DIR))/R-dyntrace
 R_BIN        := $(R_DIR)/bin/R
@@ -137,11 +138,11 @@ $(RUN_CALLS_FILE):
 #$(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE) $(RUN_RAW_FILE): $(RUN_CALLS_FILE) $(RUN_KAGGLE_CALLS_FILE) $(RUN_PROGRAM_FILE)
 #	$(call RENDER_RMD,$(ANALYSIS_DIR)/enrich_dataset.Rmd)
 
-calls: $(RUN_CALLS_FILE)
+calls: $(RUN_CALLS_FILE) $(RUN_PROGRAM_FILE)
 
 # FIXME: why does it run twice
 #enrich: $(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE) $(RUN_RAW_FILE)
-enrich:  $(RUN_CALLS_FILE) $(RUN_KAGGLE_CALLS_FILE) $(RUN_PROGRAM_FILE)
+enrich:  $(RUN_CALLS_FILE) $(RUN_KAGGLE_CALLS_FILE) 
 	$(call RENDER_RMD,$(ANALYSIS_DIR)/enrich_dataset.Rmd)
 
 analysis: $(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE)
@@ -173,7 +174,10 @@ $(RUN_KAGGLE_LOG_FILE): $(RUN_KAGGLE_SCRIPTS_FILE)
     --workdir '{1}/' \
     $(realpath $(R_BIN)) CMD BATCH '{1}/run.R' '{1}/run.R.out'
 
+$(RUN_KAGGLE_PROGRAM_FILE): $(RUN_KAGGLE_LOG_FILE)
+		$(MERGE_FST) $(@D) $(@F)
+
 $(RUN_KAGGLE_CALLS_FILE): $(RUN_KAGGLE_LOG_FILE)
 	$(MERGE_FST) $(RUN_KAGGLE_DIR) calls.fst calls-ERROR
 
-kaggle: $(RUN_KAGGLE_CALLS_FILE)
+kaggle: $(RUN_KAGGLE_CALLS_FILE) $(RUN_KAGGLE_PROGRAM_FILE)
