@@ -62,6 +62,7 @@
 \newcommand{\eval}{\texttt{eval}\xspace}
 \newcommand{\parse}{\texttt{parse}\xspace}
 \newcommand{\source}{\texttt{source}\xspace}
+\newcommand{\local}{\texttt{local}\xspace}
 \newcommand{\unlockBinding}{\texttt{unlockBinding}\xspace}
 \newcommand{\substitute}{\texttt{substitute}\xspace}
 \newcommand{\datatable}{\texttt{data.table}\xspace}
@@ -565,10 +566,10 @@ the advent of Node.js ecosystem.  The distribution of input sizes is similar
 to that found in JavaScript, the majority of inputs being rather small.
 
 
-In the corpus, we observe \AllEventCountRnd events. Only \EvalEventCountRnd
-events occur inside eval. This is just \EvalEventAllPerc of all events.
-Figure~\ref{fig:event-distribution} shows the distribution of events for
-core and package \eval calls.
+%%In the corpus, we observe \AllEventCountRnd events. Only \EvalEventCountRnd
+%%events occur inside eval. This is just \EvalEventAllPerc of all events.
+%%Figure~\ref{fig:event-distribution} shows the distribution of events for
+%%core and package \eval calls.
 
 {\bf Missing from this section is the measure of the number of events
   happening in an eval}
