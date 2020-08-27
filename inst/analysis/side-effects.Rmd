@@ -1,0 +1,135 @@
+---
+title: "Side effects"
+output: html_document
+params:
+  base_dir: ../../../
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+for (x in c(
+  "dplyr", 
+  "DT",
+  "fs",
+  "fst",
+  "ggplot2",
+  "ggthemes",
+  "lubridate",
+  "readr",
+  "purrr",
+  "stringr",
+  "tidyr"
+  )) {
+  suppressPackageStartupMessages(library(x, character.only=TRUE))
+}
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.align = "center",
+  fig.retina = 2,
+  fig.width = 10
+)
+
+# TODO: move into the package
+source("inc/paths.R")
+source("inc/setup.R")
+source("inc/latextags.R")
+
+options(repos="https://cran.r-project.org")
+theme_set(theme_minimal())
+#create_tags(path(TAGS_DIR, "side-effects.tex"), prefix="SE", default=TRUE)
+```
+
+```{r}
+# FIXME: path!
+calls_raw <- read_fst(print(path(params$base_dir, "run", "package-evals-traced.1", "calls.fst")))
+calls <- 
+  calls_raw %>%
+  mutate(package=basename(dirname(dirname(file))))
+
+core_data <- read_fst(EVALS_SUM_CORE_FILE)
+package_data <- read_fst(EVALS_SUM_PKGS_FILE)
+kaggle_data <- read_fst(EVALS_SUM_KAGGLE_FILE)
+program_data <- read_fst(PROGRAM_FILE)
+
+all_data <- rbind(core_data,
+                  package_data, 
+                  kaggle_data)
+
+head(all_data)
+
+```
+
+## Amount of computation via eval
+
+```{r writes-data}
+writes_data <-
+    all_data %>%
+    select(eval_source_type, eval_source, eval_call_srcref, direct_writes, indirect_writes) %>%
+    filter(eval_function == "eval" | eval_function == "evalq") %>%
+    mutate(all_writes = direct_writes + indirect_writes, side_effecting = as.logical(all_writes))
+# eval_events <-
+#  calls %>%
+#  filter(!is.na(eval_call_srcref)) %>%
+#  filter(eval_function == "eval" | eval_function == "evalq") %>%
+#  mutate(all_writes = direct_writes + indirect_writes) %>%
+#  select(package, file, eval_call_srcref, eval_call_id, builtin, special, closure, interpreter_eval, c_call, allocation, direct_writes, indirect_writes, all_writes) %>%
+#  pivot_longer(cols=c(builtin, special, closure, interpreter_eval, c_call, allocation, direct_writes, indirect_writes, all_writes), names_to="event", values_to="event_count")
+```
+
+```{r side-effects-analysis}
+eval_calls_by_source_writes <-
+    writes_data %>%
+    count(eval_source_type, side_effecting, wt = nb_ev_calls, name = call_count)
+
+datatable(eval_calls_by_source_writes)
+
+eval_calls_by_package_writes <-
+    writes_data %>%
+    filter(eval_source_type != "core") %>%
+    count(eval_source, side_effecting, wt = nb_ev_calls, name = call_count) %>%
+    arrange(desc(call_count))
+
+datatable(eval_calls_by_package_writes)
+
+eval_sites_by_source_writes <-
+    writes_data %>%
+    group_by(eval_source_type, eval_call_srcref) %>%
+    summarize(side_effecting = any(side_effecting)) %>%
+    ungroup() %>%
+    count(eval_source_type, side_effecting, name = site_count)
+
+datatable(eval_sites_by_source_writes)
+
+eval_sites_by_package_writes <-
+    writes_data %>%
+    filter(eval_source_type != "core") %>%
+    group_by(eval_source, eval_call_srcref) %>%
+    summarize(side_effecting = any(side_effecting)) %>%
+    ungroup() %>%
+    count(eval_source, side_effecting, name = site_count) %>%
+    group_by(eval_source, side_effecting) %>%
+    mutate(site_perc = round(100 * site_count / sum(site_count), 1)) %>%
+    ungroup() %>%
+    arrange(side_effecting, desc(site_perc))
+
+datatable(eval_sites_by_package_writes)
+
+```
+
+
+Each entry in `call.fst` contains `direct_writes` and `indirect_writes` (both `0` for `eval.parent` and `local`). 
+`direct_writes` are the side-effects directly caused by this `eval`. 
+`indirect_writes` are the side-effects caused by all children evals of this eval.
+
+For graphing, you may want to sum them up for each eval.
+I compute them separately because it is more informative (should we need this information for debugging or qualitative insights).
+Now, for normalization you have two quantities: all assignments done by the application and all assignments done by all evals (non-local or local).
+all application assignments can be found in `direct_writes` field of `program.fst` and all `eval_assignments` can be found in `indirect_writes` field of `program.fst`.
+You can also find all non-local assignments by simply summing up the `direct_writes` field of all eval calls.
+
+```{r}
+
+```
+
