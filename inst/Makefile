@@ -17,6 +17,7 @@ RUN_PACKAGE_TRACE_DIR         := $(RUN_DIR)/package-evals-traced.2
 RUN_PACKAGE_RUNNABLE_CODE_DIR := $(RUN_DIR)/package-runnable-code-eval
 
 # raw files
+RUN_PACKAGE_COVERAGE_FILE      := $(RUN_PACKAGE_COVERAGE_DIR)/coverage.csv
 RUN_PACKAGE_RUNNABLE_CODE_FILE := $(RUN_PACKAGE_RUNNABLE_CODE_DIR)/runnable-code-metadata.csv
 RUN_PACKAGE_TRACE_RUNS_FILE    := $(RUN_PACKAGE_TRACE_DIR)/run.csv
 RUN_PACKAGE_TRACE_LOG_FILE     := $(RUN_PACKAGE_TRACE_DIR)/parallel.log
@@ -77,7 +78,7 @@ all: enrich
 $(PACKAGE_EVALS_FILE): $(RUN_PACKAGE_EVALS_DIR)/package-evals.csv
 
 # TODO: why $(RUN_PACKAGE_COVERAGE_DIR)/$(@F) does not work?
-$(PACKAGE_COVERAGE_FILE): $(RUN_PACKAGE_COVERAGE_DIR)/coverage.csv
+$(PACKAGE_COVERAGE_FILE): $(RUN_PACKAGE_COVERAGE_FILE)
 
 $(PACKAGE_METADATA_FILE): $(RUN_PACKAGE_METADATA_DIR)/metadata.csv
 
@@ -120,6 +121,9 @@ corpus: $(CORPUS_FILE)
 $(RUN_PROGRAM_FILE): $(CORPUS_FILE)
 	$(MERGE_FST) $(RUN_PACKAGE_TRACE_DIR) $(@F)
 	$(R) 'fst::write_fst(dplyr::semi_join(dplyr::mutate(fst::read_fst("$(RUN_PROGRAM_FILE)"), package=basename(dirname(dirname(file)))), fst::read_fst("$(CORPUS_FILE)"), by="package"), "$(RUN_PROGRAM_FILE)");'
+
+$(RUN_PACKAGE_COVERAGE_FILE):
+	$(MERGE_CSV) $(@D) $(@F)
 
 $(RUN_PACKAGE_RUNNABLE_CODE_FILE):
 	$(MERGE_CSV) $(@D) $(@F)
