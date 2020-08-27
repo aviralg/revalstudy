@@ -20,7 +20,6 @@ RUN_PACKAGE_RUNS_DIR          := $(RUN_DIR)/run-extracted-code
 RUN_PACKAGE_TRACE_RUNS_FILE := $(RUN_PACKAGE_TRACE_DIR)/run.csv
 RUN_PACKAGE_TRACE_LOG_FILE  := $(RUN_PACKAGE_TRACE_DIR)/parallel.log
 RUN_CALLS_FILE              := $(RUN_PACKAGE_TRACE_DIR)/calls.fst
-RUN_CALLS_FINAL_FILE        := $(RUN_PACKAGE_TRACE_DIR)/calls-final.fst
 RUN_PROGRAM_FILE            := $(RUN_PACKAGE_TRACE_DIR)/program.fst
 
 RUN_SUM_CORE_FILE    := $(RUN_PACKAGE_TRACE_DIR)/summarized-core.fst
@@ -51,7 +50,6 @@ KAGGLE_DATASET_DIR  := $(RUN_DIR)/kaggle-datasets
 # kaggle runtime artifacts
 RUN_KAGGLE_LOG_FILE         := $(RUN_KAGGLE_DIR)/parallel.log
 RUN_KAGGLE_CALLS_FILE       := $(RUN_KAGGLE_DIR)/calls.fst
-RUN_KAGGLE_CALLS_FINAL_FILE := $(RUN_KAGGLE_DIR)/calls-final.fst
 RUN_KAGGLE_SCRIPTS_FILE     := $(RUN_KAGGLE_DIR)/scripts.txt
 RUN_KAGGLE_KERNEL_FILE      := $(RUN_KAGGLE_DIR)/kernels.csv
 
@@ -65,7 +63,7 @@ MERGE_CSV  := $(R_SCRIPT_BIN) $(BASE_DIR)/runr/inst/merge-csv.R
 TSV_TO_FST  = $(R) 'fst::write_fst(readr::read_tsv("$<"), "$@", compress=100)'
 RENDER_RMD  = $(R) 'rmarkdown::render("$(1)", output_dir="$(HTML_DIR)")'
 
-all: calls
+all: enrich
 
 ################################################################################
 ## CORPUS
@@ -121,7 +119,7 @@ corpus: $(CORPUS_FILE)
 ## CALLS
 ################################################################################
 
-$(RUN_PROGRAM_FILE):
+$(RUN_PROGRAM_FILE): $(CORPUS_FILE)
 	$(MERGE_FST) $(RUN_PACKAGE_TRACE_DIR) $(@F)
 	$(R) 'fst::write_fst(dplyr::semi_join(dplyr::mutate(fst::read_fst("$(RUN_PROGRAM_FILE)"), package=basename(dirname(dirname(file)))), fst::read_fst("$(CORPUS_FILE)"), by="package"), "$(RUN_PROGRAM_FILE)");'
 
@@ -131,17 +129,15 @@ $(RUN_PACKAGE_TRACE_RUNS_FILE):
 $(RUN_CALLS_FILE):
 	$(MERGE_FST) $(RUN_PACKAGE_TRACE_DIR) $(@F) calls-ERROR
 
-# FIXME: this is pretty horrible, but `R -e` does not understand \ like all the
-#        other REPLS !?!?
-$(RUN_CALLS_FINAL_FILE): $(RUN_CALLS_FILE) $(CORPUS_FILE)
-	$(R) 'fst::write_fst(dplyr::semi_join(dplyr::mutate(fst::read_fst("$(RUN_CALLS_FILE)"), package=basename(dirname(dirname(file)))), fst::read_fst("$(CORPUS_FILE)"), by="package"), "$(RUN_CALLS_FINAL_FILE)");'
+#$(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE) $(RUN_RAW_FILE): $(RUN_CALLS_FILE) $(RUN_KAGGLE_CALLS_FILE) $(RUN_PROGRAM_FILE)
+#	$(call RENDER_RMD,$(ANALYSIS_DIR)/enrich_dataset.Rmd)
 
-calls: $(RUN_CALLS_FINAL_FILE)
+calls: $(RUN_CALLS_FILE)
 
-$(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE) $(RUN_RAW_FILE): $(RUN_CALLS_FINAL_FILE) $(RUN_KAGGLE_CALLS_FINAL_FILE)
+# FIXME: why does it run twice
+#enrich: $(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE) $(RUN_RAW_FILE)
+enrich:  $(RUN_CALLS_FILE) $(RUN_KAGGLE_CALLS_FILE) $(RUN_PROGRAM_FILE)
 	$(call RENDER_RMD,$(ANALYSIS_DIR)/enrich_dataset.Rmd)
-
-enrich: $(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE) $(RUN_RAW_FILE)
 
 analysis: $(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE)
 	$(call RENDER_RMD,$(ANALYSIS_DIR)/analysis_stable.Rmd)
@@ -173,10 +169,6 @@ $(RUN_KAGGLE_LOG_FILE): $(RUN_KAGGLE_SCRIPTS_FILE)
     $(realpath $(R_BIN)) CMD BATCH '{1}/run.R' '{1}/run.R.out'
 
 $(RUN_KAGGLE_CALLS_FILE): $(RUN_KAGGLE_LOG_FILE)
-	$(MERGE_FST) $(RUN_KAGGLE_DIR) calls.fst ERROR.fst
+	$(MERGE_FST) $(RUN_KAGGLE_DIR) calls.fst calls-ERROR
 
-# this is to make the same filename as in the case of CRAN packages
-$(RUN_KAGGLE_CALLS_FINAL_FILE): $(RUN_KAGGLE_CALLS_FILE)
-	cp $< $@
-
-kaggle: $(RUN_KAGGLE_CALLS_FINAL_FILE)
+kaggle: $(RUN_KAGGLE_CALLS_FILE)

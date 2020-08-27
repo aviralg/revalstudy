@@ -37,23 +37,32 @@ source("preprocess.R", local = knitr::knit_global())
 
 # Data
 
-The analysis is being performed on a dataset read from file `r CALLS_FINAL_FILE`.
+The analysis is being performed on a dataset read from file `r CALLS_FILE`.
 
 ```{r file-info, echo=FALSE}
-file_info(CALLS_FINAL_FILE)
+file_info(CALLS_FILE)
 ```
 
 
 ```{r load-data, echo=FALSE}
+corpus <- read_fst(CORPUS_DETAILS_FILE)
+
 eval_calls_raw <-
-    read_fst(CALLS_FINAL_FILE) %>%
+    read_fst(CALLS_FILE) %>%
     as_tibble() %>%
-    mutate(corpus = "cran")
+    mutate(
+      package=basename(dirname(dirname(file))),
+      corpus="cran"
+    ) %>%
+    semi_join(corpus, by="package") # There might be more packages traced than what is in the corpus
 
 eval_calls_kaggle_raw <- 
-  read_fst(KAGGLE_CALLS_FINAL_FILE) %>%
+  read_fst(KAGGLE_CALLS_FILE) %>%
   as_tibble() %>% 
-  mutate(corpus = "kaggle")
+  mutate(
+    package=basename(dirname(file)),
+    corpus="kaggle"
+  )
 
 eval_calls_raw <- bind_rows(eval_calls_raw, eval_calls_kaggle_raw)
 ```
@@ -76,8 +85,6 @@ eval_calls <- eval_calls %>% add_eval_source(eval_calls_raw) %>% add_eval_source
 eval_calls <- eval_calls %>% add_fake_srcref()
 ```
 
-
-
 ```{r parse_args}
 eval_calls <- eval_calls %>% add_parse_args()
 ```
@@ -87,7 +94,8 @@ eval_calls <- eval_calls %>% add_parse_args()
 ```
 
 ```{r add_package}
-eval_calls <- eval_calls %>% add_package()
+# The package is already added when the files are loaded
+#eval_calls <- eval_calls %>% add_package()
 ```
 
 ```{r shrink_to_corpus}
