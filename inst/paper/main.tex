@@ -613,7 +613,7 @@ after being resolved, must be evaluated. By default, it is equal to \c{parent.fr
 
 We classify the environment from two points of view:
 \begin{itemize}
-	\item in which environment \c{eval} writes new bindings 
+	\item the \emph{default} assignment environment \c{eval} writes new bindings.\footnote{It is the default one but the expression in \eval can always write in any other environments using \c{assign} or in the parent environment using \c{<<-}.}
 	\item in which \emph{existing} environment \c{eval} reads. It is the first non new environment. \c{eval} will also be able to read in all parent environment of that environment. 
 \end{itemize}
 
