@@ -215,6 +215,7 @@ package_programs <-
   ) %>%
   filter(!endsWith(file, "tests/testthat.R"), !endsWith(file, "tests/run-all.R")) %>% # testthat drivers are not traced
   transmute(
+    package,
     type=basename(dirname(file)),
     file=as.character(path(dir, "calls.fst")),
     code, 
