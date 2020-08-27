@@ -1,20 +1,10 @@
 ---
 title: "Empirical Evaluation of eval in R"
-output:
-  rmdformats::readthedown:
-        code_folding: hide
-        lightbox: true
-        gallery: false
-        df_print: paged
-        toc_depth: 3
-date: "`r Sys.Date()`"
+output: html_document
+params:
+  base_dir: /var/lib/R/project-evalR
 editor_options: 
   chunk_output_type: console
-params:
-    base_dir: /home/aviral/projects/revalstudy2
-    kaggle_datafile: "summarized-kaggle.fst"
-    core_datafile: "summarized-core.fst"
-    packages_datafile: "summarized-packages.fst"
 ---
 
 ```{r setup, include=FALSE}
@@ -38,22 +28,25 @@ library(xtable)
 source("inc/paths.R")
 source("inc/setup.R")
 source("inc/latextags.R")
-create_tags(path("../paper/tag", "counts.tex"), prefix="", default=TRUE)
+
+create_tags(path(TAGS_DIR, "counts.tex"), prefix="", default=TRUE)
 ```
 
 ```{r eval=TRUE}
 run_trace_data <- read_fst(PACKAGE_TRACE_RUNS_FILE)
 parallel_kaggle_data <- read_fst(KAGGLE_LOG_FILE)
 
-core_data <- read_fst(params$core_datafile)
+core_data <- read_fst(EVALS_SUM_CORE_FILE)
 packages_data <- 
-    read_fst(params$packages_datafile) %>%
+    read_fst(EVALS_SUM_PKGS_FILE) %>%
     mutate(eval_source_type = "package")
+
+# kaggle should be always empty
 kaggle_data <- 
-    read_fst(params$kaggle_datafile)
+    read_fst(EVALS_SUM_KAGGLE_FILE)
     #mutate(eval_source_type == "core")
 
-all_data <- bind_rows(core_data, packages_data, kaggle_data)
+all_data <- bind_rows(core_data, packages_data, kaggle_data) %>% as_tibble()
 all_data <-
     all_data %>%
     mutate(eval_call_srcref = 
@@ -138,17 +131,19 @@ package_eval_file_count <-
 all_eval_file_count <-
     run_eval_proportion %>%
     filter(core != 0 & package != 0)
-    
-r("total file count", total_file_count)
-r("no eval file count", no_eval_file_count)
-r("no eval file perc", ratio(no_eval_file_count, total_file_count))
-r("core eval file count", core_eval_file_count)
-r("core eval file perc", ratio(core_eval_file_count, total_file_count))
-r("package eval file count", package_eval_file_count)
-r("package eval file perc", ratio(package_eval_file_count, total_file_count))
-r("all eval file count", all_eval_file_count)
-r("all eval file perc", ratio(all_eval_file_count, total_file_count))
-    
+
+overview_table(    
+  r("total file count", total_file_count),
+  r("no eval file count", no_eval_file_count),
+  r("no eval file perc", ratio(no_eval_file_count, total_file_count)),
+  r("core eval file count", core_eval_file_count),
+  r("core eval file perc", ratio(core_eval_file_count, total_file_count)),
+  r("package eval file count", package_eval_file_count),
+  r("package eval file perc", ratio(package_eval_file_count, total_file_count)),
+  r("all eval file count", all_eval_file_count),
+  r("all eval file perc", ratio(all_eval_file_count, total_file_count))
+)
+
 run_eval_proportion <-
     run_eval_proportion %>%
     filter(core != 0 & package != 0) %>%
@@ -211,7 +206,6 @@ pmap_dfr(function(eval_source, site_count, call_count, call_perc, cumsum_call_pe
 ```
 
 ```{r callsite-distribution, eval=TRUE}
-```{r call-site-table}
 eval_callsite_table <-
     package_calls %>%
     mutate(site_count = if_else(site_count <= 10, as.character(site_count), 
@@ -239,66 +233,114 @@ pmap_dfr(function(site_count, package_count, index) {
 })
 ```
 
-
 ```{r core-dependent-own-eval}
-all_data <-
-    bind_rows(core_data, packages_data, kaggle_data)
-    ##filter(is.na(eval_call_srcref))
+all_data <- bind_rows(core_data, packages_data, kaggle_data) %>%
+  as_tibble() %>%
+  mutate(
+    package=basename(dirname(dirname(file))),
+    core_own_dependent=case_when(
+      eval_source == "core"  ~ "core",
+      eval_source == "base"  ~ "core",
+      package == eval_source ~ "own",
+      TRUE ~ "dependent"
+    )
+  )
 
-all_data$package <- map_chr(path_split(all_data$file), function(l) l[[length(l) - 2]])
+# TODO - we need to summarize the data better
+# all paths must start with this
+stopifnot(nrow(filter(all_data, !startsWith(file, "../../run/"))) == 0)
+```
 
-all_data <-
-    all_data %>%
-    mutate(core_own_dependent = if_else(eval_source == "core", "core",
-                                if_else(eval_source == "base", "core",
-                                if_else(package == eval_source, "own",
-                                        "dependent"))),
-          eval_source)
+```{r}
+cran_programs <- read_fst(CRAN_PROGRAMS_FILE) %>% 
+  as_tibble() %>%
+  filter(success) %>%
+  select(file, corpus)
+
+kaggle_programs <- read_fst(KAGGLE_PROGRAMS_FILE) %>% 
+  as_tibble() %>%
+  filter(success) %>%
+  select(file, corpus)
 
 
-#all_package_programs <- 
-#    run_trace_data %>%
-#    filter(Exitval != 0)
-#    
-#
-#all_kaggle_programs <-
-#    parallel_kaggle_data %>% 
-#    filter(Exitval == 0) %>% 
-#    pull(Command) %>% 
-#    map_chr(function(str) { 
-#        script <- str_split(str, " ")[[1]][4]; 
-#        comps <- path_split(script)[[1]]; 
-#        str_c(comps[8], "/", comps[9]) 
-#    })
-#    
-#all_files <-
-#    rbind(tibble(file = run_trace_data$file, core_own_dependent = "core", corpus = "cran", nb_ev_calls = 0),
-#          tibble(file = run_trace_data$file, core_own_dependent = "own", corpus = "cran", nb_ev_calls = 0),
-#          tibble(file = run_trace_data$file, core_own_dependent = "dependent", corpus = "cran", nb_ev_calls = 0)) %>%
-#    rbind(tibble(file = all_kaggle_programs, core_own_dependent = "core", corpus = "kaggle", nb_ev_calls = 0),
-#          tibble(file = all_kaggle_programs, core_own_dependent = "own", corpus = "kaggle", nb_ev_calls = 0),
-#          tibble(file = all_kaggle_programs, core_own_dependent = "dependent", corpus = "kaggle", nb_ev_calls = 0))
+all_programs <- bind_rows(cran_programs, kaggle_programs)
+```
+
+How many programs are missing in the summarized data
+
+```{r}
+anti_join(all_programs, all_data, by="file")
+```
+
+```{r}
+all_programs_cod <-
+  map_dfr(
+    c("core", "own", "dependent"), 
+    ~mutate(
+      all_programs,
+      core_own_dependent=.,
+      nb_ev_calls=0
+    )
+  )
+  
+all_data_summary <- 
+  all_data %>%
+  select(file, core_own_dependent, corpus, nb_ev_calls) %>%
+  right_join(all_programs_cod, by=c("file", "corpus", "core_own_dependent")) %>%
+  mutate(nb_ev_calls=ifelse(is.na(nb_ev_calls.x), nb_ev_calls.y, nb_ev_calls.x)) %>%
+  select(file, core_own_dependent, corpus, nb_ev_calls)
 
 core_own_dependent <-
-    all_data %>%
-#        rbind(all_files) %>%
-#        select(file, core_own_dependent, corpus, nb_ev_calls) %>%
-        group_by(file, core_own_dependent) %>%
-        summarize(corpus = first(corpus), eval_calls = sum(nb_ev_calls)) %>%
-        ungroup() %>%
-        group_by(corpus, core_own_dependent) %>%
-        summarize(total_eval_calls = sum(eval_calls),
-                  max_eval_calls = max(eval_calls),
-                  min_eval_calls = min(eval_calls),
-                  avg_eval_calls = mean(eval_calls))
+  all_data_summary %>%
+  group_by(file, core_own_dependent) %>%
+  summarize(corpus=first(corpus), eval_calls = sum(nb_ev_calls)) %>%
+  ungroup()
 
-core_own_dependent %>%
-pmap_dfr(function(corpus, core_own_dependent, total_eval_calls, max_eval_calls, min_eval_calls, avg_eval_calls) {
-    r(str_c(corpus, " ", core_own_dependent, " total eval calls"), total_eval_calls)
-    r(str_c(corpus, " ", core_own_dependent, " max eval calls"), max_eval_calls)
-    r(str_c(corpus, " ", core_own_dependent, " min eval calls"), min_eval_calls)
-    r(str_c(corpus, " ", core_own_dependent, " avg eval calls"), avg_eval_calls)
-})
+# %>%
+#   group_by(corpus, core_own_dependent) %>%
+#   summarize(
+#     total_eval_calls = sum(eval_calls),
+#     max_eval_calls = max(eval_calls),
+#     min_eval_calls = min(eval_calls),
+#     avg_eval_calls = mean(eval_calls)
+#   )
 
-datatable(core_own_dependent)
+vars <- expand.grid(corpus=c("cran", "kaggle"), cod=c("core", "own", "dependent"), stringsAsFactors = FALSE)
+map2_dfr(vars$corpus, vars$cod, function(crps, cod) {
+  print(filter(core_own_dependent, corpus==crps, core_own_dependent==cod))
+  rs(paste(crps, cod, "eval calls"), filter(core_own_dependent, corpus==crps, core_own_dependent==cod)$eval_calls)
+}) %>%
+  overview_table()
+
+# core_own_dependent  %>%
+#   group_by(corpus, core_own_dependent) %>%
+#   pivot_longer(cols=c(total_eval_calls, max_eval_calls, min_eval_calls, avg_eval_calls))
+# 
+#   xtable::xtable(align="llrrrr") %>%
+#   print(
+#     tabular.environment = "tabularx", 
+#     width = "\\textwidth",
+#     floating=F,
+# #    file=fname,
+#     include.rownames=F
+#   )
+
+# core_own_dependent %>%
+# pmap_dfr(function(corpus, core_own_dependent, total_eval_calls, max_eval_calls, min_eval_calls, avg_eval_calls) {
+#     r(str_c(corpus, " ", core_own_dependent, " total eval calls"), total_eval_calls)
+#     r(str_c(corpus, " ", core_own_dependent, " max eval calls"), max_eval_calls)
+#     r(str_c(corpus, " ", core_own_dependent, " min eval calls"), min_eval_calls)
+#     r(str_c(corpus, " ", core_own_dependent, " avg eval calls"), avg_eval_calls)
+# })
+# 
+# datatable(core_own_dependent)
+# 
+#     xtable::xtable(align="lXrrrr") %>%
+#     print(
+#       tabular.environment = "tabularx", 
+#       width = "\\textwidth",
+#       floating=F,
+#       file=fname,
+#       include.rownames=F
+#     )
 ```

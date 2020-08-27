@@ -14,13 +14,14 @@ RUN_PACKAGE_COVERAGE_DIR      := $(RUN_DIR)/package-coverage
 RUN_KAGGLE_DIR                := $(RUN_DIR)/kaggle-run
 RUN_PACKAGE_EVALS_DIR         := $(RUN_DIR)/package-evals-static
 RUN_PACKAGE_TRACE_DIR         := $(RUN_DIR)/package-evals-traced.2
-RUN_PACKAGE_RUNNABLE_CODE_DIR := $(RUN_DIR)/package-runnable-code
-RUN_PACKAGE_RUNS_DIR          := $(RUN_DIR)/run-extracted-code
+RUN_PACKAGE_RUNNABLE_CODE_DIR := $(RUN_DIR)/package-runnable-code-eval
 
-RUN_PACKAGE_TRACE_RUNS_FILE := $(RUN_PACKAGE_TRACE_DIR)/run.csv
-RUN_PACKAGE_TRACE_LOG_FILE  := $(RUN_PACKAGE_TRACE_DIR)/parallel.log
-RUN_CALLS_FILE              := $(RUN_PACKAGE_TRACE_DIR)/calls.fst
-RUN_PROGRAM_FILE            := $(RUN_PACKAGE_TRACE_DIR)/program.fst
+# raw files
+RUN_PACKAGE_RUNNABLE_CODE_FILE := $(RUN_PACKAGE_RUNNABLE_CODE_DIR)/runnable-code-metadata.csv
+RUN_PACKAGE_TRACE_RUNS_FILE    := $(RUN_PACKAGE_TRACE_DIR)/run.csv
+RUN_PACKAGE_TRACE_LOG_FILE     := $(RUN_PACKAGE_TRACE_DIR)/parallel.log
+RUN_CALLS_FILE                 := $(RUN_PACKAGE_TRACE_DIR)/calls.fst
+RUN_PROGRAM_FILE               := $(RUN_PACKAGE_TRACE_DIR)/program.fst
 
 RUN_SUM_CORE_FILE    := $(RUN_PACKAGE_TRACE_DIR)/summarized-core.fst
 RUN_SUM_KAGGLE_FILE  := $(RUN_PACKAGE_TRACE_DIR)/summarized-kaggle.fst
@@ -33,7 +34,6 @@ PACKAGE_METADATA_FILE      := $(DATA_DIR)/metadata.fst
 PACKAGE_SLOC_FILE          := $(DATA_DIR)/sloc.fst
 PACKAGE_FUNCTIONS_FILE     := $(DATA_DIR)/functions.fst
 PACKAGE_RUNNABLE_CODE_FILE := $(DATA_DIR)/runnable-code-metadata.fst
-PACKAGE_RUNS_FILE          := $(DATA_DIR)/run.fst
 PACKAGE_TRACE_RUNS_FILE    := $(DATA_DIR)/run-trace.fst
 PACKAGE_TRACE_LOG_FILE     := $(DATA_DIR)/parallel-trace.fst
 CORPUS_FILE                := $(DATA_DIR)/corpus.fst
@@ -85,9 +85,7 @@ $(PACKAGE_SLOC_FILE): $(RUN_PACKAGE_METADATA_DIR)/sloc.csv
 
 $(PACKAGE_FUNCTIONS_FILE): $(RUN_PACKAGE_METADATA_DIR)/functions.csv
 
-$(PACKAGE_RUNNABLE_CODE_FILE): $(RUN_PACKAGE_RUNNABLE_CODE_DIR)/runnable-code-metadata.csv
-
-$(PACKAGE_RUNS_FILE): $(RUN_PACKAGE_RUNS_DIR)/run.csv
+$(PACKAGE_RUNNABLE_CODE_FILE): $(RUN_PACKAGE_RUNNABLE_CODE_FILE)
 
 $(PACKAGE_TRACE_RUNS_FILE): $(RUN_PACKAGE_TRACE_RUNS_FILE)
 
@@ -122,6 +120,9 @@ corpus: $(CORPUS_FILE)
 $(RUN_PROGRAM_FILE): $(CORPUS_FILE)
 	$(MERGE_FST) $(RUN_PACKAGE_TRACE_DIR) $(@F)
 	$(R) 'fst::write_fst(dplyr::semi_join(dplyr::mutate(fst::read_fst("$(RUN_PROGRAM_FILE)"), package=basename(dirname(dirname(file)))), fst::read_fst("$(CORPUS_FILE)"), by="package"), "$(RUN_PROGRAM_FILE)");'
+
+$(RUN_PACKAGE_RUNNABLE_CODE_FILE):
+	$(MERGE_CSV) $(@D) $(@F)
 
 $(RUN_PACKAGE_TRACE_RUNS_FILE):
 	$(MERGE_CSV) $(RUN_PACKAGE_TRACE_DIR) $(@F)

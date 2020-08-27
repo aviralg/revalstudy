@@ -362,9 +362,26 @@ groupify_function <- function(expr_function)
   )
 }
 
+build_env_rep <- function(env_class)
+{
+  splitted <- str_split(env_class, fixed("+"))[[1]]
+  return(paste0(splitted[[length(splitted)]], if(length(splitted) > 1) "+" else ""))
+}
+
+simplify_envir <- function(env_class, envir_type, envir_expression)
+{
+  # Add a + to the last environment if the first is new
+  case_when(
+    is.na(env_class) & envir_type == "VECSXP" ~ "list",
+    is.na(env_class) & envir_type == "NILSXP" ~ "NULL",
+    is.na(env_class) & envir_type == "INTSXP" ~ paste0("sys.call(", envir_expression, ")"),
+    TRUE ~ build_env_rep(env_class)
+    )
+}
+
 extract_write_envir <- function(env_class)
 {
-  return(str_split(env_class, fixed("+"), n = 2)[[1]])
+  return(str_split(env_class, fixed("+"), n = 2)[[1]][[1]])
 }
 
 
@@ -372,9 +389,9 @@ extract_envir <- function(env_class, envir_type, envir_expression)
 {
   # First element is write, second is read
   case_when(
-    is.na(env_class) && envir_type == "VECSXP" ~ c("list", "enclos"),
-    is.na(env_class) && envir_type == "NILSXP" ~ c("NULL", "enclos"),
-    is.na(env_class) && envir_type == "INTSXP" ~ {e <- paste0("sys.call(", envir_expression, ")"); c(e, e)},
+    is.na(env_class) & envir_type == "VECSXP" ~ c("list", "enclos"),
+    is.na(env_class) & envir_type == "NILSXP" ~ c("NULL", "enclos"),
+    is.na(env_class) & envir_type == "INTSXP" ~ {e <- paste0("sys.call(", envir_expression, ")"); c(e, e)},
     str_ends(env_class, fixed("global")) ~ c(extract_write_envir(env_class), "global"),
     str_ends(env_class, fixed("base")) ~ c(extract_write_envir(env_class), "base"),
     str_ends(env_class, fixed("callee")) ~ c(extract_write_envir(env_class), "callee"),
@@ -384,4 +401,5 @@ extract_envir <- function(env_class, envir_type, envir_expression)
     str_ends(env_class, "package:.*") ~ c(extract_write_envir(env_class), str_extract(env_class, "package:.*"))
   )
 }
+
 

@@ -9,10 +9,28 @@ params:
 ---
 
 ```{r setup, include=FALSE}
+knitr::knit_hooks$set(time_it = local({
+  now <- NULL
+  function(before, options) {
+    if (before) {
+      # record the current time before each chunk
+      now <<- Sys.time()
+    } else {
+      # calculate the time difference after a chunk
+      res <- difftime(Sys.time(), now)
+      # return a character string to show the time
+      paste("Time for this code chunk to run:", res)
+    }
+  }
+}))
+
 knitr::opts_chunk$set(echo = TRUE,
                       fig.retina = 2,
                       fig.width = 10,
-                      cache.lazy = FALSE)
+                      cache.lazy = FALSE,
+                      time_it = TRUE)
+
+
 
 now <- Sys.time() 
 

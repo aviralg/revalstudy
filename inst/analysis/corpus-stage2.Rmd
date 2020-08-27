@@ -39,7 +39,6 @@ metadata_raw      <- read_task_result(PACKAGE_METADATA_FILE)
 functions_raw     <- read_task_result(PACKAGE_FUNCTIONS_FILE)
 sloc_raw          <- read_task_result(PACKAGE_SLOC_FILE)
 runnable_code_raw <- read_task_result(PACKAGE_RUNNABLE_CODE_FILE)
-runs_raw          <- read_task_result(PACKAGE_RUNS_FILE)
 trace_runs_raw    <- read_task_result(PACKAGE_TRACE_RUNS_FILE)
 
 trace_log_raw     <- read_parallel_log(PACKAGE_TRACE_LOG_FILE)
@@ -110,15 +109,17 @@ runnable_code <-
   # TODO we have old version of tidyr, names_glue is missing, so have to rename manually
   rename(
     runnable_code_examples=code_examples,
-    runnable_code_tests=code_tests,
+#    runnable_code_tests=code_tests,
     runnable_code_vignettes=code_vignettes,
     runnable_files_examples=files_examples,
-    runnable_files_tests=files_tests,
+#    runnable_files_tests=files_tests,
     runnable_files_vignettes=files_vignettes,
   ) %>%
   mutate(
-    runnable_code=runnable_code_examples+runnable_code_tests+runnable_code_vignettes,
-    runnable_files=runnable_files_examples+runnable_files_tests+runnable_files_vignettes
+#    runnable_code=runnable_code_examples+runnable_code_tests+runnable_code_vignettes,
+#    runnable_files=runnable_files_examples+runnable_files_tests+runnable_files_vignettes
+    runnable_code=runnable_code_examples+runnable_code_vignettes,
+    runnable_files=runnable_files_examples+runnable_files_vignettes
   ) %>%
   select(
     package,
@@ -135,16 +136,6 @@ coverage <- coverage_raw %>%
   filter(type=="all", is.na(error), !is.na(coverage_expression)) %>% 
   select(-type, -error, coverage_expr=coverage_expression) %>%
   mutate(coverage_expr=coverage_expr/100, coverage_line=coverage_line/100)
-```
-
-### Package runs
-
-```{r process package runs}
-runs <-
-  runs_raw %>%
-  group_by(package) %>%
-  summarise(runnable_success=sum(is.na(error)), runnable_error=sum(!is.na(error)), runnable_time=sum(time, na.rm=TRUE)) %>%
-  mutate(runnable_rate=runnable_success/(runnable_success+runnable_error))
 ```
 
 ### Trace runs
@@ -183,7 +174,6 @@ corpus_s1 <-
   left_join(functions, by="package") %>%
   left_join(runnable_code, by="package") %>%
   left_join(coverage, by="package") %>%
-  left_join(runs, by="package") %>%
   left_join(trace_runs, by="package") %>%
   left_join(trace_log, by="package") %>%
   left_join(evals, by="package")
