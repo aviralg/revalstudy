@@ -55,7 +55,7 @@ RUN_KAGGLE_CALLS_FINAL_FILE := $(RUN_KAGGLE_DIR)/calls-final.fst
 RUN_KAGGLE_SCRIPTS_FILE     := $(RUN_KAGGLE_DIR)/scripts.txt
 RUN_KAGGLE_KERNEL_FILE      := $(RUN_KAGGLE_DIR)/kernels.csv
 
-R_DIR        := $(realpath $(BASE_DIR))/R-4.0.2
+R_DIR        := $(realpath $(BASE_DIR))/R-dyntrace
 R_BIN        := $(R_DIR)/bin/R
 R_SCRIPT_BIN := $(R_DIR)/bin/Rscript
 R            := $(R_BIN) --silent --no-save -e
