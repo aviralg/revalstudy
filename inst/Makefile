@@ -21,6 +21,7 @@ RUN_PACKAGE_TRACE_RUNS_FILE := $(RUN_PACKAGE_TRACE_DIR)/run.csv
 RUN_PACKAGE_TRACE_LOG_FILE  := $(RUN_PACKAGE_TRACE_DIR)/parallel.log
 RUN_CALLS_FILE              := $(RUN_PACKAGE_TRACE_DIR)/calls.fst
 RUN_CALLS_FINAL_FILE        := $(RUN_PACKAGE_TRACE_DIR)/calls-final.fst
+RUN_PROGRAM_FILE            := $(RUN_PACKAGE_TRACE_DIR)/program.fst
 
 RUN_SUM_CORE_FILE    := $(RUN_PACKAGE_TRACE_DIR)/summarized-core.fst
 RUN_SUM_KAGGLE_FILE  := $(RUN_PACKAGE_TRACE_DIR)/summarized-kaggle.fst
@@ -120,11 +121,15 @@ corpus: $(CORPUS_FILE)
 ## CALLS
 ################################################################################
 
+$(RUN_PROGRAM_FILE):
+	$(MERGE_FST) $(RUN_PACKAGE_TRACE_DIR) $(@F)
+	$(R) 'fst::write_fst(dplyr::semi_join(dplyr::mutate(fst::read_fst("$(RUN_PROGRAM_FILE)"), package=basename(dirname(dirname(file)))), fst::read_fst("$(CORPUS_FILE)"), by="package"), "$(RUN_PROGRAM_FILE)");'
+
 $(RUN_PACKAGE_TRACE_RUNS_FILE):
 	$(MERGE_CSV) $(RUN_PACKAGE_TRACE_DIR) $(@F)
 
 $(RUN_CALLS_FILE):
-	$(MERGE_FST) $(RUN_PACKAGE_TRACE_DIR) $(@F) ERROR.fst
+	$(MERGE_FST) $(RUN_PACKAGE_TRACE_DIR) $(@F) calls-ERROR
 
 # FIXME: this is pretty horrible, but `R -e` does not understand \ like all the
 #        other REPLS !?!?
