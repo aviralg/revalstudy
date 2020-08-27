@@ -89,13 +89,13 @@ eval_calls_packages <-
     as_tibble()  %>% 
     mutate(dataset = "packages")
 
-eval_call_core <- 
+eval_calls_core <- 
   read_fst(core_filepath) %>%
   as_tibble() %>%
   mutate(dataset = "core")
 
 
-eval_calls_raw <- bind_rows(eval_calls_packages, eval_call_core)
+eval_calls_raw <- bind_rows(eval_calls_packages, eval_calls_core)
 ```
 
 
@@ -523,9 +523,19 @@ default_envir <- eval_calls %>% filter(is.na(envir_expression))
 nb_default_envir <- default_envir %>% count(wt = nb_ev_calls)
 nb_call_sites_default_envir <- nb_eval_call_sites(default_envir)
 
+nb_default_envir_core <- count(default_envir %>% filter(dataset == "core"), wt = nb_ev_calls)
+
+nb_eval_calls_core <- count(eval_calls_core, wt = nb_ev_calls)$n
+nb_eval_calls_packages <- count(eval_calls_packages, wt = nb_ev_calls)$n
+
+nb_default_envir_packages <- count(default_envir %>% filter(dataset == "packages"), wt = nb_ev_calls)
+
 r("default envir expr", nb_default_envir$n)
 r("default envir expr percent", ratio(nb_default_envir$n, nb_eval_calls))
 r("default envir  call sites percent", ratio(nb_call_sites_default_envir, nb_call_sites))
+
+r("default envir core expr percent", ratio(nb_default_envir_core$n, nb_eval_calls_core))
+r("default envir packages expr percent", ratio(nb_default_envir_packages$n, nb_eval_calls_packages))
 ```
 
 `r ratio(nb_default_envir$n, nb_eval_calls)`% of the calls use the default environment, which corresponds to `r ratio(nb_call_sites_default_envir, nb_call_sites)`% of the call sites.
@@ -573,6 +583,7 @@ classified_envir %>% ggplot() +
 ggsave(path(PLOT_DIR, "environments-read.pdf"))
 ```
 
+
 ```{r}
 classified_envir_prop_core <- classified_envir %>% 
   filter(dataset == "core") %>%
@@ -584,9 +595,11 @@ classified_envir_prop_packages <- classified_envir %>%
   count(env_class, wt = nb_ev_calls, sort = TRUE) %>%
   mutate(proportion = n / sum(n))
 
+nb_top_envir <- 8
+
 classified_envir_prop_core %>%
-  head(5) %>%
-  add_column(index = toupper(letters)[1:5]) %>%
+  head(nb_top_envir) %>%
+  add_column(index = toupper(letters)[1:nb_top_envir]) %>%
   pmap_dfr(function(env_class, n, proportion, index)
   {
     r(paste("core", "env class", index), env_class)
@@ -595,14 +608,24 @@ classified_envir_prop_core %>%
   })
 
 classified_envir_prop_packages %>%
-  head(5) %>%
-  add_column(index = toupper(letters)[1:5]) %>%
+  head(nb_top_envir) %>%
+  add_column(index = toupper(letters)[1:nb_top_envir]) %>%
   pmap_dfr(function(env_class, n, proportion, index)
   {
     r(paste("packages", "env class", index), env_class)
     r(paste("packages", "count", index), n)
     r(paste("packages", "proportion", index), percent(proportion))
   })
+
+envir_enclos <- classified_envir %>% filter(env_class %in% c("NULL", "list"))
+nb_enclos <- count(envir_enclos, wt = nb_ev_calls)$n
+r("nb enclos envir", nb_enclos)
+r("enclos envir percent", ratio(nb_enclos, nb_eval_calls))
+
+envir_sys_call <- classified_envir %>% filter(str_detect(env_class, fixed("sys.class")))
+nb_sys_call <- count(envir_sys_call, wt = nb_ev_calls)$n
+r("nb sys call envir", nb_sys_call)
+r("sys call envir percent", ratio(nb_sys_call, nb_eval_calls))
 ```
 
 
