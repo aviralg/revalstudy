@@ -239,8 +239,12 @@ package_programs_errors <-
 
 package_programs <-
   left_join(
-    package_programs, 
-    transmute(package_programs_errors, error=paste(source, message, call), file), 
+    package_programs,
+    if (nrow(package_programs_errors) > 0) {
+      transmute(package_programs_errors, error=paste(source, message, call), file)
+    } else {
+      transmute(package_programs, error=NA, file)
+    }, 
     by="file"
   ) %>%
   mutate(

@@ -65,7 +65,7 @@ MERGE_CSV  := $(R_SCRIPT_BIN) $(BASE_DIR)/runr/inst/merge-csv.R
 TSV_TO_FST  = $(R) 'fst::write_fst(readr::read_tsv("$<"), "$@", compress=100)'
 RENDER_RMD  = $(R) 'rmarkdown::render("$(1)", output_dir="$(HTML_DIR)")'
 
-all: enrich
+all: kaggle enrich
 
 ################################################################################
 ## CORPUS
@@ -181,3 +181,4 @@ $(RUN_KAGGLE_CALLS_FILE): $(RUN_KAGGLE_LOG_FILE)
 	$(MERGE_FST) $(RUN_KAGGLE_DIR) calls.fst calls-ERROR
 
 kaggle: $(RUN_KAGGLE_CALLS_FILE) $(RUN_KAGGLE_PROGRAM_FILE)
+	$(call RENDER_RMD,$(ANALYSIS_DIR)/kaggle-stage2.Rmd)
