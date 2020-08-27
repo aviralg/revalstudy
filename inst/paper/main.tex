@@ -47,7 +47,13 @@
  keywordstyle=\color{Blue},    % keyword style
  commentstyle=\color{YellowGreen},  % comment style
  stringstyle=\color{ForestGreen}    % string literal style
-} 
+}
+
+% https://tex.stackexchange.com/questions/351435/table-name-placment-in-tabular-documentclass-ieeetran-conference
+\makeatletter
+\def\@IEEEtablestring{figure}
+\makeatother
+
 \begin{document}
 
 \title{A Large-Scale Study of the Use of Eval in R}
@@ -57,8 +63,8 @@
 \newcommand{\eg}{\emph{e.g.},\xspace}
 \newcommand{\ie}{\emph{i.e.},\xspace}
 \newcommand{\cf}{\emph{cf.}\xspace}
-\newcommand{\summary}[1]{({\csname #1Min\endcsname} / {\csname #1Mean\endcsname} / {\csname #1Max\endcsname})}
-\newcommand{\summaryrnd}[1]{({\csname #1MinRnd\endcsname} / {\csname #1MeanRnd\endcsname} / {\csname #1MaxRnd\endcsname})}
+\newcommand{\summary}[1]{{\csname #1\endcsname} ({\csname #1Min\endcsname} / {\csname #1Mean\endcsname} / {\csname #1Max\endcsname})}
+\newcommand{\summaryrnd}[1]{{\csname #1Rnd\endcsname} ({\csname #1MinRnd\endcsname} / {\csname #1MeanRnd\endcsname} / {\csname #1MaxRnd\endcsname})}
 
 \newcommand{\eval}{\texttt{eval}\xspace}
 \newcommand{\parse}{\texttt{parse}\xspace}
@@ -353,16 +359,15 @@ We have selected the TOP \CorpusPackages packages based on the number of reverse
 dependencies, \ie how many other packages depend on them\footnote{Extracted from
   package metadata using builtin function}. Using this criterion helps us to
 choose popular packages which in general should be of a better quality and have
-better code coverage and therefore more code to run. The resulting set has
-\summary{CorpusRevdeps}\footnote{Such triples represent ($min$ / $mean$ /
-  $max$)} reverse dependencies and consists of \CorpusRCodeRnd lines of R code
-and \CorpusNativeCodeRnd lines of native code (C/C++/Fortran)\footnote{Excluding
-  comments and blank lines using \url{github.com/AlDanial/cloc}}.
-Figure~\ref{fig:corpus} shows these packages, the size of the dots reflects the
-project's size in lines of code including both R and native code, the x-axis
-indicates the expression code coverage in percents and the y-axis gives the
-number of reverse dependencies in log scale. Dotted lines indicate means.
-Packages with over \CorpusEvalsPackageTreshold eval call sites are annotated.
+better code coverage and therefore more code to run. The resulting set contains
+\CorpusRCodeRnd lines of R code and \CorpusNativeCodeRnd lines of native code
+(C/C++/Fortran)\footnote{Excluding comments and blank lines using
+  \url{github.com/AlDanial/cloc}}. Figure~\ref{fig:corpus} shows these packages,
+the size of the dots reflects the project's size in lines of code including both
+R and native code, the x-axis indicates the expression code coverage in percents
+and the y-axis gives the number of reverse dependencies in log scale. Dotted
+lines indicate means. Packages with over \CorpusEvalsPackageTreshold eval call
+sites are annotated.
 
 \begin{figure*}[!tb]\centering\includegraphics[width=\linewidth]
   {corpus.pdf}\caption{CRAN packages}\label{fig:corpus}
@@ -391,11 +396,10 @@ The selected packages contain \CorpusPackagePrograms programs with
 \CorpusPackageProgramsCodeRnd lines of R code:
 %
 \begin{compactitem}[$-$]
-  \item \CorpusExamplesProgramsRnd examples with \CorpusExamplesCodeRnd
-  \summaryrnd{CorpusExamplesCode} lines of code,
-  \item \CorpusTestsProgramsRnd tests with \CorpusTestsCodeRnd
-  \summaryrnd{CorpusTestsCode} lines of code, and
-  \item \CorpusVignettesProgramsRnd vignettes with \CorpusVignettesCodeRnd
+  \item \CorpusExamplesProgramsRnd examples with
+  \summaryrnd{CorpusExamplesCode}\footnote{This notation represents $sum$ ($min$
+    / $mean$ / $max$)} lines of code,
+  \item \CorpusVignettesProgramsRnd vignettes with
   \summaryrnd{CorpusVignettesCode} lines of code.
 \end{compactitem}
 
@@ -429,8 +433,7 @@ various runtime exceptions, common problems were parse errors and misspelled
 package names.
 
 The final set contains \CorpusFinishedKaggle kernels with
-\CorpusFinishedKaggleCodeRnd \summaryrnd{CorpusFinishedKaggleCode} lines of R
-code.
+\summaryrnd{CorpusFinishedKaggleCode} lines of R code.
 
 \subsection{Summary}
 
@@ -465,21 +468,16 @@ itself.  The Kaggle data set has small programs, and, these programs only
 trigger \eval in core and dependent packages. Thus, an average Kaggle run
 has 412 core calls, 96 dependent calls, and no own calls.
 
-
-\begin{table}[ht]
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}r|ccc@{}} \hline
-Source & Core & Dependent & Own \\\hline
-      %      CRAN & \CranCoreTotalEvalCallsRnd (\CranCoreMinEvalCallsRnd/\CranCoreAvgEvalCallsRnd/\CranCoreMaxEvalCallsRnd) & \CranDependentTotalEvalCallsRnd (\CranDependentMinEvalCallsRnd/\CranDependentAvgEvalCallsRnd/\CranDependentMaxEvalCallsRnd) & \CranOwnTotalEvalCallsRnd (\CranOwnMinEvalCallsRnd/\CranOwnAvgEvalCallsRnd/\CranOwnMaxEvalCallsRnd) \\
-CRAN & \CranCoreTotalEvalCallsRnd (1 / 581 / 416K)  & \CranDependentTotalEvalCallsRnd (1 / 532 / 183K) & \CranOwnTotalEvalCallsRnd (1 / 292 / 144K)\\
-Kaggle & \KaggleCoreTotalEvalCallsRnd (1 / 412 / 2.8K) & \KaggleDependentTotalEvalCallsRnd (3 / 96 / 1.1K) & 0 (0 / 0 / 0) \\
-%      Kaggle & \KaggleCoreTotalEvalCallsRnd (\KaggleCoreMinEvalCallsRnd/\KaggleCoreAvgEvalCallsRnd/\KaggleCoreMaxEvalCallsRnd) & \KaggleDependentTotalEvalCallsRnd (\KaggleDependentMinEvalCallsRnd/\KaggleDependentAvgEvalCallsRnd/\KaggleDependentMaxEvalCallsRnd) & 0(0/0/0) \\
-      \hline
-    \end{tabular}
-  }
-  \caption{Eval calls in CRAN and Kaggle}
-  \label{A}
-\end{table}
+ \begin{table*}[tb]
+   \centering
+   \begin{tabular}{r|c|c|c@{}} \hline
+     Corpus / Source & Core                              & Dependent                              & Own \\\hline
+     CRAN   & \summaryrnd{CranCoreEvalCalls}    & \summaryrnd{CranDependentEvalCalls}    & \summaryrnd{CranOwnEvalCalls} \\
+     Kaggle & \summaryrnd{KaggleCoreEvalCalls}  & \summaryrnd{KaggleDependentEvalCalls}  & \summaryrnd{KaggleOwnEvalCalls} \\\hline
+   \end{tabular}
+   \caption{Eval calls in CRAN and Kaggle}
+   \label{A}
+ \end{table*}
 
 
 
@@ -537,16 +535,12 @@ be called reflectively, through aliases, or passed to a higher-order function.
 
 \begin{table}[ht]\resizebox{\columnwidth}{!}{%
 \begin{tabular}{rr|rr|rr}\hline
-Callsites & Packages & Callsites & Packages & Callsites & Packages \\ \hline
-\SiteSummarySiteCountA & \SiteSummaryPackageCountA & \SiteSummarySiteCountF & \SiteSummaryPackageCountF & \SiteSummarySiteCountK & \SiteSummaryPackageCountK \\
-\SiteSummarySiteCountB & \SiteSummaryPackageCountB & \SiteSummarySiteCountG & \SiteSummaryPackageCountG & \SiteSummarySiteCountL & \SiteSummaryPackageCountL \\
-\SiteSummarySiteCountC & \SiteSummaryPackageCountC & \SiteSummarySiteCountH & \SiteSummaryPackageCountH & \SiteSummarySiteCountM & \SiteSummaryPackageCountM \\
-\SiteSummarySiteCountD & \SiteSummaryPackageCountD & \SiteSummarySiteCountI & \SiteSummaryPackageCountI & \SiteSummarySiteCountN & \SiteSummaryPackageCountN \\
-      \SiteSummarySiteCountE & \SiteSummaryPackageCountE & \SiteSummarySiteCountJ & \SiteSummaryPackageCountJ & \SiteSummarySiteCountO & \SiteSummaryPackageCountO \\    \hline
-\end{tabular}} \label{table:site-package-summary}
+ Callsites & Packages & Callsites & Packages & Callsites & Packages \\\hline
+\input{tag/table-site-package-summary.tex}
+\end{tabular}}
 \caption{Distribution of callsites in CRAN}
+\label{table:site-package-summary}
 \end{table}
-
 
 To roughly estimate the complexity of the code being evaluated,
 Fig.~\ref{fig:ast-size} shows the distribution of the abstract syntax tree
@@ -602,8 +596,22 @@ package \eval call generate \EventsMinRangeC to \EventsMaxRangeC events.
 These \eval calls originate from statistical modeling packages such as \mlogit,
 \mboost, \metafor, \lavaan, \mclust and \gamlss.
 
+\section{A taxonomy of eval}
 
-\section{Side-Effects}
+We first classify \c{eval} depending on the resolved expression, \emph{i.e.}
+the first argument of \c{eval} after all possible function calls and symbol
+resolution in it have been executed.
+
+\subsection{Operation Mix}
+
+%Unlike Javascript, R packages also call native code for access to efficient
+%numerical and statistical routines. We intercept all calls to R functions and
+%native functions from the programs and \eval calls. In the whole corpus there
+%are \AllClosureCallCount calls to R functions and \AllNativeCallCount to native
+%code. Of those, \eval contribute to only \EvalClosureCallCount calls to R
+%functions and \EvalNativeCallCount to native code.
+
+\subsection{Side-Effects}
 
 In the corpus we observe \AllWritesRnd writes to variables of which
 \EvalWritesRnd writes happen inside \eval. However, all writes are not
@@ -619,18 +627,6 @@ An \eval is considered side-effecting if it performs a side-effecting write to a
 variable, directly or indirectly. Only \SideEffectingCoreCallPerc \eval calls in
 Core R are side-effecting and \SideEffectingPackageCallPerc \eval calls in CRAN
 packages are side-effecting.
-
-\section{A taxonomy of eval}
-
-We first classify \c{eval} depending on the resolved expression, \emph{i.e.}
-the first argument of \c{eval} after all possible function calls and symbol
-resolution in it have been executed.
-
-\subsection{Operation mix}
-
-Here we should show some information about what happens during an eval. What kinds of operations...
-
-
 
 \subsection{Scope}
 
@@ -709,7 +705,9 @@ identity_transformer <- function(text, envir) {
 }
 \end{lstlisting}
 
+
 The \c{imchange} function of package \c{imager} makes it possible to modify images using a dedicated formula syntax using \c{\~}.\footnote{Inspired by \c{map} in package \emph{purr}.}  Here, \eval is evaluated in \c{newenv}, which creates a new environment that inherits from \c{parent.frame()} by default. We classify it as 1+.
+
 
 \begin{lstlisting}
 newenv <- new.env()
