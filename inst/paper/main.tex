@@ -596,8 +596,22 @@ package \eval call generate \EventsMinRangeC to \EventsMaxRangeC events.
 These \eval calls originate from statistical modeling packages such as \mlogit,
 \mboost, \metafor, \lavaan, \mclust and \gamlss.
 
+\section{A taxonomy of eval}
 
-\section{Side-Effects}
+We first classify \c{eval} depending on the resolved expression, \emph{i.e.}
+the first argument of \c{eval} after all possible function calls and symbol
+resolution in it have been executed.
+
+\subsection{Operation Mix}
+
+Unlike Javascript, R packages also call native code for access to efficient
+numerical and statistical routines. We intercept all calls to R functions and
+native functions from the programs and \eval calls. In the whole corpus there
+are \AllClosureCallCount calls to R functions and \AllNativeCallCount to native
+code. Of those, \eval contribute to only \EvalClosureCallCount calls to R
+functions and \EvalNativeCallCount to native code.
+
+\subsection{Side-Effects}
 
 In the corpus we observe \AllWritesRnd writes to variables of which
 \EvalWritesRnd writes happen inside \eval. However, all writes are not
@@ -613,18 +627,6 @@ An \eval is considered side-effecting if it performs a side-effecting write to a
 variable, directly or indirectly. Only \SideEffectingCoreCallPerc \eval calls in
 Core R are side-effecting and \SideEffectingPackageCallPerc \eval calls in CRAN
 packages are side-effecting.
-
-\section{A taxonomy of eval}
-
-We first classify \c{eval} depending on the resolved expression, \emph{i.e.}
-the first argument of \c{eval} after all possible function calls and symbol
-resolution in it have been executed.
-
-\subsection{Operation mix}
-
-Here we should show some information about what happens during an eval. What kinds of operations...
-
-
 
 \subsection{Scope}
 
