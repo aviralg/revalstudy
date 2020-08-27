@@ -528,9 +528,9 @@ Callsites & Packages & Callsites & Packages & Callsites & Packages \\ \hline
 To roughly estimate the complexity of the code being evaluated,
 Fig.~\ref{fig:ast-size} shows the distribution of the abstract syntax tree
 size of the \c{expr} argument to \eval. The majority of inputs across core
-and packages (\miss{XX}\%) is 1. That is to say, the code being evaluated
+and packages (\NbAstOnePercent of \eval calls and \NbAstOneCallSitePercent of call sites) is 1. That is to say, the code being evaluated
 consists of a single variable name or constant. A function call needs at
-least three nodes. Inputs smaller than \c{X} nodes account for 95\% of all
+least three nodes. Inputs smaller than \AstSizeNineFive nodes account for 95\% of all
 calls. Sizes are roughly similar between core and packages.
 
 \begin{figure}[htbp]
