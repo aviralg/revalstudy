@@ -549,6 +549,7 @@ least three nodes. Inputs smaller than \AstSizeNineFive nodes account for 95\% o
 calls. Sizes are roughly similar between core and packages.
 
 \begin{figure}[htbp]
+	\centering
 \includegraphics[width=\columnwidth]{ast_sizes}
 \caption{Input sizes} \label{fig:ast-size}
 \end{figure}
@@ -611,19 +612,26 @@ One of the main differences of the R \eval with the javascript one is how it
 interacts with \emph{scope}, or environments in R. In Javascript, \c{eval}
 can access the local scope and the global scope. In R, \c{eval} has an
 argument \c{envir} to indicate in which environment its first argument,
-after being resolved, must be evaluated. By default, it is equal to \c{parent.frame()}, which is the parent environment of the \c{eval} call.
+after being resolved, must be evaluated. By default, it is equal to \c{parent.frame()}, which is the parent environment of the \c{eval} call. This default argument happens in \miss{XX\%} of the eval calls.
 
- This argument can also be \c{NULL}, a list or a dataframe. In that case, \c{eval} copies \c{envir} and encloses it the environment defined by \c{enclos}. Finally, the argument can also be a number $n$. It means that the environment in which the expressions is evaluated will be the results of \c{sys.call(n)} where $n$ refers to the $n$-th call frame after the global environment.
+This argument can also be \c{NULL}, a list or a dataframe. In that case, \c{eval} copies \c{envir} and encloses it the environment defined by \c{enclos}. Finally, the argument can also be a number $n$. It means that the environment in which the expressions is evaluated will be the results of \c{sys.call(n)} where $n$ refers to the $n$-th call frame after the global environment.
 
 \textbf{Do we speak more about what an environment is, \c{.GlobalEnv}, \c{emptyenv()}, environment navigation here, or in the Background section?}
 
-We classify the environment from two points of view:
+There are two main environments affected by \eval:
 \begin{itemize}
-	\item the \emph{default} assignment environment \c{eval} writes new bindings.\footnote{It is the default one but the expression in \eval can always write in any other environments using \c{assign} or in the parent environment using \c{<<-}.}
-	\item in which \emph{existing} environment \c{eval} reads. It is the first non new environment. \c{eval} will also be able to read in all parent environment of that environment. 
+	\item the \emph{existing} environment where \c{eval} reads. It is the first non new environment. \c{eval} will also be able to read in all parent environment of that environment. It can be the global environment, a package environment, an empty environment, the callee environment, or a parent environment of the callee.
+	\item the \emph{default} assignment environment \c{eval} writes new bindings.\footnote{It is the default one but the expression in \eval can always write in any other environments using \c{assign} or in the parent environment using \c{<<-}.} If it is different from the read environment and is a new one that inherits from the read environment, we add a symbol \texttt{+} after the read environment.
 \end{itemize}
 
+As shown in Figure~\ref{fig:environments}, \eval in R is often performed in the global environment.  It is also used a lot to evaluate in the context of a dataframe (\emph{list} environment).
+
 % Variability: how many different envir class, and different envir expr, for one call site?
+\begin{figure*}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{environments.pdf}
+	\caption{The environments in which the expression is evaluated. \c{NA} corresponds to the default environment.} \label{fig:environments}
+\end{figure*}
 
 \subsection{Patterns}
 
@@ -730,6 +738,7 @@ in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
 \emph{monomorphic}.
 
 \begin{figure}[!h]
+	\centering
     \includegraphics[width=\columnwidth]{polymorphism}
     \caption{Degree of polymorphism of \c{expr} per call sites.} \label{fig:polymorphism}
 \end{figure}
