@@ -42,7 +42,7 @@ source("inc/paths.R")
 source("inc/latextags.R")
 source("inc/setup.R")
 theme_set(theme_minimal())
-theme_update(text = element_text(size = 20))
+#theme_update(text = element_text(size = 16))
 
 create_tags(path(TAGS_DIR, "analysisStable.tex"), prefix="", default=TRUE)
 
