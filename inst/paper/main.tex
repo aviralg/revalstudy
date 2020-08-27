@@ -62,6 +62,7 @@
 \newcommand{\eval}{\texttt{eval}\xspace}
 \newcommand{\parse}{\texttt{parse}\xspace}
 \newcommand{\source}{\texttt{source}\xspace}
+\newcommand{\local}{\texttt{local}\xspace}
 \newcommand{\unlockBinding}{\texttt{unlockBinding}\xspace}
 \newcommand{\substitute}{\texttt{substitute}\xspace}
 \newcommand{\datatable}{\texttt{data.table}\xspace}
@@ -565,6 +566,11 @@ the advent of Node.js ecosystem.  The distribution of input sizes is similar
 to that found in JavaScript, the majority of inputs being rather small.
 
 
+%%In the corpus, we observe \AllEventCountRnd events. Only \EvalEventCountRnd
+%%events occur inside eval. This is just \EvalEventAllPerc of all events.
+%%Figure~\ref{fig:event-distribution} shows the distribution of events for
+%%core and package \eval calls.
+
 {\bf Missing from this section is the measure of the number of events
   happening in an eval}
 
@@ -613,7 +619,7 @@ after being resolved, must be evaluated. By default, it is equal to \c{parent.fr
 
 We classify the environment from two points of view:
 \begin{itemize}
-	\item in which environment \c{eval} writes new bindings 
+	\item the \emph{default} assignment environment \c{eval} writes new bindings.\footnote{It is the default one but the expression in \eval can always write in any other environments using \c{assign} or in the parent environment using \c{<<-}.}
 	\item in which \emph{existing} environment \c{eval} reads. It is the first non new environment. \c{eval} will also be able to read in all parent environment of that environment. 
 \end{itemize}
 
@@ -665,6 +671,11 @@ We have grouped those uses in the following categories.
   current call to another function. Both ``patterns'' use the \c{match.call} to
   capture current call. The latter is just for laziness as it is the same as
   calling the new function with explicitly selecting the arguments.
+
+  \subsubsection{Implementation}
+  The package installation process adds an extra file to the package directory
+  that contains the code to load the package code inside a \local block. It
+  creates a namespace object and injects the package bindings.
 
   \subsubsection{Miscellaneous} \eval is also used in R packages to get around
   various limitations. For example, in \datatable package, \eval is used to modify
