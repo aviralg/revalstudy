@@ -705,7 +705,8 @@ identity_transformer <- function(text, envir) {
 }
 \end{lstlisting}
 
-The \c{imchange} function of package \c{imager} makes it possible to modify images using a dedicated formula syntax using \c{~}.\footnote{Inspired by \c{map} in package \emph{purr}.}  Here, \eval is evaluated in \c{newenv}, which creates a new environment that inherits from \c{parent.frame()} by default. We classify it as 1+.
+The \c{imchange} function of package \c{imager} makes it possible to modify images using a dedicated formula syntax using \c{\~}.\footnote{Inspired by \c{map} in package \emph{purr}.}
+Here, \eval is evaluated in \c{newenv}, which creates a new environment that inherits from \c{parent.frame()} by default. We classify it as 1+.
 
 \begin{lstlisting}
 newenv <- new.env()
