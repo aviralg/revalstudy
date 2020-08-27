@@ -565,6 +565,11 @@ the advent of Node.js ecosystem.  The distribution of input sizes is similar
 to that found in JavaScript, the majority of inputs being rather small.
 
 
+In the corpus, we observe \AllEventCountRnd events. Only \EvalEventCountRnd
+events occur inside eval. This is just \EvalEventAllPerc of all events.
+Figure~\ref{fig:event-distribution} shows the distribution of events for
+core and package \eval calls.
+
 {\bf Missing from this section is the measure of the number of events
   happening in an eval}
 
@@ -665,6 +670,11 @@ We have grouped those uses in the following categories.
   current call to another function. Both ``patterns'' use the \c{match.call} to
   capture current call. The latter is just for laziness as it is the same as
   calling the new function with explicitly selecting the arguments.
+
+  \subsubsection{Implementation}
+  The package installation process adds an extra file to the package directory
+  that contains the code to load the package code inside a \local block. It
+  creates a namespace object and injects the package bindings.
 
   \subsubsection{Miscellaneous} \eval is also used in R packages to get around
   various limitations. For example, in \datatable package, \eval is used to modify
