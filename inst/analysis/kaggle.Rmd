@@ -202,6 +202,14 @@ write_lines(dirname(kernels_runnable$run_file), SCRIPTS_FILE)
 count(kernels_supported, runnable)
 ```
 
+## Copy datasets
+
+```{r}
+dataset_inputs <- path(KAGGLE_DATASETS_DIR, params$competitions)
+dataset_outpus <- path(KAGGLE_RUN_DIR, params$competitions, "input")
+dir_copy(dataset_inputs, dataset_outpus, overwrite = TRUE)
+```
+
 ## Run
 
 Run the following command from the `r params$base_dir` directory:

@@ -206,3 +206,59 @@ corpus <-
 write_lines(corpus$package, CORPUS_FILE)
 write_fst(corpus, CORPUS_DETAILS_FILE)
 ```
+
+### Programs
+
+```{r}
+package_runs <- trace_runs_raw %>%
+  mutate(
+    dir=as.character(path("../../run/package-evals-traced", package, basename(file))),
+    file=as.character(path("./", basename(dirname(file)), basename(file))),
+  ) %>%
+  semi_join(corpus, by="package")
+
+package_programs <-
+  left_join(
+    filter(package_runs, exitval==0) %>% select(package, file, dir, time), 
+    runnable_code_raw %>% select(package, file=filename, code),
+    by=c("package", "file")
+  ) %>%
+  filter(!endsWith(file, "tests/testthat.R"), !endsWith(file, "tests/run-all.R")) %>% # testthat drivers are not traced
+  transmute(
+    type=basename(dirname(file)),
+    file=as.character(path(dir, "calls.fst")),
+    code, 
+    runtime=time,
+    corpus="cran"
+  )
+
+package_programs_errors <- 
+  package_programs %>%
+  mutate(
+    error_file=path(dirname(str_replace(file, fixed("../.."), params$base_dir)), "calls-ERROR"), 
+    error=file.exists(error_file)
+  ) %>%
+  filter(error) %>%
+  rowwise() %>%
+  do(mutate(read_fst(.$error_file), file=.$file))
+
+package_programs <-
+  left_join(
+    package_programs, 
+    transmute(package_programs_errors, error=paste(source, message, call), file), 
+    by="file"
+  ) %>%
+  mutate(
+    success=
+      type %in% c("examples", "tests", "vignettes") & 
+      !is.na(code) &
+      !is.na(runtime) &
+      code > 0 &
+      is.na(error)
+  )
+```
+
+```{r}
+write_fst(package_programs, CRAN_PROGRAMS_FILE)
+```
+
