@@ -2,7 +2,7 @@
 title: "Side effects"
 output: html_document
 params:
-  base_dir: ../../../
+  base_dir: /home/aviral/projects/revalstudy2
 editor_options: 
   chunk_output_type: console
 ---
@@ -114,6 +114,26 @@ eval_calls_by_package_writes <-
     arrange(desc(call_count))
 
 datatable(eval_calls_by_package_writes)
+
+eval_calls_by_source_write_count <-
+    eval_writes_data %>%
+    filter(all_writes != 0) %>%
+    mutate(all_writes = if_else(all_writes <= 5, as.character(all_writes), "> 5")) %>%
+    count(eval_source_type, all_writes, wt = nb_ev_calls, name = "call_count") %>%
+    group_by(eval_source_type) %>%
+    mutate(total_call_count = sum(call_count)) %>%
+    ungroup() %>%
+    mutate(call_perc = round(100 * call_count/total_call_count, 1))
+
+datatable(eval_calls_by_source_write_count)
+
+plot <-
+    eval_calls_by_source_write_count %>%
+    ggplot(aes(factor(all_writes, level = c(1:5, "> 5")), call_perc)) +
+    geom_col(aes(fill = eval_source_type), position = "dodge") +
+    labs(title="", x ="Side-Effects", y = "Side-Effecting Eval Calls %", fill = "") +
+    theme(text = element_text(size=15), axis.text.x = element_text(size=15))
+plot
 ```
 
 The call site computation is incorrect.
