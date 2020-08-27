@@ -1,0 +1,100 @@
+---
+title: "Kaggle stage2"
+output: html_document
+params:
+  base_dir: /var/lib/R/project-evalR
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+for (x in c(
+  "dplyr", 
+  "DT",
+  "fs",
+  "fst",
+  "lubridate",
+  "readr",
+  "purrr",
+  "stringr",
+  "tidyr"
+  )) {
+  suppressPackageStartupMessages(library(x, character.only=TRUE))
+}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+# TODO: move into the package
+source("inc/paths.R")
+source("inc/setup.R")
+```
+
+## Load data
+
+```{r loading raw data}
+kaggle_kernels <- as_tibble(read_fst(KAGGLE_KERNELS_FILE))
+kaggle_log <- as_tibble(read_fst(KAGGLE_LOG_FILE)) %>%
+  transmute(
+    id=str_replace(Command, ".*/kaggle-run/[^/]+/([^/]+)/.*", "\\1"),
+    exitval=Exitval,
+    runtime=as.duration(JobRuntime)
+  )
+```
+
+### Programs
+
+```{r}
+kaggle_programs <- left_join(
+  kaggle_kernels,
+  kaggle_log,
+  by="id"
+) %>%
+  mutate(
+    file=path("../../run/kaggle-run", competition, id, "calls.fst"),
+    corpus="kaggle"
+  ) %>%
+  select(
+    file,
+    id,
+    language,
+    kernel_type,
+    competition,
+    runtime,
+    code,
+    exitval,
+    corpus
+  )
+
+kaggle_programs_errors <- 
+  kaggle_programs %>%
+  mutate(
+    error_file=path(dirname(str_replace(file, fixed("../.."), params$base_dir)), "calls-ERROR"), 
+    error=file.exists(error_file)
+  ) %>%
+  filter(error) %>%
+  rowwise() %>%
+  do(mutate(read_fst(.$error_file), file=.$file))
+
+kaggle_programs <-
+    left_join(
+      kaggle_programs, 
+      if (nrow(kaggle_programs_errors) > 0) {
+        transmute(kaggle_programs_errors, error=paste(source, message, call), file)
+      } else {
+        transmute(kaggle_programs, error=NA, file)
+      }, 
+      by="file"
+    ) %>%
+    mutate(
+      success=
+        exitval==0 &
+        !is.na(code) &
+        !is.na(runtime) &
+        code > 0 &
+        is.na(error)
+    )
+```
+
+```{r}
+write_fst(kaggle_programs, KAGGLE_PROGRAMS_FILE)
+```

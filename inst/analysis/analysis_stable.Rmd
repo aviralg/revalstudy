@@ -42,6 +42,8 @@ source("inc/paths.R")
 source("inc/latextags.R")
 source("inc/setup.R")
 theme_set(theme_minimal())
+theme_update(text = element_text(rel(1.5)))
+
 create_tags(path(TAGS_DIR, "analysisStable.tex"), prefix="", default=TRUE)
 
 
@@ -452,6 +454,7 @@ ast_sizes %>%
   scale_y_log10(labels = scales::comma) +
   labs(y="AST size (log)") +
   theme(
+    #text=element_text(rel=2),
     legend.box="horizontal",
     axis.title.x=element_blank()
   )
@@ -513,12 +516,28 @@ We also classify environments in the following way:
 
 
 ```{r environment_hierarchy}
-# classified_envir <- eval_calls %>% filter(!is.na(envir_expression)) %>%
-#       mutate(env_class = pmap(list(environment_class, envir_type, envir_expression), extract_envir)) %>%
-#       unnest_wider(env_class)
+classified_envir <- eval_calls %>% filter(!is.na(envir_expression)) %>%
+      mutate(env_class = pmap(list(environment_class, envir_type, envir_expression), extract_envir)) %>%
+      hoist(env_class, read_env = 1, write_env = 2, .remove=FALSE) #Quicker when not removing
 
-#TODO
+
 ```
+
+
+```{r write_env}
+
+classified_envir %>% ggplot() +
+  geom_bar(aes(x = write_env, weight = nb_ev_calls, group = dataset)) +
+  labs(x = "Environment write")
+```
+
+```{r read_env}
+
+classified_envir %>% ggplot() +
+  geom_bar(aes(x = read_env, weight = nb_ev_calls, group = dataset)) +
+  labs(x = "Environment reads")
+```
+
 
 
 ## Patterns

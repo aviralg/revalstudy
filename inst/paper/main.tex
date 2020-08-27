@@ -62,6 +62,7 @@
 \newcommand{\eval}{\texttt{eval}\xspace}
 \newcommand{\parse}{\texttt{parse}\xspace}
 \newcommand{\source}{\texttt{source}\xspace}
+\newcommand{\local}{\texttt{local}\xspace}
 \newcommand{\unlockBinding}{\texttt{unlockBinding}\xspace}
 \newcommand{\substitute}{\texttt{substitute}\xspace}
 \newcommand{\datatable}{\texttt{data.table}\xspace}
@@ -269,7 +270,7 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 \begin{lstlisting}
 > r <- 5
 > env <- new.env()
-> env$r <- 9
+> env\$r <- 9
 > eval(r, envir = env)
 [1] 5
 > evalq(r, envir = env)
@@ -565,6 +566,11 @@ the advent of Node.js ecosystem.  The distribution of input sizes is similar
 to that found in JavaScript, the majority of inputs being rather small.
 
 
+%%In the corpus, we observe \AllEventCountRnd events. Only \EvalEventCountRnd
+%%events occur inside eval. This is just \EvalEventAllPerc of all events.
+%%Figure~\ref{fig:event-distribution} shows the distribution of events for
+%%core and package \eval calls.
+
 {\bf Missing from this section is the measure of the number of events
   happening in an eval}
 
@@ -666,6 +672,11 @@ We have grouped those uses in the following categories.
   capture current call. The latter is just for laziness as it is the same as
   calling the new function with explicitly selecting the arguments.
 
+  \subsubsection{Implementation}
+  The package installation process adds an extra file to the package directory
+  that contains the code to load the package code inside a \local block. It
+  creates a namespace object and injects the package bindings.
+
   \subsubsection{Miscellaneous} \eval is also used in R packages to get around
   various limitations. For example, in \datatable package, \eval is used to modify
   a binding in the \base package of R. Bindings in the \base package are locked
@@ -679,9 +690,25 @@ We have grouped those uses in the following categories.
 
 Here we talk about where the input of an eval comes from.
 
-Although \c{eval} takes an R expression, it can evaluate a string if this string is first parsed with \c{parse}, \c{str2expression} or \c{str2lang}. This happens for \PercentParsedEvals of the eval calls, and \PercentParsedCallSites of the call sites.
+\c{eval} takes an R expression. To evaluate a string, it first has to be parse
+using either \c{parse}, \c{str2expression} or \c{str2lang} functions. The
+difference between them is that the latter two are specialized versions of
+\c{parse} that do not keep source references (line and column numbers). This
+happens for \PercentParsedEvals of the eval calls, and \PercentParsedCallSites
+of the call sites. The input to \c{parse} can come from either a string, a file
+or directly a from a user input in interactive REPL session\footnote{in the
+  corpus, there is only one call site to eval that takes parse expression from a
+  user input, \c{invokeRestartInteractively} that prompts user for new argument
+  values when a function invocation fails.}.
 
-This corresponds to strings loaded from a file or to metaprogramming, \ie building new variables or functions by concatenating strings together, as in Listing~\ref{code:parsepaste}. To detect this kind of metaprogramming, we look at the usage of the main concatenating functions in R, \c{paste}, \c{paste0}, \c{glue} and \c{str_c}, and \PasteParsedEvals of the evals and \PasteParsedCallSite of the call sites using a parse function actually call a concatenating function.
+
+This corresponds to strings loaded from a file or to metaprogramming, \ie
+building new variables or functions by concatenating strings together, as in
+Listing~\ref{code:parsepaste}. To detect this kind of metaprogramming, we look
+at the usage of the main concatenating functions in R, \c{paste}, \c{paste0},
+\c{glue} and \c{str_c}, and \PasteParsedEvals of the evals and
+\PasteParsedCallSite of the call sites using a parse function actually call a
+concatenating function.
 
 
 \begin{lstlisting}[caption={Using \c{eval} and \c{parse} to do meta-programming in package \emph{data.table}, to build the options at load time (in \emph{onLoad.R}).}, label=code:parsepaste]

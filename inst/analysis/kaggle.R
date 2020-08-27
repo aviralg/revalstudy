@@ -140,4 +140,8 @@ kernels_runnable <- filter(kernels_supported, runnable)
 write_csv(kernels_supported, KERNELS_FILE)
 write_lines(dirname(kernels_runnable$run_file), SCRIPTS_FILE)
 
+dataset_inputs <- path(KAGGLE_DATASETS_DIR, params$competitions)
+dataset_outpus <- path(KAGGLE_RUN_DIR, params$competitions, "input")
+dir_copy(dataset_inputs, dataset_outpus, overwrite = TRUE)
+
 print(count(kernels_supported, runnable))

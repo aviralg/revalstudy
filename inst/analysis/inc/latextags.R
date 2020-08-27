@@ -23,6 +23,17 @@ my_datatable <- function(df, page_size=20, round=TRUE, ...) {
   table
 }
 
+rs <- function(name, value) {
+  stopifnot(is.numeric(value))
+  bind_rows(
+    r(name, sum(value)),
+    r(paste(name, "mean"), mean(value)),
+    r(paste(name, "median"), median(value)),
+    r(paste(name, "min"), min(value)),
+    r(paste(name, "max"), max(value))
+  )
+}
+
 r <- function(name, value, ...) {
   stopifnot(is.character(name))
   stopifnot(length(name) == 1)
