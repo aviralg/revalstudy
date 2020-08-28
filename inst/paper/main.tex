@@ -817,7 +817,7 @@ To give some examples,  global+ refers to a new scope that inherits from the glo
 
 Table~\ref{tab:environments} shows the environments when they are \emph{explicitly specified}. \eval in R is often performed in a new environment inherited from the global environment for packages, while for core, it is mostly done in the environment of the grand-parent.  It is also used a lot to evaluate in the context of a dataframe (\emph{list} environment). \emph{loop} \textbf{To explain...? But we do not see it here anyway}
 
-The \c{sys.call} option is not used a lot, only \SysCallEnvirPercent as a whole, and always with \c{sys.parent()} as argument.
+%The \c{sys.call} option is not used a lot, only \SysCallEnvirPercent as a whole, and always with \c{sys.parent()} as argument.
 
 % Variability: how many different envir class, and different envir expr, for one call site?
 %\begin{figure*}[htbp]
@@ -862,7 +862,7 @@ eval(parse(text = paste(\"fam$dld\", ii, sep = \"\")), envir = environment())
 \end{lstlisting}
 
 
-The \emph{glue} library is used to interpolate string litterals with variables, such as in \c{glue('My name is {name}.')} where \c{name} will be subtituted by its value. \emph{glue} makes it possible to define transformers that process those interpolated variables. They are built upon the \c{identity_transformer}, which uses \eval. The interpretation environment for \eval is often global here, as the string litterals are often used to print variabels at the top level.
+The \emph{glue} library is used to interpolate string litterals with variables, such as in \c{glue('My name is \{name\}.')} where \c{name} will be subtituted by its value. \emph{glue} makes it possible to define transformers that process those interpolated variables. They are built upon the \c{identity_transformer}, which uses \eval. The interpretation environment for \eval is often global here, as the string litterals are often used to print variabels at the top level.
 
 \begin{lstlisting}
 identity_transformer <- function(text, envir) {
@@ -881,9 +881,14 @@ fo <- parse(text=as.character(fo)[2])
 im[where] <- eval(fo,envir=newenv,enclos=env)
 \end{lstlisting}
 
-We finally look at the case where \c{envir} is not an environment, but a list, such as this \c{h2} function, defined inside function \c{adjCoef} in package \emph{actuar}.
+\c{adjCoef} in package \emph{actuar} find the root of an equation defined by a function \c{h} whose arguments must be named \c{x} and \c{y}.
+\c{h} is transformed into an auxiliary function \c{h2} that can be optimized. Here, the list used for \c{envir} ensures the correspondance between the textual arguments of \c{h} and the arguments of \c{h2}. 
+
 
 \begin{lstlisting}
+sh <- substitute(h)
+fcall <- paste(sh, "(x, y)")
+...
 h2 <- function(x, y)
     eval(parse(text = fcall),
     envir = list(x = x, y = y),
