@@ -290,7 +290,7 @@ name or arguments are determined dynamically. For this purpose, R provides
 
 \section{R and The Design of Eval}
 
-The R Project is a tool for data analysis.  At its heart is a {vectorized,
+The R Project is a tool for data analysis.  At its heart it is a {vectorized,
   dynamic, lazy, functional, object-oriented} programming language with an
 unusual combination of features~\cite{ecoop12} designed to ease learning by
 non-programmer and enable rapid development of statistical
@@ -406,7 +406,7 @@ are extracted using the \href{ https://github.com/r-lib/covr}{\covr}
 package. This is followed by extraction of runnable programs from R
 packages: tests, examples and vignettes as well as from Kaggle. The code of
 each extracted program is wrapped into a call to dynamic analyzer
-\emph{evil} (\emph{Ev}al \emph{I}nspection \emph{L}ibrary) that collect eval
+\emph{evil} (\emph{Ev}al \emph{I}nspection \emph{L}ibrary) that collects eval
 usage. The reason for this is that we only want to record eval usage for the
 extracted code. Without this, the data would include eval calls from the
 unit testing frameworks as well as from bootstrapping R virtual machine
@@ -492,7 +492,7 @@ vignettes.%%% with \summaryrnd{CorpusVignettesCode} lines of code.
 
 To represent end-user code in the corpus, we turned to
 Kaggle,\footnote{\url{https://www.kaggle.com}} an online platform for
-data-science and machine-learning. The website allow people to share
+data-science and machine-learning. The website allows people to share
 data-science competitions, a data-analysis problem together with data, for
 which users try to find the best solution. The solutions, called {kernels},
 are then shared back to the platform in the form of either plain scripts or
