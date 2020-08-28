@@ -261,9 +261,78 @@ code~\cite{oopsla12b}.  The limitation of that work are that there was no
 measure of code coverage, so the numbers presented can be a lower bound on
 the possible behaviors.  Furthermore in 2011, JavaScript usage is quite
 different from today. Their work captured very few libraries and none of the
-more recent Node.js ecosystem.
+more recent Node.js ecosystem.  More details about dynamic analysis of
+JavaScript can be found in~\cite{liang}.
+
+Wang et al.~\cite{wang} analyzed usage of dynamic features in 18 Python
+programs include dynamic code generation to find if they affects file
+change-proneness.  They reported that files with dynamic features are
+significantly more likely to be the subject of changes, than other files.
+Chen et al. looked at the correlation between code changes and dynamic
+features, including \eval, in 17 Python programs~\cite{chen}. They did not
+observe many uses of \eval.  Callau et al. performed an empirical study of
+the usage of dynamic features in the 1,000 largest Smalltalk projects in the
+Squeaksource repository, accounting for more than 4 million lines of
+code~\cite{oscar}. While \eval itself is not present, Smalltalk has a rich
+reflective interface that gives programmer great flexibility. Their work was
+based on a static analysis.
+
+Morandat et al.~\cite{ecoop12} had a short section on the usage of \eval in
+R. They found the \eval function to be widely used in R code with 8500 call
+sites in CRAN and 2.2 million dynamic calls. The 15 most frequent call sites
+account for 88\% of eval. The \c{match.arg} function is the highest user
+with 54\% of all calls. In the other call sites, they saw two uses
+cases. The most common is the evaluation of the source code of a promise
+retrieved by \c{substitute} in a new environment. This is done in the
+\c{with} function. The other use case is the invocation of a function whose
+name or arguments are determined dynamically. For this purpose, R provides
+\c{do.call} and thus using \eval is overkill.
 
 \section{The Design of Eval}
+
+The R Project is a tool for data analysis.  At its heart is a {vectorized,
+  dynamic, lazy, functional, object-oriented} programming language with a
+rather unusual combination of features~\cite{ecoop12} designed to ease
+learning by non-programmer and enable rapid development of statistical
+methods~\cite{R96}.  The language was designed as a successor to
+S~\cite{S88}.
+
+In R, most data types are vectorized. Values are constructed by the
+\c{c(...)} function: \c{c("hi","ho")} creates a vector of two strings. The
+language does not differentiate scalars from vectors. To enable equational
+reasoning, R copies values accessible through multiple variables when they
+are written to.  Values can be tagged by user-defined attributes. For
+instance, one can attach the attribute \c{dim} to the value
+\c{x<-c(1,2,3,4)} by evaluating \c{attr(x,"dim")<-c(2,2)}.  Once done,
+arithmetic functions will treat \c x as a \c{2x2} matrix. Another attribute
+is \c{class} which can be bound to a list of names. For instance,
+\c{class(x)<-"human"}, sets the class of \c{x} to \c{human}.  Attributes are
+used for object-oriented dispatch.  Every linguistic construct is desugared
+to a function call, even control flow statements, assignments, and
+bracketing. Furthermore, all functions can be redefined in user code. This
+makes R both flexible and challenging to compile~\cite{dls19}.
+
+Arguments to user-defined functions are bundled into a thunk called a
+promise. Logically, a promise combines an expression's code, its
+environment, and its value.  To access the value of a promise, one must
+force it. Forcing a promise triggers evaluation and the computed value is
+captured for future reference.  
+
+R supports reflection and meta-programming. The \c{substitute(e,envir)}
+function yields the parse tree of the expression \c{e} after performing
+substitutions defined by the bindings in \c{envir}.
+
+\begin{lstlisting}
+> substitute(expression(a + b), list(a = 1)))  
+expression(1 + b)
+\end{lstlisting}
+\vspace{2mm}
+
+\noindent
+R allows programmatic manipulation of parse trees, which are themselves
+first class objects. They are evaluated using the \c{eval(e,envir)}
+function. Environment on the call stack can also be accessed.
+
 
 There are four different kinds of \eval in the \emph{base} package:
 \c{eval}, \c{evalq}, \c{eval.parent}, \c{local}.  The most important one is
@@ -278,7 +347,7 @@ There are four different kinds of \eval in the \emph{base} package:
 
 
 
-The three other functions are defined using \lstinline|eval|.
+The three other functions are defined using \eval.
 
 \begin{lstlisting}
 evalq <- function (expr, envir = parent.frame(), enclos = if (is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv())  
@@ -294,7 +363,7 @@ local <- function (expr, envir = new.env()) eval.parent(substitute(eval(quote(ex
 \end{lstlisting}
 
 
-\c{expr} is the expression to be evaluated. It is not a string as in javascript. In order to evaluate a string, it should be first parsed using \c(parse(text = str)) to get an expression.
+\c{expr} is the expression to be evaluated. It is not a string as in javascript. In order to evaluate a string, it should be first parsed using \c{parse(text = str)} to get an expression.
 
 \eval makes it possible to specify the environment in which to evaluate the expression. \c{enclos} is an additional environment used for lookup when \c{envir} is a list, a pairlist or a dataframe. In that case, \c{envir} is copied into a temporary environment enclosed in \c{enclos}.
 
@@ -311,6 +380,16 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 \end{lstlisting}
 
 \eval will return unchanged basic types such as vectors, functions, strings and environments. Promises are forced by \eval. Symbols are looked up in the current environment. Calls and expressions are evaluated. 
+
+
+\begin{lstlisting}
+> eval(2)
+[1] 2
+> eval(expression(1+2))
+[1] 3
+> eval(parse(text = "1 + 2"))
+[1] 3
+\end{lstlisting}
 
 \begin{figure*}[!tb]\centering\includegraphics[width=.8\linewidth]
 {pipeline.pdf}\caption{Analysis Pipeline}\label{fig:pipeline}
@@ -1028,8 +1107,8 @@ We have grouped those uses in the following categories.
 
 We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie
 how many different types of the resolved \c{expr} there are per call sites,
-in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
-\emph{consistent}.
+in Figure~\ref{fig:polymorphism}. Most of the call sites, \ie \PercentMonomorphic,  are
+\emph{consistent}. However, a few ones are \emph{polymorphic}, such as:
 
 \begin{figure}[!h]
 	\centering
