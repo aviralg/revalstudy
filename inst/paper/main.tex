@@ -668,15 +668,34 @@ once.
 \end{itemize}
 
 We looked at the top ten expressions passed to core and
-package \eval calls.
+package \eval calls. 
 For package \eval calls, the ten most frequently evaluated expressions account
-for 80\% of all package eval calls. The most frequently occurring call is to the
+for 80\% of the calls. The most frequently occurring call is to the
 \eval in \c{ggplot2::ggproto} which happens over 68\% of the times. The
-remaining calls
+remaining expressions occur with a frequency of less than 4\%. They originate
+from \c{plyr}, \c{VGAM}, \c{magrittr}, \c{??}
 
 
-%%eval(quote(function(value) freduce(value, `_function_list`)),
-%%env, env), c("fseq", "function")
+\begin{table*}[tb]
+  \centering
+  \begin{tabular}{l|rr} \hline
+    Expression & Eval Call & Eval Call \% \\\hline
+    \c{c("auto", "shell", "radix")} & 1987105 & 29.3\%\\
+    \c{c("auto", "shell", "quick", "radix")} & 1593169  & 23.5\%\\
+    \c{local(\{info <- loadingNamespaceInfo(...} & 1008632 &       14.9\%\\
+    \c{c("onLoad", "attach", "detach", "onUnload")}   & 470566 &      6.9\%\\
+    \c{c("append", "prepend", "replace")} &              261587&       3.9\% \\
+    \c{c("left", "right", "centre", "none")} & 162086     & 2.4\%\\
+    \c{c("no", "ifany", "always")}   &                71580 &       1.1\%\\
+    \c{c("pearson", "kendall", "spearman")}  & 72962 &      1.1\%\\
+    \c{NULL}& 75330  &      1.1\% \\
+    \c{Integer Vector}&                 66279&       1\%\\
+  \end{tabular}
+  \caption{Top ten eval calls in CRAN}
+  \label{A}
+\end{table*}
+
+
 \subsubsection{Provenance}
 
 In this section we turn our attention to the \AllExpressionInputEvalCallPerc
