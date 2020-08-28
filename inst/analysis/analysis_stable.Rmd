@@ -11,7 +11,7 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: /var/lib/R/project-evalR
+  base_dir: /home/pierre/Documents/Articles/ISCE2021
 
 # This makes it possible to generate the html file in the html subfolder
 # knit: (function(inputFile, encoding) {
@@ -473,12 +473,14 @@ ast_sizes <- read_fst(path(RUN_DIR, "package-evals-traced.3/summarized-ast-size.
 #   )
 
 ast_sizes %>%
-  ggplot(aes(x = eval_source_type, y = expr_resolved_nodes, fill = eval_source_type, weight = nb_ev_calls)) +
+  ggplot(aes(x = eval_source_type, y = expr_resolved_nodes, fill = eval_source_type, weight = nb_ev_calls), na.rm = TRUE) +
   geom_violin(trim = FALSE, width=.5)+
-  #geom_boxplot(width=.05) +
+  geom_boxplot(width=.05) +
   scale_y_log10(labels = scales::comma) +
   labs(y="AST size (log)") +
   theme(
+    legend.position=c(0.5, 0.85),
+    legend.box.background = element_rect(fill="white", size=0.1),
     legend.box="horizontal",
     axis.title.x=element_blank()
   )
@@ -794,10 +796,15 @@ ggsave(path(PLOT_DIR, "polymorphism.pdf"))
 
 `r nb_monomorphic` call sites are not polymorphic, which represents `r nb_monomorphic / nb_call_sites * 100`% of the call sites.
 
+```{r}
+eval_calls %>% semi_join(expr_resolved_polymorphism %>% filter(polym_degree == max(polym_degree)), by ="eval_call_srcref")
+```
+
+
 From the monomorphic functions, we can deduce how many are _replaceable_:
 
 ```{r}
-expr_resolved_replaceable <- expr_resolved_monomorphic %>% left_join(eval_calls) %>% mutate(can_replace = map_lgl(expr_resolved,  is_replaceable_str))
+#expr_resolved_replaceable <- expr_resolved_monomorphic %>% left_join(eval_calls) %>% mutate(can_replace = map_lgl(expr_resolved,  is_replaceable_str))
 ```
 
 

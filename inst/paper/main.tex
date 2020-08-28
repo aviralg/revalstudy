@@ -278,7 +278,7 @@ There are four different kinds of \eval in the \emph{base} package:
 
 
 
-The three other functions are defined using \lstinline|eval|.
+The three other functions are defined using \eval.
 
 \begin{lstlisting}
 evalq <- function (expr, envir = parent.frame(), enclos = if (is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv())  
@@ -294,7 +294,7 @@ local <- function (expr, envir = new.env()) eval.parent(substitute(eval(quote(ex
 \end{lstlisting}
 
 
-\c{expr} is the expression to be evaluated. It is not a string as in javascript. In order to evaluate a string, it should be first parsed using \c(parse(text = str)) to get an expression.
+\c{expr} is the expression to be evaluated. It is not a string as in javascript. In order to evaluate a string, it should be first parsed using \c{parse(text = str)} to get an expression.
 
 \eval makes it possible to specify the environment in which to evaluate the expression. \c{enclos} is an additional environment used for lookup when \c{envir} is a list, a pairlist or a dataframe. In that case, \c{envir} is copied into a temporary environment enclosed in \c{enclos}.
 
@@ -311,6 +311,15 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 \end{lstlisting}
 
 \eval will return unchanged basic types such as vectors, functions, strings and environments. Promises are forced by \eval. Symbols are looked up in the current environment. Calls and expressions are evaluated. 
+
+\begin{lstlisting}
+> eval(2)
+[1] 2
+> eval(expression(1+2))
+[1] 3
+> eval(parse(text = "1 + 2"))
+[1] 3
+\end{lstlisting}
 
 \begin{figure*}[!tb]\centering\includegraphics[width=.8\linewidth]
 {pipeline.pdf}\caption{Analysis Pipeline}\label{fig:pipeline}
@@ -1028,8 +1037,8 @@ We have grouped those uses in the following categories.
 
 We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie
 how many different types of the resolved \c{expr} there are per call sites,
-in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
-\emph{consistent}.
+in Figure~\ref{fig:polymorphism}. Most of the call sites, \ie \PercentMonomorphic,  are
+\emph{consistent}. However, a few ones are \emph{polymorphic}, such as:
 
 \begin{figure}[!h]
 	\centering
