@@ -1044,7 +1044,7 @@ looked at \PatternManualCallsites call sites from which we have observed the fol
 %   This pattern is used quite often for statistical modeling. The modeling
 %   expressions is constructed from variable names whose values are supplied by a
 %   data frame or list.
-\subsubsection{Reconding the current call} R provides a \c{match.call} function
+\subsubsection{Recording the current call} R provides a \c{match.call} function
 which can return the current call. This is heavily used by the statistical
 model-fitting functions that records the current call that is then reevaluated
 in the different environment. Another pattern is to match the current call,
@@ -1097,8 +1097,8 @@ for (i in names(opts)) eval(parse(text=paste0("options(",i,"=",opts[i],")")))
   \subsubsection{Miscellaneous} \eval is also used in R packages to get around
   various limitations. For example, in \datatable package, \eval is used to
   modify a binding in the \base package of R. Bindings in the \base package are
-  locked for modification and require explicit unlocking using \unlockBinding
-  function. However, directly using this function triggers a
+  locked for modification and require explicit unlocking using 
+  function \unlockBinding. However, directly using this function triggers a
   restricted-function-use warning during package build, preventing the package
   to be accepted by CRAN. The \datatable gets around this limitation by
   enclosing the call to \unlockBinding inside \eval. From the same reason, other
@@ -1106,7 +1106,7 @@ for (i in names(opts)) eval(parse(text=paste0("options(",i,"=",opts[i],")")))
   dependencies.
 
   \subsubsection{Unnecessary use of eval} Similarly to JavaScript, there are also unnecessary uses of \eval.
-  For example, the \c{PerfromanceAnalytics} package contains a function \c{chart.QQPlot} that uses \eval to resolve a string into function and anther to call it and assign its results into a variable:
+  For example, the \c{PerformanceAnalytics} package contains a function \c{chart.QQPlot} that uses \eval to resolve a string into function and another to call it and assign its results into a variable:
   \begin{lstlisting}
 function (R, d="norm", dp, ...) {
 q.f <- eval(parse(text=paste("q",d,sep="")))
