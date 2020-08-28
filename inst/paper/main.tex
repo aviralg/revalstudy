@@ -1006,24 +1006,22 @@ We have grouped those uses in the following categories.
   functions. The \datatable gets around this limitation by enclosing the call to
   \unlockBinding inside \eval.
 
-%%\subsection{Consistency}
-%%Here we talk about whether the same call site sees the same pattern
-%%
-%%{\bf Polymorphic may not be the right word.}
-%%
-%%We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie
-%%how many different types of the resolved \c{expr} there are per call sites,
-%%in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
-%%\emph{monomorphic}.
-%%
-%%\begin{figure}[!h]
-%%	\centering
-%%    \includegraphics[width=\columnwidth]{polymorphism}
-%%    \caption{Degree of polymorphism of \c{expr} per call sites.} \label{fig:polymorphism}
-%%\end{figure}
-%%
-%%\subsection{base}
-%%
+\subsection{Consistency}
+
+
+We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie
+how many different types of the resolved \c{expr} there are per call sites,
+in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
+\emph{consistent}.
+
+\begin{figure}[!h]
+	\centering
+    \includegraphics[width=\columnwidth]{polymorphism}
+    \caption{Number of different types  of \c{expr} per call sites.} \label{fig:polymorphism}
+\end{figure}
+%
+%\subsection{base}
+%
 %%There are 30 functions in \emph{base} that use \eval. Only five of them use \c{parse}, for legitimate reasons, such \c{source} and \c{sys.source} which load a file and then evaluate it, or \c{invokeRestartInteractively} which prompts the user for arguments to restart execution after an error.
 %%
 %%We endeavored  to write these functions without \eval. \c{match.arg} appears in \MatchArgPercent of the \eval calls. It is used to get the arguments, possibly abbreviated, of a function. With one argument, as \c{match.arg(arg)}, it uses \c{eval} to infer them from a parent function's formal arguments. We can rewrite it using its version with two arguments, \c{match.arg(arg, choices)} where \c{choices} are the possible formal arguments of the function, as shown in Listing~\ref{code:matcharg}.
