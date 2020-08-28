@@ -578,7 +578,7 @@ consists of a single variable name or constant. A function call needs at
 least three nodes and a list such as \c{c(1, 2, 3)} counts for 4
 nodes. Inputs smaller than \AstSizeNineFive nodes account for 95\% of all
 calls. Sizes in core are larger than in packages. Most large AST originate
-from library \c{VGAM}, which is used for statistical modelling. It uses
+from library \c{VGAM}, which is used for statistical modeling, and also calls functions using \eval from core. It uses
 \eval to evaluate large matrices with values in a given environment.
 
 We compare the number of events intercepted during execution of \eval across
