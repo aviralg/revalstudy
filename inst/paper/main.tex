@@ -614,10 +614,12 @@ which are reduced to values by \eval.
 % passed to core \eval call is \CoreEvalValueInputPerc compared to a significantly
 % higher \PackageEvalValueInputPerc for package \eval calls.
 To investigate this, we look at the type of expressions accepted by \eval
-callsites in our corpus. We find that only \AllExpressionInputEvalSitePerc call
-sites exclusively receive expressions as arguments across all program runs. The
-remaining \AllPolymorphicInputEvalSitePerc call sites don't always accept expressions
-as inputs. The top three of these call sites contribute to over
+callsites in our corpus. We find that only \AllValueInputEvalSitePerc receive
+only values as inputs, \AllExpressionInputEvalSitePerc call
+sites exclusively receive expressions as inputs and a very large proportion,
+\AllPolymorphicInputEvalSitePerc, receive both expressions and values as inputs across all program runs.
+We inspected the eval callsites that accept only values or both values and expression as inputs.
+The top three of these call sites contribute to over
 ~80\% of all calls to evals. The first one is inside \c{match.arg} from core.
 Given a vector of names as strings, this function finds the default values for
 parameters with those names in the caller function. Since the default value for
