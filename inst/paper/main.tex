@@ -199,7 +199,7 @@ data, and code will be submitted to artifact evaluation.
 The origins of \eval go back to the first implementation of the Lisp
 programming language~\cite{lisp}. Over the years, \eval has been included in
 many dynamic languages, with some variability in expressive power and
-nomenclature. In all of its incarnation \eval allow developpers to
+nomenclature. In all of its incarnation \eval allows developers to
 dynamically extend the code of their program at run-time.  Originally, \eval
 was limited to interpreted languages, but with the advent of just-in-time
 compilation this restriction was gradually lifted.
@@ -207,7 +207,7 @@ compilation this restriction was gradually lifted.
 Some languages have chosen to restrict \eval. The essential difference
 between languages relates to scoping of variables that can be accessed from
 code executed by \eval.  Java and Julia are among the more restrictive
-languages. In Java, \eval must be synthesized as a combination dynamic
+languages. In Java, \eval must be synthesized as a combination of dynamic
 loading and reflection.\footnote{While Java does not have \eval built-in,
   one can take the input to \eval, wrap it in a static method of an
   anonymous class, generate bytecode for that class, invoke the Java class
@@ -265,7 +265,7 @@ more recent Node.js ecosystem.  More details about dynamic analysis of
 JavaScript can be found in~\cite{liang}.
 
 Wang et al.~\cite{wang} analyzed usage of dynamic features in 18 Python
-programs include dynamic code generation to find if they affects file
+programs include dynamic code generation to find if they affect file
 change-proneness.  They reported that files with dynamic features are
 significantly more likely to be the subject of changes, than other files.
 Chen et al. looked at the correlation between code changes and dynamic
@@ -280,7 +280,7 @@ based on a static analysis.
 Morandat et al.~\cite{ecoop12} had a short section on the usage of \eval in
 R. They found the \eval function to be widely used in R code with 8500 call
 sites in CRAN and 2.2 million dynamic calls. The 15 most frequent call sites
-account for 88\% of eval. The \c{match.arg} function is the highest user
+account for 88\% of eval. The \c{match.arg} function is the highest used one
 with 54\% of all calls. In the other call sites, they saw two uses
 cases. The most common is the evaluation of the source code of a promise
 retrieved by \c{substitute} in a new environment. This is done in the
