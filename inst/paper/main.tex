@@ -28,7 +28,7 @@
 
 \lstset{ 
  language=R,              % the language of the code
- basicstyle=\small\ttfamily,    % the size of the fonts
+ basicstyle=\small\sffamily,    % the size of the fonts
 % numbers=left,            % where to put the line-numbers
  numberstyle=\color{Blue},% the style that is used for the line-numbers
  stepnumber=1,            % the step between two line-numbers. If it is 1,
@@ -68,23 +68,23 @@
 \newcommand{\summary}[1]{{\csname #1\endcsname} ({\csname #1Min\endcsname} / {\csname #1Mean\endcsname} / {\csname #1Max\endcsname})}
 \newcommand{\summaryrnd}[1]{{\csname #1Rnd\endcsname} ({\csname #1MinRnd\endcsname} / {\csname #1MeanRnd\endcsname} / {\csname #1MaxRnd\endcsname})}
 
-\newcommand{\eval}{\texttt{eval}\xspace}
-\newcommand{\parse}{\texttt{parse}\xspace}
-\newcommand{\source}{\texttt{source}\xspace}
-\newcommand{\local}{\texttt{local}\xspace}
-\newcommand{\unlockBinding}{\texttt{unlockBinding}\xspace}
-\newcommand{\substitute}{\texttt{substitute}\xspace}
-\newcommand{\datatable}{\texttt{data.table}\xspace}
-\newcommand{\mlogit}{\texttt{mlogit}\xspace}
-\newcommand{\mboost}{\texttt{mboost}\xspace}
-\newcommand{\metafor}{\texttt{metafor}\xspace}
-\newcommand{\lavaan}{\texttt{lavaan}\xspace}
-\newcommand{\mclust}{\texttt{mclust}\xspace}
-\newcommand{\gamlss}{\texttt{gamlss}\xspace}
-\newcommand{\ggproto}{\texttt{ggproto}\xspace}
-\newcommand{\ggplot}{\texttt{ggplot2}\xspace}
+\newcommand{\eval}{\c{eval}\xspace}
+\newcommand{\parse}{\c{parse}\xspace}
+\newcommand{\source}{\c{source}\xspace}
+\newcommand{\local}{\c{local}\xspace}
+\newcommand{\unlockBinding}{\c{unlockBinding}\xspace}
+\newcommand{\substitute}{\c{substitute}\xspace}
+\newcommand{\datatable}{\c{data.table}\xspace}
+\newcommand{\mlogit}{\c{mlogit}\xspace}
+\newcommand{\mboost}{\c{mboost}\xspace}
+\newcommand{\metafor}{\c{metafor}\xspace}
+\newcommand{\lavaan}{\c{lavaan}\xspace}
+\newcommand{\mclust}{\c{mclust}\xspace}
+\newcommand{\gamlss}{\c{gamlss}\xspace}
+\newcommand{\ggproto}{\c{ggproto}\xspace}
+\newcommand{\ggplot}{\c{ggplot2}\xspace}
 
-\newcommand{\base}{\texttt{base}\xspace}
+\newcommand{\base}{\c{base}\xspace}
 \renewcommand{\c}[1]{\lstinline{#1}\xspace}
 \newcommand{\miss}[1]{{\textcolor{red}{#1}}\xspace}
 \newcommand{\evil}{\emph{evil}\xspace}
@@ -288,7 +288,7 @@ retrieved by \c{substitute} in a new environment. This is done in the
 name or arguments are determined dynamically. For this purpose, R provides
 \c{do.call} and thus using \eval is overkill.
 
-\section{The Design of Eval}
+\section{R and The Design of Eval}
 
 The R Project is a tool for data analysis.  At its heart is a {vectorized,
   dynamic, lazy, functional, object-oriented} programming language with a
@@ -318,56 +318,70 @@ environment, and its value.  To access the value of a promise, one must
 force it. Forcing a promise triggers evaluation and the computed value is
 captured for future reference.  
 
-R supports reflection and meta-programming. The \c{substitute(e,envir)}
-function yields the parse tree of the expression \c{e} after performing
-substitutions defined by the bindings in \c{envir}.
+R supports reflection and meta-programming. The function
+\c{substitute(e,envir)} yields the parse tree of the expression \c{e} after
+performing substitutions defined by the bindings in \c{envir}.
 
 \begin{lstlisting}
-> substitute(expression(a + b), list(a = 1)))  
-expression(1 + b)
+> substitute(expression(a+b), list(a=1)))  
+expression(1+b)
 \end{lstlisting}
-\vspace{2mm}
 
 \noindent
 R allows programmatic manipulation of parse trees, which are themselves
-first class objects. They are evaluated using the \c{eval(e,envir)}
-function. Environment on the call stack can also be accessed.
-
-
-There are four different kinds of \eval in the \emph{base} package:
-\c{eval}, \c{evalq}, \c{eval.parent}, \c{local}.  The most important one is
-\eval:
+first class objects. They are evaluated using the \c{eval()}
+function. There are three alternative forms  of \eval in the \c{base} package:
+\c{evalq}, \c{eval.parent}, \c{local}.
 
 \begin{lstlisting}
-  eval <- function(expr, envir=parent.frame(),
-                   enclos=if (is.list(envir)||is.pairlist(envir)) parent.frame() else baseenv())  
-	.Internal(eval(expr, envir, enclos))
-\end{lstlisting}
+ eval(expr,
+      envir = parent.frame(),
+      enclos = if(is.list(envir) || is.pairlist(envir))
+               parent.frame() else baseenv())
+\end{lstlisting}           
 
+The arguments are as follows: \c{expr} is the value to be evaluated,
+\c{envir} is the environment in which \c{expr} is to be evaluated, and
+\c{enclos} is relevant when \c{envir} is a list or a data frame, then it
+specifies where R looks for objects not found in \c{envir}. This can be
+\c{NULL} (interpreted as the base package environment, \c{baseenv()}) or an
+environment.
 
+The semanitcs of \eval is to evaluate \c{expr} in the environment specified
+by \c{envir} and return the computed value. If \c{envir} is not specified,
+then the default is \c{parent.frame()} (the environment where the call to
+\eval was made).  Values to be evaluated can be of types \c{call} (AST for
+function calls) or \c{expression} (AST nodes for arbitrary expressions) or
+\c{name} (when the symbol is looked up in the current scope and its binding
+is evaluated), a promise or any of the basic types such as vectors,
+functions and environments (which are returned unchanged).
 
+The \c{evalq} form is equivalent to \c{eval(quote(expr), ...)}. eval
+evaluates its first argument in the current scope before passing it to the
+evaluator: evalq avoids this.
 
-The three other functions are defined using \eval.
+\c{eval.parent(expr, n)} is a shorthand for \c{eval(expr, parent.frame(n))}.
 
-\begin{lstlisting}
-evalq <- function (expr, envir = parent.frame(), enclos = if (is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv())  
-	.Internal(eval(substitute(expr), envir, enclos))
-	
-eval.parent <- function (expr, n = 1) 
-{
-	p <- parent.frame(n + 1)
-	eval(expr, p)
-}
+If envir is a list (such as a data frame) or pairlist, it is copied into a
+temporary environment (with enclosure enclos), and the temporary environment
+is used for evaluation. So if expr changes any of the components named in
+the (pair)list, the changes are lost.
 
-local <- function (expr, envir = new.env()) eval.parent(substitute(eval(quote(expr), envir)))
-\end{lstlisting}
+If envir is NULL it is interpreted as an empty list so no values could be
+found in envir and look-up goes directly to enclos.
 
+\c{local} evaluates an expression in a local environment. It is equivalent to
+evalq except that its default argument creates a new, empty
+environment. This is useful to create anonymous recursive functions and as a
+kind of limited namespace feature since variables defined in the environment
+are not visible from the outside.
 
-\c{expr} is the expression to be evaluated. It is not a string as in javascript. In order to evaluate a string, it should be first parsed using \c{parse(text = str)} to get an expression.
-
-\eval makes it possible to specify the environment in which to evaluate the expression. \c{enclos} is an additional environment used for lookup when \c{envir} is a list, a pairlist or a dataframe. In that case, \c{envir} is copied into a temporary environment enclosed in \c{enclos}.
-
-The \c{expr} argument of \eval is first evaluated in the current scope, then passed to the \eval. Quoting that argument prevents if from being evaluated in the current environment. \c{evalq} is a shortcut for \c{eval(quote(expr), ...)}. In the following code snippet, variable \c{r} is first looked up in the current scope with \eval whereas it is looked up in \c{env} with \c{evalq}.
+The \c{expr} argument of \eval is first evaluated in the current scope, then
+passed to the \eval. Quoting that argument prevents if from being evaluated
+in the current environment. \c{evalq} is a shortcut for \c{eval(quote(expr),
+  ...)}. In the following code snippet, variable \c{r} is first looked up in
+the current scope with \eval whereas it is looked up in \c{env} with
+\c{evalq}.
 
 \begin{lstlisting}
 > r <- 5
@@ -379,7 +393,9 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 [1] 9
 \end{lstlisting}
 
-\eval will return unchanged basic types such as vectors, functions, strings and environments. Promises are forced by \eval. Symbols are looked up in the current environment. Calls and expressions are evaluated. 
+\eval will return unchanged basic types such as vectors, functions, strings
+and environments. Promises are forced by \eval. Symbols are looked up in the
+current environment. Calls and expressions are evaluated.
 
 
 \begin{lstlisting}
@@ -523,7 +539,7 @@ kernels in R (over 1/4 of all available R kernels) which we used for our corpus.
 Unlike CRAN, Kaggle is not a curated repository and therefore there are no
 guarantees about the quality of the code. After downloading all of the
 \CorpusKaggle kernels and extracting the R code from the various
-formats\footnote{We use \texttt{rmarkdown} package to convert from Jupyer
+formats\footnote{We use \c{rmarkdown} package to convert from Jupyer
   notebook to Rmarkdown as well as to convert from Rmarkdown to plain R}, we
 found that \CorpusDuplicatedKaggle were whole-file duplicates. From
 \CorpusRunnableKaggle kernels, \CorpusFailedKaggle failed to execute. Next to
