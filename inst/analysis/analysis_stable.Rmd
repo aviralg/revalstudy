@@ -476,7 +476,7 @@ ast_sizes <- read_fst(path(RUN_DIR, "package-evals-traced.3/summarized-ast-size.
 
 ast_sizes %>%
   ggplot(aes(x = dataset, y = expr_resolved_nodes, fill = dataset, weight = nb_ev_calls), na.rm = TRUE) +
-  geom_violin(trim = FALSE, width=.5)+
+  geom_violin(trim = FALSE, width=1.7)+
   geom_boxplot(data = slice_sample(ast_sizes, n = 100000), width=.03) + # too slow otherwise
   scale_y_log10(labels = scales::comma) +
   labs(y="AST size (log)") +
@@ -506,6 +506,11 @@ nb_nodes_many <- ast_sizes_prop %>% filter(cumulative >= 0.95) %>% .[1,]
 r("ast size nine five", nb_nodes_many$expr_resolved_nodes)
 r("ast size nine five exact percent", percent(nb_nodes_many$cumulative))
 
+```
+
+
+```{r}
+ast_sizes %>% filter(expr_resolved_nodes > 1000) %>% count(eval_call_srcref, wt = nb_ev_calls, sort = TRUE)
 ```
 
 
@@ -634,6 +639,9 @@ r("nb sys call envir", nb_sys_call)
 r("sys call envir percent", ratio(nb_sys_call, nb_eval_calls))
 ```
 
+```{r env_assign}
+eval_calls_env_assign <- eval_calls %>% filter(!is.na(expr_resolved)) %>% mutate(env_assign = pblapply(expr_resolved, is_assign_str, cl = parallel::detectCores() - 2))
+```
 
 
 ## Patterns
@@ -708,7 +716,7 @@ We can distinguish a few groups:
 group_expr_resolved_functions <- expr_resolved_call_arg %>%
                             mutate(function_expr2 = groupify_function(expr_resolved_function)) %>%
                             mutate(group_function_expr = fct_collapse(function_expr2, 
-                              assignment = c("<-", "[[<-", "[<-", "$<-", "<<-", "=", "@<-"),
+                              assignment = c("<-", "[[<-", "[<-", "$<-", "<<-", "=", "@<-", "assign"),
                               slot_access = c("[", "[[", "$", "slot", "@", "::", ":::"),
                               parsing = c("parse", "str2lang", "str2expression", "parse_only", "base::parse"),
                               defusing = c("quote", "substitute", "bquote", "expr", "quo", "enquo", "expression", "as.name", "as.expression"),
@@ -851,6 +859,9 @@ if("parse_args_file" %in% names(parsed_evals))
   nb_file <- 0
   nb_file_call_sites <- 0
 }
+
+r("nb parse files", nb_file$n)
+r("percent parse file call sites", ratio(nb_file_call_sites, nb_call_sites))
 
 ```
 
