@@ -294,7 +294,7 @@ name or arguments are determined dynamically. For this purpose, R provides
 The R Project is a tool for data analysis.  At its heart it is a {vectorized,
   dynamic, lazy, functional, object-oriented} programming language with an
 unusual combination of features~\cite{ecoop12} designed to ease learning by
-non-programmer and enable rapid development of statistical
+non-programmers and enable rapid development of statistical
 methods~\cite{R96}.  The language was designed as a successor to
 S~\cite{S88}.
 
@@ -310,9 +310,9 @@ copies values accessible through multiple variables when they are updated.
 Values can be tagged by user-defined attributes. For instance, one can
 attach the attribute \c{dim} to the value \c{x<-c(1,2,3,4)} with
 \c{attr(x,"dim")<-c(2,2)}.  This causes arithmetic functions to treat \c x
-as a 2x2 matrix. Another attribute is \c{class} which can be bound to a list
+as a $2 \times 2$ matrix. Another attribute is \c{class} which can be bound to a list
 of names, e.g., \c{class(x)<-"human"}. This sets the class of \c{x} to
-\c{human}, classes are used for object-oriented dispatch.  Every R
+\c{human}; classes are used for object-oriented dispatch.  Every R
 linguistic construct is desugared to a function call, even control flow
 statements, assignments, and bracketing. Furthermore, all functions can be
 redefined in user code. This makes R both flexible and challenging to
@@ -325,9 +325,9 @@ force it. Forcing a promise triggers evaluation and the computed value is
 captured for future reference.
 
 
-R supports reflection and meta-programming. The function
-\c{substitute(e,envir)} yields the parse tree of the expression \c{e} after
-performing substitutions defined by the bindings in \c{envir}.
+R supports reflection and meta-programming. The function \c{substitute(e,envir)}
+yields the parse tree of the expression \c{e} after performing substitutions
+defined by the bindings in \c{envir}.
 
 \begin{lstlisting}
 > substitute(expression(a+b), list(a=1)))  
