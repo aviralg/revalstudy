@@ -652,9 +652,53 @@ type of functions.
 From the figure, we observe that majority of inputs to Core \eval functions are
 expressions in contrast to package \eval calls which receive mostly environments
 as inputs. In fact, \PackageEnvironmentInputEvalCallPerc of \eval calls in
-packages receive environments as input expressions.
+packages receive environments as input expressions. There are only four
+callsites in package evals that receive environments as expressions.
+\begin{itemize}
+\item \c{ggplot2::ggproto} contributes to 99.9\% of package \eval calls that
+receive environments as input.
+\item \c{R6::generator_funs} function contributes to only 936 \eval calls and
+implements the same functionality as \c{ggplot2::ggproto} but for the \emph{R6}
+OOP system.
+\item \c{future::backtrace} function applies \eval to a future object which is
+implemented as an environment. This is called only once.
+\item \c{RModel::str.RMmodel} function overloads the core \c{str} method for its
+\c{RModel} objects and maps \eval exactly like \c{str}. This is called only
+once.
+\end{itemize}
 
-Now, we turn our attention to the expressions passed as input to \eval.
+\subsubsection{Provenance}
+
+In this section we turn our attention to the \AllExpressionInputEvalCallPerc
+expressions passed as input to \eval. There are multiple ways to obtain
+expressions in R.
+
+\c{eval} takes an R expression. To evaluate a string, it first has to be parse
+using either \c{parse}, \c{str2expression} or \c{str2lang} functions. The
+difference between them is that the latter two are specialized versions of
+\c{parse} that do not keep source references (line and column numbers). This
+happens for \PercentParsedEvals of the eval calls, and \PercentParsedCallSites
+of the call sites. The input to \c{parse} can come from either a string, a file
+or directly a from a user input in interactive REPL session\footnote{in the
+  corpus, there is only one call site to eval that takes parse expression from a
+  user input, \c{invokeRestartInteractively} that prompts user for new argument
+  values when a function invocation fails.}.
+
+
+This corresponds to strings loaded from a file or to metaprogramming, \ie
+building new variables or functions by concatenating strings together, as in
+Listing~\ref{code:parsepaste}. To detect this kind of metaprogramming, we look
+at the usage of the main concatenating functions in R, \c{paste}, \c{paste0},
+\c{glue} and \c{str_c}, and \PasteParsedEvals of the evals and
+\PasteParsedCallSite of the call sites using a parse function actually call a
+concatenating function.
+
+
+\begin{lstlisting}[caption={Using \c{eval} and \c{parse} to do meta-programming in package \emph{data.table}, to build the options at load time (in \emph{onLoad.R}).}, label=code:parsepaste]
+eval(parse(text=paste0("options(",i,"=",opts[i],")")))
+\end{lstlisting}
+
+\textbf{What about a table of packages ranked by usage of parse (and/or paste...)?}
 
 
 %%Unlike Javascript, R packages also call native code for access to efficient
@@ -848,38 +892,6 @@ We have grouped those uses in the following categories.
   process which statically analyzes the package for use of such restricted
   functions. The \datatable gets around this limitation by enclosing the call to
   \unlockBinding inside \eval.
-  
-\subsection{Provenance}
-
-Here we talk about where the input of an eval comes from.
-
-\c{eval} takes an R expression. To evaluate a string, it first has to be parse
-using either \c{parse}, \c{str2expression} or \c{str2lang} functions. The
-difference between them is that the latter two are specialized versions of
-\c{parse} that do not keep source references (line and column numbers). This
-happens for \PercentParsedEvals of the eval calls, and \PercentParsedCallSites
-of the call sites. The input to \c{parse} can come from either a string, a file
-or directly a from a user input in interactive REPL session\footnote{in the
-  corpus, there is only one call site to eval that takes parse expression from a
-  user input, \c{invokeRestartInteractively} that prompts user for new argument
-  values when a function invocation fails.}.
-
-
-This corresponds to strings loaded from a file or to metaprogramming, \ie
-building new variables or functions by concatenating strings together, as in
-Listing~\ref{code:parsepaste}. To detect this kind of metaprogramming, we look
-at the usage of the main concatenating functions in R, \c{paste}, \c{paste0},
-\c{glue} and \c{str_c}, and \PasteParsedEvals of the evals and
-\PasteParsedCallSite of the call sites using a parse function actually call a
-concatenating function.
-
-
-\begin{lstlisting}[caption={Using \c{eval} and \c{parse} to do meta-programming in package \emph{data.table}, to build the options at load time (in \emph{onLoad.R}).}, label=code:parsepaste]
-eval(parse(text=paste0("options(",i,"=",opts[i],")")))
-\end{lstlisting}
-
-\textbf{What about a table of packages ranked by usage of parse (and/or paste...)?}
-
 
 \subsection{Consistency}
 
