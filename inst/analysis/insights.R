@@ -303,6 +303,32 @@ is_replaceable <- function(expr)
   }
 }
 
+env_assign <- c("<<-", "assign")
+
+is_assign <- function(expr)
+{
+  if(is.call(expr))
+  {
+    function_name <- expr[[1]]
+    function_args <- expr[-1]
+    return(as.character(function_name) %in% env_assign || some(function_args, is_assign))
+  }
+  else if(is.expression(expr))
+  {
+    return(some(expr, is_assign))
+  }
+  else
+  {
+    return(FALSE)
+  }
+}
+
+is_assign_str <- function(expr)
+{
+  e <- get_expr(expr)
+  return(is_assign(e))
+}
+
 
 
 is_replaceable_str <- function(expr)

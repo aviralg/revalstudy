@@ -11,6 +11,7 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
+  #base_dir: /home/pierre/Documents/Articles/ISCE2021
   base_dir: /var/lib/R/project-evalR
 
 # This makes it possible to generate the html file in the html subfolder
@@ -35,6 +36,7 @@ library(DT)
 library(fst)
 library(fs)
 library(ggthemes)
+library(pbapply)
 
 save_table <- function(df, fname) {
   df %>%
@@ -446,7 +448,8 @@ eval_calls %>% group_by(caller_package) %>% summarize(max_expr_size = max(expr_e
 #ast_sizes <- eval_calls %>% slice_sample(n=10000) %>% mutate(expr_resolved_nodes = map_int(expr_resolved, expr_size_str))
 # Now precomputed during the tracing
 ast_sizes <- read_fst(path(RUN_DIR, "package-evals-traced.3/summarized-ast-size.fst")) %>% as_tibble() %>% 
-      filter(eval_source_type != "<undefined>")
+      filter(eval_source_type != "<undefined>") %>% 
+      rename(dataset = eval_source_type)
 ```
 
 
@@ -473,9 +476,9 @@ ast_sizes <- read_fst(path(RUN_DIR, "package-evals-traced.3/summarized-ast-size.
 #   )
 
 ast_sizes %>%
-  ggplot(aes(x = eval_source_type, y = expr_resolved_nodes, fill = eval_source_type, weight = nb_ev_calls), na.rm = TRUE) +
-  geom_violin(trim = FALSE, width=.5)+
-  geom_boxplot(width=.05) +
+  ggplot(aes(x = dataset, y = expr_resolved_nodes, fill = dataset, weight = nb_ev_calls), na.rm = TRUE) +
+  geom_violin(trim = FALSE, width=1.7)+
+  geom_boxplot(data = slice_sample(ast_sizes, n = 100000), width=.03) + # too slow otherwise
   scale_y_log10(labels = scales::comma) +
   labs(y="AST size (log)") +
   theme(
@@ -504,6 +507,11 @@ nb_nodes_many <- ast_sizes_prop %>% filter(cumulative >= 0.95) %>% .[1,]
 r("ast size nine five", nb_nodes_many$expr_resolved_nodes)
 r("ast size nine five exact percent", percent(nb_nodes_many$cumulative))
 
+```
+
+
+```{r}
+ast_sizes %>% filter(expr_resolved_nodes > 1000) %>% count(eval_call_srcref, wt = nb_ev_calls, sort = TRUE)
 ```
 
 
@@ -632,6 +640,11 @@ r("nb sys call envir", nb_sys_call)
 r("sys call envir percent", ratio(nb_sys_call, nb_eval_calls))
 ```
 
+```{r env_assign}
+eval_calls_env_assign <- eval_calls %>% filter(!is.na(expr_resolved)) %>% mutate(env_assign = pblapply(expr_resolved, is_assign_str, cl = parallel::detectCores() - 2))
+
+#eval_calls_env_assign2 <-  eval_calls_env_assign %>% filter(is.logical(env_assign)) %>% hoist("env_assign", env_assign = 1)
+```
 
 
 ## Patterns
@@ -706,7 +719,7 @@ We can distinguish a few groups:
 group_expr_resolved_functions <- expr_resolved_call_arg %>%
                             mutate(function_expr2 = groupify_function(expr_resolved_function)) %>%
                             mutate(group_function_expr = fct_collapse(function_expr2, 
-                              assignment = c("<-", "[[<-", "[<-", "$<-", "<<-", "=", "@<-"),
+                              assignment = c("<-", "[[<-", "[<-", "$<-", "<<-", "=", "@<-", "assign"),
                               slot_access = c("[", "[[", "$", "slot", "@", "::", ":::"),
                               parsing = c("parse", "str2lang", "str2expression", "parse_only", "base::parse"),
                               defusing = c("quote", "substitute", "bquote", "expr", "quo", "enquo", "expression", "as.name", "as.expression"),
@@ -796,8 +809,14 @@ ggsave(path(PLOT_DIR, "polymorphism.pdf"))
 
 `r nb_monomorphic` call sites are not polymorphic, which represents `r nb_monomorphic / nb_call_sites * 100`% of the call sites.
 
+The maximum number of types is `r max(expr_resolved_polymorphism$polym_degree)`.
+
 ```{r}
-eval_calls %>% semi_join(expr_resolved_polymorphism %>% filter(polym_degree == max(polym_degree)), by ="eval_call_srcref")
+highly_polymorphic <- eval_calls %>% semi_join(expr_resolved_polymorphism %>% filter(polym_degree == max(polym_degree)), by ="eval_call_srcref")
+```
+
+```{r}
+highly_polymorphic %>% count(caller_function, wt = nb_ev_calls, sort = TRUE)
 ```
 
 
@@ -844,6 +863,9 @@ if("parse_args_file" %in% names(parsed_evals))
   nb_file_call_sites <- 0
 }
 
+r("nb parse files", nb_file$n)
+r("percent parse file call sites", ratio(nb_file_call_sites, nb_call_sites))
+
 ```
 
 ```{r}
@@ -886,6 +908,40 @@ meta_parsed %>% count(expr_parsed_expression, wt = nb_ev_calls, sort = TRUE)
 
 ```{r}
 duration <- difftime(Sys.time(), now)
+```
+
+
+Number of eval calls in packages.
+
+```{r call_sites_core}
+
+corpus_files <- read_lines(CORPUS_FILE)
+corpus_size <- length(corpus_files)
+
+program_call_sites <- read_fst(PACKAGE_EVALS_FILE) %>% as_tibble() %>%
+  filter(package %in% c(corpus_files, CORE_PACKAGES))
+
+in_core <- program_call_sites %>% filter(package %in% CORE_PACKAGES)
+
+nb_in_core <- in_core %>% nrow()
+
+r("nb core eval call sites", nb_in_core)
+
+call_sites_per_package <- program_call_sites %>% count(package, sort = TRUE)
+
+max_call_sites <- max(call_sites_per_package$n)
+
+r("max call site package", max_call_sites)
+
+nb_one_call_site <- call_sites_per_package %>% filter(n == 1) %>% nrow()
+
+r("one call site package", nb_one_call_site)
+
+nb_packages_plus_one <- n_distinct(program_call_sites %>% filter(!package %in% CORE_PACKAGES) %>% select(package))
+
+nb_package_none_eval_call_site <- corpus_size - nb_packages_plus_one
+
+r("no call site packages", nb_package_none_eval_call_site)
 ```
 
 
