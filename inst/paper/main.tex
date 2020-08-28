@@ -886,7 +886,8 @@ eval(parse(text = paste(\"fam$dld\", ii, sep = \"\")), envir = environment())
 The \emph{glue} library is used to interpolate string litterals with variables, such as in \c{glue('My name is \{name\}.')} where \c{name} will be subtituted by its value. \emph{glue} makes it possible to define transformers that process those interpolated variables. They are built upon the \c{identity_transformer}, which uses \eval. The interpretation environment for \eval is often global here, as the string litterals are often used to print variabels at the top level.
 
 \begin{lstlisting}
-identity_transformer <- function(text, envir) {
+identity_transformer <- function(text, envir) 
+{
     eval(parse(text = text, keep.source = FALSE), envir)
 }
 \end{lstlisting}
