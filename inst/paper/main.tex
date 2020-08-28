@@ -549,8 +549,8 @@ Kaggle &  1.2M &  470K   & 0\\
 \end{tabular}\caption{Eval calls in CRAN and Kaggle}\label{A}\end{table}
 
 Table~\ref{table:site-package-summary} shows the number of call sites in
-CRAN packages. 61 packages have a single call site, and one package, \emph{VGAM}, has \MaxCallSitePackage
-call sites of \eval. \NoCallSitePackages packages have no calls to \eval. The core packages
+CRAN packages. \OneCallSitesEnrich packages have a single call site, and one package, \emph{metafor}, has \MaxCallSitesEnrich
+call sites of \eval. \NoCallSitesEnrich packages have no calls to \eval. The core packages
 have \NbCoreEvalCallSites call sites of \eval and Kaggle has none. These numbers are
 under-approximations as \eval may be called reflectively, through aliases,
 or passed to a higher-order function.
