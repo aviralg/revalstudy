@@ -453,15 +453,6 @@ packages <- c(
 evals_static <- read_fst(PACKAGE_EVALS_FILE)
 ```
 
-### parse
-
-```{r}
-all_data %>%
-  filter(!is.na(parse_args_text))
-```
-
-
-
 ### timeSeries
 
 ```{r}

@@ -24,6 +24,7 @@
 \input{tag/events.tex}
 \input{tag/analysisStable.tex}
 \input{tag/enrichDataset.tex}
+\input{tag/patterns.tex}
 
 \graphicspath{{img/}}
 
@@ -975,9 +976,14 @@ h2 <- function(x, y)
 
 \subsection{Patterns}
 
-The JavaScript paper identified a number of frequently occurring eval
-patterns. The patterns were detected using simple regular expressions on the
-string passed to \eval. In the case of R look at the AST passed to evals.
+The JavaScript paper identified a number of frequently occurring \eval patterns
+which were detected using simple regular expressions on the \eval strings. In
+the case of R we match the patterns on the recorded AST.
+
+Table~\ref{table:js-pattens-in-r} shows the ratio of \eval in each of these
+patterns. We included all the original patterns except for \emph{JSON} as R uses
+its own serialization format and \emph{empty} as there were no empty expression
+passed to \eval:
 
 \begin{table}[ht]%\resizebox{\columnwidth}{!}{%
   \centering
@@ -990,21 +996,67 @@ string passed to \eval. In the case of R look at the AST passed to evals.
 \label{table:js-pattens-in-r}
 \end{table}
 
+%\noindent
+%\begin{compactitem}[$-$]
+  % \item \emph{Library}: in JavaScript, the library pattern captures asynchronous
+  % loading of external external function definitions. In R we have seen only
+  % \PatternLibRnd such calls (\PatternLibRatio) mostly coming from source loading
+  % functions (\ie \c{source} and \c{sys.source}). Most of the external function
+  % definitions in R come from packages and R makes it very easy for users to
+  % install packages from its centralized repository.
 
-For the rest of this section we show some of the common use of \eval in R that
-we have seen by looking at 20 randomly selected packages:
+\noindent \emph{Library}, \emph{Typeof} and \emph{Try} are all barely used
+mostly because the language provides dedicated features for it. The few calls in
+Library pattern come mostly from file sourcing functions (\ie \c{source} and \c{sys.source}).
+%
+\noindent \emph{Read} pattern in JavaScript represented mostly an incorrect
+access to an object's property or local variable both replaceable by JavaScript
+core functions. In the case of R there are \PatternReadRnd \eval calls
+(\PatternReadRatio). They come from calls like \c{subset(airquality, select =
+  Temp)} where the variable \c{Temp} will be evaluated in the \c{airquality}
+data frame.
+%
+\noindent \emph{Assign} category comprises of assignments to variables within
+an \eval call. We have seen \PatternAssignRnd such calls (\PatternAssignRatio).
+\PatternAssignArrowRatio uses the simple assignment (\c{<-}). The majority of
+cases comes from the \c{magrittr}'s \c{\%<>\%} pipe operator
+(\PatternAssignArrowMagrittrRatio) which forwards an object to a function on rhs
+and update lhs with the result. Far more calls used the super assignment
+(\c{<<-}) operator, but almost all come from the \c{plyr} package which provides
+a convenient API for common data manipulation problems.
+%
+\noindent \emph{Call} and \emph{Other} together represents the vast majority of
+eval calls in R. The \emph{Other} pattern represents all the calls where eval
+was called with a value instead of with an expression. The \emph{Call} pattern
+contains all the calls that did not fall in the previous categories. Without a
+context it is usually difficult to further categorize the intent of these calls.
+Therefore we have randomly chosen \PatternManualPackages packages and manually
+looked at \PatternManualCallsites call sites from which we have observed the following categories:
 
-\subsubsection{Evaluation using Data Fields} A common use of \eval is to
-  evaluate expressions that access data frame columns or list (heterogeneous
-  vectors) elements by name. Core R provides two functions, \c{with} and
-  \c{within} that implement this pattern. These functions construct a temporary
-  environment with data frame columns or list elements as the bindings.
-  Side-effects performed by the evaluated expression take place in this temporary
-  environment and are ignored by the \c{with} function. The \c{within} function
-  copies these modifications to a local copy of the input data and returns it.
-  This pattern is used quite often for statistical modeling. The modeling
-  expressions is constructed from variable names whose values are supplied by a
-  data frame or list.
+% this is read pattern
+% \subsubsection{Evaluation using Data Fields} A common use of \eval is to
+%   evaluate expressions that access data frame columns or list (heterogeneous
+%   vectors) elements by name. Core R provides two functions, \c{with} and
+%   \c{within} that implement this pattern. These functions construct a temporary
+%   environment with data frame columns or list elements as the bindings.
+%   Side-effects performed by the evaluated expression take place in this temporary
+%   environment and are ignored by the \c{with} function. The \c{within} function
+%   copies these modifications to a local copy of the input data and returns it.
+%   This pattern is used quite often for statistical modeling. The modeling
+%   expressions is constructed from variable names whose values are supplied by a
+%   data frame or list.
+\subsubsection{Reconding the current call} R provides a \c{match.call} function
+which can return the current call. This is heavily used by the statistical
+model-fitting functions that records the current call that is then reevaluated
+in the different environment. Another pattern is to match the current call,
+adjust some arguments and pass it to another function. For example the
+\c{write.csv} function changes the \c{sep} argument in the matched call and reevaluate itself as \c{write.table}:
+%
+\begin{lstlisting}
+    Call <- match.call(expand.dots = TRUE)
+    Call$sep <- ","; Call[[1L]] <- as.name("write.table")
+    eval.parent(Call)
+\end{lstlisting}
 
   \subsubsection{Sandboxing} The combination of \eval and first class
   environments can be used to construct a sandbox for evaluating side-effecting
