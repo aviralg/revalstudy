@@ -172,21 +172,22 @@ often have only a cursory knowledge of the language.\footnote{To illustrate
   have informally surveyed end-users, including computer scientists, and did
   not find a single one aware of this fact. Library developers, on the other
   hand, know about laziness and program defensively around it.}  Thus, our
-corpus distinguished between \emph{core packages} (there are \CorpusCorePackages such
-packages that are distributed together with the R virtual machine), \emph{CRAN
-  packages} (we selected \CorpusPackages curated packages that pass stringent
-community quality checks and are equipped with tests and sample data),
-\emph{Kaggle scripts} (we used \CorpusFinishedKaggle end-user written programs that performs a
-particular data analysis task). There are reasons to believe that \eval
-usage patterns may differ between these datasets. The core R code is
-extremely stable, it has only been maintained for the last 20 years with
-very few far reaching changes. The libraries represent a more lively
-ecosystem with new libraries added each day.  Finally, end user code is
-often one-use scripts thrown together and sometimes never revisited.
+corpus distinguished between \emph{core packages} (there are
+\CorpusCorePackages such packages that are distributed together with the R
+virtual machine), \emph{CRAN packages} (we selected \CorpusPackages curated
+packages that pass stringent community quality checks and are equipped with
+tests and sample data), \emph{Kaggle scripts} (we used \CorpusFinishedKaggle
+end-user written programs that performs a particular data analysis
+task). There are reasons to believe that \eval usage patterns may differ
+between these datasets. The core R code is extremely stable, it has only
+been maintained for the last 20 years with very few far reaching
+changes. The libraries represent a more lively ecosystem with new libraries
+added each day.  Finally, end user code is often one-use scripts thrown
+together and sometimes never revisited.
 
 
 To understand the behavior of eval we perform a combination of static
-analysis, dynamic analysis and manual inspection. The results presented
+analysis, dynamic analysis and manual code inspection. The results presented
 here summarize our findings.
 
 Our infrastructure is publicly available, released in open source, and our
@@ -207,16 +208,17 @@ Some languages have chosen to restrict \eval. The essential difference
 between languages relates to scoping of variables that can be accessed from
 code executed by \eval.  Java and Julia are among the more restrictive
 languages. In Java, \eval must be synthesized as a combination dynamic
-loading and reflection.\footnote{While Java does not have \eval built in,
+loading and reflection.\footnote{While Java does not have \eval built-in,
   one can take the input to \eval, wrap it in a static method of an
   anonymous class, generate bytecode for that class, invoke the Java class
-  loader to dynamically install it, and then use reflection to call the new
-  method.} Julia provides \eval more directly but limits its scope to top
-level variables and methods. JavaScript support both a, so-called, global
-\eval, and a local \eval. Where the latter has acces to local variables of
-the function being executed (as well as variables of lexically enclosing
-scopes). Finally languages such as R allow \eval to manipulate variables
-defined in the caller environment of the function in which \eval is invoked.
+  loader to dynamically install the new code, and then use reflection to
+  call the new method.} Julia provides \eval more directly but limits its
+scope to top level variables and methods. JavaScript support both a,
+so-called, global \eval, and a local \eval. Where the latter has acces to
+local variables of the function being executed (as well as variables of
+lexically enclosing scopes). Finally languages such as R allow \eval to
+manipulate variables defined in the caller environment of the function in
+which \eval is invoked.
 
 The difference between these design choices has an impact on the ability of
 compilers to optimize, and of analysis tools to reason about, code. The
