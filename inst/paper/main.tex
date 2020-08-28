@@ -604,22 +604,22 @@ resolution in it have been executed.
 
 \subsection{Operation Mix}
 
-%%Unlike Javascript, R packages also call native code for access to efficient
-%%numerical and statistical routines. We intercept all calls to R functions and
-%%native functions from the programs and \eval calls. In the whole corpus there
-%%are \AllClosureCallCount calls to R functions and \AllNativeCallCount to native
-%%code. Of those, \eval contribute to only \EvalClosureCallCount calls to R
-%%functions and \EvalNativeCallCount to native code.
-%%
-%%\begin{table}[ht]\resizebox{\columnwidth}{!}{%
-%%    \begin{tabular}{lll}\hline
-%%      Source & Primitive Functions & R Functions & Native Functions \\ \hline
-%%      Core & \CorePrimitiveFunctionCount & \CoreRFunctionCount & \CoreNativeFunctionCount \\
-%%      CRAN & \PackagePrimitiveFunctionCount & \PackageRFunctionCount & \PackageNativeFunctionCount \\
-%%      All  & \AllPrimitiveFunctionCount & \AllRFunctionCount & \AllNativeFunctionCount \\
-%%    \end{tabular}} \label{table:operation-distribution}
-%%  \caption{Distribution of operation calls to \eval calls across Core and Package}
-%%\end{table}
+##Unlike Javascript, R packages also call native code for access to efficient
+##numerical and statistical routines. We intercept all calls to R functions and
+##native functions from the programs and \eval calls. In the whole corpus there
+##are \AllClosureCallCount calls to R functions and \AllNativeCallCount to native
+##code. Of those, \eval contribute to only \EvalClosureCallCount calls to R
+##functions and \EvalNativeCallCount to native code.
+##
+##\begin{table}[ht]\resizebox{\columnwidth}{!}{%
+##    \begin{tabular}{lll}\hline
+##      Source & Primitive Functions & R Functions & Native Functions \\ \hline
+##      Core & \CorePrimitiveFunctionCount & \CoreRFunctionCount & \CoreNativeFunctionCount \\
+##      CRAN & \PackagePrimitiveFunctionCount & \PackageRFunctionCount & \PackageNativeFunctionCount \\
+##      All  & \AllPrimitiveFunctionCount & \AllRFunctionCount & \AllNativeFunctionCount \\
+##    \end{tabular}} \label{table:operation-distribution}
+##  \caption{Distribution of operation calls to \eval calls across Core and Package}
+##\end{table}
 
 \subsection{Side-Effects}
 
