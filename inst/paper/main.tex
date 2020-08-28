@@ -692,7 +692,7 @@ captured for future reference.
 
 R supports reflection and meta-programming. The function \c{substitute(e,envir)}
 yields the parse tree of the expression \c{e} after performing substitutions
-defined by the bindings in \c{envir}.
+defined by the bindings in the \c{envir} parameter.
 
 \begin{lstlisting}
 > substitute(expression(a+b), list(a=1)))  
@@ -703,8 +703,9 @@ expression(1+b)
 R allows programmatic manipulation of parse trees, which are themselves
 first class objects. They are evaluated using the \c{eval()}
 function. There are three alternative forms  of \eval in the \c{base} package:
-\c{evalq}, \c{eval.parent}, \c{local}.
+\c{evalq}, \c{eval.parent} and \c{local}.
 
+\eval function in R takes three arguments as shown below.
 \begin{lstlisting}
  eval(expr,
       envir = parent.frame(),
@@ -712,14 +713,14 @@ function. There are three alternative forms  of \eval in the \c{base} package:
                parent.frame() else baseenv())
 \end{lstlisting}           
 
-Arguments are as follows: \c{expr} is the value to be evaluated, \c{envir}
+\c{expr} is the value to be evaluated, \c{envir}
 is the environment in which it is to be evaluated, and \c{enclos} is
 relevant when \c{envir} is a list or a data frame, then it specifies where R
 looks for objects not found in \c{envir}. This can be \c{NULL} (interpreted
 as the base package environment, \c{baseenv()}) or an environment.
 
 When called, \eval evaluates \c{expr} in the environment specified by
-\c{envir} and return the computed value. If \c{envir} is missing, then the
+\c{envir} and returns the computed value. If \c{envir} is missing, then the
 default is \c{parent.frame()} (the environment where the call to \eval was
 made).  Values to be evaluated can be of types \c{call} (AST for function
 calls) or \c{expression} (AST nodes for arbitrary expressions), \c{name}
