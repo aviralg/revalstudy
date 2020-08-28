@@ -939,14 +939,17 @@ actual_type = match.arg(type, choices=c("examples", "tests", "vignettes"))
 \section{Threats to Validity} The primary threat to validity is the issue of
 code coverage, a cause of concern for any dynamic approach. We mitigate this by
 including only those R packages in our corpus that have many reverse
-dependencies and thus high code coverage. Secondly, we turn off the bytecode
-compiler for this study. The bytecode compiler can also call eval. Thirdly, we
-do not get source locations for \UndefinedEvalsRnd eval calls. In these cases
-\eval is either passed as an argument to a higher-order functions or is defined
-in a function returned by a higher-order function and the R parser does not
-retain location information for \eval. However, this is a meager
-\PercentUndefinedEval of all eval calls and is unlikely to affect our analysis.
-
+dependencies and thus high code coverage. We turn off the bytecode compiler for
+this study. The bytecode compiler can also call eval. We do not get source
+locations for \UndefinedEvalsRnd eval calls. In these cases \eval is either
+passed as an argument to a higher-order functions or is defined in a function
+returned by a higher-order function and the R parser does not retain location
+information for \eval. However, this is a meager \PercentUndefinedEval of all
+eval calls and is unlikely to affect our analysis. We ignore calls to the native
+\eval function exposed by R. We also ignore the \c{rlang::tidy_eval} function
+which uses native \eval internally because \c{rlang} is used to implement a DSL
+for data analysis in R. It introduces a new first-class promise object called
+\c{quosure} for which it implements special evaluation support in \c{tidy_eval}.
 
 \section{Conclusion}
 
