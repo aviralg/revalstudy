@@ -702,30 +702,51 @@ from calls to \c{match.arg} which is used to look up the default choices for a
 variable and match against the choice passed by the caller.
 
 The most frequent ten expressions to eval calls from CRAN packages contribute to
-90\% of all \eval calls.
+77.1\% of all \eval calls.
 \begin{table*}[tb]
   \centering
   \begin{tabular}{l|rr} \hline
     Expression & Eval Call & Eval Call \% \\\hline
-    \c{\<Environment\>} &                                                          1091474  & 68.2\%\\
+    \c{Environment} &                                                              989302   & 61.8\%\\
     \c{column[rows] <<- what} &                                                    55677    & 3.5\%\\
     \c{function(value) freduce(value, `_function_list`)} &                         37251    & 2.3\%\\
+    \c{NULL} &                         32005    & 2\%\\
+    \c{List} &                         22293    & 1.4\%\\
     \c{c("default", "default2012", "default2011" ...}&                             20610    & 1.3\%\\
     \c{force(..1)}                                        &                        20461    & 1.3\%\\
     \c{alist(`_spec`)}                                   &                         18532    & 1.2\%\\
     \c{inner}                                           &                          18530    & 1.2\%\\
-    \c{slot(family, "fini")}                           &                           7288     & 0.5\%\\
-    \c{\~fitted(.)}                                    &                           4733     & 0.3\%\\
-    \c{function(.) purrr::keep(., is.function)}      &                             4344     & 0.3\%\\\hline
+    \c{String Vector}                           &                           17487     & 1.1\%\\
   \end{tabular}
   \caption{Top ten eval calls in CRAN}
   \label{A}
 \end{table*}
-The most frequently occurring call is to the
-\eval in \c{ggplot2::ggproto} which happens over 68\% of the times. The
-remaining expressions occur with a frequency of less than 4\%. They originate
-from \c{plyr}, \c{VGAM}, \c{magrittr}, \c{??}
 
+The expression \c{Environment} occurs because of the four callsites explained
+above, \c{ggplot2::ggproto}, \c{R6::generator_funs}, \c{future::backtrace} and
+\c{RModel::str.RMmodel}. The next expression, \c{column[rows] <<- what}, is used
+inside the \c{plyr::rbind.fill} function to merge data frames by assigning
+concatenated vectors to rows. The \c{<<-} operator is interesting in that it
+skips the current scope and assigns in a parent scope in which the variable is
+already present. In our corpus, all these \eval calls contribute to a single
+side-effect. The expression \c{function(value) freduce(value, `_function_list`)}
+arises from the \c{magrittr::\%>\%} function which is a pipe operator that pipes
+the output of previous command to the next one. The expression is evaluated in a
+custom environment to create a function binding for evaluating the components of
+the pipe.\c{String Vector} and \c{List} also arise from the same function when a
+string or a list is piped using the \c{\%>\%} function into the next expression.
+The \c{NULL} arises from \c{R6::generator_funs} function when the \eval is
+passed a \c{NULL} argument by the \c{DataMask_generator} package. The
+\c{c("default", "default2012", "default2011" ...} pattern arises from
+\c{copula::polyG} where it reflectively access the default expression for its
+formal parameter and evaluates it. The \c{force(..1)} and \c{alist(`_spec`)}
+patterns occur in \c{glue::glue_data} function which concatenates and
+interpolates strings. The two patterns occur because the function captures
+unevaluated unnamed arguments and maps the evaluation of \c{force(..1)} on them.
+The \c{force} function forces promises~\cite{oopsla19a} and returns the result
+of evaluation. The \c{inner} pattern arises from \c{glue::identity_transformer}
+which enables the creation of custom transformation functions for affecting the
+interpolation and concatenation of input by the \c{glue} package.
 
 \subsubsection{Provenance}
 
@@ -956,40 +977,39 @@ We have grouped those uses in the following categories.
   functions. The \datatable gets around this limitation by enclosing the call to
   \unlockBinding inside \eval.
 
-\subsection{Consistency}
-
-Here we talk about whether the same call site sees the same pattern
-
-{\bf Polymorphic may not be the right word.}
-
-We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie
-how many different types of the resolved \c{expr} there are per call sites,
-in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
-\emph{monomorphic}.
-
-\begin{figure}[!h]
-	\centering
-    \includegraphics[width=\columnwidth]{polymorphism}
-    \caption{Degree of polymorphism of \c{expr} per call sites.} \label{fig:polymorphism}
-\end{figure}
-
-\subsection{base}
-
-There are 30 functions in \emph{base} that use \eval. Only five of them use \c{parse}, for legitimate reasons, such \c{source} and \c{sys.source} which load a file and then evaluate it, or \c{invokeRestartInteractively} which prompts the user for arguments to restart execution after an error.
-
-We endeavored  to write these functions without \eval. \c{match.arg} appears in \MatchArgPercent of the \eval calls. It is used to get the arguments, possibly abbreviated, of a function. With one argument, as \c{match.arg(arg)}, it uses \c{eval} to infer them from a parent function's formal arguments. We can rewrite it using its version with two arguments, \c{match.arg(arg, choices)} where \c{choices} are the possible formal arguments of the function, as shown in Listing~\ref{code:matcharg}.
-
-\begin{lstlisting}[caption={Rewriting \c{match.arg} without \eval}, label=code:matcharg]
-f <- function(type=c("examples", "tests", "vignettes")) {
-actual_type = match.arg(type)
-...
-}
-
-f <- function(type=c("examples", "tests", "vignettes")) {
-actual_type = match.arg(type, choices=c("examples", "tests", "vignettes"))
-...
-}
-\end{lstlisting}
+%%\subsection{Consistency}
+%%Here we talk about whether the same call site sees the same pattern
+%%
+%%{\bf Polymorphic may not be the right word.}
+%%
+%%We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie
+%%how many different types of the resolved \c{expr} there are per call sites,
+%%in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
+%%\emph{monomorphic}.
+%%
+%%\begin{figure}[!h]
+%%	\centering
+%%    \includegraphics[width=\columnwidth]{polymorphism}
+%%    \caption{Degree of polymorphism of \c{expr} per call sites.} \label{fig:polymorphism}
+%%\end{figure}
+%%
+%%\subsection{base}
+%%
+%%There are 30 functions in \emph{base} that use \eval. Only five of them use \c{parse}, for legitimate reasons, such \c{source} and \c{sys.source} which load a file and then evaluate it, or \c{invokeRestartInteractively} which prompts the user for arguments to restart execution after an error.
+%%
+%%We endeavored  to write these functions without \eval. \c{match.arg} appears in \MatchArgPercent of the \eval calls. It is used to get the arguments, possibly abbreviated, of a function. With one argument, as \c{match.arg(arg)}, it uses \c{eval} to infer them from a parent function's formal arguments. We can rewrite it using its version with two arguments, \c{match.arg(arg, choices)} where \c{choices} are the possible formal arguments of the function, as shown in Listing~\ref{code:matcharg}.
+%%
+%%\begin{lstlisting}[caption={Rewriting \c{match.arg} without \eval}, label=code:matcharg]
+%%f <- function(type=c("examples", "tests", "vignettes")) {
+%%actual_type = match.arg(type)
+%%...
+%%}
+%%
+%%f <- function(type=c("examples", "tests", "vignettes")) {
+%%actual_type = match.arg(type, choices=c("examples", "tests", "vignettes"))
+%%...
+%%}
+%%\end{lstlisting}
 
 \section{Threats to Validity} The primary threat to validity is the issue of
 code coverage, a cause of concern for any dynamic approach. We mitigate this by
