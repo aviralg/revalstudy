@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2020-08-28T00:01:11.714Z" agent="5.0 (X11)" etag="s__Q9vlToQBcdxo9rGrN" version="13.6.5" type="github">
+<mxfile host="app.diagrams.net" modified="2020-08-28T00:07:01.919Z" agent="5.0 (X11)" etag="7fhNSwLR665ibRzvojTn" version="13.6.5" type="github">
   <diagram id="F0AHolVVesLSMNE4kyMN" name="Page-1">
     <mxGraphModel dx="2062" dy="1172" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -118,7 +118,7 @@
         <mxCell id="XyMEwlzETBZZqd7nD72x-31" value="800MB" style="text;html=1;align=right;" vertex="1" parent="1">
           <mxGeometry x="452.93" y="267" width="45.13" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="XyMEwlzETBZZqd7nD72x-32" value="18.5M calls to eval" style="text;html=1;align=center;" vertex="1" parent="1">
+        <mxCell id="XyMEwlzETBZZqd7nD72x-32" value="8.5M calls to eval" style="text;html=1;align=center;" vertex="1" parent="1">
           <mxGeometry x="552" y="237" width="130" height="20" as="geometry" />
         </mxCell>
         <mxCell id="XyMEwlzETBZZqd7nD72x-33" value="600K unique evals" style="text;html=1;align=right;" vertex="1" parent="1">
@@ -169,7 +169,7 @@
             <mxPoint x="852" y="229" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="XyMEwlzETBZZqd7nD72x-48" value="5.2GB" style="text;html=1;align=right;" vertex="1" parent="1">
+        <mxCell id="XyMEwlzETBZZqd7nD72x-48" value="2GB" style="text;html=1;align=right;" vertex="1" parent="1">
           <mxGeometry x="588.5" y="268" width="42" height="30" as="geometry" />
         </mxCell>
         <mxCell id="XyMEwlzETBZZqd7nD72x-49" value="Kaggle kernels download" style="whiteSpace=wrap;html=1;rounded=1;shadow=1;fontStyle=1" vertex="1" parent="1">
@@ -188,7 +188,7 @@
         <mxCell id="XyMEwlzETBZZqd7nD72x-52" value="&lt;div align=&quot;center&quot;&gt;500 packages&lt;br&gt;&lt;/div&gt;&lt;div&gt;2.8K kernels&lt;/div&gt;" style="text;html=1;align=center;" vertex="1" parent="1">
           <mxGeometry x="263" y="228" width="125" height="44" as="geometry" />
         </mxCell>
-        <mxCell id="XyMEwlzETBZZqd7nD72x-54" value="19K programs" style="text;html=1;align=center;" vertex="1" parent="1">
+        <mxCell id="XyMEwlzETBZZqd7nD72x-54" value="18K programs" style="text;html=1;align=center;" vertex="1" parent="1">
           <mxGeometry x="413" y="235" width="125" height="24" as="geometry" />
         </mxCell>
         <mxCell id="XyMEwlzETBZZqd7nD72x-60" value="Tool" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" vertex="1" parent="1">
