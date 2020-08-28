@@ -829,106 +829,119 @@ packages are side-effecting.
 
 \subsection{Scope}
 
-Here we talk about scopes and envs
-
 One of the main differences of the R \eval with the javascript one is how it
-interacts with \emph{scope}, or environments in R. In Javascript, \c{eval}
-can access the local scope and the global scope. In R, \c{eval} has an
-argument \c{envir} to indicate in which environment its first argument,
-after being resolved, must be evaluated. By default, it is equal to \c{parent.frame()}, which is the parent environment of the \c{eval} call. This default argument happens in \DefaultEnvirExprPercent of the eval calls.
+interacts with \emph{scope}, or environments in R. In Javascript, \c{eval} can
+access the local scope and the global scope. In R, \c{eval} has an argument
+\c{envir} to indicate in which environment its first argument must be evaluated.
+By default, it is equal to \c{parent.frame()}, 
+which is the parent environment of \c{eval} call.This default argument
+happens in \DefaultEnvirExprPercent of the eval calls.
 
-This argument can also be \c{NULL}, a list or a dataframe. In that case, \c{eval} copies \c{envir} and encloses it the environment defined by \c{enclos}. Finally, the argument can also be a number $n$. It means that the environment in which the expressions is evaluated will be the results of \c{sys.call(n)} where $n$ refers to the $n$-th call frame after the global environment.
+This argument can also be \c{NULL}, a \c{List} or a data frame. This happens in
+3.5\% of the cases.
+\c{eval} copies the fields of the list or data frame and creates bindings for
+them in a new environment. This pattern is used to evaluate formulas which can
+directly refer to the fields of the data.
+The \c{envir} argument can also be a number $n$. It means that the environment in
+which the expressions is evaluated will be the result of \c{sys.call(n)} where
+$n$ refers to the $n$-th stack frame.
 
-\textbf{Do we speak more about what an environment is, \c{.GlobalEnv}, \c{emptyenv()}, environment navigation here, or in the Background section?}
+The top-level environment in R is called the global environment. New
+environments can be created using \c{new.env}. They can be provided a parent
+environment which becomes the enclosing scope of the new environment.
 
-There are two main environments affected by \eval:
-\begin{itemize}
-	\item the \emph{existing} environment where \c{eval} reads. It is the first non new environment. \c{eval} will also be able to read in all parent environment of that environment. It can be the global environment, a package environment, an empty environment, the callee environment, or a parent environment of the callee: $1$ is the parent, $2$ the grand-parent, and so on.
-	\item the \emph{default} assignment environment \c{eval} writes new bindings.\footnote{It is the default one but the expression in \eval can always write in any other environments using \c{assign} or in the parent environment using \c{<<-}.} If it is different from the read environment and is a new one that inherits from the read environment, we add a symbol \texttt{+} after the read environment.
-\end{itemize}
-
-To give some examples,  global+ refers to a new scope that inherits from the global scope, while 3 refers to the great grand parent of the \eval scope.
-
-Table~\ref{tab:environments} shows the environments when they are \emph{explicitly specified}. \eval in R is often performed in a new environment inherited from the global environment for packages, while for core, it is mostly done in the environment of the grand-parent.  It is also used a lot to evaluate in the context of a dataframe (\emph{list} environment). \emph{loop} \textbf{To explain...? But we do not see it here anyway}
-
-%The \c{sys.call} option is not used a lot, only \SysCallEnvirPercent as a whole, and always with \c{sys.parent()} as argument.
-
-% Variability: how many different envir class, and different envir expr, for one call site?
-%\begin{figure*}[htbp]
-%	\centering
-%	\includegraphics[width=\linewidth]{environments.pdf}
-%	\caption{The environments in which the expression is evaluated. \c{NA} corresponds to the default environment.} \label{fig:environments}
-%\end{figure*}
+We looked at the environments passed to all the \eval calls in our corpus.
+Table~\ref{tab:environments} summarizes the results. A numeric environment class
+\c{n} denotes the environment of the $n$-th call stack frame from the current
+function. \c{global} denotes the top-level environment and \c{list} denotes a list
+passed for evaluation of formulas. Environment classes of the form $n+$ denote
+the $n$-th environment extended with a new environment. The new environment
+provides a limited form of sandboxing. All assignments using the \c{\<-}
+function occur inside it and prevent the extended environment from
+mutation. However, it is still possible to mutate the extended environment
+using the \c{\<\<-} function; but, that happens rarely.
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{|c|c||c|c|}
+    \begin{tabular}{c|c|c|c}
         \hline
-        \multicolumn{2}{|c|}{Core} &  \multicolumn{2}{|c|}{Packages}  \\
+        \multicolumn{2}{c|}{Core} & \multicolumn{2}{|c}{Packages}  \\
         \hline
-        Environment & Proportion & Environment & Proportion \\
+        Environment Class & Eval Calls \% & Environment Class & Eval Calls \% \\
         \hline
-        \CoreEnvClassA &  \CoreProportionA & \PackagesEnvClassA &  \PackagesProportionA\\
-        \hline
-        \CoreEnvClassB &  \CoreProportionB & \PackagesEnvClassB &  \PackagesProportionB \\
-        \hline
-        \CoreEnvClassC & \CoreProportionC  & \PackagesEnvClassC &  \PackagesProportionC \\
-        \hline
-       \CoreEnvClassD  &  \CoreProportionD & \PackagesEnvClassD &  \PackagesProportionD \\
-        \hline
-        \CoreEnvClassE  & \CoreProportionE & \PackagesEnvClassE & \PackagesProportionE \\
+        \CoreEnvClassA & \CoreProportionA & \PackagesEnvClassA &  \PackagesProportionA\\
+        \CoreEnvClassB & \CoreProportionB & \PackagesEnvClassB &  \PackagesProportionB\\
+        \CoreEnvClassC & \CoreProportionC & \PackagesEnvClassC &  \PackagesProportionC\\
+        \CoreEnvClassD & \CoreProportionD & \PackagesEnvClassD &  \PackagesProportionD\\
+        \CoreEnvClassE & \CoreProportionE & \PackagesEnvClassE &  \PackagesProportionE\\
         \hline
     \end{tabular} \label{tab:environments}
 \caption{Environments in terms of eval calls.}
 \end{table}
 
-\c{match.arg} (see Listing~\ref{code:matchargenvir}) is the function that contributes the most to the eval calls (\MatchArgPercent) and has environment class 2. \c{sys.parent()} refers to the parent environment of \c{match.arg} and so to the grand-parent environment of \c{eval}, \ie what we denote 2.
+We observe that a disproportionately high core R \eval calls access the
+caller's caller's environment. This is because many core R functions call
+functions that pass the result of \c{parent.frame()} to an \eval.
+A disproportionately high calls to \eval happen in an extended
+top-level environment. This can be explained by the fact that many packages
+evaluate code passed from the user's workspace in the top-level environment to
+access the bindings.
 
-\begin{lstlisting}[label=code:matchargenvir, caption={\c{match.arg} using \eval with a custom environment.}]
-formal.args <- formals(sys.function(sysP <- sys.parent()))
-choices <- eval(formal.args[[as.character(substitute(arg))]], envir = sys.frame(sysP))
-\end{lstlisting}
+%%Below, we provide some code snippets to show how some of these environment
+%%classes manifest.
 
-In package \emph{gamlss}, function \c{get.K} evaluates its expression in its parent environment, the one of the body of \c{get.K} returned from \c{environment()}.
+%%The \c{match.arg} (see Listing~\ref{code:matchargenvir}) function has an
+%%environment class 2. \c{sys.parent()} refers to the parent environment of
+%%\c{match.arg} and so to the grand-parent environment of \c{eval} which we denote
+%%as $2$.
+%%
+%%\begin{lstlisting}[label=code:matchargenvir, caption={\c{match.arg} using \eval with a custom environment.}]
+%%formal.args <- formals(sys.function(sysP <- sys.parent()))
+%%choices <- eval(formal.args[[as.character(substitute(arg))]], envir = sys.frame(sysP))
+%%\end{lstlisting}
 
-\begin{lstlisting}
-eval(parse(text = paste(\"fam$dld\", ii, sep = \"\")), envir = environment())
-\end{lstlisting}
-
-
-The \emph{glue} library is used to interpolate string litterals with variables, such as in \c{glue('My name is \{name\}.')} where \c{name} will be subtituted by its value. \emph{glue} makes it possible to define transformers that process those interpolated variables. They are built upon the \c{identity_transformer}, which uses \eval. The interpretation environment for \eval is often global here, as the string litterals are often used to print variabels at the top level.
-
-\begin{lstlisting}
-identity_transformer <- function(text, envir) 
-{
-    eval(parse(text = text, keep.source = FALSE), envir)
-}
-\end{lstlisting}
-
-
-The \c{imchange} function of package \c{imager} makes it possible to modify images using a dedicated formula syntax using \c{\~}.\footnote{Inspired by \c{map} in package \emph{purr}.}  Here, \eval is evaluated in \c{newenv}, which creates a new environment that inherits from \c{parent.frame()} by default. We classify it as 1+.
-
-
-\begin{lstlisting}
-newenv <- new.env()
-...
-fo <- parse(text=as.character(fo)[2])
-im[where] <- eval(fo,envir=newenv,enclos=env)
-\end{lstlisting}
-
-\c{adjCoef} in package \emph{actuar} find the root of an equation defined by a function \c{h} whose arguments must be named \c{x} and \c{y}.
-\c{h} is transformed into an auxiliary function \c{h2} that can be optimized. Here, the list used for \c{envir} ensures the correspondance between the textual arguments of \c{h} and the arguments of \c{h2}. 
-
-
-\begin{lstlisting}
-sh <- substitute(h)
-fcall <- paste(sh, "(x, y)")
-...
-h2 <- function(x, y)
-    eval(parse(text = fcall),
-    envir = list(x = x, y = y),
-    enclos = parent.frame(2))
-\end{lstlisting}
+%%In package \emph{gamlss::get.K} function \c{get.K} evaluates its expression in its
+%%parent environment, the one of the body of \c{get.K} returned from
+%%\c{environment()}.
+%%
+%%\begin{lstlisting}
+%%eval(parse(text = paste(\"fam$dld\", ii, sep = \"\")), envir = environment())
+%%\end{lstlisting}
+%%
+%%
+%%The \emph{glue} library is used to interpolate string litterals with variables, such as in \c{glue('My name is \{name\}.')} where \c{name} will be subtituted by its value. \emph{glue} makes it possible to define transformers that process those interpolated variables. They are built upon the \c{identity_transformer}, which uses \eval. The interpretation environment for \eval is often global here, as the string litterals are often used to print variabels at the top level.
+%%
+%%\begin{lstlisting}
+%%identity_transformer <- function(text, envir) 
+%%{
+%%    eval(parse(text = text, keep.source = FALSE), envir)
+%%}
+%%\end{lstlisting}
+%%
+%%
+%%The \c{imchange} function of package \c{imager} makes it possible to modify images using a dedicated formula syntax using \c{\~}.\footnote{Inspired by \c{map} in package \emph{purr}.}  Here, \eval is evaluated in \c{newenv}, which creates a new environment that inherits from \c{parent.frame()} by default. We classify it as 1+.
+%%
+%%
+%%\begin{lstlisting}
+%%newenv <- new.env()
+%%...
+%%fo <- parse(text=as.character(fo)[2])
+%%im[where] <- eval(fo,envir=newenv,enclos=env)
+%%\end{lstlisting}
+%%
+%%\c{adjCoef} in package \emph{actuar} find the root of an equation defined by a function \c{h} whose arguments must be named \c{x} and \c{y}.
+%%\c{h} is transformed into an auxiliary function \c{h2} that can be optimized. Here, the list used for \c{envir} ensures the correspondance between the textual arguments of \c{h} and the arguments of \c{h2}. 
+%%
+%%
+%%\begin{lstlisting}
+%%sh <- substitute(h)
+%%fcall <- paste(sh, "(x, y)")
+%%...
+%%h2 <- function(x, y)
+%%    eval(parse(text = fcall),
+%%    envir = list(x = x, y = y),
+%%    enclos = parent.frame(2))
+%%\end{lstlisting}
 
 \subsection{Patterns}
 
