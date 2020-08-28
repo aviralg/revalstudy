@@ -104,11 +104,11 @@
   whether the usage of \eval is dependent on the application domain or other
   features of the language. This paper is a large-scale study of a corpus of
   \CorpusAllCodeRnd lines of data science libraries and end-user written in
-  the R language. We performed a simple static analysis and more
-  sophisticated dynamic analysis to confirm that \eval is indeed in wide
-  spread use, and to categorized patters of usage. We found that \eval in
-  this code base is more dangerous in some ways, and safer in others, than
-  what was previously reported for JavaScript.
+  the R language. We performed a sophisticated dynamic analysis to confirm
+  that \eval is indeed in wide spread use, and to categorized patters of
+  usage. We found that \eval in this code base is more dangerous in some
+  ways, and safer in others, than what was previously reported for
+  JavaScript.
 \end{abstract}
 
 \section{Introduction}
@@ -187,9 +187,8 @@ added each day.  Finally, end user code is often one-use scripts thrown
 together and sometimes never revisited.
 
 
-To understand the behavior of eval we perform a combination of static
-analysis, dynamic analysis and manual code inspection. The results presented
-here summarize our findings.
+To understand the behavior of eval we perform a dynamic analysis and manual
+code inspection. The results presented here summarize our findings.
 
 Our infrastructure is publicly available, released in open source, and our
 data, and code will be submitted to artifact evaluation.
@@ -222,33 +221,47 @@ manipulate variables defined in the caller environment of the function in
 which \eval is invoked.
 
 The difference between these design choices has an impact on the ability of
-compilers to optimize, and of analysis tools to reason about, code. The
-impact of a top level \eval is that any global definition may be affected
-but the current function can continue to execute unchanged. A local \eval
-may change the value of local variables, their types, or even their
-presence. This is a much more invasive change for reasoning about code and
-may invalidate common optimizations such as constant folding or copy
-propagation. The designers of Julia were aware of this difference and chose
-to restrict \eval to preserve their ability to compile
-code~\cite{oopsla18a}. They even added a versioning mechanism to function
-definitions to ensure that new code added during an \eval would not
-invalidate optimizations such as inlining.  R's ability to affect any one of
-the callers of a function is even more invasive as the impact of \eval is
-non-local. Such unfettered power is difficult to deal with.
+compilers to optimize, and of analysis tools to reason about code. The
+impact of a top level \eval is that any global variable may be modified, but
+currently running functions can continue to execute unchanged. A local
+\eval, may change the values of local variables, their types, or even their
+presence. This is a much more invasive change, one that may invalidate
+currently executing functions as it may change the results of common
+optimizations such as constant folding or copy propagation. The designers of
+the Julia programming language were aware of this difference and
+purposefully chose to restrict \eval to the top level in order to preserve
+their ability to optimize code~\cite{oopsla18a}. They even added a
+versioning mechanism to function definitions to ensure that code added
+during an \eval would not invalidate optimizations such as inlining.  R's
+ability to affect any one of the callers of a function is even more invasive
+as the impact of \eval is non-local. Such unfettered power is difficult to
+deal with.
 
 The intuition behind the soundiness manifesto~\cite{soundy} is that while
 the use of a single \eval may invalidate every single invariant computed by
-a static analysis or optimizer, this worst case usually does not happen.  In
-many cases, \eval is used carefully and has limited effect. This is a
-hypothesis that must be validated and, to be useful, we should have the
-means to provide some reasonable guesses as to which side-effects will
-result from any particular \eval call.
+a static analyzer, this worst case usually does not happen.  In many cases,
+\eval is used carefully to limited effect. This hypothesis must be validated
+and, for it to be useful, we need to have a way to make some educated
+guesses as to which side-effects will result from any particular \eval.
 
-Previous work looked at eval in JavaScript
-
-Othere languages
-
-Dynamic analysis
+Richards et al.~\cite{ecoop11} provided the first large-scale study of the
+runtime behavior of \eval in JavaScript. They analyzed a corpus of the
+10,000 most popular websites. They used an instrumented web browser to
+gather execution traces and perform a dynamic analysis.  Their results show
+that \eval is pervasive with 82\% of the most popular websites using it. The
+reasons for using \eval include the desire to load code on demand (to reduce
+the time it takes to display a page), the deserialization of JSON data
+(about 37\% of all calls) and lightweight meta-programming to customize web
+pages.  While many uses \eval were legitimate, many were unnecessary and
+could be replaced with equivalent and safer code.  The reported on a
+categorization of inputs to \eval that covers the vast majority of input
+strings.  Restricting themselves to \eval in which all named variables refer
+to the global scope, many patterns can be replaced by more disciplined
+code~\cite{oopsla12b}.  The limitation of that work are that there was no
+measure of code coverage, so the numbers presented can be a lower bound on
+the possible behaviors.  Furthermore in 2011, JavaScript usage is quite
+different from today. Their work captured very few libraries and none of the
+more recent Node.js ecosystem.
 
 \section{The Design of Eval}
 
@@ -299,6 +312,9 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 
 \eval will return unchanged basic types such as vectors, functions, strings and environments. Promises are forced by \eval. Symbols are looked up in the current environment. Calls and expressions are evaluated. 
 
+\begin{figure*}[!tb]\centering\includegraphics[width=.8\linewidth]
+{pipeline.pdf}\caption{Analysis Pipeline}\label{fig:pipeline}
+\end{figure*}
 
 \section{Infrastructure}
 
@@ -308,9 +324,6 @@ to \eval and RMarkdown notebooks for data analysis and visualization.
 Figure~\ref{fig:pipeline} shows the main steps of the pipeline. We provide the
 runtime, input and output data size for each step.
 
-\begin{figure*}[!tb]\centering\includegraphics[width=\linewidth]
-{pipeline.pdf}\caption{Pipeline}label{fig:pipeline}
-\end{figure*}
 
 The pipeline begins with downloading and installing open source R packages from
 CRAN for the corpus along with their dependencies. The Kaggle programs are
@@ -375,7 +388,7 @@ and the y-axis gives the number of reverse dependencies in log scale. Dotted
 lines indicate means. Packages with over \CorpusEvalsPackageTreshold eval call
 sites are annotated.
 
-\begin{figure*}[!tb]\centering\includegraphics[width=\linewidth]
+\begin{figure*}[!tb]\centering\includegraphics[width=.8\linewidth]
   {corpus.pdf}\caption{CRAN packages}\label{fig:corpus}
 \end{figure*}
 
