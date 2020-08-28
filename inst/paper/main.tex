@@ -1323,9 +1323,9 @@ h2 <- function(x, y)
 
 \subsection{Patterns}
 
-The JavaScript paper identified a number of frequently occurring \eval
+Richards et al.~\cite{ecoop11} identified a number of frequently occurring \eval
 patterns which were detected using simple regular expressions on the \eval
-strings. In the case of R, we match the patterns on the resolved AST.
+strings. In the case of R we match the patterns on the recorded AST.
 
 Table~\ref{table:js-pattens-in-r} shows the ratio of \eval in each of these
 patterns. We included all the original patterns except for \emph{JSON} as R uses
@@ -1339,21 +1339,24 @@ passed to \eval:
                          & Calls & Ratio            & Calls & Ratio \\\hline
 \input{tag/table-js-patterns-in-r.tex}
 \end{tabular}
-\caption{JavaScript evals patterns in R}
+\caption{JavaScript \eval Patterns in R}
 \label{table:js-pattens-in-r}
 \end{table}
 
 
 \noindent \emph{Library}, \emph{Typeof} and \emph{Try} are all barely used
 mostly because the language provides dedicated features for it. The few calls in
-Library pattern come mostly from file sourcing functions (\ie \c{source} and \c{sys.source}).
+Library pattern come mostly from file loading functions such as \c{source} and
+\c{sys.source}.
 %
 \noindent \emph{Read} pattern in JavaScript represented mostly an incorrect
+
 access to an object's property or local variable both replaceable by
 JavaScript core functions. In the case of R there are \PatternReadRnd read
 \eval calls (\PatternReadRatio). They come from calls like
 \c{subset(airquality, select = Temp)} where the variable \c{Temp} will be
 evaluated in the \c{airquality} data frame.
+
 %
 \noindent \emph{Assign} category comprises of assignments to variables
 within an \eval call. We have seen \PatternAssignRnd such calls
