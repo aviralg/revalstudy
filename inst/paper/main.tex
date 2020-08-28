@@ -303,7 +303,7 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 \begin{lstlisting}
 > r <- 5
 > env <- new.env()
-> env\$r <- 9
+> env$r <- 9
 > eval(r, envir = env)
 [1] 5
 > evalq(r, envir = env)
@@ -573,10 +573,10 @@ be called reflectively, through aliases, or passed to a higher-order function.
 To roughly estimate the complexity of the code being evaluated,
 Fig.~\ref{fig:ast-size} shows the distribution of the abstract syntax tree
 size of the \c{expr} argument to \eval. The majority of inputs across core
-and packages (\NbAstOnePercent of \eval calls and \NbAstOneCallSitePercent of call sites) is 1. That is to say, the code being evaluated
+and packages (\NbAstOnePercent of \eval calls and \NbAstOneCallSitePercent of call sites) have size 1. That is to say, the code being evaluated
 consists of a single variable name or constant. A function call needs at
-least three nodes. Inputs smaller than \AstSizeNineFive nodes account for 95\% of all
-calls. Sizes are roughly similar between core and packages.
+least three nodes and a list such as \c{c(1, 2, 3)} counts for 4 nodes. Inputs smaller than \AstSizeNineFive nodes account for 95\% of all
+calls. Sizes in core are larger than in packages. It is due to core 
 
 \begin{figure}[htbp]
 	\centering
@@ -862,7 +862,7 @@ interacts with \emph{scope}, or environments in R. In Javascript, \c{eval} can
 access the local scope and the global scope. In R, \c{eval} has an argument
 \c{envir} to indicate in which environment its first argument must be evaluated.
 By default, it is equal to \c{parent.frame()}, 
-which is the parent environment of \c{eval} call.This default argument
+which is the parent environment of \c{eval} call. This default argument
 happens in \DefaultEnvirExprPercent of the eval calls.
 
 This argument can also be \c{NULL}, a \c{List} or a data frame. This happens in
@@ -887,7 +887,7 @@ the $n$-th environment extended with a new environment. The new environment
 provides a limited form of sandboxing. All assignments using the \c{\<-}
 function occur inside it and prevent the extended environment from
 mutation. However, it is still possible to mutate the extended environment
-using the \c{\<\<-} function; but, that happens rarely.
+using the \c{\<\<-} or \c{assign} functions; but, that happens rarely.
 
 \begin{table}[htbp]
     \centering
@@ -1035,16 +1035,16 @@ We have grouped those uses in the following categories.
 \subsection{Consistency}
 
 
-We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie
-how many different types of the resolved \c{expr} there are per call sites,
-in Figure~\ref{fig:polymorphism}. Most of the call sites, \ie \PercentMonomorphic,  are
-\emph{consistent}. However, a few ones are \emph{polymorphic}, such as:
 
-\begin{figure}[!h]
-	\centering
-    \includegraphics[width=\columnwidth]{polymorphism}
-    \caption{Number of different types  of \c{expr} per call sites.} \label{fig:polymorphism}
-\end{figure}
+We look at how \emph{consistent} the \c{expr} argument of \eval can be, \ie
+how many different types of the resolved \c{expr} there are per call sites. Most of the call sites, \ie \PercentMonomorphic,  are
+\emph{consistent}, and this is similar to javascript. However, a few ones are highly \emph{polymorphic} (10 different types). They are the  pipe  operators \c{\%>\%}, \c{\%<>\%} and \c{\%$\%} in package \emph{magrittr}. It is effectively used to compose functions on their first argument, which can be of any type.
+
+%\begin{figure}[!h]
+%	\centering
+%    \includegraphics[width=\columnwidth]{polymorphism}
+%    \caption{Number of different types  of \c{expr} per call sites.} \label{fig:polymorphism}
+%\end{figure}
 %
 %\subsection{base}
 %

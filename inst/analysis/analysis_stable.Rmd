@@ -11,7 +11,8 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: /home/pierre/Documents/Articles/ISCE2021
+  #base_dir: /home/pierre/Documents/Articles/ISCE2021
+  base_dir: /var/lib/R/project-evalR
 
 # This makes it possible to generate the html file in the html subfolder
 # knit: (function(inputFile, encoding) {
@@ -446,7 +447,8 @@ eval_calls %>% group_by(caller_package) %>% summarize(max_expr_size = max(expr_e
 #ast_sizes <- eval_calls %>% slice_sample(n=10000) %>% mutate(expr_resolved_nodes = map_int(expr_resolved, expr_size_str))
 # Now precomputed during the tracing
 ast_sizes <- read_fst(path(RUN_DIR, "package-evals-traced.3/summarized-ast-size.fst")) %>% as_tibble() %>% 
-      filter(eval_source_type != "<undefined>")
+      filter(eval_source_type != "<undefined>") %>% 
+      rename(dataset = eval_source_type)
 ```
 
 
@@ -473,9 +475,9 @@ ast_sizes <- read_fst(path(RUN_DIR, "package-evals-traced.3/summarized-ast-size.
 #   )
 
 ast_sizes %>%
-  ggplot(aes(x = eval_source_type, y = expr_resolved_nodes, fill = eval_source_type, weight = nb_ev_calls), na.rm = TRUE) +
+  ggplot(aes(x = dataset, y = expr_resolved_nodes, fill = dataset, weight = nb_ev_calls), na.rm = TRUE) +
   geom_violin(trim = FALSE, width=.5)+
-  geom_boxplot(width=.05) +
+  geom_boxplot(data = slice_sample(ast_sizes, n = 100000), width=.03) + # too slow otherwise
   scale_y_log10(labels = scales::comma) +
   labs(y="AST size (log)") +
   theme(
@@ -796,8 +798,14 @@ ggsave(path(PLOT_DIR, "polymorphism.pdf"))
 
 `r nb_monomorphic` call sites are not polymorphic, which represents `r nb_monomorphic / nb_call_sites * 100`% of the call sites.
 
+The maximum number of types is `r max(expr_resolved_polymorphism$polym_degree)`.
+
 ```{r}
-eval_calls %>% semi_join(expr_resolved_polymorphism %>% filter(polym_degree == max(polym_degree)), by ="eval_call_srcref")
+highly_polymorphic <- eval_calls %>% semi_join(expr_resolved_polymorphism %>% filter(polym_degree == max(polym_degree)), by ="eval_call_srcref")
+```
+
+```{r}
+highly_polymorphic %>% count(caller_function, wt = nb_ev_calls, sort = TRUE)
 ```
 
 
