@@ -977,11 +977,11 @@ h2 <- function(x, y)
 
 The JavaScript paper identified a number of frequently occurring \eval patterns
 which were detected using simple regular expressions on the \eval strings. In
-the case of R we match the patterns on the recorded AST.
+the case of R, we match the patterns on the resolved AST.
 
 Table~\ref{table:js-pattens-in-r} shows the ratio of \eval in each of these
 patterns. We included all the original patterns except for \emph{JSON} as R uses
-its own serialization format and \emph{empty} as there were no empty expression
+its own serialization format and for \emph{empty} as there were no empty expression
 passed to \eval:
 
 \begin{table}[ht]%\resizebox{\columnwidth}{!}{%
@@ -1010,7 +1010,7 @@ Library pattern come mostly from file sourcing functions (\ie \c{source} and \c{
 %
 \noindent \emph{Read} pattern in JavaScript represented mostly an incorrect
 access to an object's property or local variable both replaceable by JavaScript
-core functions. In the case of R there are \PatternReadRnd \eval calls
+core functions. In the case of R there are \PatternReadRnd read \eval calls
 (\PatternReadRatio). They come from calls like \c{subset(airquality, select =
   Temp)} where the variable \c{Temp} will be evaluated in the \c{airquality}
 data frame.
@@ -1049,7 +1049,7 @@ which can return the current call. This is heavily used by the statistical
 model-fitting functions that records the current call that is then reevaluated
 in the different environment. Another pattern is to match the current call,
 adjust some arguments and pass it to another function. For example the
-\c{write.csv} function changes the \c{sep} argument in the matched call and reevaluate itself as \c{write.table}:
+\c{write.csv} function changes the \c{sep} argument in the matched call and reevaluates itself as \c{write.table}:
 %
 \begin{lstlisting}
     Call <- match.call(expand.dots = TRUE)
