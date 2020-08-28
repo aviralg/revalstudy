@@ -45,98 +45,32 @@ create_tags(path(TAGS_DIR, "corpus.tex"), prefix="Corpus", default=TRUE)
 ## Load data
 
 ```{r load corpus}
+evals_dynamic <- read_fst(PACKAGE_EVALS_DYNAMIC_FILE) %>% as_tibble() %>% rename(evals_dyn=n)
+
 corpus <- 
   read_fst(CORPUS_DETAILS_FILE) %>%
   as_tibble() %>%
+  left_join(evals_dynamic, by="package") %>%
   mutate_at(
     vars(
       starts_with("runnable_code"),
       starts_with("runnable_files"),
       starts_with("package_"),
       starts_with("funs_"),
-      "evals"
+      "evals",
+      "evals_dyn"
     ), 
     replace_na, 
     0
   )
 ```
 
-```{r load kaggle}
-kaggle_dependencies <- tibble(package=read_lines(KAGGLE_DEPENDENCIES_FILE))
-kaggle_kernels <- as_tibble(read_fst(KAGGLE_KERNELS_FILE))
-kaggle_log <- as_tibble(read_fst(KAGGLE_LOG_FILE)) %>%
-  transmute(
-    id=str_replace(Command, ".*/kaggle-run/[^/]+/([^/]+)/.*", "\\1"),
-    exitval=Exitval,
-    runtime=as.duration(JobRuntime)
-  )
-
-kaggle <- left_join(
-  kaggle_kernels,
-  kaggle_log,
-  by="id"
-)
-```
-
-```{r load runnable code metadata}
-runnable_code_metadata <- read_fst(PACKAGE_RUNNABLE_CODE_FILE) %>%
-  as_tibble() %>%
-  mutate(package=basename(package)) %>%
-  select(package, file=filename, code)
-
-# TODO semi_join with traced-programs.fst
-```
-
-```{r load run metadata}
-runs <- read_fst(PACKAGE_RUNS_FILE) %>%
-  as_tibble() %>%
-  mutate(
-    package=basename(package),
-    file=as.character(path("./", basename(dirname(file)), basename(file)))
-  ) %>%
-  semi_join(corpus, by="package")
-```
-
-
 ## CRAN packages
 
-```{r compute corpus programs}
-corpus_programs <-
-  left_join(
-    filter(runs, exitval==0) %>% select(package, file, time), 
-    runnable_code_metadata %>% select(package, file, code),
-    by=c("package", "file")
-  ) %>%
-  transmute(
-    package,
-    file,
-    type=basename(dirname(file)),
-    code, 
-    runtime=time
-  )
-```
-
-There will be some programs that were not strictly part of examples, tests or vignettes, or they do not have
-counts for code size or for execution time.
-
-```{r compute program inconsistencies}
-corpus_programs_inconsistent <-
-  corpus_programs %>%
-  filter(
-    !(type %in% c("examples", "tests", "vignettes")) |
-    is.na(code) | 
-    is.na(runtime) |
-    code == 0
-  )
-
-corpus_programs_inconsistent %>% 
-    my_datatable()
-```
-
-Since, there are just a few of them, we ignore them.
-
 ```{r filter out inconsistent programs}
-corpus_programs <- anti_join(corpus_programs, corpus_programs_inconsistent, by=c("package", "file"))
+corpus_programs <-
+  read_fst(CRAN_PROGRAMS_FILE) %>%
+  as_tibble()
 ```
 
 ```{r summary}
@@ -144,25 +78,15 @@ runnable_code <-
   corpus_programs %>%
   mutate(files=1) %>%
   pivot_wider(names_from=type, values_from=c(files, code)) %>%
-  select(-file) %>%
+  select(-file, -runtime, -error, -success, -corpus) %>%
   group_by(package) %>%
   summarise_all(sum, na.rm=TRUE) %>%
   group_by(package) %>%
   mutate(
-    files=files_examples + files_tests + files_vignettes,
-    code=code_examples + code_tests + code_vignettes
-  )
-
-rs <- function(name, value) {
-  stopifnot(is.numeric(value))
-  bind_rows(
-    r(name, sum(value)),
-    r(paste(name, "mean"), mean(value)),
-    r(paste(name, "median"), median(value)),
-    r(paste(name, "min"), min(value)),
-    r(paste(name, "max"), max(value))
-  )
-}
+    files=files_examples + files_vignettes,
+    code=code_examples + code_vignettes
+  ) %>%
+  ungroup()
 
 corpus_program_examples <- filter(corpus_programs, type=="examples")
 corpus_programs_tests <- filter(corpus_programs, type=="tests")
@@ -175,20 +99,13 @@ overview_table(
   
   rs("package programs",         runnable_code$files),
   rs("package programs code",    runnable_code$code),
-  rs("package programs runtime", as.duration(runnable_code$runtime)),
-  
+
   rs("examples programs",  runnable_code$files_examples),
-  rs("tests programs",     runnable_code$files_tests),
   rs("vignettes programs", runnable_code$files_vignettes),
   
   rs("examples code",  corpus_program_examples$code),
-  rs("tests code",     corpus_programs_tests$code),
   rs("vignettes code", corpus_programs_vignettes$code),
 
-  rs("examples runtime",  corpus_program_examples$runtime),
-  rs("tests runtime",     corpus_programs_tests$runtime),
-  rs("vignettes runtime", corpus_programs_vignettes$runtime),
-  
   r("mean expr coverage",   percent(mean(corpus$coverage_expr))),
   r("median expr coverage", percent(median(corpus$coverage_expr))),
   
@@ -233,7 +150,7 @@ size_bins_lasb  <- c("< 1000", "1,000 - 4,999", "5,000 - 9,999", "10,000 - 49,99
 
 corpus %>%
   mutate(
-    outlier=evals > PACKAGE_EVALS_OUTLIER,# | package_r_code > PACKAGE_SIZE_OUTLIER,
+    outlier=evals_dyn > PACKAGE_EVALS_DYN_OUTLIER,# | package_r_code > PACKAGE_SIZE_OUTLIER,
     label=ifelse(outlier, package, NA),
     code_size=cut(package_r_code, size_bins, labels=size_bins_lasb, include.lowest=TRUE)
   ) %>%
@@ -241,7 +158,7 @@ corpus %>%
     aes(
       x=coverage_expr, 
 #      y=funs_with_eval,
-      y=evals,
+      y=evals_dyn,
       label=label,
       size=code_size
     )
@@ -288,20 +205,19 @@ datatable(
 
 ## Kaggle
 
+```{r kaggle dependencies}
+kaggle_dependencies <- tibble(package=read_lines(KAGGLE_DEPENDENCIES_FILE))
+```
+
+
 ```{r compute kaggle programs}
+kaggle <- read_fst(KAGGLE_KERNELS_FILE) %>% as_tibble()
 kaggle_programs <-
-  kaggle %>%
-  filter(exitval==0) %>%
-  transmute(
-    id, 
-    code, 
-    runtime=as.numeric(runtime, units="seconds")
-  )
+  read_fst(KAGGLE_PROGRAMS_FILE) %>% as_tibble() %>% filter(success)
 ```
 
 ```{r kaggle summary}
 kaggle_code     <- kaggle_programs$code
-kaggle_runtime  <- kaggle_programs$runtime
 
 overview_table(
   r("kaggle",                 kaggle),
@@ -309,8 +225,7 @@ overview_table(
   r("runnable kaggle",        filter(kaggle, runnable)),
   r("finished kaggle",        kaggle_programs),
   r("failed kaggle",          nrow(filter(kaggle, runnable))-nrow(kaggle_programs)),
-  rs("finished kaggle code",   kaggle_code),
-  rs("kaggle runtime",         as.duration(kaggle_runtime)),
+  rs("finished kaggle code",  kaggle_code)
 )
 ```
 
@@ -323,8 +238,8 @@ setdiff(kaggle_dependencies$package, corpus$package)
 
 ```{r compute programs}
 programs <- bind_rows(
-  corpus_programs %>% mutate(corpus="packages") %>% select(code, runtime, corpus),
-  kaggle_programs %>% mutate(corpus="kaggle") %>% select(code, runtime, corpus)
+  corpus_programs %>% select(code, runtime, corpus),
+  kaggle_programs %>% select(code, runtime, corpus)
 )
 ```
 
