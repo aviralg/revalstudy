@@ -183,10 +183,37 @@ undefined_per_package <- bind_rows(undefined_per_package, known_packages) %>% ar
 ```
 
 
+# Known call sites per packages
+
+```{r defined_call_sites}
+call_sites_per_package <- eval_calls_corpus %>% 
+    filter(eval_source_type == "package", eval_source %in% corpus_files) %>%
+    group_by(eval_source) %>%
+    summarize(n = n_distinct(eval_call_srcref)) 
+
+known_packages <- setdiff(corpus_files, call_sites_per_package$eval_source) %>% as_tibble_col(column_name = "eval_source")
+
+known_packages <- known_packages %>% mutate(n = 0)
+    
+call_sites_per_package <- bind_rows(call_sites_per_package, known_packages) %>%
+  rename(package = eval_source) %>% 
+  arrange(desc(n))
+
+write_fst(call_sites_per_package, PACKAGE_EVALS_DYNAMIC_FILE)
+
+```
+
+
+```{r}
+max_call_sites <- max(call_sites_per_package$n)
+r("max call sites enrich")
+```
+
+
 # Write
 
 ```{r write_back}
-write_fst(undefined_per_package, PACKAGE_EVALS_DYNAMIC_FILE)
+write_fst(undefined_per_package, PACKAGE_EVALS_UNDEFINED_FILE)
 
 write_fst(eval_calls, EVALS_RAW_FILE)
 
