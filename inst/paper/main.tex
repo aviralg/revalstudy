@@ -9,7 +9,7 @@
 \newcommand{\missingTag}[1]{\textcolor{red}{#1}\xspace}
 \newcommand{\missingNumber}{\textcolor{red}{XX}\xspace}
 \newcommand{\missingPercentage}{\textcolor{red}{XX\%}\xspace}
-\newcommand{\missingTable}{\textcolor{red}{XXTable}\xspace}
+\newcommand{\missingTable}[1][XX]{\textcolor{red}{Table #1}\xspace}
 \newcommand{\missingGraph}{\textcolor{red}{XXGraph}\xspace}
 \usepackage[usenames,dvipsnames]{xcolor}
 \usepackage{paralist}
@@ -946,6 +946,8 @@ access the bindings.
 %%\end{lstlisting}
 %%
 %%
+%% \end{lstlisting}
+%%$ <- to fix emacs fontification issues
 
 The \c{imchange} function of package \c{imager} makes it possible to modify images using a dedicated formula syntax using \c{\~}.\footnote{Inspired by \c{map} in package \emph{purr}.}  Here, \eval is evaluated in \c{newenv}, which creates a new environment that inherits from \c{parent.frame()} by default (classified as 1+).
 
@@ -973,11 +975,16 @@ h2 <- function(x, y)
 
 \subsection{Patterns}
 
-This section presents the common patterns of \eval usage in our corpus. We
-randomly selected 20 packages from the corpus and studied how they use eval.
-We have grouped those uses in the following categories.
+The JavaScript paper identified a number of frequently occurring eval
+patterns. The patterns were detected using simple regular expressions on the
+string passed to \eval. In the case of R look at the AST passed to evals.
 
-  \subsubsection{Evaluation using Data Fields} A common use of \eval is to
+\missingTable[JS evals in R]
+
+For the rest of this section we show some of the common use of \eval in R that
+we have seen by looking at 20 randomly selected packages:
+
+\subsubsection{Evaluation using Data Fields} A common use of \eval is to
   evaluate expressions that access data frame columns or list (heterogeneous
   vectors) elements by name. Core R provides two functions, \c{with} and
   \c{within} that implement this pattern. These functions construct a temporary
@@ -1024,13 +1031,16 @@ We have grouped those uses in the following categories.
   creates a namespace object and injects the package bindings.
 
   \subsubsection{Miscellaneous} \eval is also used in R packages to get around
-  various limitations. For example, in \datatable package, \eval is used to modify
-  a binding in the \base package of R. Bindings in the \base package are locked
-  for modification and require explicit unlocking using \unlockBinding function.
-  However, directly using this function triggers a warning during package building
-  process which statically analyzes the package for use of such restricted
-  functions. The \datatable gets around this limitation by enclosing the call to
-  \unlockBinding inside \eval.
+  various limitations. For example, in \datatable package, \eval is used to
+  modify a binding in the \base package of R. Bindings in the \base package are
+  locked for modification and require explicit unlocking using \unlockBinding
+  function. However, directly using this function triggers a
+  restricted-function-use warning during package build, preventing the package
+  to be accepted by CRAN. The \datatable gets around this limitation by
+  enclosing the call to \unlockBinding inside \eval. From the same reason, other
+  packages use \eval to access private variables and functions from their
+  dependencies.
+  % \AllValueInputEvalCallPerc migth hit on a wong usage
 
 \subsection{Consistency}
 
