@@ -68,23 +68,23 @@
 \newcommand{\summary}[1]{{\csname #1\endcsname} ({\csname #1Min\endcsname} / {\csname #1Mean\endcsname} / {\csname #1Max\endcsname})}
 \newcommand{\summaryrnd}[1]{{\csname #1Rnd\endcsname} ({\csname #1MinRnd\endcsname} / {\csname #1MeanRnd\endcsname} / {\csname #1MaxRnd\endcsname})}
 
-\newcommand{\eval}{\c{eval}\xspace}
-\newcommand{\parse}{\c{parse}\xspace}
-\newcommand{\source}{\c{source}\xspace}
-\newcommand{\local}{\c{local}\xspace}
-\newcommand{\unlockBinding}{\c{unlockBinding}\xspace}
-\newcommand{\substitute}{\c{substitute}\xspace}
-\newcommand{\datatable}{\c{data.table}\xspace}
-\newcommand{\mlogit}{\c{mlogit}\xspace}
-\newcommand{\mboost}{\c{mboost}\xspace}
-\newcommand{\metafor}{\c{metafor}\xspace}
-\newcommand{\lavaan}{\c{lavaan}\xspace}
-\newcommand{\mclust}{\c{mclust}\xspace}
-\newcommand{\gamlss}{\c{gamlss}\xspace}
-\newcommand{\ggproto}{\c{ggproto}\xspace}
-\newcommand{\ggplot}{\c{ggplot2}\xspace}
+\newcommand{\eval}{\c{eval}}
+\newcommand{\parse}{\c{parse}}
+\newcommand{\source}{\c{source}}
+\newcommand{\local}{\c{local}}
+\newcommand{\unlockBinding}{\c{unlockBinding}}
+\newcommand{\substitute}{\c{substitute}}
+\newcommand{\datatable}{\c{data.table}}
+\newcommand{\mlogit}{\c{mlogit}}
+\newcommand{\mboost}{\c{mboost}}
+\newcommand{\metafor}{\c{metafor}}
+\newcommand{\lavaan}{\c{lavaan}}
+\newcommand{\mclust}{\c{mclust}}
+\newcommand{\gamlss}{\c{gamlss}}
+\newcommand{\ggproto}{\c{ggproto}}
+\newcommand{\ggplot}{\c{ggplot2}}
 
-\newcommand{\base}{\c{base}\xspace}
+\newcommand{\base}{\c{base}}
 \renewcommand{\c}[1]{\lstinline{#1}\xspace}
 \newcommand{\miss}[1]{{\textcolor{red}{#1}}\xspace}
 \newcommand{\evil}{\emph{evil}\xspace}
@@ -453,8 +453,8 @@ packages which should be better written and have better code coverage.  The
 resulting set contains \CorpusRCodeRnd lines of R code and
 \CorpusNativeCodeRnd lines of native code.\footnote{Excluding comments and
   blank lines using \url{github.com/AlDanial/cloc}.}  For each package we
-use its runnable code to compute the package code coverage\footnote{Computed
-  using \url{ https://github.com/r-lib/covr}}. On average, across the
+use its runnable code to compute the package code coverage.\footnote{Computed
+  using \url{ https://github.com/r-lib/covr}.} On average, across the
 \CorpusPackages packages, it is \CorpusMeanExprCoverage.
 Figure~\ref{fig:corpus} shows these packages, the size of the dots reflects
 the project's size in lines of code.  The x-axis indicates code coverage in
@@ -464,8 +464,8 @@ scale. Dotted lines indicate means. Packages with over
 
 All included packages come from the Comprehensive R Archive Network
 (CRAN\footnote{\url{http://cran.r-project.org}}), the largest repository of R
-code with over \CorpusAllCranRnd packages\footnote{CRAN receives about 6 new
-  package submissions a day~\cite{Ligges2017}}. Unlike other open code
+code with over \CorpusAllCranRnd packages.\footnote{CRAN receives about 6 new
+  package submissions a day~\cite{Ligges2017}.} Unlike other open code
 repositories such as GitHub, CRAN is a curated repository. Each submitted
 package must abide to a number of well-formedness rules that are automatically
 checked asserting certain quality. Most relevant for this work is that all of
@@ -491,7 +491,7 @@ vignettes.%%% with \summaryrnd{CorpusVignettesCode} lines of code.
 \subsection{Kaggle Scripts}
 
 To represent end-user code in the corpus, we turned to
-Kaggle\footnote{\url{https://www.kaggle.com}}, an online platform for
+Kaggle,\footnote{\url{https://www.kaggle.com}} an online platform for
 data-science and machine-learning. The website allow people to share
 data-science competitions, a data-analysis problem together with data, for
 which users try to find the best solution. The solutions, called {kernels},
@@ -513,96 +513,46 @@ to various runtime exceptions, common problems were parse errors and
 misspelled package names.  The final set contains \CorpusFinishedKaggle
 kernels with \summaryrnd{CorpusFinishedKaggleCode} lines of R code.
 
-
 \section{Usage Metrics}
 
 This section presents an overview of the usage of \eval in our corpus.
-Previous work reported that 82\% of JavaScript-enabled web pages used
+Richards et al. reported 82\% of JavaScript-enabled web pages using
 \eval~\cite{ecoop11}. The case for R is more striking with 100\% of the
-programs using that \eval.\footnote{In this section, we combine calls to
-  \c{eval}, \c{eval.parent}, \c{evalq} and \c{local}.}  This high number is
-explained by the fact that the R implementation, its core packages, use
-\eval extensively. In our analysis, we differentiate uses of \eval based on
-where they originate from. A {\bf core} \eval is one that occurs in the code
-of a core package.  A {\bf dependent} \eval is one that occurs in a package
-that was included by the target package. An {\bf own} \eval is one that
-occurs in the source code of the target package.
+programs call the \eval function.\footnote{We combine calls to \c{eval},
+  \c{eval.parent}, \c{evalq} and \c{local}.}  This high number is explained
+by the fact that the R implementation, its core packages, use \eval
+extensively. We differentiate uses based on their origin. A {\bf core} \eval
+is one that occurs in the code of a core package.  A {\bf dependent} \eval
+occurs in a package imported by the target package. An {\bf own} \eval is
+one that occurs in the source code of the target package.
 
-Over all, we observed \AllAllCallCountRnd calls to \eval in the
-\CorpusAllProgramsRnd programs in our corpus.  Table~\ref{A} details this
-run-time information. The format is T (m/M/x) where T is the total number of
-calls observed for all runs of the corpus, m and x are the minimum and
-maximum number of calls for any given run, and M is the mean number of calls
-per run. We can observe that an average run of CRAN package will trigger 581
-{\eval}s in core package, 532 in dependent packages and 292 in the package
-itself.  The Kaggle data set has small programs, and, these programs only
+Over all, we observe \AllAllCallCountRnd calls to \eval in our corpus.
+Table~\ref{A} details this run-time information. The format is T (m/M/x)
+where T is the total number of calls observed for all runs of the corpus, m
+and x are the minimum and maximum number of calls for any given run, and M
+is the mean number of calls per run. An average CRAN package run triggers
+581 {\eval} calls in core package, 532 in dependent packages and 292 in the
+CRAN package itself.  The Kaggle data set has small programs which only
 trigger \eval in core and dependent packages. Thus, an average Kaggle run
 has 412 core calls, 96 dependent calls, and no own calls.
 
- \begin{table*}[tb]
-   \centering
-   \begin{tabular}{r|c|c|c@{}} \hline
-     Corpus / Source & Core                              & Dependent                              & Own \\\hline
-     CRAN   & \summaryrnd{CranCoreEvalCalls}    & \summaryrnd{CranDependentEvalCalls}    & \summaryrnd{CranOwnEvalCalls} \\
-     Kaggle & \summaryrnd{KaggleCoreEvalCalls}  & \summaryrnd{KaggleDependentEvalCalls}  & \summaryrnd{KaggleOwnEvalCalls} \\\hline
-   \end{tabular}
-   \caption{Eval calls in CRAN and Kaggle}
-   \label{A}
- \end{table*}
+%% SORRY  I HAD TO REFORMAT
+\begin{table}[tb] \centering
+ \begin{tabular}{r|c|c|c} \hline
+Source & Core    & Dependent                      & Own \\\hline
+CRAN   & 5.6M &  867K    & 259K \\
+       & (1 / 337 / 46K)& (0 / 52 / 58K ) & (0 / 15 / 15K) \\\hline
+Kaggle &  1.2M &  470K   & 0\\
+ &  (0 / 721 / 18K) & (0 / 290 / 20K) & (0 / 0 / 0)\\\hline
+\end{tabular}\caption{Eval calls in CRAN and Kaggle}\label{A}\end{table}
 
-
-
-%% The following table will be replaced. {\bf <At this point separating between
-%%   the different kinds of evals is distracting. We have not argued why it is
-%%   important.>}
-
-%% \begin{table}[ht]\resizebox{\columnwidth}{!}{\begin{tabular}{l|rr|r||rr|r}\hline
-%% \multicolumn{1}{c}{Function}& \multicolumn{3}{c}{Calls} & \multicolumn{3}{c}{Callsites}\\
-%% \cline{1-1} \cline{2-4} \cline{5-7}
-%% & Core & Packages & Total & Core & Packages & Total\\\hline
-%% \c{eval} & \CoreEvalCallCountRnd & \PackageEvalCallCountRnd  & \AllEvalCallCountRnd & \CoreEvalSiteCountRnd & \PackageEvalSiteCountRnd &  \AllEvalSiteCountRnd\\
-%% \c{eval.parent} & \CoreEvalParentCallCountRnd & \PackageEvalParentCallCountRnd  & \AllEvalParentCallCountRnd & \CoreEvalParentSiteCountRnd & \PackageEvalParentSiteCountRnd & \AllEvalParentSiteCountRnd\\
-%% \c{evalq} & \CoreEvalqCallCountRnd & \PackageEvalqCallCountRnd  & \AllEvalqCallCountRnd & \CoreEvalqSiteCountRnd & \PackageEvalqSiteCountRnd & \AllEvalqSiteCountRnd \\
-%% \c{local} & \CoreLocalCallCountRnd & \PackageLocalCallCountRnd  & \AllLocalCallCountRnd & \CoreLocalSiteCountRnd & \PackageLocalSiteCountRnd & \AllLocalSiteCountRnd \\\hline
-%% Total & \CoreAllCallCountRnd & \PackageAllCallCountRnd  & \AllAllCallCountRnd & \CoreAllSiteCountRnd & \PackageAllSiteCountRnd & \AllAllSiteCountRnd \\  \hline
-%% \end{tabular} } \label{table:eval-count-summary}
-%%  \caption{Distribution of eval calls and callsites in the corpus}
-%% \end{table}
-
-%% \ref{table:top-ten-package-summary} shows the number of calls to eval
-%% made by the ten most frequent callers to eval. These packages together have
-%% \missingNumber callsites and account for \missingPercentage calls to eval.
-%% Furthermore, the top ten callsites account for \missingPercentage of package
-%% eval calls. A single callsite of \TopTenPackageNameA accounts for over
-%% \missingPercentage calls to eval.
-
-%% \begin{table}[ht]
-%%   \resizebox{\columnwidth}{!}{%
-%%     \begin{tabular}{l|rrr||l|rrr}
-%%       \hline
-%%       \multicolumn{4}{c}{}& \multicolumn{4}{c}{} \\
-%%       \cline{1-4} \cline{5-8}
-%%       Package & Callsites & Calls & Calls \% & Package & Callsites & Calls & Calls \%\\
-%%       \hline
-%%       \TopTenPackageNameA & \TopTenPackageCallsiteCountA & \TopTenPackageCallCountA &\TopTenPackageCallPercA & \TopTenPackageNameF & \TopTenPackageCallsiteCountF & \TopTenPackageCallCountF & \TopTenPackageCallPercF \\
-%%       \TopTenPackageNameB & \TopTenPackageCallsiteCountB & \TopTenPackageCallCountB &\TopTenPackageCallPercB & \TopTenPackageNameG & \TopTenPackageCallsiteCountG & \TopTenPackageCallCountG & \TopTenPackageCallPercG \\
-%%       \TopTenPackageNameC & \TopTenPackageCallsiteCountC & \TopTenPackageCallCountC &\TopTenPackageCallPercC & \TopTenPackageNameH & \TopTenPackageCallsiteCountH & \TopTenPackageCallCountH & \TopTenPackageCallPercH \\
-%%       \TopTenPackageNameD & \TopTenPackageCallsiteCountD & \TopTenPackageCallCountD &\TopTenPackageCallPercD & \TopTenPackageNameI & \TopTenPackageCallsiteCountI & \TopTenPackageCallCountI & \TopTenPackageCallPercI \\
-%%       \TopTenPackageNameE & \TopTenPackageCallsiteCountE & \TopTenPackageCallCountE &\TopTenPackageCallPercE & \TopTenPackageNameJ & \TopTenPackageCallsiteCountJ & \TopTenPackageCallCountJ & \TopTenPackageCallPercJ \\
-%%       \hline
-%%     \end{tabular}
-%%   }
-%%   \label{table:top-ten-package-summary}
-%%   \caption{Distribution of eval calls and callsites in the top ten packages}
-%% \end{table}
-
-
-Table \ref{table:site-package-summary} shows the results of static analysis
-for the CRAN packages in our corpus. 89 packages have a single call site,
-and one package has \miss{252} call sites of \eval. \miss{XXX} packages have
-no calls to \eval. The core packages have \miss{41} callsites of eval and
-Kaggle has none. These static numbers are under approximations as \eval may
-be called reflectively, through aliases, or passed to a higher-order function.
+Table~\ref{table:site-package-summary} shows the number of call sites in
+CRAN packages. 61 packages have a single call site, and one package has 142
+call sites of \eval. 60 packages have no calls to \eval. The core packages
+%%%% FIX THESE NUMBERS
+have \miss{41} callsites of eval and Kaggle has none. These numbers are
+under approximations as \eval may be called reflectively, through aliases,
+or passed to a higher-order function.
 
 \begin{table}[ht]\resizebox{\columnwidth}{!}{%
 \begin{tabular}{rr|rr|rr}\hline
@@ -613,19 +563,52 @@ be called reflectively, through aliases, or passed to a higher-order function.
 \label{table:site-package-summary}
 \end{table}
 
-To roughly estimate the complexity of the code being evaluated,
-Fig.~\ref{fig:ast-size} shows the distribution of the abstract syntax tree
-size of the \c{expr} argument to \eval. The majority of inputs across core
-and packages (\NbAstOnePercent of \eval calls and \NbAstOneCallSitePercent of call sites) have size 1. That is to say, the code being evaluated
-consists of a single variable name or constant. A function call needs at
-least three nodes and a list such as \c{c(1, 2, 3)} counts for 4 nodes. Inputs smaller than \AstSizeNineFive nodes account for 95\% of all
-calls. Sizes in core are larger than in packages. Most large AST originate from library \emph{VGAM}, which is used for statistical modelling. It uses \eval to evaluate large matrices with values in a given environment.  
-
-\begin{figure}[htbp]
+\begin{figure}[!b]
 	\centering
 \includegraphics[width=\columnwidth]{ast_sizes}
 \caption{Input sizes} \label{fig:ast-size}
 \end{figure}
+
+To roughly estimate the complexity of the code being evaluated,
+Fig.~\ref{fig:ast-size} shows the distribution of the abstract syntax tree
+size of the \c{expr} argument to \eval. The majority of inputs across core
+and packages (\NbAstOnePercent of \eval calls and \NbAstOneCallSitePercent
+of call sites) have size 1. That is to say, the code being evaluated
+consists of a single variable name or constant. A function call needs at
+least three nodes and a list such as \c{c(1, 2, 3)} counts for 4
+nodes. Inputs smaller than \AstSizeNineFive nodes account for 95\% of all
+calls. Sizes in core are larger than in packages. Most large AST originate
+from library \c{VGAM}, which is used for statistical modelling. It uses
+\eval to evaluate large matrices with values in a given environment.
+
+We compare the number of events intercepted during execution of \eval across
+the whole corpus. For this, we use the number of interpreter steps as a
+proxy for events. We observe \AllEventCountRnd events all told, and
+\EvalEventCountRnd events occur inside eval (\EvalEventAllPerc of all
+events). Table~\ref{table:event-distribution} shows the distribution of
+events caused by \eval calls.
+
+\begin{table}[ht]\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lll}\hline
+Events & Core Eval Call \% & Package Eval Call \% \\ \hline
+\EventsMinRangeA--\EventsMaxRangeA & \EventsCoreEvalPercA & \EventsPackageEvalPercA \\
+\EventsMinRangeB--\EventsMaxRangeB & \EventsCoreEvalPercB & \EventsPackageEvalPercB \\
+\EventsMinRangeC+ & \EventsCoreEvalPercC & \EventsPackageEvalPercC \\ \hline
+\end{tabular}} \label{table:event-distribution}
+  \caption{Events in \eval calls}
+\end{table}
+
+We observe a very wide spread in the number of events generated by \eval
+calls. The largest number of events generated by an \eval call is
+\EventsMaxCount.  However majority of \eval calls perform up to
+\EventsMaxRangeA events suggesting that most expressions passed to \eval are
+small.  It is interesting to note that a higher proportion of Core R \eval
+calls perform side effects in the \EventsMinRangeB--\EventsMaxRangeB range.
+Only \EventsCoreEvalCountC Core R \eval calls and \EventsPackageEvalCountC
+package \eval call generate \EventsMinRangeC to \EventsMaxRangeC events.
+These \eval calls originate from statistical modeling packages such as
+\mlogit, \mboost, \metafor, \lavaan, \mclust and \gamlss.
+
 
 \medskip\noindent\emph{Discussion:} Comparing the use of \eval in R and
 JavaScript is instructive. The use of \eval is more widespread in data
@@ -639,33 +622,6 @@ was not observed in the JavaScript community, but this may have changed with
 the advent of Node.js ecosystem.  The distribution of input sizes is similar
 to that found in JavaScript, the majority of inputs being rather small.
 
-We compare the number of events intercepted during execution of \eval across the
-whole corpus. For this, we use the number of interpreter's evaluator loops as a
-proxy for events. In the corpus, we observe \AllEventCountRnd events. Only
-\EvalEventCountRnd events occur inside eval. This is just \EvalEventAllPerc of
-all events. Table~\ref{table:event-distribution} shows the distribution of events
-caused by \eval calls from R Core and CRAN packages.
-
-\begin{table}[ht]\resizebox{\columnwidth}{!}{%
-\begin{tabular}{lll}\hline
-Events & Core Eval Call \% & Package Eval Call \% \\ \hline
-\EventsMinRangeA--\EventsMaxRangeA & \EventsCoreEvalPercA & \EventsPackageEvalPercA \\
-\EventsMinRangeB--\EventsMaxRangeB & \EventsCoreEvalPercB & \EventsPackageEvalPercB \\
-\EventsMinRangeC--\EventsMaxRangeC & \EventsCoreEvalPercC & \EventsPackageEvalPercC \\ \hline
-\end{tabular}} \label{table:event-distribution}
-\caption{Distribution of events in \eval calls across Core and Package}
-\end{table}
-
-We observe a very wide spread in the number of events generated by \eval
-calls. The largest number of events generated by an \eval call is \EventsMaxCount.
-However majority of \eval calls perform up to \EventsMaxRangeA events suggesting
-that most expressions passed to \eval are small.
-It is interesting to note that a higher proportion of Core R \eval calls perform
-side effects in the \EventsMinRangeB--\EventsMaxRangeB range.
-Only \EventsCoreEvalCountC Core R \eval calls and \EventsPackageEvalCountC
-package \eval call generate \EventsMinRangeC to \EventsMaxRangeC events.
-These \eval calls originate from statistical modeling packages such as \mlogit,
-\mboost, \metafor, \lavaan, \mclust and \gamlss.
 
 \section{A taxonomy of eval}
 
