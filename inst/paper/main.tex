@@ -261,7 +261,32 @@ code~\cite{oopsla12b}.  The limitation of that work are that there was no
 measure of code coverage, so the numbers presented can be a lower bound on
 the possible behaviors.  Furthermore in 2011, JavaScript usage is quite
 different from today. Their work captured very few libraries and none of the
-more recent Node.js ecosystem.
+more recent Node.js ecosystem.  More details about dynamic analysis of
+JavaScript can be found in~\cite{liang}.
+
+Wang et al.~\cite{wang} analyzed usage of dynamic features in 18 Python
+programs include dynamic code generation to find if they affects file
+change-proneness.  They reported that files with dynamic features are
+significantly more likely to be the subject of changes, than other files.
+Chen et al. looked at the correlation between code changes and dynamic
+features, including \eval, in 17 Python programs~\cite{chen}. They did not
+observe many uses of \eval.  Callau et al. performed an empirical study of
+the usage of dynamic features in the 1,000 largest Smalltalk projects in the
+Squeaksource repository, accounting for more than 4 million lines of
+code~\cite{oscar}. While \eval itself is not present, Smalltalk has a rich
+reflective interface that gives programmer great flexibility. Their work was
+based on a static analysis.
+
+Morandat et al.~\cite{ecoop12} had a short section on the usage of \eval in
+R. They found the \eval function to be widely used in R code with 8500 call
+sites in CRAN and 2.2 million dynamic calls. The 15 most frequent call sites
+account for 88\% of eval. The \c{match.arg} function is the highest user
+with 54\% of all calls. In the other call sites, they saw two uses
+cases. The most common is the evaluation of the source code of a promise
+retrieved by \c{substitute} in a new environment. This is done in the
+\c{with} function. The other use case is the invocation of a function whose
+name or arguments are determined dynamically. For this purpose, R provides
+\c{do.call} and thus using \eval is overkill.
 
 \section{The Design of Eval}
 
@@ -311,6 +336,7 @@ The \c{expr} argument of \eval is first evaluated in the current scope, then pas
 \end{lstlisting}
 
 \eval will return unchanged basic types such as vectors, functions, strings and environments. Promises are forced by \eval. Symbols are looked up in the current environment. Calls and expressions are evaluated. 
+
 
 \begin{lstlisting}
 > eval(2)
