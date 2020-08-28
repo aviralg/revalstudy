@@ -18,6 +18,7 @@
 \input{tag/counts.tex}
 \input{tag/corpus.tex}
 \input{tag/side-effects.tex}
+\input{tag/operations.tex}
 \input{tag/events.tex}
 \input{tag/analysisStable.tex}
 \input{tag/enrichDataset.tex}
@@ -79,6 +80,8 @@
 \newcommand{\lavaan}{\texttt{lavaan}\xspace}
 \newcommand{\mclust}{\texttt{mclust}\xspace}
 \newcommand{\gamlss}{\texttt{gamlss}\xspace}
+\newcommand{\ggproto}{\texttt{ggproto}\xspace}
+\newcommand{\ggplot}{\texttt{ggplot2}\xspace}
 
 \newcommand{\base}{\texttt{base}\xspace}
 \renewcommand{\c}[1]{\lstinline{#1}\xspace}
@@ -598,28 +601,73 @@ These \eval calls originate from statistical modeling packages such as \mlogit,
 
 \section{A taxonomy of eval}
 
-We first classify \c{eval} depending on the resolved expression, \emph{i.e.}
-the first argument of \c{eval} after all possible function calls and symbol
-resolution in it have been executed.
+
 
 \subsection{Operation Mix}
 
-##Unlike Javascript, R packages also call native code for access to efficient
-##numerical and statistical routines. We intercept all calls to R functions and
-##native functions from the programs and \eval calls. In the whole corpus there
-##are \AllClosureCallCount calls to R functions and \AllNativeCallCount to native
-##code. Of those, \eval contribute to only \EvalClosureCallCount calls to R
-##functions and \EvalNativeCallCount to native code.
-##
-##\begin{table}[ht]\resizebox{\columnwidth}{!}{%
-##    \begin{tabular}{lll}\hline
-##      Source & Primitive Functions & R Functions & Native Functions \\ \hline
-##      Core & \CorePrimitiveFunctionCount & \CoreRFunctionCount & \CoreNativeFunctionCount \\
-##      CRAN & \PackagePrimitiveFunctionCount & \PackageRFunctionCount & \PackageNativeFunctionCount \\
-##      All  & \AllPrimitiveFunctionCount & \AllRFunctionCount & \AllNativeFunctionCount \\
-##    \end{tabular}} \label{table:operation-distribution}
-##  \caption{Distribution of operation calls to \eval calls across Core and Package}
-##\end{table}
+In this section we turn our attention to the expression passed for evaluation to
+\eval. \eval accepts all types of R objects as inputs. In our corpus, we observe
+that \AllValueInputEvalCallPerc of all inputs to \eval are values, i.e., they evaluate to
+themselves. The remaining \AllExpressionInputEvalCallPerc inputs are expressions
+which are reduced to values by \eval.
+% Furthermore, the proportion of values
+% passed to core \eval call is \CoreEvalValueInputPerc compared to a significantly
+% higher \PackageEvalValueInputPerc for package \eval calls.
+To investigate this, we look at the type of expressions accepted by \eval
+callsites in our corpus. We find that only \AllExpressionInputEvalSitePerc call
+sites exclusively receive expressions as arguments across all program runs. The
+remaining \AllPolymorphicInputEvalSitePerc call sites don't always accept expressions
+as inputs. The top three of these call sites contribute to over
+~80\% of all calls to evals. The first one is inside \c{match.arg} from core.
+Given a vector of names as strings, this function finds the default values for
+parameters with those names in the caller function. Since the default value for
+a function parameter can be a complex expression or a benign value such as
+\c{NULL}, \c{match.arg} evaluates it through a call to \eval. This makes the
+\eval inside \c{match.arg} ``polymorhpic''. The second such \eval call
+originates from the popular \ggplot package of R which is a DSL for plotting.
+\ggplot has it's own object system, \ggproto, which uses \eval inside the
+\ggproto function to determine the super-class from which it inherits. The
+default value of the superclass is \c{NULL} but in general could be an
+arbitrarily complex expression. The third \eval call is in core R \c{str}
+function. This function is used to print a summary of R objects. It internally
+maps \eval function on the bindings of an environment which results in inputs of
+multiples types being passed to \eval.
+
+
+%%We further investigate the type of input passed to \eval in
+%%Figure~\cite{fig:eval-expr-type} by the type of input and
+%%the source of \eval. In this figure, \emph{Expression} is the type of program text,
+%%\emph{Environmment} is the type of scopes or environments used for binding,
+%%\emph{Null} is the type of the unique \c{NULL} object, \emph{Vector} is the type
+%%assigned to vectors of strings, booleans, integers, reals and bytes;
+%%\emph{Symbol} is the type of unevaluated symbols, and \emph{Function} is the
+%%type of functions.
+%%
+%%
+%%From the figure, we observe that majority of inputs to Core \eval functions are
+%%expressions in contrast to package \eval calls which receive mostly environments
+%%as inputs. In fact, \PackageEnvironmentEvalPerc of inputs to package evals are
+%%environments.
+%%
+%%Now, we turn our attention to the expressions passed as input to \eval.
+
+
+%%Unlike Javascript, R packages also call native code for access to efficient
+%%numerical and statistical routines. We intercept all calls to R functions and
+%%native functions from the programs and \eval calls. In the whole corpus there
+%%are \AllClosureCallCount calls to R functions and \AllNativeCallCount to native
+%%code. Of those, \eval contribute to only \EvalClosureCallCount calls to R
+%%functions and \EvalNativeCallCount to native code.
+%%
+%%\begin{table}[ht]\resizebox{\columnwidth}{!}{%
+%%    \begin{tabular}{lll}\hline
+%%      Source & Primitive Functions & R Functions & Native Functions \\ \hline
+%%      Core & \CorePrimitiveFunctionCount & \CoreRFunctionCount & \CoreNativeFunctionCount \\
+%%      CRAN & \PackagePrimitiveFunctionCount & \PackageRFunctionCount & \PackageNativeFunctionCount \\
+%%      All  & \AllPrimitiveFunctionCount & \AllRFunctionCount & \AllNativeFunctionCount \\
+%%    \end{tabular}} \label{table:operation-distribution}
+%%  \caption{Distribution of operation calls to \eval calls across Core and Package}
+%%\end{table}
 
 \subsection{Side-Effects}
 

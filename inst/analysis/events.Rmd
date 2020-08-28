@@ -48,7 +48,7 @@ package_data <- read_fst(EVALS_SUM_PKGS_FILE)
 kaggle_data <- read_fst(EVALS_SUM_KAGGLE_FILE)
 program_data <- read_fst(PROGRAM_FILE)
 
-all_data <- rbind(core_data, package_data, kaggle_data) %>% filter(eval_source != "testthat")
+all_data <- rbind(core_data, package_data, kaggle_data)
 ```
 
 ```{r preprocess-write-data}
