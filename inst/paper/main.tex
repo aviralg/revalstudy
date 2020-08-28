@@ -1159,7 +1159,7 @@ how many different types of the resolved \c{expr} there are per call sites. Most
 code coverage, a cause of concern for any dynamic approach. We mitigate this by
 including only those R packages in our corpus that have many reverse
 dependencies and thus high code coverage. We turn off the bytecode compiler for
-this study. The bytecode compiler can also call eval. We do not get source
+this study. The bytecode compiler can also call \eval. We do not get source
 locations for \UndefinedEvalsRnd eval calls. In these cases \eval is either
 passed as an argument to a higher-order functions or is defined in a function
 returned by a higher-order function and the R parser does not retain location
