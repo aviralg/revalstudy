@@ -291,32 +291,32 @@ name or arguments are determined dynamically. For this purpose, R provides
 \section{R and The Design of Eval}
 
 The R Project is a tool for data analysis.  At its heart is a {vectorized,
-  dynamic, lazy, functional, object-oriented} programming language with a
-rather unusual combination of features~\cite{ecoop12} designed to ease
-learning by non-programmer and enable rapid development of statistical
+  dynamic, lazy, functional, object-oriented} programming language with an
+unusual combination of features~\cite{ecoop12} designed to ease learning by
+non-programmer and enable rapid development of statistical
 methods~\cite{R96}.  The language was designed as a successor to
 S~\cite{S88}.
 
-In R, most data types are vectorized. Values are constructed by the
-\c{c(...)} function: \c{c("hi","ho")} creates a vector of two strings. The
-language does not differentiate scalars from vectors. To enable equational
-reasoning, R copies values accessible through multiple variables when they
-are written to.  Values can be tagged by user-defined attributes. For
-instance, one can attach the attribute \c{dim} to the value
-\c{x<-c(1,2,3,4)} by evaluating \c{attr(x,"dim")<-c(2,2)}.  Once done,
-arithmetic functions will treat \c x as a \c{2x2} matrix. Another attribute
-is \c{class} which can be bound to a list of names. For instance,
-\c{class(x)<-"human"}, sets the class of \c{x} to \c{human}.  Attributes are
-used for object-oriented dispatch.  Every linguistic construct is desugared
-to a function call, even control flow statements, assignments, and
-bracketing. Furthermore, all functions can be redefined in user code. This
-makes R both flexible and challenging to compile~\cite{dls19}.
+Most R data types are vectorized. Values are constructed by the \c{c(...)}
+function, e.g., \c{c("hi","ho")} creates a vector of two strings.  R does
+not differentiate scalars from vectors. To enable equational reasoning, R
+copies values accessible through multiple variables when they are updated.
+Values can be tagged by user-defined attributes. For instance, one can
+attach the attribute \c{dim} to the value \c{x<-c(1,2,3,4)} with
+\c{attr(x,"dim")<-c(2,2)}.  This causes arithmetic functions to treat \c x
+as a 2x2 matrix. Another attribute is \c{class} which can be bound to a list
+of names, e.g., \c{class(x)<-"human"}. This sets the class of \c{x} to
+\c{human}, classes are used for object-oriented dispatch.  Every R
+linguistic construct is desugared to a function call, even control flow
+statements, assignments, and bracketing. Furthermore, all functions can be
+redefined in user code. This makes R both flexible and challenging to
+compile~\cite{dls19}.
 
-Arguments to user-defined functions are bundled into a thunk called a
-promise. Logically, a promise combines an expression's code, its
+Arguments to user-defined functions are bundled into thunks called
+promises. Logically, a promise combines an expression's code, its
 environment, and its value.  To access the value of a promise, one must
 force it. Forcing a promise triggers evaluation and the computed value is
-captured for future reference.  
+captured for future reference.
 
 R supports reflection and meta-programming. The function
 \c{substitute(e,envir)} yields the parse tree of the expression \c{e} after
@@ -340,46 +340,24 @@ function. There are three alternative forms  of \eval in the \c{base} package:
                parent.frame() else baseenv())
 \end{lstlisting}           
 
-The arguments are as follows: \c{expr} is the value to be evaluated,
-\c{envir} is the environment in which \c{expr} is to be evaluated, and
-\c{enclos} is relevant when \c{envir} is a list or a data frame, then it
-specifies where R looks for objects not found in \c{envir}. This can be
-\c{NULL} (interpreted as the base package environment, \c{baseenv()}) or an
-environment.
+Arguments are as follows: \c{expr} is the value to be evaluated, \c{envir}
+is the environment in which it is to be evaluated, and \c{enclos} is
+relevant when \c{envir} is a list or a data frame, then it specifies where R
+looks for objects not found in \c{envir}. This can be \c{NULL} (interpreted
+as the base package environment, \c{baseenv()}) or an environment.
 
-The semanitcs of \eval is to evaluate \c{expr} in the environment specified
-by \c{envir} and return the computed value. If \c{envir} is not specified,
-then the default is \c{parent.frame()} (the environment where the call to
-\eval was made).  Values to be evaluated can be of types \c{call} (AST for
-function calls) or \c{expression} (AST nodes for arbitrary expressions) or
-\c{name} (when the symbol is looked up in the current scope and its binding
-is evaluated), a promise or any of the basic types such as vectors,
-functions and environments (which are returned unchanged).
+When called, \eval evaluates \c{expr} in the environment specified by
+\c{envir} and return the computed value. If \c{envir} is missing, then the
+default is \c{parent.frame()} (the environment where the call to \eval was
+made).  Values to be evaluated can be of types \c{call} (AST for function
+calls) or \c{expression} (AST nodes for arbitrary expressions), \c{name}
+(when the symbol is looked up in the current scope and its binding is
+evaluated), promise, or any of the basic types such as vectors and
+environments (which are returned unchanged).
 
-The \c{evalq} form is equivalent to \c{eval(quote(expr), ...)}. eval
-evaluates its first argument in the current scope before passing it to the
-evaluator: evalq avoids this.
-
-\c{eval.parent(expr, n)} is a shorthand for \c{eval(expr, parent.frame(n))}.
-
-If envir is a list (such as a data frame) or pairlist, it is copied into a
-temporary environment (with enclosure enclos), and the temporary environment
-is used for evaluation. So if expr changes any of the components named in
-the (pair)list, the changes are lost.
-
-If envir is NULL it is interpreted as an empty list so no values could be
-found in envir and look-up goes directly to enclos.
-
-\c{local} evaluates an expression in a local environment. It is equivalent to
-evalq except that its default argument creates a new, empty
-environment. This is useful to create anonymous recursive functions and as a
-kind of limited namespace feature since variables defined in the environment
-are not visible from the outside.
-
-The \c{expr} argument of \eval is first evaluated in the current scope, then
-passed to the \eval. Quoting that argument prevents if from being evaluated
-in the current environment. \c{evalq} is a shortcut for \c{eval(quote(expr),
-  ...)}. In the following code snippet, variable \c{r} is first looked up in
+The \c{evalq} form is equivalent to \c{eval(quote(expr), ...)}.  Quoting
+that argument prevents if from being evaluated in the current environment.
+In the following code snippet, variable \c{r} is first looked up in
 the current scope with \eval whereas it is looked up in \c{env} with
 \c{evalq}.
 
@@ -393,9 +371,12 @@ the current scope with \eval whereas it is looked up in \c{env} with
 [1] 9
 \end{lstlisting}
 
-\eval will return unchanged basic types such as vectors, functions, strings
-and environments. Promises are forced by \eval. Symbols are looked up in the
-current environment. Calls and expressions are evaluated.
+\c{eval.parent(expr, n)} is a shorthand for \c{eval(expr, parent.frame(n))}.
+\c{local} evaluates an expression in a local environment. It is equivalent
+to evalq except that its default argument creates a new, empty
+environment. This is useful to create anonymous recursive functions and as a
+kind of limited namespace feature since variables defined in the environment
+are not visible from the outside.
 
 
 \begin{lstlisting}
