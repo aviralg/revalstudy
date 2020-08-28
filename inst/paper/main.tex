@@ -880,11 +880,11 @@ The pattern \c{eval(parse(...))} can be used for dynamic code loading. This
 forms the core of \c{source} and \c{sys.source} functions in R that are commonly
 used for loading code in R files in interactive settings. We investigated the
 number of cases in which the output of \c{parse} and its variants is passed to
-\eval, directly or transitively by tainting their output. We observed that
-\PercentParsedEvals of the eval calls consume the result of calling \c{parse} on
-a file and \PasteParsedEvals of the eval calls consume the result of calling
-\c{parse} on a string. This corresponds to \PercentParsedCallSites and
-\PasteParsedCallSite of the total \eval call sites. We also identified one
+\eval, directly or transitively by tainting their output. This corresponds to \PercentParsedCallSites of the total \eval call sites and
+\PercentParsedEvals of the eval calls. We observed that
+very few of the eval call(\NbParseFilesRnd in total) consume the result of calling \c{parse} on
+a file. Most of the eval calls consume the result of calling
+\c{parse} on a string.  We also identified one
 function in core R, \c{invokeRestartInteractively} that prompts the user for
 input, parses it, and passes it to \eval.
 
