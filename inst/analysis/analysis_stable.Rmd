@@ -53,7 +53,8 @@ source("insights.R", local = knitr::knit_global())
 source("inc/paths.R")
 source("inc/latextags.R")
 source("inc/setup.R")
-theme_set(theme_minimal())
+theme_set(theme_minimal(base_size = 25))
+
 #theme_update(text = element_text(size = 16))
 
 create_tags(path(TAGS_DIR, "analysisStable.tex"), prefix="", default=TRUE)
@@ -441,10 +442,10 @@ eval_calls %>% group_by(caller_package) %>% summarize(max_expr_size = max(expr_e
 
 ### AST size
 
-```{r}
+```{r subsample_for_ast}
 ast_sizes <- eval_calls %>% slice_sample(n=10000) %>% mutate(expr_resolved_nodes = map_int(expr_resolved, expr_size_str))
 # Now precomputed during the tracing
-#ast_sizes <- eval_calls
+#ast_sizes <- read_fst(NODE_COUNT_FILE)
 ```
 
 
@@ -473,7 +474,7 @@ ast_sizes <- eval_calls %>% slice_sample(n=10000) %>% mutate(expr_resolved_nodes
 ast_sizes %>%
   ggplot(aes(x = dataset, y = expr_resolved_nodes, fill = dataset, weight = nb_ev_calls)) +
   geom_violin(trim = FALSE, width=.5)+
-  geom_boxplot(width=.05) +
+  #geom_boxplot(width=.05) +
   scale_y_log10(labels = scales::comma) +
   labs(y="AST size (log)") +
   theme(
@@ -622,7 +623,7 @@ nb_enclos <- count(envir_enclos, wt = nb_ev_calls)$n
 r("nb enclos envir", nb_enclos)
 r("enclos envir percent", ratio(nb_enclos, nb_eval_calls))
 
-envir_sys_call <- classified_envir %>% filter(str_detect(env_class, fixed("sys.class")))
+envir_sys_call <- classified_envir %>% filter(str_detect(env_class, fixed("sys.call")))
 nb_sys_call <- count(envir_sys_call, wt = nb_ev_calls)$n
 r("nb sys call envir", nb_sys_call)
 r("sys call envir percent", ratio(nb_sys_call, nb_eval_calls))
@@ -705,8 +706,8 @@ group_expr_resolved_functions <- expr_resolved_call_arg %>%
                               assignment = c("<-", "[[<-", "[<-", "$<-", "<<-", "=", "@<-"),
                               slot_access = c("[", "[[", "$", "slot", "@", "::", ":::"),
                               parsing = c("parse", "str2lang", "str2expression", "parse_only", "base::parse"),
-                              defusing = c("quote", "substitute", "bquote", "expr", "quo"),
-                              expressions = c("as.list", "expression", "as.name", "as.expression", "list", "c", "as.data.frame", "as.character", "{", "modify_lang"),
+                              defusing = c("quote", "substitute", "bquote", "expr", "quo", "enquo", expression),
+                              expressions = c("as.list", "as.name", "as.expression", "list", "c", "as.data.frame", "as.character", "{", "modify_lang"),
                               calling = c("call", "as.call", "do.call"),
                               environment = c("environment", "as.environment"),
                               logical = c("!", "&", "|", "&&", "||"),
