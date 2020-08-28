@@ -182,3 +182,6 @@ $(RUN_KAGGLE_CALLS_FILE): $(RUN_KAGGLE_LOG_FILE)
 
 kaggle: $(RUN_KAGGLE_CALLS_FILE) $(RUN_KAGGLE_PROGRAM_FILE)
 	$(call RENDER_RMD,$(ANALYSIS_DIR)/kaggle-stage2.Rmd)
+
+download:
+	scp prl3:/var/lib/R/project-evalR/run/package-evals-traced.2/sum*.fst $(RUN_PACKAGE_TRACE_DIR)

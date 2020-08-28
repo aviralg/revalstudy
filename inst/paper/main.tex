@@ -18,6 +18,7 @@
 \input{tag/counts.tex}
 \input{tag/corpus.tex}
 \input{tag/side-effects.tex}
+\input{tag/operations.tex}
 \input{tag/events.tex}
 \input{tag/analysisStable.tex}
 \input{tag/enrichDataset.tex}
@@ -47,7 +48,13 @@
  keywordstyle=\color{Blue},    % keyword style
  commentstyle=\color{YellowGreen},  % comment style
  stringstyle=\color{ForestGreen}    % string literal style
-} 
+}
+
+% https://tex.stackexchange.com/questions/351435/table-name-placment-in-tabular-documentclass-ieeetran-conference
+\makeatletter
+\def\@IEEEtablestring{figure}
+\makeatother
+
 \begin{document}
 
 \title{A Large-Scale Study of the Use of Eval in R}
@@ -57,8 +64,8 @@
 \newcommand{\eg}{\emph{e.g.},\xspace}
 \newcommand{\ie}{\emph{i.e.},\xspace}
 \newcommand{\cf}{\emph{cf.}\xspace}
-\newcommand{\summary}[1]{({\csname #1Min\endcsname} / {\csname #1Mean\endcsname} / {\csname #1Max\endcsname})}
-\newcommand{\summaryrnd}[1]{({\csname #1MinRnd\endcsname} / {\csname #1MeanRnd\endcsname} / {\csname #1MaxRnd\endcsname})}
+\newcommand{\summary}[1]{{\csname #1\endcsname} ({\csname #1Min\endcsname} / {\csname #1Mean\endcsname} / {\csname #1Max\endcsname})}
+\newcommand{\summaryrnd}[1]{{\csname #1Rnd\endcsname} ({\csname #1MinRnd\endcsname} / {\csname #1MeanRnd\endcsname} / {\csname #1MaxRnd\endcsname})}
 
 \newcommand{\eval}{\texttt{eval}\xspace}
 \newcommand{\parse}{\texttt{parse}\xspace}
@@ -73,6 +80,8 @@
 \newcommand{\lavaan}{\texttt{lavaan}\xspace}
 \newcommand{\mclust}{\texttt{mclust}\xspace}
 \newcommand{\gamlss}{\texttt{gamlss}\xspace}
+\newcommand{\ggproto}{\texttt{ggproto}\xspace}
+\newcommand{\ggplot}{\texttt{ggplot2}\xspace}
 
 \newcommand{\base}{\texttt{base}\xspace}
 \renewcommand{\c}[1]{\lstinline{#1}\xspace}
@@ -163,21 +172,22 @@ often have only a cursory knowledge of the language.\footnote{To illustrate
   have informally surveyed end-users, including computer scientists, and did
   not find a single one aware of this fact. Library developers, on the other
   hand, know about laziness and program defensively around it.}  Thus, our
-corpus distinguished between \emph{core packages} (there are \CorpusCorePackages such
-packages that are distributed together with the R virtual machine), \emph{CRAN
-  packages} (we selected \CorpusPackages curated packages that pass stringent
-community quality checks and are equipped with tests and sample data),
-\emph{Kaggle scripts} (we used \CorpusFinishedKaggle end-user written programs that performs a
-particular data analysis task). There are reasons to believe that \eval
-usage patterns may differ between these datasets. The core R code is
-extremely stable, it has only been maintained for the last 20 years with
-very few far reaching changes. The libraries represent a more lively
-ecosystem with new libraries added each day.  Finally, end user code is
-often one-use scripts thrown together and sometimes never revisited.
+corpus distinguished between \emph{core packages} (there are
+\CorpusCorePackages such packages that are distributed together with the R
+virtual machine), \emph{CRAN packages} (we selected \CorpusPackages curated
+packages that pass stringent community quality checks and are equipped with
+tests and sample data), \emph{Kaggle scripts} (we used \CorpusFinishedKaggle
+end-user written programs that performs a particular data analysis
+task). There are reasons to believe that \eval usage patterns may differ
+between these datasets. The core R code is extremely stable, it has only
+been maintained for the last 20 years with very few far reaching
+changes. The libraries represent a more lively ecosystem with new libraries
+added each day.  Finally, end user code is often one-use scripts thrown
+together and sometimes never revisited.
 
 
 To understand the behavior of eval we perform a combination of static
-analysis, dynamic analysis and manual inspection. The results presented
+analysis, dynamic analysis and manual code inspection. The results presented
 here summarize our findings.
 
 Our infrastructure is publicly available, released in open source, and our
@@ -198,16 +208,17 @@ Some languages have chosen to restrict \eval. The essential difference
 between languages relates to scoping of variables that can be accessed from
 code executed by \eval.  Java and Julia are among the more restrictive
 languages. In Java, \eval must be synthesized as a combination dynamic
-loading and reflection.\footnote{While Java does not have \eval built in,
+loading and reflection.\footnote{While Java does not have \eval built-in,
   one can take the input to \eval, wrap it in a static method of an
   anonymous class, generate bytecode for that class, invoke the Java class
-  loader to dynamically install it, and then use reflection to call the new
-  method.} Julia provides \eval more directly but limits its scope to top
-level variables and methods. JavaScript support both a, so-called, global
-\eval, and a local \eval. Where the latter has acces to local variables of
-the function being executed (as well as variables of lexically enclosing
-scopes). Finally languages such as R allow \eval to manipulate variables
-defined in the caller environment of the function in which \eval is invoked.
+  loader to dynamically install the new code, and then use reflection to
+  call the new method.} Julia provides \eval more directly but limits its
+scope to top level variables and methods. JavaScript support both a,
+so-called, global \eval, and a local \eval. Where the latter has acces to
+local variables of the function being executed (as well as variables of
+lexically enclosing scopes). Finally languages such as R allow \eval to
+manipulate variables defined in the caller environment of the function in
+which \eval is invoked.
 
 The difference between these design choices has an impact on the ability of
 compilers to optimize, and of analysis tools to reason about, code. The
@@ -297,7 +308,7 @@ Figure~\ref{fig:pipeline} shows the main steps of the pipeline. We provide the
 runtime, input and output data size for each step.
 
 \begin{figure*}[!tb]\centering\includegraphics[width=\linewidth]
-{pipeline.pdf}\caption{Pipeline}\label{fig:pipeline}
+{pipeline.pdf}\caption{Pipeline}label{fig:pipeline}
 \end{figure*}
 
 The pipeline begins with downloading and installing open source R packages from
@@ -353,16 +364,15 @@ We have selected the TOP \CorpusPackages packages based on the number of reverse
 dependencies, \ie how many other packages depend on them\footnote{Extracted from
   package metadata using builtin function}. Using this criterion helps us to
 choose popular packages which in general should be of a better quality and have
-better code coverage and therefore more code to run. The resulting set has
-\summary{CorpusRevdeps}\footnote{Such triples represent ($min$ / $mean$ /
-  $max$)} reverse dependencies and consists of \CorpusRCodeRnd lines of R code
-and \CorpusNativeCodeRnd lines of native code (C/C++/Fortran)\footnote{Excluding
-  comments and blank lines using \url{github.com/AlDanial/cloc}}.
-Figure~\ref{fig:corpus} shows these packages, the size of the dots reflects the
-project's size in lines of code including both R and native code, the x-axis
-indicates the expression code coverage in percents and the y-axis gives the
-number of reverse dependencies in log scale. Dotted lines indicate means.
-Packages with over \CorpusEvalsPackageTreshold eval call sites are annotated.
+better code coverage and therefore more code to run. The resulting set contains
+\CorpusRCodeRnd lines of R code and \CorpusNativeCodeRnd lines of native code
+(C/C++/Fortran)\footnote{Excluding comments and blank lines using
+  \url{github.com/AlDanial/cloc}}. Figure~\ref{fig:corpus} shows these packages,
+the size of the dots reflects the project's size in lines of code including both
+R and native code, the x-axis indicates the expression code coverage in percents
+and the y-axis gives the number of reverse dependencies in log scale. Dotted
+lines indicate means. Packages with over \CorpusEvalsPackageTreshold eval call
+sites are annotated.
 
 \begin{figure*}[!tb]\centering\includegraphics[width=\linewidth]
   {corpus.pdf}\caption{CRAN packages}\label{fig:corpus}
@@ -391,11 +401,10 @@ The selected packages contain \CorpusPackagePrograms programs with
 \CorpusPackageProgramsCodeRnd lines of R code:
 %
 \begin{compactitem}[$-$]
-  \item \CorpusExamplesProgramsRnd examples with \CorpusExamplesCodeRnd
-  \summaryrnd{CorpusExamplesCode} lines of code,
-  \item \CorpusTestsProgramsRnd tests with \CorpusTestsCodeRnd
-  \summaryrnd{CorpusTestsCode} lines of code, and
-  \item \CorpusVignettesProgramsRnd vignettes with \CorpusVignettesCodeRnd
+  \item \CorpusExamplesProgramsRnd examples with
+  \summaryrnd{CorpusExamplesCode}\footnote{This notation represents $sum$ ($min$
+    / $mean$ / $max$)} lines of code,
+  \item \CorpusVignettesProgramsRnd vignettes with
   \summaryrnd{CorpusVignettesCode} lines of code.
 \end{compactitem}
 
@@ -429,8 +438,7 @@ various runtime exceptions, common problems were parse errors and misspelled
 package names.
 
 The final set contains \CorpusFinishedKaggle kernels with
-\CorpusFinishedKaggleCodeRnd \summaryrnd{CorpusFinishedKaggleCode} lines of R
-code.
+\summaryrnd{CorpusFinishedKaggleCode} lines of R code.
 
 \subsection{Summary}
 
@@ -465,21 +473,16 @@ itself.  The Kaggle data set has small programs, and, these programs only
 trigger \eval in core and dependent packages. Thus, an average Kaggle run
 has 412 core calls, 96 dependent calls, and no own calls.
 
-
-\begin{table}[ht]
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}r|ccc@{}} \hline
-Source & Core & Dependent & Own \\\hline
-      %      CRAN & \CranCoreTotalEvalCallsRnd (\CranCoreMinEvalCallsRnd/\CranCoreAvgEvalCallsRnd/\CranCoreMaxEvalCallsRnd) & \CranDependentTotalEvalCallsRnd (\CranDependentMinEvalCallsRnd/\CranDependentAvgEvalCallsRnd/\CranDependentMaxEvalCallsRnd) & \CranOwnTotalEvalCallsRnd (\CranOwnMinEvalCallsRnd/\CranOwnAvgEvalCallsRnd/\CranOwnMaxEvalCallsRnd) \\
-CRAN & \CranCoreTotalEvalCallsRnd (1 / 581 / 416K)  & \CranDependentTotalEvalCallsRnd (1 / 532 / 183K) & \CranOwnTotalEvalCallsRnd (1 / 292 / 144K)\\
-Kaggle & \KaggleCoreTotalEvalCallsRnd (1 / 412 / 2.8K) & \KaggleDependentTotalEvalCallsRnd (3 / 96 / 1.1K) & 0 (0 / 0 / 0) \\
-%      Kaggle & \KaggleCoreTotalEvalCallsRnd (\KaggleCoreMinEvalCallsRnd/\KaggleCoreAvgEvalCallsRnd/\KaggleCoreMaxEvalCallsRnd) & \KaggleDependentTotalEvalCallsRnd (\KaggleDependentMinEvalCallsRnd/\KaggleDependentAvgEvalCallsRnd/\KaggleDependentMaxEvalCallsRnd) & 0(0/0/0) \\
-      \hline
-    \end{tabular}
-  }
-  \caption{Eval calls in CRAN and Kaggle}
-  \label{A}
-\end{table}
+ \begin{table*}[tb]
+   \centering
+   \begin{tabular}{r|c|c|c@{}} \hline
+     Corpus / Source & Core                              & Dependent                              & Own \\\hline
+     CRAN   & \summaryrnd{CranCoreEvalCalls}    & \summaryrnd{CranDependentEvalCalls}    & \summaryrnd{CranOwnEvalCalls} \\
+     Kaggle & \summaryrnd{KaggleCoreEvalCalls}  & \summaryrnd{KaggleDependentEvalCalls}  & \summaryrnd{KaggleOwnEvalCalls} \\\hline
+   \end{tabular}
+   \caption{Eval calls in CRAN and Kaggle}
+   \label{A}
+ \end{table*}
 
 
 
@@ -537,16 +540,12 @@ be called reflectively, through aliases, or passed to a higher-order function.
 
 \begin{table}[ht]\resizebox{\columnwidth}{!}{%
 \begin{tabular}{rr|rr|rr}\hline
-Callsites & Packages & Callsites & Packages & Callsites & Packages \\ \hline
-\SiteSummarySiteCountA & \SiteSummaryPackageCountA & \SiteSummarySiteCountF & \SiteSummaryPackageCountF & \SiteSummarySiteCountK & \SiteSummaryPackageCountK \\
-\SiteSummarySiteCountB & \SiteSummaryPackageCountB & \SiteSummarySiteCountG & \SiteSummaryPackageCountG & \SiteSummarySiteCountL & \SiteSummaryPackageCountL \\
-\SiteSummarySiteCountC & \SiteSummaryPackageCountC & \SiteSummarySiteCountH & \SiteSummaryPackageCountH & \SiteSummarySiteCountM & \SiteSummaryPackageCountM \\
-\SiteSummarySiteCountD & \SiteSummaryPackageCountD & \SiteSummarySiteCountI & \SiteSummaryPackageCountI & \SiteSummarySiteCountN & \SiteSummaryPackageCountN \\
-      \SiteSummarySiteCountE & \SiteSummaryPackageCountE & \SiteSummarySiteCountJ & \SiteSummaryPackageCountJ & \SiteSummarySiteCountO & \SiteSummaryPackageCountO \\    \hline
-\end{tabular}} \label{table:site-package-summary}
+ Callsites & Packages & Callsites & Packages & Callsites & Packages \\\hline
+\input{tag/table-site-package-summary.tex}
+\end{tabular}}
 \caption{Distribution of callsites in CRAN}
+\label{table:site-package-summary}
 \end{table}
-
 
 To roughly estimate the complexity of the code being evaluated,
 Fig.~\ref{fig:ast-size} shows the distribution of the abstract syntax tree
@@ -586,7 +585,7 @@ caused by \eval calls from R Core and CRAN packages.
 Events & Core Eval Call \% & Package Eval Call \% \\ \hline
 \EventsMinRangeA--\EventsMaxRangeA & \EventsCoreEvalPercA & \EventsPackageEvalPercA \\
 \EventsMinRangeB--\EventsMaxRangeB & \EventsCoreEvalPercB & \EventsPackageEvalPercB \\
-\EventsMinRangeC--\EventsMaxRangeC & \EventsCoreEvalPercC & \EventsPackageEvalPercC \\
+\EventsMinRangeC--\EventsMaxRangeC & \EventsCoreEvalPercC & \EventsPackageEvalPercC \\ \hline
 \end{tabular}} \label{table:event-distribution}
 \caption{Distribution of events in \eval calls across Core and Package}
 \end{table}
@@ -602,8 +601,218 @@ package \eval call generate \EventsMinRangeC to \EventsMaxRangeC events.
 These \eval calls originate from statistical modeling packages such as \mlogit,
 \mboost, \metafor, \lavaan, \mclust and \gamlss.
 
+\section{A taxonomy of eval}
 
-\section{Side-Effects}
+In this section we turn our attention to the expression passed for evaluation to
+\eval. \eval accepts all types of R objects as inputs. In our corpus, we observe
+that \AllValueInputEvalCallPerc of all inputs to \eval are values, i.e., they
+evaluate to themselves. The remaining \AllExpressionInputEvalCallPerc inputs are
+expressions which are reduced to values by \eval. % Furthermore, the proportion
+of values % passed to core \eval call is \CoreEvalValueInputPerc compared to a
+significantly % higher \PackageEvalValueInputPerc for package \eval calls. To
+investigate this, we look at the type of expressions accepted by \eval callsites
+in our corpus. We find that only \AllValueInputEvalSitePerc receive only values
+as inputs, \AllExpressionInputEvalSitePerc call sites exclusively receive
+expressions as inputs and a very large proportion,
+\AllPolymorphicInputEvalSitePerc, receive both expressions and values as inputs
+across all program runs. We inspected the eval callsites that accept only values
+or both values and expression as inputs. The top three of these call sites
+contribute to over ~80\% of all calls to evals. The first one is inside
+\c{match.arg} from core. Given a vector of names as strings, this function finds
+the default values for parameters with those names in the caller function. Since
+the default value for a function parameter can be a complex expression or a
+benign value such as \c{NULL}, \c{match.arg} evaluates it through a call to
+\eval. This makes the \eval inside \c{match.arg} ``polymorhpic''. The second
+such \eval call originates from the popular \ggplot package of R which is a DSL
+for plotting. \ggplot has it's own object system, \ggproto, which uses \eval
+inside the \ggproto function to determine the super-class from which it
+inherits. The default value of the superclass is \c{NULL} but in general could
+be an arbitrarily complex expression. The third \eval call is in core R \c{str}
+function. This function is used to print a summary of R objects. It internally
+maps \eval function on the bindings of an environment which results in inputs of
+multiples types being passed to \eval.
+
+We further investigate the type of input passed to \eval in
+Figure~\cite{fig:eval-expression-kind} by the type of input and
+the source of \eval. In this figure, \emph{Expression} is the type of program text,
+\emph{Environmment} is the type of scopes or environments used for binding,
+\emph{Null} is the type of the unique \c{NULL} object, \emph{Vector} is the type
+assigned to vectors of strings, booleans, integers, reals and bytes;
+\emph{Symbol} is the type of unevaluated symbols, and \emph{Function} is the
+type of functions.
+
+\begin{figure}[!h]
+	\centering
+  \includegraphics[width=\columnwidth]{eval-expression-kind}
+  \caption{Type of Expression passed to \eval} \label{fig:eval-expression-kind}
+\end{figure}
+
+From the figure, we observe that majority of inputs to Core \eval functions are
+expressions in contrast to package \eval calls which receive mostly environments
+as inputs. In fact, \PackageEnvironmentInputEvalCallPerc of \eval calls in
+packages receive environments as input expressions. There are only four
+callsites in package evals that receive environments as expressions.
+\begin{itemize}
+\item \c{ggplot2::ggproto} contributes to 99.9\% of package \eval calls that
+receive environments as input.
+\item \c{R6::generator_funs} function contributes to only 936 \eval calls and
+implements the same functionality as \c{ggplot2::ggproto} but for the \emph{R6}
+OOP system.
+\item \c{future::backtrace} function applies \eval to a future object which is
+implemented as an environment. This is called only once.
+\item \c{RModel::str.RMmodel} function overloads the core \c{str} method for its
+\c{RModel} objects and maps \eval exactly like \c{str}. This is called only
+once.
+\end{itemize}
+
+
+We looked at the top ten expressions passed to core and package \eval calls. The
+most frequent ten expressions to eval calls from core R contribute to 85.2\% of
+all \eval calls.
+\begin{table*}[tb]
+  \centering
+  \begin{tabular}{l|rr} \hline
+    Expression & Eval Call & Eval Call \% \\\hline
+    \c{c("auto", "shell", "radix")} & 1987105 & 29.3\%\\
+    \c{c("auto", "shell", "quick", "radix")} & 1593169  & 23.5\%\\
+    \c{\{info <- loadingNamespaceInfo(...} & 1008632 &       14.9\%\\
+    \c{c("onLoad", "attach", "detach", "onUnload")}   & 470566 &      6.9\%\\
+    \c{c("append", "prepend", "replace")} &              261587&       3.9\% \\
+    \c{c("left", "right", "centre", "none")} & 162086     & 2.4\%\\
+    \c{c("no", "ifany", "always")}   &                71580 &       1.1\%\\
+    \c{c("pearson", "kendall", "spearman")}  & 72962 &      1.1\%\\
+    \c{NULL}& 75330  &      1.1\% \\
+    \c{Symbol}&                 66279&       1\%\\\hline
+  \end{tabular}
+  \caption{Top ten eval calls in Core}
+  \label{A}
+\end{table*}
+
+The expression \c{\{info <- loadingNamespaceInfo(...} is added by core R
+to a package directory during installation. To load the package, this code is
+executed. It creates a namespace for the package, injects the package bindings,
+and attaches the namespace to the program search path. The \c{NULL} comes from a
+call to \c{substitute(subset)} in \c{stats::model.frame.default} function which
+has a default value of \c{subset} as \c{NULL}. The \c{Symbol} arises from a
+call to \c{as.name} in \c{base::str} function that returns a symbol that is
+looked up by evaluating it in a specific environment. The remaining cases arise
+from calls to \c{match.arg} which is used to look up the default choices for a
+variable and match against the choice passed by the caller.
+
+The most frequent ten expressions to eval calls from CRAN packages contribute to
+77.1\% of all \eval calls.
+\begin{table*}[tb]
+  \centering
+  \begin{tabular}{l|rr} \hline
+    Expression & Eval Call & Eval Call \% \\\hline
+    \c{Environment} &                                                              989302   & 61.8\%\\
+    \c{column[rows] <<- what} &                                                    55677    & 3.5\%\\
+    \c{function(value) freduce(value, `_function_list`)} &                         37251    & 2.3\%\\
+    \c{NULL} &                         32005    & 2\%\\
+    \c{List} &                         22293    & 1.4\%\\
+    \c{c("default", "default2012", "default2011" ...}&                             20610    & 1.3\%\\
+    \c{force(..1)}                                        &                        20461    & 1.3\%\\
+    \c{alist(`_spec`)}                                   &                         18532    & 1.2\%\\
+    \c{inner}                                           &                          18530    & 1.2\%\\
+    \c{String Vector}                           &                           17487     & 1.1\%\\
+  \end{tabular}
+  \caption{Top ten eval calls in CRAN}
+  \label{A}
+\end{table*}
+
+The expression \c{Environment} occurs because of the four callsites explained
+above, \c{ggplot2::ggproto}, \c{R6::generator_funs}, \c{future::backtrace} and
+\c{RModel::str.RMmodel}. The next expression, \c{column[rows] <<- what}, is used
+inside the \c{plyr::rbind.fill} function to merge data frames by assigning
+concatenated vectors to rows. The \c{<<-} operator is interesting in that it
+skips the current scope and assigns in a parent scope in which the variable is
+already present. In our corpus, all these \eval calls contribute to a single
+side-effect. The expression \c{function(value) freduce(value, `_function_list`)}
+arises from the \c{magrittr::\%>\%} function which is a pipe operator that pipes
+the output of previous command to the next one. The expression is evaluated in a
+custom environment to create a function binding for evaluating the components of
+the pipe.\c{String Vector} and \c{List} also arise from the same function when a
+string or a list is piped using the \c{\%>\%} function into the next expression.
+The \c{NULL} arises from \c{R6::generator_funs} function when the \eval is
+passed a \c{NULL} argument by the \c{DataMask_generator} package. The
+\c{c("default", "default2012", "default2011" ...} pattern arises from
+\c{copula::polyG} where it reflectively access the default expression for its
+formal parameter and evaluates it. The \c{force(..1)} and \c{alist(`_spec`)}
+patterns occur in \c{glue::glue_data} function which concatenates and
+interpolates strings. The two patterns occur because the function captures
+unevaluated unnamed arguments and maps the evaluation of \c{force(..1)} on them.
+The \c{force} function forces promises~\cite{oopsla19a} and returns the result
+of evaluation. The \c{inner} pattern arises from \c{glue::identity_transformer}
+which enables the creation of custom transformation functions for affecting the
+interpolation and concatenation of input by the \c{glue} package.
+
+\subsection{Operation Mix}
+In this section, we look at the operations executed by the expressions and
+symbols on evaluation. R is a lazy language, so symbols can be bound to promises
+that can evaluate arbitrary code. All operations in R are function calls, even
+primitive operations such as addition and assignment are treated as calls to
+functions implemented in the interpreter. In our corpus, we observe 2.9G calls
+to R functions of which 125.5M happen inside \eval. Furthermore, unlike
+Javascript, R code also calls into peformant native implementations of numerical
+and statistical routines. In the corpus there are 463.8M calls to native code of
+which only 31.2M happens inside \eval.
+Qualitatively, we observe all kinds of operations being executed inside \eval
+calls, from numerical computing for statistical modeling to reflection and
+metaprogramming for implementing DSLs. Even testing frameworks such \c{genthat}
+heavily rely upon \eval to execute test code snippets. The core R implementation
+is rife with uses of \eval for mundane things like accessing default values of
+formal parameters and in statistical packages for computation.
+
+\subsubsection{Provenance}
+
+In this section we turn our attention to the \AllExpressionInputEvalCallPerc
+expressions passed as input to \eval. There are two ways to obtain
+expressions in R.
+\begin{itemize}
+  \item \c{substitute} function can be used to synthesize ASTs from
+  expressions by replacing symbols with their bindings in the specified
+  environment.
+  \item \c{expression} function can be used to create a vector of expression
+    objects from text.
+  \item \c{parse} function and its variants \c{str2expression} and \c{str2lang}
+    can be used to turn strings or text from file into R expressions.
+\end{itemize}
+
+In our corpus, we observe 5.2\% cases where \eval directly evaluates output of
+\c{substitute}, 0.7\% cases where output of \c{parse} and its variants is read
+directly and only 704 cases for \c{expression}. Majority of expression objects
+consumed by \eval are generated by their transitive uses by other functions.
+
+The pattern \c{eval(parse(...))} can be used for dynamic code loading. This
+forms the core of \c{source} and \c{sys.source} functions in R that are commonly
+used for loading code in R files in interactive settings. We investigated the
+number of cases in which the output of \c{parse} and its variants is passed to
+\eval, directly or transitively by tainting their output. We observed that
+\PercentParsedEvals of the eval calls consume the result of calling \c{parse} on
+a file and \PasteParsedEvals of the eval calls consume the result of calling
+\c{parse} on a string. This corresponds to \PercentParsedCallSites and
+\PasteParsedCallSite of the total \eval call sites. We also identified one
+function in core R, \c{invokeRestartInteractively} that prompts the user for
+input, parses it, and passes it to \eval.
+
+%%Unlike Javascript, R packages also call native code for access to efficient
+%%numerical and statistical routines. We intercept all calls to R functions and
+%%native functions from the programs and \eval calls. In the whole corpus there
+%%are \AllClosureCallCount calls to R functions and \AllNativeCallCount to native
+%%code. Of those, \eval contribute to only \EvalClosureCallCount calls to R
+%%functions and \EvalNativeCallCount to native code.
+%%
+%%\begin{table}[ht]\resizebox{\columnwidth}{!}{%
+%%    \begin{tabular}{lll}\hline
+%%      Source & Primitive Functions & R Functions & Native Functions \\ \hline
+%%      Core & \CorePrimitiveFunctionCount & \CoreRFunctionCount & \CoreNativeFunctionCount \\
+%%      CRAN & \PackagePrimitiveFunctionCount & \PackageRFunctionCount & \PackageNativeFunctionCount \\
+%%      All  & \AllPrimitiveFunctionCount & \AllRFunctionCount & \AllNativeFunctionCount \\
+%%    \end{tabular}} \label{table:operation-distribution}
+%%  \caption{Distribution of operation calls to \eval calls across Core and Package}
+%%\end{table}
+
+\subsection{Side-Effects}
 
 In the corpus we observe \AllWritesRnd writes to variables of which
 \EvalWritesRnd writes happen inside \eval. However, all writes are not
@@ -620,46 +829,121 @@ variable, directly or indirectly. Only \SideEffectingCoreCallPerc \eval calls in
 Core R are side-effecting and \SideEffectingPackageCallPerc \eval calls in CRAN
 packages are side-effecting.
 
-\section{A taxonomy of eval}
-
-We first classify \c{eval} depending on the resolved expression, \emph{i.e.}
-the first argument of \c{eval} after all possible function calls and symbol
-resolution in it have been executed.
-
-\subsection{Operation mix}
-
-Here we should show some information about what happens during an eval. What kinds of operations...
-
-
-
 \subsection{Scope}
 
-Here we talk about scopes and envs
-
 One of the main differences of the R \eval with the javascript one is how it
-interacts with \emph{scope}, or environments in R. In Javascript, \c{eval}
-can access the local scope and the global scope. In R, \c{eval} has an
-argument \c{envir} to indicate in which environment its first argument,
-after being resolved, must be evaluated. By default, it is equal to \c{parent.frame()}, which is the parent environment of the \c{eval} call. This default argument happens in \miss{XX\%} of the eval calls.
+interacts with \emph{scope}, or environments in R. In Javascript, \c{eval} can
+access the local scope and the global scope. In R, \c{eval} has an argument
+\c{envir} to indicate in which environment its first argument must be evaluated.
+By default, it is equal to \c{parent.frame()}, 
+which is the parent environment of \c{eval} call.This default argument
+happens in \DefaultEnvirExprPercent of the eval calls.
 
-This argument can also be \c{NULL}, a list or a dataframe. In that case, \c{eval} copies \c{envir} and encloses it the environment defined by \c{enclos}. Finally, the argument can also be a number $n$. It means that the environment in which the expressions is evaluated will be the results of \c{sys.call(n)} where $n$ refers to the $n$-th call frame after the global environment.
+This argument can also be \c{NULL}, a \c{List} or a data frame. This happens in
+3.5\% of the cases.
+\c{eval} copies the fields of the list or data frame and creates bindings for
+them in a new environment. This pattern is used to evaluate formulas which can
+directly refer to the fields of the data.
+The \c{envir} argument can also be a number $n$. It means that the environment in
+which the expressions is evaluated will be the result of \c{sys.call(n)} where
+$n$ refers to the $n$-th stack frame.
 
-\textbf{Do we speak more about what an environment is, \c{.GlobalEnv}, \c{emptyenv()}, environment navigation here, or in the Background section?}
+The top-level environment in R is called the global environment. New
+environments can be created using \c{new.env}. They can be provided a parent
+environment which becomes the enclosing scope of the new environment.
 
-There are two main environments affected by \eval:
-\begin{itemize}
-	\item the \emph{existing} environment where \c{eval} reads. It is the first non new environment. \c{eval} will also be able to read in all parent environment of that environment. It can be the global environment, a package environment, an empty environment, the callee environment, or a parent environment of the callee.
-	\item the \emph{default} assignment environment \c{eval} writes new bindings.\footnote{It is the default one but the expression in \eval can always write in any other environments using \c{assign} or in the parent environment using \c{<<-}.} If it is different from the read environment and is a new one that inherits from the read environment, we add a symbol \texttt{+} after the read environment.
-\end{itemize}
+We looked at the environments passed to all the \eval calls in our corpus.
+Table~\ref{tab:environments} summarizes the results. A numeric environment class
+\c{n} denotes the environment of the $n$-th call stack frame from the current
+function. \c{global} denotes the top-level environment and \c{list} denotes a list
+passed for evaluation of formulas. Environment classes of the form $n+$ denote
+the $n$-th environment extended with a new environment. The new environment
+provides a limited form of sandboxing. All assignments using the \c{\<-}
+function occur inside it and prevent the extended environment from
+mutation. However, it is still possible to mutate the extended environment
+using the \c{\<\<-} function; but, that happens rarely.
 
-As shown in Figure~\ref{fig:environments}, \eval in R is often performed in the global environment.  It is also used a lot to evaluate in the context of a dataframe (\emph{list} environment).
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{c|c|c|c}
+        \hline
+        \multicolumn{2}{c|}{Core} & \multicolumn{2}{|c}{Packages}  \\
+        \hline
+        Environment Class & Eval Calls \% & Environment Class & Eval Calls \% \\
+        \hline
+        \CoreEnvClassA & \CoreProportionA & \PackagesEnvClassA &  \PackagesProportionA\\
+        \CoreEnvClassB & \CoreProportionB & \PackagesEnvClassB &  \PackagesProportionB\\
+        \CoreEnvClassC & \CoreProportionC & \PackagesEnvClassC &  \PackagesProportionC\\
+        \CoreEnvClassD & \CoreProportionD & \PackagesEnvClassD &  \PackagesProportionD\\
+        \CoreEnvClassE & \CoreProportionE & \PackagesEnvClassE &  \PackagesProportionE\\
+        \hline
+    \end{tabular} \label{tab:environments}
+\caption{Environments in terms of eval calls.}
+\end{table}
 
-% Variability: how many different envir class, and different envir expr, for one call site?
-\begin{figure*}[htbp]
-	\centering
-	\includegraphics[width=\linewidth]{environments.pdf}
-	\caption{The environments in which the expression is evaluated. \c{NA} corresponds to the default environment.} \label{fig:environments}
-\end{figure*}
+We observe that a disproportionately high core R \eval calls access the
+caller's caller's environment. This is because many core R functions call
+functions that pass the result of \c{parent.frame()} to an \eval.
+A disproportionately high calls to \eval happen in an extended
+top-level environment. This can be explained by the fact that many packages
+evaluate code passed from the user's workspace in the top-level environment to
+access the bindings.
+
+%%Below, we provide some code snippets to show how some of these environment
+%%classes manifest.
+
+%%The \c{match.arg} (see Listing~\ref{code:matchargenvir}) function has an
+%%environment class 2. \c{sys.parent()} refers to the parent environment of
+%%\c{match.arg} and so to the grand-parent environment of \c{eval} which we denote
+%%as $2$.
+%%
+%%\begin{lstlisting}[label=code:matchargenvir, caption={\c{match.arg} using \eval with a custom environment.}]
+%%formal.args <- formals(sys.function(sysP <- sys.parent()))
+%%choices <- eval(formal.args[[as.character(substitute(arg))]], envir = sys.frame(sysP))
+%%\end{lstlisting}
+
+%%In package \emph{gamlss::get.K} function \c{get.K} evaluates its expression in its
+%%parent environment, the one of the body of \c{get.K} returned from
+%%\c{environment()}.
+%%
+%%\begin{lstlisting}
+%%eval(parse(text = paste(\"fam$dld\", ii, sep = \"\")), envir = environment())
+%%\end{lstlisting}
+%%
+%%
+%%The \emph{glue} library is used to interpolate string litterals with variables, such as in \c{glue('My name is \{name\}.')} where \c{name} will be subtituted by its value. \emph{glue} makes it possible to define transformers that process those interpolated variables. They are built upon the \c{identity_transformer}, which uses \eval. The interpretation environment for \eval is often global here, as the string litterals are often used to print variabels at the top level.
+%%
+%%\begin{lstlisting}
+%%identity_transformer <- function(text, envir) 
+%%{
+%%    eval(parse(text = text, keep.source = FALSE), envir)
+%%}
+%%\end{lstlisting}
+%%
+%%
+%%The \c{imchange} function of package \c{imager} makes it possible to modify images using a dedicated formula syntax using \c{\~}.\footnote{Inspired by \c{map} in package \emph{purr}.}  Here, \eval is evaluated in \c{newenv}, which creates a new environment that inherits from \c{parent.frame()} by default. We classify it as 1+.
+%%
+%%
+%%\begin{lstlisting}
+%%newenv <- new.env()
+%%...
+%%fo <- parse(text=as.character(fo)[2])
+%%im[where] <- eval(fo,envir=newenv,enclos=env)
+%%\end{lstlisting}
+%%
+%%\c{adjCoef} in package \emph{actuar} find the root of an equation defined by a function \c{h} whose arguments must be named \c{x} and \c{y}.
+%%\c{h} is transformed into an auxiliary function \c{h2} that can be optimized. Here, the list used for \c{envir} ensures the correspondance between the textual arguments of \c{h} and the arguments of \c{h2}. 
+%%
+%%
+%%\begin{lstlisting}
+%%sh <- substitute(h)
+%%fcall <- paste(sh, "(x, y)")
+%%...
+%%h2 <- function(x, y)
+%%    eval(parse(text = fcall),
+%%    envir = list(x = x, y = y),
+%%    enclos = parent.frame(2))
+%%\end{lstlisting}
 
 \subsection{Patterns}
 
@@ -721,85 +1005,55 @@ We have grouped those uses in the following categories.
   process which statically analyzes the package for use of such restricted
   functions. The \datatable gets around this limitation by enclosing the call to
   \unlockBinding inside \eval.
-  
-\subsection{Provenance}
 
-Here we talk about where the input of an eval comes from.
-
-\c{eval} takes an R expression. To evaluate a string, it first has to be parse
-using either \c{parse}, \c{str2expression} or \c{str2lang} functions. The
-difference between them is that the latter two are specialized versions of
-\c{parse} that do not keep source references (line and column numbers). This
-happens for \PercentParsedEvals of the eval calls, and \PercentParsedCallSites
-of the call sites. The input to \c{parse} can come from either a string, a file
-or directly a from a user input in interactive REPL session\footnote{in the
-  corpus, there is only one call site to eval that takes parse expression from a
-  user input, \c{invokeRestartInteractively} that prompts user for new argument
-  values when a function invocation fails.}.
-
-
-This corresponds to strings loaded from a file or to metaprogramming, \ie
-building new variables or functions by concatenating strings together, as in
-Listing~\ref{code:parsepaste}. To detect this kind of metaprogramming, we look
-at the usage of the main concatenating functions in R, \c{paste}, \c{paste0},
-\c{glue} and \c{str_c}, and \PasteParsedEvals of the evals and
-\PasteParsedCallSite of the call sites using a parse function actually call a
-concatenating function.
-
-
-\begin{lstlisting}[caption={Using \c{eval} and \c{parse} to do meta-programming in package \emph{data.table}, to build the options at load time (in \emph{onLoad.R}).}, label=code:parsepaste]
-eval(parse(text=paste0("options(",i,"=",opts[i],")")))
-\end{lstlisting}
-
-\textbf{What about a table of packages ranked by usage of parse (and/or paste...)?}
-
-
-\subsection{Consistency}
-
-Here we talk about whether the same call site sees the same pattern
-
-{\bf Polymorphic may not be the right word.}
-
-We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie
-how many different types of the resolved \c{expr} there are per call sites,
-in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
-\emph{monomorphic}.
-
-\begin{figure}[!h]
-	\centering
-    \includegraphics[width=\columnwidth]{polymorphism}
-    \caption{Degree of polymorphism of \c{expr} per call sites.} \label{fig:polymorphism}
-\end{figure}
-
-\subsection{base}
-
-There are 30 functions in \emph{base} that use \eval. Only five of them use \c{parse}, for legitimate reasons, such \c{source} and \c{sys.source} which load a file and then evaluate it, or \c{invokeRestartInteractively} which prompts the user for arguments to restart execution after an error.
-
-We endeavored  to write these functions without \eval. \c{match.arg} appears in \MatchArgPercent of the \eval calls. It is used to get the arguments, possibly abbreviated, of a function. With one argument, as \c{match.arg(arg)}, it uses \c{eval} to infer them from a parent function's formal arguments. We can rewrite it using its version with two arguments, \c{match.arg(arg, choices)} where \c{choices} are the possible formal arguments of the function, as shown in Listing~\ref{code:matcharg}.
-
-\begin{lstlisting}[caption={Rewriting \c{match.arg} without \eval}, label=code:matcharg]
-f <- function(type=c("examples", "tests", "vignettes")) {
-actual_type = match.arg(type)
-...
-}
-
-f <- function(type=c("examples", "tests", "vignettes")) {
-actual_type = match.arg(type, choices=c("examples", "tests", "vignettes"))
-...
-}
-\end{lstlisting}
+%%\subsection{Consistency}
+%%Here we talk about whether the same call site sees the same pattern
+%%
+%%{\bf Polymorphic may not be the right word.}
+%%
+%%We look at how \emph{polymorphic} the \c{expr} argument of \eval can be, \ie
+%%how many different types of the resolved \c{expr} there are per call sites,
+%%in Figure~\ref{fig:polymorphism}. \PercentMonomorphic of the call sites are
+%%\emph{monomorphic}.
+%%
+%%\begin{figure}[!h]
+%%	\centering
+%%    \includegraphics[width=\columnwidth]{polymorphism}
+%%    \caption{Degree of polymorphism of \c{expr} per call sites.} \label{fig:polymorphism}
+%%\end{figure}
+%%
+%%\subsection{base}
+%%
+%%There are 30 functions in \emph{base} that use \eval. Only five of them use \c{parse}, for legitimate reasons, such \c{source} and \c{sys.source} which load a file and then evaluate it, or \c{invokeRestartInteractively} which prompts the user for arguments to restart execution after an error.
+%%
+%%We endeavored  to write these functions without \eval. \c{match.arg} appears in \MatchArgPercent of the \eval calls. It is used to get the arguments, possibly abbreviated, of a function. With one argument, as \c{match.arg(arg)}, it uses \c{eval} to infer them from a parent function's formal arguments. We can rewrite it using its version with two arguments, \c{match.arg(arg, choices)} where \c{choices} are the possible formal arguments of the function, as shown in Listing~\ref{code:matcharg}.
+%%
+%%\begin{lstlisting}[caption={Rewriting \c{match.arg} without \eval}, label=code:matcharg]
+%%f <- function(type=c("examples", "tests", "vignettes")) {
+%%actual_type = match.arg(type)
+%%...
+%%}
+%%
+%%f <- function(type=c("examples", "tests", "vignettes")) {
+%%actual_type = match.arg(type, choices=c("examples", "tests", "vignettes"))
+%%...
+%%}
+%%\end{lstlisting}
 
 \section{Threats to Validity} The primary threat to validity is the issue of
 code coverage, a cause of concern for any dynamic approach. We mitigate this by
 including only those R packages in our corpus that have many reverse
-dependencies and thus high code coverage. Secondly, we turn off the bytecode
-compiler for this study. The bytecode compiler can also call eval. Thirdly, we
-do not get source locations for \UndefinedEvalsRnd eval calls. In these cases
-\eval is either passed as an argument to a higher-order functions or is defined
-in a function returned by a higher-order function and the R parser does not
-retain location information for \eval. However, this is a meager
-\PercentUndefinedEval of all eval calls and is unlikely to affect our analysis.
-
+dependencies and thus high code coverage. We turn off the bytecode compiler for
+this study. The bytecode compiler can also call eval. We do not get source
+locations for \UndefinedEvalsRnd eval calls. In these cases \eval is either
+passed as an argument to a higher-order functions or is defined in a function
+returned by a higher-order function and the R parser does not retain location
+information for \eval. However, this is a meager \PercentUndefinedEval of all
+eval calls and is unlikely to affect our analysis. We ignore calls to the native
+\eval function exposed by R. We also ignore the \c{rlang::tidy_eval} function
+which uses native \eval internally because \c{rlang} is used to implement a DSL
+for data analysis in R. It introduces a new first-class promise object called
+\c{quosure} for which it implements special evaluation support in \c{tidy_eval}.
 
 \section{Conclusion}
 
