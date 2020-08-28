@@ -232,11 +232,12 @@ pmap_dfr(function(eval_source, site_count, call_count, call_perc, cumsum_call_pe
 ```
 
 ```{r callsite-distribution, eval=TRUE}
+package_evals_dynamic <- read_fst(PACKAGE_EVALS_DYNAMIC_FILE) %>% as_tibble()
 eval_callsite_table <-
-  package_calls %>%
+  package_evals_dynamic %>%
   mutate(
     site_count=cut(
-      site_count, 
+      n, 
       breaks=c(0:10, 50, 100, 150, 200, 250, 300, Inf), 
       labels=c(1:10, "11--50", "51--100", "101--150", "151--200", "201--250", "251--300", "> 300"),
       include.lowest = T
