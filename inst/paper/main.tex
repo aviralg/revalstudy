@@ -643,7 +643,7 @@ size of the \c{expr} argument to \eval. The majority of inputs across core
 and packages (\NbAstOnePercent of \eval calls and \NbAstOneCallSitePercent of call sites) have size 1. That is to say, the code being evaluated
 consists of a single variable name or constant. A function call needs at
 least three nodes and a list such as \c{c(1, 2, 3)} counts for 4 nodes. Inputs smaller than \AstSizeNineFive nodes account for 95\% of all
-calls. Sizes in core are larger than in packages. It is due to core 
+calls. Sizes in core are larger than in packages. Most large AST originate from library \emph{VGAM}, which is used for statistical modelling. It uses \eval to evaluate large matrices with values in a given environment.  
 
 \begin{figure}[htbp]
 	\centering
