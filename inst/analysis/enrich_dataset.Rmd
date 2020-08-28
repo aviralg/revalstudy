@@ -139,6 +139,13 @@ The core dataset has `r nrow(eval_calls_core)` unique calls, the packages datase
 
 ```
 
+```{r}
+eval_calls_ast_size <- eval_calls_corpus %>% select(eval_call_srcref, caller_package, caller_function, eval_source_type, expr_resolved_nodes, nb_ev_calls)
+
+write_fst(eval_calls_ast_size, path(RUN_TRACE_DIR, "summarized-ast-size.fst"))
+```
+
+
 # Unknown evals
 
 Some `eval` do not have srcref information attached and are not in *base*. It is often because they are located in a function that is created by another function.
