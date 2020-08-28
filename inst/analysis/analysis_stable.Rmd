@@ -443,9 +443,10 @@ eval_calls %>% group_by(caller_package) %>% summarize(max_expr_size = max(expr_e
 ### AST size
 
 ```{r subsample_for_ast}
-ast_sizes <- eval_calls %>% slice_sample(n=10000) %>% mutate(expr_resolved_nodes = map_int(expr_resolved, expr_size_str))
+#ast_sizes <- eval_calls %>% slice_sample(n=10000) %>% mutate(expr_resolved_nodes = map_int(expr_resolved, expr_size_str))
 # Now precomputed during the tracing
-#ast_sizes <- read_fst(NODE_COUNT_FILE)
+ast_sizes <- read_fst(path(RUN_DIR, "package-evals-traced.3/summarized-ast-size.fst")) %>% as_tibble() %>% 
+      filter(eval_source_type != "<undefined>")
 ```
 
 
@@ -472,7 +473,7 @@ ast_sizes <- eval_calls %>% slice_sample(n=10000) %>% mutate(expr_resolved_nodes
 #   )
 
 ast_sizes %>%
-  ggplot(aes(x = dataset, y = expr_resolved_nodes, fill = dataset, weight = nb_ev_calls)) +
+  ggplot(aes(x = eval_source_type, y = expr_resolved_nodes, fill = eval_source_type, weight = nb_ev_calls)) +
   geom_violin(trim = FALSE, width=.5)+
   #geom_boxplot(width=.05) +
   scale_y_log10(labels = scales::comma) +
@@ -706,8 +707,8 @@ group_expr_resolved_functions <- expr_resolved_call_arg %>%
                               assignment = c("<-", "[[<-", "[<-", "$<-", "<<-", "=", "@<-"),
                               slot_access = c("[", "[[", "$", "slot", "@", "::", ":::"),
                               parsing = c("parse", "str2lang", "str2expression", "parse_only", "base::parse"),
-                              defusing = c("quote", "substitute", "bquote", "expr", "quo", "enquo", expression),
-                              expressions = c("as.list", "as.name", "as.expression", "list", "c", "as.data.frame", "as.character", "{", "modify_lang"),
+                              defusing = c("quote", "substitute", "bquote", "expr", "quo", "enquo", "expression", "as.name", "as.expression"),
+                              expressions = c("as.list",  "list", "c", "as.data.frame", "as.character", "{", "modify_lang"),
                               calling = c("call", "as.call", "do.call"),
                               environment = c("environment", "as.environment"),
                               logical = c("!", "&", "|", "&&", "||"),
@@ -785,7 +786,7 @@ r("percent monomorphic", ratio(nb_monomorphic, nb_call_sites))
 expr_resolved_polymorphism %>% ggplot() +
   geom_bar(aes(x = polym_degree)) +
   scale_x_continuous(breaks=c(0, 1, 5, 10)) +
-  labs(title = "Degree of polymorphism", x = "degree", y = "n") 
+  labs( x = "Number of different types", y = "n") 
 
 ggsave(path(PLOT_DIR, "polymorphism.pdf"))
 ```
