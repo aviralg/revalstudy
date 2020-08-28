@@ -995,7 +995,7 @@ access the bindings.
 %%\end{lstlisting}
 %%
 %%
-%%The \emph{glue} library is used to interpolate string litterals with variables, such as in \c{glue('My name is \{name\}.')} where \c{name} will be subtituted by its value. \emph{glue} makes it possible to define transformers that process those interpolated variables. They are built upon the \c{identity_transformer}, which uses \eval. The interpretation environment for \eval is often global here, as the string litterals are often used to print variabels at the top level.
+%%The \emph{glue} library is used to interpolate string litterals with variables, such as in \c{glue('My name is \{name\}.')} where \c{name} will be subtituted by its value. \emph{glue} makes it possible to define transformers that process those interpolated variables. They are built upon the \c{identity_transformer}, which uses \eval. The interpretation environment for \eval is often global here, as the string litterals are often used to print variables at the top level.
 %%
 %%\begin{lstlisting}
 %%identity_transformer <- function(text, envir) 
@@ -1005,29 +1005,30 @@ access the bindings.
 %%\end{lstlisting}
 %%
 %%
-%%The \c{imchange} function of package \c{imager} makes it possible to modify images using a dedicated formula syntax using \c{\~}.\footnote{Inspired by \c{map} in package \emph{purr}.}  Here, \eval is evaluated in \c{newenv}, which creates a new environment that inherits from \c{parent.frame()} by default. We classify it as 1+.
-%%
-%%
-%%\begin{lstlisting}
-%%newenv <- new.env()
-%%...
-%%fo <- parse(text=as.character(fo)[2])
-%%im[where] <- eval(fo,envir=newenv,enclos=env)
-%%\end{lstlisting}
-%%
-%%\c{adjCoef} in package \emph{actuar} find the root of an equation defined by a function \c{h} whose arguments must be named \c{x} and \c{y}.
-%%\c{h} is transformed into an auxiliary function \c{h2} that can be optimized. Here, the list used for \c{envir} ensures the correspondance between the textual arguments of \c{h} and the arguments of \c{h2}. 
-%%
-%%
-%%\begin{lstlisting}
-%%sh <- substitute(h)
-%%fcall <- paste(sh, "(x, y)")
-%%...
-%%h2 <- function(x, y)
-%%    eval(parse(text = fcall),
-%%    envir = list(x = x, y = y),
-%%    enclos = parent.frame(2))
-%%\end{lstlisting}
+
+The \c{imchange} function of package \c{imager} makes it possible to modify images using a dedicated formula syntax using \c{\~}.\footnote{Inspired by \c{map} in package \emph{purr}.}  Here, \eval is evaluated in \c{newenv}, which creates a new environment that inherits from \c{parent.frame()} by default (classified as 1+).
+
+
+\begin{lstlisting}
+newenv <- new.env()
+...
+fo <- parse(text=as.character(fo)[2])
+im[where] <- eval(fo,envir=newenv,enclos=env)
+\end{lstlisting}
+
+\c{adjCoef} in package \emph{actuar} find the root of an equation defined by a function \c{h} whose arguments must be named \c{x} and \c{y}.
+\c{h} is transformed into an auxiliary function \c{h2} that can be optimized. Here, the list used for \c{envir} ensures the correspondance between the textual arguments of \c{h} and the arguments of \c{h2}. 
+
+
+\begin{lstlisting}
+sh <- substitute(h)
+fcall <- paste(sh, "(x, y)")
+...
+h2 <- function(x, y)
+    eval(parse(text = fcall),
+    envir = list(x = x, y = y),
+    enclos = parent.frame(2))
+\end{lstlisting}
 
 \subsection{Patterns}
 
