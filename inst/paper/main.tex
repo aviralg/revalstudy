@@ -379,14 +379,14 @@ kind of limited namespace feature since variables defined in the environment
 are not visible from the outside.
 
 
-\begin{lstlisting}
-> eval(2)
-[1] 2
-> eval(expression(1+2))
-[1] 3
-> eval(parse(text = "1 + 2"))
-[1] 3
-\end{lstlisting}
+%\begin{lstlisting}
+%> eval(2)
+%[1] 2
+%> eval(expression(1+2))
+%[1] 3
+%> eval(parse(text = "1 + 2"))
+%[1] 3
+%\end{lstlisting}
 
 \begin{figure*}[!tb]\centering\includegraphics[width=.8\linewidth]
 {pipeline.pdf}\caption{Analysis Pipeline}\label{fig:pipeline}
@@ -667,7 +667,7 @@ We compare the number of events intercepted during execution of \eval across the
 whole corpus. For this, we use the number of interpreter's evaluator loops as a
 proxy for events. In the corpus, we observe \AllEventCountRnd events. Only
 \EvalEventCountRnd events occur inside eval. This is just \EvalEventAllPerc of
-all events. Figure~\ref{fig:event-distribution} shows the distribution of events
+all events. Table~\ref{table:event-distribution} shows the distribution of events
 caused by \eval calls from R Core and CRAN packages.
 
 \begin{table}[ht]\resizebox{\columnwidth}{!}{%
@@ -726,7 +726,7 @@ maps \eval function on the bindings of an environment which results in inputs of
 multiples types being passed to \eval.
 
 We further investigate the type of input passed to \eval in
-Figure~\cite{fig:eval-expression-kind} by the type of input and
+Figure~\ref{fig:eval-expression-kind} by the type of input and
 the source of \eval. In this figure, \emph{Expression} is the type of program text,
 \emph{Environmment} is the type of scopes or environments used for binding,
 \emph{Null} is the type of the unique \c{NULL} object, \emph{Vector} is the type
