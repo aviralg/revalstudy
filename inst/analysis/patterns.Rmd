@@ -1,0 +1,489 @@
+---
+title: "Patterns"
+output: html_document
+params:
+  base_dir: ../../../
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+local(for (x in c(
+  "dplyr", 
+  "DT",
+  "fs",
+  "fst",
+  "ggplot2",
+  "ggthemes",
+  "lubridate",
+  "readr",
+  "purrr",
+  "stringr",
+  "tidyr",
+  "tidytext",
+  "viridis",
+  "xtable"
+  )) {
+  suppressPackageStartupMessages(library(x, character.only=TRUE))
+})
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.align = "center",
+  fig.retina = 2,
+  fig.width = 10
+)
+
+# TODO: move into the package
+source("inc/paths.R")
+source("inc/setup.R")
+source("inc/latextags.R")
+
+options(repos="https://cran.r-project.org")
+theme_set(theme_minimal())
+create_tags(path(TAGS_DIR, "patterns.tex"), prefix="Pattern", default=TRUE)
+```
+
+## Data
+
+```{r}
+cran_programs <- read_fst(CRAN_PROGRAMS_FILE) %>% as_tibble() %>% filter(success)
+kaggle_programs <- read_fst(KAGGLE_PROGRAMS_FILE) %>% as_tibble() %>% filter(success)
+programs <- bind_rows(
+  select(cran_programs, file, corpus),
+  select(kaggle_programs, file, corpus)
+)
+```
+
+```{r}
+core_data <- 
+  read_fst(EVALS_SUM_CORE_FILE) %>%
+  as_tibble() %>%
+  semi_join(programs, by="file")
+
+packages_data <- 
+  read_fst(EVALS_SUM_PKGS_FILE) %>%
+  as_tibble() %>%
+  semi_join(programs, by="file")
+
+# kaggle should be always empty
+kaggle_data <- 
+  read_fst(EVALS_SUM_KAGGLE_FILE) %>%
+  as_tibble() %>%
+  semi_join(programs, by="file")
+
+all_data <- 
+  bind_rows(core_data, packages_data, kaggle_data) %>%
+  filter(eval_function %in% c("eval", "evalq")) %>%
+  select(
+    file, 
+    expr=expr_resolved, 
+    expr_type=expr_resolved_type, 
+    expr_fun=expr_resolved_function,
+    srcref=eval_call_srcref, 
+    caller_expression,
+    caller_function,
+    caller_package,
+    expr_parsed_expression, 
+    eval_source_type,
+    expr_expression_type,
+    envir_expression,
+    enclos_expression,
+    environment_class,
+    nb_ev_calls
+  )
+```
+
+## JS Patterns
+
+```{r}
+calls <- function(x) {
+  stopifnot("nb_ev_calls" %in% colnames(x))
+  sum(x$nb_ev_calls)
+}
+
+ratio_calls <- function(x, y) {
+  ratio(calls(x), calls(y))
+}
+```
+
+
+### library
+
+```{r}
+p_lib <- filter(all_data, str_detect(expr, "<-\\s*function\\("))
+p_lib_class <- 
+  p_lib %>%
+  mutate(
+    reason=case_when(
+      caller_expression == "eval(ei, envir)"    ~ "source", # base/R/source.R:219
+      caller_function == "source"               ~ "source",
+      caller_function == "sys.source"           ~ "source",
+      str_starts(expr, fixed("eval(quote({\n")) ~ "local",
+      TRUE                                      ~ "unknown"
+    )
+  )
+
+count(p_lib_class, reason)
+filter(p_lib_class, reason=="unknown") %>% arrange(desc(nb_ev_calls))
+```
+
+```{r}
+overview_table(
+  r("lib",        calls(p_lib_class)),
+  r("lib ratio",  ratio_calls(p_lib, all_data)),
+  r("lib source", calls(filter(p_lib_class, reason=="source"))),  
+  r("lib local",  calls(filter(p_lib_class, reason=="local")))  
+)
+```
+
+### Read
+
+resolving variable -- `evalq(x)` or `eval(quote(x))`
+
+```{r}
+p_read <-
+  all_data %>%
+  filter(expr_type=="SYMSXP" | expr_fun %in% c("[", "[[", "$", "slot", "@", "::", ":::"))
+
+p_read %>% 
+  count(caller_function, sort=T) %>% print(n=Inf)
+
+p_read_slot_access <- filter(p_read, expr_fun %in% c("[", "[[", "$", "slot", "@", "::", ":::"))
+
+overview_table(
+  r("read", calls(p_read)),
+  r("read ratio", ratio_calls(p_read, all_data)),
+  r("read slot access ratio", ratio_calls(p_read_slot_access, p_read)),
+  r("read datatable ratio", ratio_calls(filter(p_read, caller_package=="data.table"), p_read_slot_access))
+)
+```
+
+### Assign
+
+```{r}
+p_assign <-
+  all_data %>%
+  filter(expr_fun == "=" | str_ends(expr_fun, "<-") | expr_fun %in% c("assign", "delayedAssign"))
+
+p_assign_arrow <- filter(p_assign, expr_fun=="<-")
+p_assign_superarrow <- filter(p_assign, expr_fun=="<<-")
+
+overview_table(
+  r("assign", calls(p_assign)),
+  r("assign ratio", ratio_calls(p_assign, all_data)),
+  r("assign arrow ratio", ratio_calls(p_assign_arrow, p_assign)),
+  r("assign arrow magrittr ratio", ratio_calls(filter(p_assign_arrow, caller_package=="magrittr"), p_assign_arrow)),
+  r("assign superarrow ratio", ratio_calls(p_assign_superarrow, p_assign)),
+  r("assign superarrow plyr ratio", ratio_calls(filter(p_assign_superarrow, caller_package=="plyr"), p_assign_superarrow))
+)
+
+count(p_assign, expr_fun) %>%
+  rowwise() %>%
+  do({
+    e_f <- .$expr_fun
+    e_n <- .$n
+    tibble(e_f, e_n, calls=calls(filter(p_assign, expr_fun==e_f)))
+  })
+
+count(p_assign, caller_package) %>%
+  rowwise() %>%
+  do({
+    e_p <- .$caller_package
+    e_n <- .$n
+    tibble(e_p, e_n, calls=calls(filter(p_assign, caller_package==e_p)))
+  })
+```
+
+### typeof
+
+```{r}
+p_typeof <- 
+  all_data %>%
+  filter(
+    expr_fun=="typeof" |
+    expr_fun=="class" |
+    str_starts(expr_fun, "is\\.")
+  )
+
+count(p_typeof, expr_fun) %>%
+  rowwise() %>%
+  do({
+    e_f <- .$expr_fun
+    e_n <- .$n
+    tibble(e_f, e_n, calls=calls(filter(p_typeof, expr_fun==e_f)))
+  })
+
+
+overview_table(
+  r("typeof", calls(p_typeof)),
+  r("typeof ratio", ratio_calls(p_assign, all_data)),
+  r("assign arrow ratio", ratio_calls(filter(p_assign, expr_fun=="<-"), p_assign)),
+  r("assign superarrow ratio", ratio_calls(p_assign_superarrow, p_assign)),
+  r("typeof assertthat ratio", ratio_calls(filter(p_assign_superarrow, caller_package=="plyr"), p_assign_superarrow))
+)
+```
+
+### try
+
+```{r}
+p_try <- 
+  all_data %>%
+  filter(
+    expr_fun %in% c("try", "tryCatch")
+  )
+
+overview_table(
+  r("try", calls(p_try)),
+  r("try ratio", ratio_calls(p_try, all_data))
+)
+```
+
+mostly from methods
+
+### empty
+
+```{r}
+p_empty <- all_data %>%
+  filter(expr=="" | str_detect(expr, "^[\"']\\s*[\"']$"))
+
+overview_table(
+  r("empty", calls(p_empty)),
+  r("empty ratio", ratio_calls(p_empty, all_data))
+)
+```
+
+### call
+
+```{r}
+p_call <- all_data %>%
+  filter(
+    expr_type %in% c("LANGSXP", "EXPRSXP")
+  ) %>%
+  anti_join(
+    bind_rows(
+      p_lib, p_read, p_assign, p_typeof, p_try, p_empty
+    )
+  )
+
+filter(all_data, expr_type == "EXPRSXP", !str_starts(expr, "^.*\\(")) %>% count(expr)
+
+overview_table(
+  r("call", calls(p_call)),
+  r("call ratio", ratio_calls(p_call, all_data))
+)
+```
+
+### other
+
+```{r}
+p_other <-
+  anti_join(
+    all_data,
+    bind_rows(
+      p_lib, p_read, p_assign, p_typeof, p_try, p_call, p_empty
+    )
+  )
+
+overview_table(
+  r("other", calls(p_other)),
+  r("other ratio", ratio_calls(p_other, all_data))
+)
+```
+
+
+```{r}
+merge_patterns <- function(...) {
+  vars <- substitute(list(...))
+  vars <- as.list(vars[-1])
+  
+  map_dfr(
+    vars,
+    function(x) {
+      df <- get(as.character(x))
+      mutate(df, pattern=as.character(x))
+    }
+  )
+}
+
+merge_patterns_sum <- function(...) {
+  vars <- substitute(list(...))
+  vars <- as.list(vars[-1])
+
+  all <- all_data %>% group_by(eval_source_type) %>% summarize(all_evals=sum(nb_ev_calls))
+  
+  map_dfr(
+    vars,
+    function(x) {
+      name <- as.character(x)
+      df <- get(name)
+      if (nrow(df) == 0) {
+        tibble(eval_source_type=all$eval_source_type, pattern=name, nb_ev_calls=0, ratio=0)
+      } else {
+        df %>%
+          mutate(pattern=name) %>%
+          select(eval_source_type, nb_ev_calls, pattern) %>%
+          group_by(eval_source_type, pattern) %>%
+          summarize_all(sum) %>%
+          left_join(all, by="eval_source_type") %>%
+          mutate(ratio=nb_ev_calls/all_evals) %>%
+          select(-all_evals)
+      }
+    }
+  )
+}
+```
+
+
+```{r}
+patterns <- merge_patterns(p_lib, p_read, p_assign, p_typeof, p_try, p_call, p_other)
+
+patterns_sum <- merge_patterns_sum(p_lib, p_read, p_assign, p_typeof, p_try, p_call, p_other)
+```
+
+```{r}
+patterns_sum %>%
+  group_by(eval_source_type) %>%
+  summarise(ratio=sum(ratio))
+```
+
+```{r}
+patterns_sum %>%
+  ggplot(aes(x=reorder(pattern, -ratio), y=ratio)) +
+  geom_bar(stat="identity") +
+  scale_y_continuous(labels = scales::percent) +
+  facet_wrap(~eval_source_type)
+```
+
+```{r}
+patterns_table <- 
+  patterns_sum %>%
+  mutate(ratio=map_chr(ratio, ~fmt(percent(.))), nb_ev_calls=map_chr(nb_ev_calls, ~fmt(oom(.)))) %>%
+  pivot_wider(names_from=eval_source_type, values_from=c(nb_ev_calls, ratio), values_fill=list(nb_ev_calls="0", ratio="0%")) %>%
+  left_join(
+    tibble(
+      name   =c("Library", "Read", "Assign",   "Typeof",   "Try",   "Call",   "Empty",   "Other"),
+      pattern=c("p_lib", "p_read", "p_assign", "p_typeof", "p_try", "p_call", "p_empty", "p_other")
+    ),
+    by="pattern"
+  ) %>%
+  select(name, nb_ev_calls_core, ratio_core, nb_ev_calls_package, ratio_package)
+
+patterns_table %>%
+  arrange(desc(ratio_core)) %>%
+  xtable() %>%
+  print(
+    only.contents=TRUE, 
+    include.colnames=FALSE, 
+    include.rownames=FALSE,
+    hline.after=nrow(patterns_table),
+    file=path(TAGS_DIR, "table-js-patterns-in-r.tex")
+  )
+```
+
+
+```
+p_assign_ast <-
+  p_assign %>%
+  mutate(expr_ast=map(expr, ~tryCatch(str2lang(.), error=function(e) NA)))
+
+p_assign_ast_len <-
+  p_assign_ast %>%
+  mutate(expr_ast_length=map_int(expr_ast, length)) %>%
+  filter(expr_ast_length==3) %>%
+  mutate(fun=map_chr(expr_ast, function(x) {
+    if (length(x[[1]]) == 1) as.character(x[[1]]) else NA
+  })) %>%
+  filter(!is.na(fun))
+
+p_assign_arrow <- 
+  filter(p_assign_ast_len, fun %in% c("<-", "<<-"))
+
+p_assign_arrow %>% count(caller_function, sort = TRUE)
+
+overview_table(
+  r("assign", p_assign_arrow),
+  r("assign ratio", ratio(p_assign_arrow, all_data)),
+  r("assign super", ratio(filter(p_assign_ast_len, fun == "<<-"), p_assign_ast_len)),
+  r("assign maggit", ratio(filter(p_assign_ast_len, caller_function == "%<>%"), p_assign_ast_len))
+)
+```
+
+
+
+## Patterns
+
+### Value
+
+```{r}
+
+```
+
+
+```
+filter(corpus, evals>0)$package %>% sample(20)
+```
+
+```{r}
+packages <- c(
+  "timeSeries",
+  "irlba",
+  "assertthat",
+  "rgenoud",
+  "taxize",
+  "prodlim",
+  "vars" ,
+  "betareg"   ,
+  "bookdown"  ,
+  "R2HTML"   ,
+  "withr",
+  "processx" ,
+  "modeltools"  ,
+  "rprojroot"  ,
+  "ggplot2",
+  "binom",
+  "rmarkdown" ,
+  "R.methodsS3" ,
+  "FactoMineR" ,
+  "PerformanceAnalytics"
+)
+```
+
+```{r}
+evals_static <- read_fst(PACKAGE_EVALS_FILE)
+```
+
+### parse
+
+```{r}
+all_data %>%
+  filter(!is.na(parse_args_text))
+```
+
+
+
+### timeSeries
+
+```{r}
+filter(evals_static, package=="timeSeries")
+```
+
+
+```
+as.timeSeries.character - dynamic code loading
+    # Load Demo File - Returns a data frame:
+    x <- eval(parse(text = eval(x)))
+
+
+setMethod("rank", "timeSeries",
+  function(x,  na.last = TRUE,
+      ties.method = eval(formals(rank)$ties.method)) -- incorrect usage
+
+```
+
+
+
+```{r}
+paste0("scp -r prl3:/var/lib/R/project-evalR/CRAN/extracted/",packages," . &&") %>% cat(sep="\n")
+```
+

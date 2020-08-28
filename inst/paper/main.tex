@@ -6,6 +6,7 @@
 \usepackage{textcomp}
 \usepackage{listings}
 \usepackage{hyperref}
+\usepackage{multirow}
 \newcommand{\missingTag}[1]{\textcolor{red}{#1}\xspace}
 \newcommand{\missingNumber}{\textcolor{red}{XX}\xspace}
 \newcommand{\missingPercentage}{\textcolor{red}{XX\%}\xspace}
@@ -947,7 +948,7 @@ access the bindings.
 %%
 %%
 %% \end{lstlisting}
-%%$ <- to fix emacs fontification issues
+%% $$$$ <- to fix emacs fontification issues
 
 The \c{imchange} function of package \c{imager} makes it possible to modify images using a dedicated formula syntax using \c{\~}.\footnote{Inspired by \c{map} in package \emph{purr}.}  Here, \eval is evaluated in \c{newenv}, which creates a new environment that inherits from \c{parent.frame()} by default (classified as 1+).
 
@@ -979,7 +980,17 @@ The JavaScript paper identified a number of frequently occurring eval
 patterns. The patterns were detected using simple regular expressions on the
 string passed to \eval. In the case of R look at the AST passed to evals.
 
-\missingTable[JS evals in R]
+\begin{table}[ht]%\resizebox{\columnwidth}{!}{%
+  \centering
+\begin{tabular}{r|r|r|r|r}\hline
+\multirow{2}{*}{Pattern} & \multicolumn{2}{c|}{Core} & \multicolumn{2}{c}{Packages} \\
+                         & Calls & Ratio            & Calls & Ratio \\\hline
+\input{tag/table-js-patterns-in-r.tex}
+\end{tabular}
+\caption{JavaScript evals patterns in R}
+\label{table:js-pattens-in-r}
+\end{table}
+
 
 For the rest of this section we show some of the common use of \eval in R that
 we have seen by looking at 20 randomly selected packages:
