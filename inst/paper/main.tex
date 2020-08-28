@@ -1080,11 +1080,14 @@ adjust some arguments and pass it to another function. For example the
   returns this new AST which can then be evaluated in custom environments using
   \eval.
 
-  \subsubsection{Convenience}
-  evaling recorded calls in model-fitting functions or passing most of the
-  current call to another function. Both ``patterns'' use the \c{match.call} to
-  capture current call. The latter is just for laziness as it is the same as
-  calling the new function with explicitly selecting the arguments.
+  \subsubsection{Convenience} Eval is used to make some programming tasks easier (and/or shorter). For example, in \c{data.table}, it is used to set R options from a character vector
+  \begin{lstlisting}
+opts = c("datatable.verbose"="FALSE", ...)
+for (i in names(opts)) eval(parse(text=paste0("options(",i,"=",opts[i],")")))
+
+  \end{lstlisting}
+  %
+  instead of manually calling \c{options(datatable.verbose=FALSE)}
 
   \subsubsection{Implementation}
   The package installation process adds an extra file to the package directory
@@ -1101,7 +1104,24 @@ adjust some arguments and pass it to another function. For example the
   enclosing the call to \unlockBinding inside \eval. From the same reason, other
   packages use \eval to access private variables and functions from their
   dependencies.
-  % \AllValueInputEvalCallPerc migth hit on a wong usage
+
+  \subsubsection{Unnecessary use of eval} Similarly to JavaScript, there are also unnecessary uses of \eval.
+  For example, the \c{PerfromanceAnalytics} package contains a function \c{chart.QQPlot} that uses \eval to resolve a string into function and anther to call it and assign its results into a variable:
+  \begin{lstlisting}
+function (R, d="norm", dp, ...) {
+q.f <- eval(parse(text=paste("q",d,sep="")))
+z <- NULL
+eval(parse(text=paste("z<-q.f(",dp,",...)")))
+}
+  \end{lstlisting}
+  In both cases, there is no need for \eval:
+  \begin{lstlisting}
+function (R, d="norm", dp, ...) {
+q.f <- get(paste0("q",d))
+z <- q.f(dp, ...)
+}
+  \end{lstlisting}
+  or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
 \subsection{Consistency}
 

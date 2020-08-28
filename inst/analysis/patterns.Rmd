@@ -425,14 +425,14 @@ filter(corpus, evals>0)$package %>% sample(20)
 ```
 
 ```{r}
-packages <- c(
+rnd_packages <- tibble(package=c(
   "timeSeries",
   "irlba",
   "assertthat",
   "rgenoud",
   "taxize",
   "prodlim",
-  "vars" ,
+  "data.table" ,
   "betareg"   ,
   "bookdown"  ,
   "R2HTML"   ,
@@ -441,16 +441,23 @@ packages <- c(
   "modeltools"  ,
   "rprojroot"  ,
   "ggplot2",
-  "binom",
+  "anytime",
   "rmarkdown" ,
   "R.methodsS3" ,
   "FactoMineR" ,
   "PerformanceAnalytics"
-)
+))
 ```
 
 ```{r}
-evals_static <- read_fst(PACKAGE_EVALS_FILE)
+evals_static <- read_fst(PACKAGE_EVALS_FILE) %>% as_tibble() %>% semi_join(rnd_packages, by="package")
+```
+
+```{r}
+overview_table(
+  r("Manual packages", nrow(rnd_packages)),
+  r("Manual callsites", nrow(evals_static))
+)
 ```
 
 ### timeSeries
