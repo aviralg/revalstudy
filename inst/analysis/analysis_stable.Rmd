@@ -36,6 +36,7 @@ library(DT)
 library(fst)
 library(fs)
 library(ggthemes)
+library(pbapply)
 
 save_table <- function(df, fname) {
   df %>%
@@ -641,6 +642,8 @@ r("sys call envir percent", ratio(nb_sys_call, nb_eval_calls))
 
 ```{r env_assign}
 eval_calls_env_assign <- eval_calls %>% filter(!is.na(expr_resolved)) %>% mutate(env_assign = pblapply(expr_resolved, is_assign_str, cl = parallel::detectCores() - 2))
+
+#eval_calls_env_assign2 <-  eval_calls_env_assign %>% filter(is.logical(env_assign)) %>% hoist("env_assign", env_assign = 1)
 ```
 
 
@@ -905,6 +908,40 @@ meta_parsed %>% count(expr_parsed_expression, wt = nb_ev_calls, sort = TRUE)
 
 ```{r}
 duration <- difftime(Sys.time(), now)
+```
+
+
+Number of eval calls in packages.
+
+```{r call_sites_core}
+
+corpus_files <- read_lines(CORPUS_FILE)
+corpus_size <- length(corpus_files)
+
+program_call_sites <- read_fst(PACKAGE_EVALS_FILE) %>% as_tibble() %>%
+  filter(package %in% c(corpus_files, CORE_PACKAGES))
+
+in_core <- program_call_sites %>% filter(package %in% CORE_PACKAGES)
+
+nb_in_core <- in_core %>% nrow()
+
+r("nb core eval call sites", nb_in_core)
+
+call_sites_per_package <- program_call_sites %>% count(package, sort = TRUE)
+
+max_call_sites <- max(call_sites_per_package$n)
+
+r("max call site package", max_call_sites)
+
+nb_one_call_site <- call_sites_per_package %>% filter(n == 1) %>% nrow()
+
+r("one call site package", nb_one_call_site)
+
+nb_packages_plus_one <- n_distinct(program_call_sites %>% filter(!package %in% CORE_PACKAGES) %>% select(package))
+
+nb_package_none_eval_call_site <- corpus_size - nb_packages_plus_one
+
+r("no call site packages", nb_package_none_eval_call_site)
 ```
 
 

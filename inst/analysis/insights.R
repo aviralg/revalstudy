@@ -311,11 +311,11 @@ is_assign <- function(expr)
   {
     function_name <- expr[[1]]
     function_args <- expr[-1]
-    return(as.character(function_name) %in% env_assign && any(function_args, is_assign))
+    return(as.character(function_name) %in% env_assign || some(function_args, is_assign))
   }
   else if(is.expression(expr))
   {
-    return(any(expr, is_assign))
+    return(some(expr, is_assign))
   }
   else
   {
