@@ -601,10 +601,6 @@ These \eval calls originate from statistical modeling packages such as \mlogit,
 
 \section{A taxonomy of eval}
 
-
-
-\subsection{Operation Mix}
-
 In this section we turn our attention to the expression passed for evaluation to
 \eval. \eval accepts all types of R objects as inputs. In our corpus, we observe
 that \AllValueInputEvalCallPerc of all inputs to \eval are values, i.e., they
@@ -747,6 +743,23 @@ The \c{force} function forces promises~\cite{oopsla19a} and returns the result
 of evaluation. The \c{inner} pattern arises from \c{glue::identity_transformer}
 which enables the creation of custom transformation functions for affecting the
 interpolation and concatenation of input by the \c{glue} package.
+
+\subsection{Operation Mix}
+In this section, we look at the operations executed by the expressions and
+symbols on evaluation. R is a lazy language, so symbols can be bound to promises
+that can evaluate arbitrary code. All operations in R are function calls, even
+primitive operations such as addition and assignment are treated as calls to
+functions implemented in the interpreter. In our corpus, we observe 2.9G calls
+to R functions of which 125.5M happen inside \eval. Furthermore, unlike
+Javascript, R code also calls into peformant native implementations of numerical
+and statistical routines. In the corpus there are 463.8M calls to native code of
+which only 31.2M happens inside \eval.
+Qualitatively, we observe all kinds of operations being executed inside \eval
+calls, from numerical computing for statistical modeling to reflection and
+metaprogramming for implementing DSLs. Even testing frameworks such \c{genthat}
+heavily rely upon \eval to execute test code snippets. The core R implementation
+is rife with uses of \eval for mundane things like accessing default values of
+formal parameters and in statistical packages for computation.
 
 \subsubsection{Provenance}
 
