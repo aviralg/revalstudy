@@ -17,6 +17,7 @@ R_LIBS_DIR <- path(params$base_dir, "library", "4.0")
 ## INPUTs
 
 PACKAGE_EVALS_DYNAMIC_FILE <- path(DATA_DIR, "evals-dynamic.fst")
+PACKAGE_EVALS_UNDEFINED_FILE <- path(DATA_DIR, "evals-undefined.fst")
 PACKAGE_EVALS_FILE         <- path(DATA_DIR, "evals.fst")
 PACKAGE_COVERAGE_FILE      <- path(DATA_DIR, "coverage.fst")
 PACKAGE_METADATA_FILE      <- path(DATA_DIR, "metadata.fst")
@@ -70,7 +71,7 @@ CRAN_MIRROR_LOCAL_URL <- paste0("file://", params$base_dir, "/CRAN")
 # size of a package to be considered as outlier
 PACKAGE_SIZE_OUTLIER <- 50000
 PACKAGE_EVALS_OUTLIER <- 50
-PACKAGE_EVALS_DYN_OUTLIER <- 10
+PACKAGE_EVALS_DYN_OUTLIER <- 50
 MOST_DOWNLOADED <- 25
 # R packages distributed with vanilla R
 CORE_PACKAGES <- c(
