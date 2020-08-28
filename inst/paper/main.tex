@@ -290,6 +290,51 @@ name or arguments are determined dynamically. For this purpose, R provides
 
 \section{The Design of Eval}
 
+The R Project is a key tool for data analysis.  At the heart of the R
+project is a \emph{vectorized, dynamic, lazy, functional, object-oriented}
+programming language with a rather unusual combination of
+features~\cite{ecoop12} designed to ease learning by non-programmer and
+enable rapid development of new statistical methods.  The language was
+designed~\cite{R96} as a successor to S~\cite{S88}.
+
+In R, most data types are vectorized. Values are constructed by the
+\c{c(...)} function: \c{c("hi","ho")} creates a vector of two strings. The
+language does not differentiate scalars from vectors, thus \c{1==c(1)}. In
+order to enable equational reasoning, R copies most values accessible
+through multiple variables if they are written to.  Every linguistic
+construct is desugared to a function call, even control flow statements,
+assignments, and bracketing. Furthermore, all functions can be redefined in
+packages or user code. This makes R both flexible and challenging to
+compile~\cite{dls19}. In R, arguments to a user-defined function are bundled
+into a thunk called a promise. Logically, a promise combines an expression's
+code, its environment, and its value.  To access the value of a promise, one
+must force it. Forcing a promise triggers evaluation and the computed value
+is captured for future reference.  Values can be tagged by user-defined
+attributes. For instance, one can attach the attribute \c{dim} to the value
+\c{x<-c(1,2,3,4)} by evaluating \c{attr(x,"dim")<-c(2,2)}.  Once done,
+arithmetic functions will treat \c x as a \c{2x2} matrix. Another attribute
+is \c{class} which can be bound to a list of names. For instance,
+\c{class(x)<-"human"}, sets the class of \c{x} to \c{human}.  Attributes are
+used for object-oriented dispatch.
+
+R supports reflection and meta-programming. The \c{substitute(e,envir)}
+function yields the parse tree of the expression \c{e} after performing
+substitutions defined by the bindings in \c{envir}.
+
+
+\begin{lstlisting}
+> substitute(expression(a + b), list(a = 1)))  
+expression(1 + b)
+\end{lstlisting}
+\vspace{2mm}
+
+\noindent
+R allows programmatic manipulation of parse trees, which are themselves
+first class objects. They are evaluated using the \c{eval(e,envir)}
+function. Environment on the call stack can also be accessed.
+
+
+
 There are four different kinds of \eval in the \emph{base} package:
 \c{eval}, \c{evalq}, \c{eval.parent}, \c{local}.  The most important one is
 \eval:
