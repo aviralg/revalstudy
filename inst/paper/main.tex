@@ -607,51 +607,54 @@ These \eval calls originate from statistical modeling packages such as \mlogit,
 
 In this section we turn our attention to the expression passed for evaluation to
 \eval. \eval accepts all types of R objects as inputs. In our corpus, we observe
-that \AllValueInputEvalCallPerc of all inputs to \eval are values, i.e., they evaluate to
-themselves. The remaining \AllExpressionInputEvalCallPerc inputs are expressions
-which are reduced to values by \eval.
-% Furthermore, the proportion of values
-% passed to core \eval call is \CoreEvalValueInputPerc compared to a significantly
-% higher \PackageEvalValueInputPerc for package \eval calls.
-To investigate this, we look at the type of expressions accepted by \eval
-callsites in our corpus. We find that only \AllValueInputEvalSitePerc receive
-only values as inputs, \AllExpressionInputEvalSitePerc call
-sites exclusively receive expressions as inputs and a very large proportion,
-\AllPolymorphicInputEvalSitePerc, receive both expressions and values as inputs across all program runs.
-We inspected the eval callsites that accept only values or both values and expression as inputs.
-The top three of these call sites contribute to over
-~80\% of all calls to evals. The first one is inside \c{match.arg} from core.
-Given a vector of names as strings, this function finds the default values for
-parameters with those names in the caller function. Since the default value for
-a function parameter can be a complex expression or a benign value such as
-\c{NULL}, \c{match.arg} evaluates it through a call to \eval. This makes the
-\eval inside \c{match.arg} ``polymorhpic''. The second such \eval call
-originates from the popular \ggplot package of R which is a DSL for plotting.
-\ggplot has it's own object system, \ggproto, which uses \eval inside the
-\ggproto function to determine the super-class from which it inherits. The
-default value of the superclass is \c{NULL} but in general could be an
-arbitrarily complex expression. The third \eval call is in core R \c{str}
+that \AllValueInputEvalCallPerc of all inputs to \eval are values, i.e., they
+evaluate to themselves. The remaining \AllExpressionInputEvalCallPerc inputs are
+expressions which are reduced to values by \eval. % Furthermore, the proportion
+of values % passed to core \eval call is \CoreEvalValueInputPerc compared to a
+significantly % higher \PackageEvalValueInputPerc for package \eval calls. To
+investigate this, we look at the type of expressions accepted by \eval callsites
+in our corpus. We find that only \AllValueInputEvalSitePerc receive only values
+as inputs, \AllExpressionInputEvalSitePerc call sites exclusively receive
+expressions as inputs and a very large proportion,
+\AllPolymorphicInputEvalSitePerc, receive both expressions and values as inputs
+across all program runs. We inspected the eval callsites that accept only values
+or both values and expression as inputs. The top three of these call sites
+contribute to over ~80\% of all calls to evals. The first one is inside
+\c{match.arg} from core. Given a vector of names as strings, this function finds
+the default values for parameters with those names in the caller function. Since
+the default value for a function parameter can be a complex expression or a
+benign value such as \c{NULL}, \c{match.arg} evaluates it through a call to
+\eval. This makes the \eval inside \c{match.arg} ``polymorhpic''. The second
+such \eval call originates from the popular \ggplot package of R which is a DSL
+for plotting. \ggplot has it's own object system, \ggproto, which uses \eval
+inside the \ggproto function to determine the super-class from which it
+inherits. The default value of the superclass is \c{NULL} but in general could
+be an arbitrarily complex expression. The third \eval call is in core R \c{str}
 function. This function is used to print a summary of R objects. It internally
 maps \eval function on the bindings of an environment which results in inputs of
 multiples types being passed to \eval.
 
+We further investigate the type of input passed to \eval in
+Figure~\cite{fig:eval-expression-kind} by the type of input and
+the source of \eval. In this figure, \emph{Expression} is the type of program text,
+\emph{Environmment} is the type of scopes or environments used for binding,
+\emph{Null} is the type of the unique \c{NULL} object, \emph{Vector} is the type
+assigned to vectors of strings, booleans, integers, reals and bytes;
+\emph{Symbol} is the type of unevaluated symbols, and \emph{Function} is the
+type of functions.
 
-%%We further investigate the type of input passed to \eval in
-%%Figure~\cite{fig:eval-expr-type} by the type of input and
-%%the source of \eval. In this figure, \emph{Expression} is the type of program text,
-%%\emph{Environmment} is the type of scopes or environments used for binding,
-%%\emph{Null} is the type of the unique \c{NULL} object, \emph{Vector} is the type
-%%assigned to vectors of strings, booleans, integers, reals and bytes;
-%%\emph{Symbol} is the type of unevaluated symbols, and \emph{Function} is the
-%%type of functions.
-%%
-%%
-%%From the figure, we observe that majority of inputs to Core \eval functions are
-%%expressions in contrast to package \eval calls which receive mostly environments
-%%as inputs. In fact, \PackageEnvironmentEvalPerc of inputs to package evals are
-%%environments.
-%%
-%%Now, we turn our attention to the expressions passed as input to \eval.
+\begin{figure}[!h]
+	\centering
+  \includegraphics[width=\columnwidth]{eval-expression-kind}
+  \caption{Type of Expression passed to \eval} \label{fig:eval-expression-kind}
+\end{figure}
+
+From the figure, we observe that majority of inputs to Core \eval functions are
+expressions in contrast to package \eval calls which receive mostly environments
+as inputs. In fact, \PackageEnvironmentInputEvalCallPerc of \eval calls in
+packages receive environments as input expressions.
+
+Now, we turn our attention to the expressions passed as input to \eval.
 
 
 %%Unlike Javascript, R packages also call native code for access to efficient
