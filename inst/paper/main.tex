@@ -412,7 +412,7 @@ usage. The reason for this is that we only want to record eval usage for the
 extracted code. Without this, the data would include eval calls from the
 unit testing frameworks as well as from bootstrapping R virtual machine
 itself. To avoid any interference, each program is run in its own R
-instance. The \emph{evil} framework implemented as R package in 2K lines of
+instance. The \emph{evil} framework is implemented as a R package in 2K lines of
 R and 400 lines of C++ code.
 
 The dynamic analyzer builds upon the dynamic analysis framework, \instrumentr
@@ -459,7 +459,7 @@ use its runnable code to compute the package code coverage.\footnote{Computed
 \CorpusPackages packages, it is \CorpusMeanExprCoverage.
 Figure~\ref{fig:corpus} shows these packages, the size of the dots reflects
 the project's size in lines of code.  The x-axis indicates code coverage in
-percents and the y-axis gives the number of call sites to \eval in log
+percents and the y-axis gives the number of call sites to \eval that were traced, in log
 scale. Dotted lines indicate means. Packages with over
 \CorpusEvalsPackageTreshold eval call sites are named.
 
