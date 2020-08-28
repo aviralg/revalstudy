@@ -249,8 +249,8 @@ eval_callsite_table_row <- ceiling(nrow(eval_callsite_table)/3)
                                    
 eval_callsite_table3 <- map_dfc(seq(1, nrow(eval_callsite_table), eval_callsite_table_row), function(i) {
   x <- tibble(
-    eval_callsite_table[i:(i+eval_callsite_table_row), "site_count"],
-    eval_callsite_table[i:(i+eval_callsite_table_row), "package_count"]
+    eval_callsite_table[i:(i+eval_callsite_table_row-1), "site_count"],
+    eval_callsite_table[i:(i+eval_callsite_table_row-1), "package_count"]
   )
   colnames(x) <- paste0(colnames(x), i)
   x
