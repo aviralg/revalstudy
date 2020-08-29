@@ -863,9 +863,8 @@ code that can be similarly extracted into R scripts. R provides builtin
 functions for tangling the embedded code into files.  The selected packages
 contain \CorpusPackagePrograms programs with \CorpusPackageProgramsCodeRnd
 lines of R code: \CorpusExamplesProgramsRnd examples with
-\summaryrnd{CorpusExamplesCode}\footnote{This notation represents $sum$
-  ($min$ / $mean$ / $max$)} lines of code, and \CorpusVignettesProgramsRnd
-vignettes.%%% with \summaryrnd{CorpusVignettesCode} lines of code.
+\CorpusExamplesCodeRnd lines of code, and \CorpusVignettesProgramsRnd
+vignettes.
 
 \subsection{Kaggle Scripts}
 
@@ -888,22 +887,25 @@ found that \CorpusDuplicatedKaggle were whole-file duplicates. From
 \CorpusRunnableKaggle kernels, \CorpusFailedKaggle failed to execute. Next
 to various runtime exceptions, common problems were parse errors and
 misspelled package names.  The final set contains \CorpusFinishedKaggle
-kernels with \summaryrnd{CorpusFinishedKaggleCode} lines of R code.
+kernels with \CorpusFinishedKaggleCodeRnd lines of R code.
 
 \section{Usage Metrics}
 
-This section presents an overview of the usage of \eval in our corpus.
-Richards et al. reported 82\% of JavaScript-enabled web pages using
-\eval~\cite{ecoop11}. The case for R is more striking with 100\% of the
-programs call the \eval function.\footnote{We combine calls to {\sf eval},
-  {\sf eval.parent}, {\sf evalq} and {\sf local}.}  This high number is
-explained by the fact that the R implementation, its core packages, use
-\eval extensively. We differentiate uses based on their origin. A {\bf core}
-\eval is one that occurs in the code of a core package.  A {\bf dependent}
-\eval occurs in a package imported by the target package. An {\bf own} \eval
-is one that occurs in the source code of the target package.
-
-
+This section presents an overview of the usage of \eval in our corpus. Richards
+et al. reported 82\% of JavaScript-enabled web pages using \eval~\cite{ecoop11}.
+The case for R is more striking with 100\% of the programs call the \eval
+function.\footnote{We combine calls to {\sf eval}, {\sf eval.parent}, {\sf
+    evalq} and {\sf local}.} This high number is explained by the fact that the
+R implementation, its core packages, use \eval extensively. We differentiate
+three types of eval based on their origin:
+%
+\begin{compactitem}[$-$]
+  \item a {\bf core eval} is one that occurs in the code of a core package,
+  \item a {\bf dependent eval} occurs in a package imported by the target
+  package, and
+  \item an {\bf own eval} is one that occurs in the source code of the target
+  package.
+\end{compactitem}
 
 Over all, we observe \AllAllCallCountRnd calls to \eval in our corpus.
 Table~\ref{A} details this run-time information. The format is T (m/M/x)
@@ -1012,28 +1014,26 @@ inputs, but in the majority of cases (\AllExpressionInputEvalCallPerc), it
 is called with expressions. The remaining \AllValueInputEvalCallPerc are
 values, \ie, they evaluate to themselves.
 %
-Passing a value into an eval is effectively an no-op so we look closely at
-the expression types the call sites pass to eval across all the runs.
+Passing a value into an eval is effectively an no-op so we look closely at the
+expression types the call sites pass to eval across all the runs.
 \AllValueInputEvalSitePerc of all call sites always pass values,
-\AllExpressionInputEvalSitePerc pass expressions and a very large
-proportion, \AllPolymorphicInputEvalSitePerc, pass both expressions and
-values as inputs across all program runs. We inspected the eval callsites
-that accept only values or both values and expression as inputs. The top
-three of these call sites contribute to over ~80\% of all calls to
-evals. The first one is inside \c{match.arg} from core. Given a vector of
-names as strings, this function finds the default values for parameters with
-those names in the caller function. Since the default value for a function
-parameter can be a complex expression or a benign value such as \c{NULL},
-\c{match.arg} evaluates it through a call to \eval. This makes the \eval
-inside \c{match.arg} ``polymorhpic''. The second such \eval call originates
-from the popular \ggplot package of R which is a DSL for plotting. \ggplot
-has it's own object system, \ggproto, which uses \eval inside the \ggproto
-function to determine the super-class from which it inherits. The default
-value of the superclass is \c{NULL} but in general could be an arbitrarily
-complex expression. The third \eval call is in core R \c{str} function. This
-function is used to print a summary of R objects. It internally maps \eval
-function on the bindings of an environment which results in inputs of
-multiples types being passed to \eval.
+\AllExpressionInputEvalSitePerc pass expressions and a very large proportion,
+\AllPolymorphicInputEvalSitePerc, pass both expressions and values as inputs
+across all program runs. We inspected the eval callsites that accept only values
+or both values and expression as inputs. The top three of these call sites
+contribute to over ~80\% of all calls to evals. The first one is inside
+\c{match.arg} from core. Given a vector of names as strings, this function finds
+the default values for parameters with those names in the caller function. Since
+the default value for a function parameter can be a complex expression or a
+benign value such as \c{NULL}, the \c{match.arg} function evaluates it through a
+call to \eval. This makes the \eval inside \c{match.arg} ``polymorhpic''. The
+second such \eval call originates from \ggplot, a popular R package for making
+plots. \ggplot has it's own object system, \ggproto, which uses \eval inside the
+\ggproto function to determine the super-class from which it inherits (the
+default value is \c{NULL} but in general it could be an arbitrarily expression).
+The third \eval call is in core R \c{str} function used to print a summary of R
+objects. It internally maps \eval function on the bindings of an environment
+which results in inputs of multiples types being passed to \eval.
 
 We further investigate the type of input passed to \eval in
 Figure~\ref{fig:eval-expression-kind} by the type of input and the source of
