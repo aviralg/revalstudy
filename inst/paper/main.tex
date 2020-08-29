@@ -365,9 +365,9 @@
 \newcommand{\UndefinedOutOfCorpusRnd}{0\xspace}
 \newcommand{\UndefinedOutOfCorpus}{0\xspace}
 \newcommand{\UndefinedOutOfCoprusPercent}{0\%\xspace}
-\newcommand{\MaxCallSitesEnrich}{114}
-\newcommand{\OneCallSitesEnrich}{61}
-\newcommand{\NoCallSitesEnrich}{297}
+\newcommand{\MaxCallSitesEnrich}{114\xspace}
+\newcommand{\OneCallSitesEnrich}{61\xspace}
+\newcommand{\NoCallSitesEnrich}{297\xspace}
 %\input{tag/patterns.tex}
 \newcommand{\PatternLibRnd}{4K\xspace}
 \newcommand{\PatternLib}{4,278\xspace}
@@ -437,7 +437,7 @@
 \newcommand{\summary}[1]{{\csname #1\endcsname} ({\csname #1Min\endcsname} / {\csname #1Mean\endcsname} / {\csname #1Max\endcsname})}
 \newcommand{\summaryrnd}[1]{{\csname #1Rnd\endcsname} ({\csname #1MinRnd\endcsname} / {\csname #1MeanRnd\endcsname} / {\csname #1MaxRnd\endcsname})}
 
-\newcommand{\eval}{\c{eval}}
+\newcommand{\eval}{\texttt{eval}}
 \newcommand{\evals}{{\sf eval}s\xspace}
 \newcommand{\parse}{\c{parse}}
 \newcommand{\source}{\c{source}}
@@ -930,12 +930,13 @@ Kaggle &  1.2M &  470K   & 0\\
 
 
 Table~\ref{table:site-package-summary} shows the number of call sites in
-CRAN packages. \OneCallSitesEnrich packages have a single call site, and one
-package, \emph{metafor}, has \MaxCallSitesEnrich call sites of
-\eval. \NoCallSitesEnrich packages have no calls to \eval. The core packages
-have \NbCoreEvalCallSites call sites of \eval and Kaggle has none. These
+CRAN packages. \OneCallSitesEnrich{} packages have a single call site, and one
+package, \emph{metafor}, has \MaxCallSitesEnrich{} call sites of
+\eval. \NoCallSitesEnrich{} packages have no calls to \eval. The core packages
+have \NbCoreEvalCallSites{} call sites of \eval and Kaggle has none. These
 numbers are under-approximations as \eval may be called reflectively,
 through aliases, or passed to a higher-order function.
+
 
 \begin{table}[ht]\resizebox{\columnwidth}{!}{%
 \begin{tabular}{rr|rr|rr}\hline
@@ -1230,15 +1231,15 @@ packages are side-effecting.
 \subsection{Scope}
 
 One of the main differences of the R \eval with the javascript one is how it
-interacts with \emph{scope}, or environments in R. In Javascript, \c{eval} can
-access the local scope and the global scope. In R, \c{eval} has an argument
+interacts with \emph{scope}, or environments in R. In Javascript, \eval can
+access the local scope and the global scope. In R, \eval has an argument
 \c{envir} to indicate in which environment its first argument must be evaluated.
 By default, it is equal to \c{parent.frame()}, 
-which is the parent environment of \c{eval} call. This default argument
+which is the parent environment of \eval call. This default argument
 happens in \DefaultEnvirExprPercent of the eval calls.
 
 This argument can also be \c{NULL}, a \c{List} or a data frame. This happens
-in 3.5\% of the cases: \c{eval} copies the fields of the list or data frame
+in 3.5\% of the cases: \eval copies the fields of the list or data frame
 and creates bindings for them in a new environment. This pattern is used to
 evaluate formulas which can directly refer to the fields of the data.  The
 \c{envir} argument can also be a number $n$. It means that the environment
