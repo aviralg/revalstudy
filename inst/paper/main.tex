@@ -798,11 +798,6 @@ intercepts the hooks exposed by \rdyntrace and attaches R functions exported by
 \evil as callbacks. The \evil callbacks execute on corresponding interpreter
 events.
 
-
-\begin{figure*}[!tb]\centering\includegraphics[width=.8\linewidth]
-  {corpus.pdf}\caption{CRAN packages}\label{fig:corpus}
-\end{figure*}
-
 All steps of this pipeline are parallelized using GNU
 parallel~\cite{GNUparallel} and orchestrated by GNU make. To schedule and
 parallelize extraction and analysis of programs, we use the \runr
@@ -822,6 +817,10 @@ In this study, we report on a corpus of \CorpusCorePackages R core and
 packages as well as from the user-written data-analyses shared on the Kaggle
 platform. In this section we describe this corpus and methodology used to
 assemble it.
+
+\begin{figure}[!h]\centering\includegraphics[width=\linewidth]
+  {corpus.pdf}\caption{CRAN packages}\label{fig:corpus}
+\end{figure}
 
 \subsection{CRAN Packages}
 
@@ -869,14 +868,13 @@ vignettes.%%% with \summaryrnd{CorpusVignettesCode} lines of code.
 
 \subsection{Kaggle Scripts}
 
-To represent end-user code in the corpus, we turned to
-Kaggle,\footnote{\url{https://www.kaggle.com}} an online platform for
-data-science and machine-learning. The website allows people to share
-data-science competitions, a data-analysis problem together with data, for
-which users try to find the best solution. The solutions, called {kernels},
-are then shared back to the platform in the form of either plain scripts or
-as notebooks.  One of the most popular competition is about predicting
-passenger survival on
+To represent end-user code in the corpus, we turned to Kaggle, an online
+platform for data-science and machine-learning. The website allows people to
+share data-science competitions, a data-analysis problem together with data,
+for which users try to find the best solution. The solutions, called
+{kernels}, are then shared back to the platform in the form of either plain
+scripts or as notebooks.  One of the most popular competition is about
+predicting passenger survival on
 Titanic\footnote{\url{https://www.kaggle.com/c/titanic}} with \CorpusKaggle
 kernels in R (over 1/4 of all available R kernels) which we used for our
 corpus.
@@ -884,9 +882,8 @@ corpus.
 Unlike CRAN, Kaggle is not a curated repository and therefore there are no
 guarantees about the quality of the code. After downloading all of the
 \CorpusKaggle kernels and extracting the R code from the various
-formats,\footnote{We use rmarkdown package to convert from Jupyer notebook
-  to Rmarkdown as well as to convert from Rmarkdown to plain R.} we found
-that \CorpusDuplicatedKaggle were whole-file duplicates. From
+formats,\footnote{We use {\sf rmarkdown} to convert from notebooks to R.} we
+found that \CorpusDuplicatedKaggle were whole-file duplicates. From
 \CorpusRunnableKaggle kernels, \CorpusFailedKaggle failed to execute. Next
 to various runtime exceptions, common problems were parse errors and
 misspelled package names.  The final set contains \CorpusFinishedKaggle
@@ -897,13 +894,15 @@ kernels with \summaryrnd{CorpusFinishedKaggleCode} lines of R code.
 This section presents an overview of the usage of \eval in our corpus.
 Richards et al. reported 82\% of JavaScript-enabled web pages using
 \eval~\cite{ecoop11}. The case for R is more striking with 100\% of the
-programs call the \eval function.\footnote{We combine calls to \c{eval},
-  \c{eval.parent}, \c{evalq} and \c{local}.}  This high number is explained
-by the fact that the R implementation, its core packages, use \eval
-extensively. We differentiate uses based on their origin. A {\bf core} \eval
-is one that occurs in the code of a core package.  A {\bf dependent} \eval
-occurs in a package imported by the target package. An {\bf own} \eval is
-one that occurs in the source code of the target package.
+programs call the \eval function.\footnote{We combine calls to {\sf eval},
+  {\sf eval.parent}, {\sf evalq} and {\sf local}.}  This high number is
+explained by the fact that the R implementation, its core packages, use
+\eval extensively. We differentiate uses based on their origin. A {\bf core}
+\eval is one that occurs in the code of a core package.  A {\bf dependent}
+\eval occurs in a package imported by the target package. An {\bf own} \eval
+is one that occurs in the source code of the target package.
+
+
 
 Over all, we observe \AllAllCallCountRnd calls to \eval in our corpus.
 Table~\ref{A} details this run-time information. The format is T (m/M/x)
@@ -915,8 +914,9 @@ CRAN package itself.  The Kaggle data set has small programs which only
 trigger \eval in core and dependent packages. Thus, an average Kaggle run
 has 412 core calls, 96 dependent calls, and no own calls.
 
+
 %% SORRY  I HAD TO REFORMAT
-\begin{table}[tb] \centering
+\begin{table}[!h] \centering
  \begin{tabular}{r|c|c|c} \hline
 Source & Core    & Dependent                      & Own \\\hline
 CRAN   & 5.6M &  867K    & 259K \\
@@ -925,12 +925,14 @@ Kaggle &  1.2M &  470K   & 0\\
  &  (0 / 721 / 18K) & (0 / 290 / 20K) & (0 / 0 / 0)\\\hline
 \end{tabular}\caption{Eval calls in CRAN and Kaggle}\label{A}\end{table}
 
+
 Table~\ref{table:site-package-summary} shows the number of call sites in
-CRAN packages. \OneCallSitesEnrich packages have a single call site, and one package, \emph{metafor}, has \MaxCallSitesEnrich
-call sites of \eval. \NoCallSitesEnrich packages have no calls to \eval. The core packages
-have \NbCoreEvalCallSites call sites of \eval and Kaggle has none. These numbers are
-under-approximations as \eval may be called reflectively, through aliases,
-or passed to a higher-order function.
+CRAN packages. \OneCallSitesEnrich packages have a single call site, and one
+package, \emph{metafor}, has \MaxCallSitesEnrich call sites of
+\eval. \NoCallSitesEnrich packages have no calls to \eval. The core packages
+have \NbCoreEvalCallSites call sites of \eval and Kaggle has none. These
+numbers are under-approximations as \eval may be called reflectively,
+through aliases, or passed to a higher-order function.
 
 \begin{table}[ht]\resizebox{\columnwidth}{!}{%
 \begin{tabular}{rr|rr|rr}\hline
@@ -1003,44 +1005,41 @@ to that found in JavaScript, the majority of inputs being rather small.
 
 \section{A taxonomy of eval}
 
-In this section we turn our attention to the expression passed for evaluation to
-\eval. The \eval function accepts all types of R objects as inputs, but in the
-majority of cases (\AllExpressionInputEvalCallPerc), it is called with
-expressions. The remaining \AllValueInputEvalCallPerc are values, \ie, they
-evaluate to themselves.
+In this section we turn our attention to the expression passed for
+evaluation to \eval. The \eval function accepts all types of R objects as
+inputs, but in the majority of cases (\AllExpressionInputEvalCallPerc), it
+is called with expressions. The remaining \AllValueInputEvalCallPerc are
+values, \ie, they evaluate to themselves.
 %
-%Furthermore, the proportion of values passed to core
-%\eval call is \missingTag{CoreEvalValueInputPerc} compared to a significantly higher
-%\missingTag{PackageEvalValueInputPerc} for package \eval calls.
-%
-Passing a value into an eval is effectively an no-op so we look closely at the
-expression types the call sites pass to eval across all the runs.
+Passing a value into an eval is effectively an no-op so we look closely at
+the expression types the call sites pass to eval across all the runs.
 \AllValueInputEvalSitePerc of all call sites always pass values,
-\AllExpressionInputEvalSitePerc pass expressions and a very large proportion,
-\AllPolymorphicInputEvalSitePerc, pass both expressions and values as inputs
-across all program runs. We inspected the eval callsites that accept only values
-or both values and expression as inputs. The top three of these call sites
-contribute to over ~80\% of all calls to evals. The first one is inside
-\c{match.arg} from core. Given a vector of names as strings, this function finds
-the default values for parameters with those names in the caller function. Since
-the default value for a function parameter can be a complex expression or a
-benign value such as \c{NULL}, \c{match.arg} evaluates it through a call to
-\eval. This makes the \eval inside \c{match.arg} ``polymorhpic''. The second
-such \eval call originates from the popular \ggplot package of R which is a DSL
-for plotting. \ggplot has it's own object system, \ggproto, which uses \eval
-inside the \ggproto function to determine the super-class from which it
-inherits. The default value of the superclass is \c{NULL} but in general could
-be an arbitrarily complex expression. The third \eval call is in core R \c{str}
-function. This function is used to print a summary of R objects. It internally
-maps \eval function on the bindings of an environment which results in inputs of
+\AllExpressionInputEvalSitePerc pass expressions and a very large
+proportion, \AllPolymorphicInputEvalSitePerc, pass both expressions and
+values as inputs across all program runs. We inspected the eval callsites
+that accept only values or both values and expression as inputs. The top
+three of these call sites contribute to over ~80\% of all calls to
+evals. The first one is inside \c{match.arg} from core. Given a vector of
+names as strings, this function finds the default values for parameters with
+those names in the caller function. Since the default value for a function
+parameter can be a complex expression or a benign value such as \c{NULL},
+\c{match.arg} evaluates it through a call to \eval. This makes the \eval
+inside \c{match.arg} ``polymorhpic''. The second such \eval call originates
+from the popular \ggplot package of R which is a DSL for plotting. \ggplot
+has it's own object system, \ggproto, which uses \eval inside the \ggproto
+function to determine the super-class from which it inherits. The default
+value of the superclass is \c{NULL} but in general could be an arbitrarily
+complex expression. The third \eval call is in core R \c{str} function. This
+function is used to print a summary of R objects. It internally maps \eval
+function on the bindings of an environment which results in inputs of
 multiples types being passed to \eval.
 
 We further investigate the type of input passed to \eval in
-Figure~\ref{fig:eval-expression-kind} by the type of input and
-the source of \eval. In this figure, \emph{Expression} is the type of program text,
+Figure~\ref{fig:eval-expression-kind} by the type of input and the source of
+\eval. In this figure, \emph{Expression} is the type of program text,
 \emph{Environmment} is the type of scopes or environments used for binding,
-\emph{Null} is the type of the unique \c{NULL} object, \emph{Vector} is the type
-assigned to vectors of strings, booleans, integers, reals and bytes;
+\emph{Null} is the type of the unique \c{NULL} object, \emph{Vector} is the
+type assigned to vectors of strings, booleans, integers, reals and bytes;
 \emph{Symbol} is the type of unevaluated symbols, and \emph{Function} is the
 type of functions.
 
@@ -1050,46 +1049,45 @@ type of functions.
   \caption{Type of Expression passed to \eval} \label{fig:eval-expression-kind}
 \end{figure}
 
-From the figure, we observe that majority of inputs to Core \eval functions are
-expressions in contrast to package \eval calls which receive mostly environments
-as inputs. In fact, \PackageEnvironmentInputEvalCallPerc of \eval calls in
-packages receive environments as input expressions. There are only four
-callsites in package evals that receive environments as expressions.
+From the figure, we observe that majority of inputs to Core \eval functions
+are expressions in contrast to package \eval calls which receive mostly
+environments as inputs. In fact, \PackageEnvironmentInputEvalCallPerc of
+\eval calls in packages receive environments as input expressions. There are
+only four callsites in package evals that receive environments as
+expressions.
 \begin{compactitem}[$-$]
 \item \c{ggplot2::ggproto} contributes to 99.9\% of package \eval calls that
   receive environments as input.
 \item \c{R6::generator_funs} function contributes to only 936 \eval calls and
 implements the same functionality as \c{ggplot2::ggproto} but for the \emph{R6}
 OOP system.
-\item \c{future::backtrace} function applies \eval to a future object which is
-implemented as an environment. This is called only once.
+\item \c{future::backtrace} function applies \eval to a future object which
+  is implemented as an environment. This is called only once.
 \item \c{RModel::str.RMmodel} function overloads the core \c{str} method for its
 \c{RModel} objects and maps \eval exactly like \c{str}. This is called only
 once.
 \end{compactitem}
 
+We looked at the top ten expressions passed to core and package \eval
+calls. The most frequent ten expressions to eval calls from core R
+contribute to 85\% of all \eval calls.
 
-We looked at the top ten expressions passed to core and package \eval calls. The
-most frequent ten expressions to eval calls from core R contribute to 85\% of
-all \eval calls.
-\begin{table*}[tb]
-  \centering
-  \begin{tabular}{l|rr} \hline
-    Expression & Eval Call & Eval Call \% \\\hline
-    \c{c("auto", "shell", "radix")} & 1987105 & 29\%\\
-    \c{c("auto", "shell", "quick", "radix")} & 1593169  & 23\%\\
-    \c{\{info <- loadingNamespaceInfo(...} & 1008632 &       14\%\\
-    \c{c("onLoad", "attach", "detach", "onUnload")}   & 470566 &      6.9\%\\
-    \c{c("append", "prepend", "replace")} &              261587&       3.9\% \\
-    \c{c("left", "right", "centre", "none")} & 162086     & 2.4\%\\
-    \c{c("no", "ifany", "always")}   &                71580 &       1.1\%\\
-    \c{c("pearson", "kendall", "spearman")}  & 72962 &      1.1\%\\
-    \c{NULL}& 75330  &      1.1\% \\
-    \c{Symbol}&                 66279&       1\%\\\hline
-  \end{tabular}
-  \caption{Top ten eval calls in Core}
-  \label{A}
-\end{table*}
+\begin{table}[!h] \centering
+\begin{tabular}{@{}l|rr@{}} \hline
+Expression & Eval Call &  \% \\\hline
+\c{c("auto", "shell", "radix")} & 198,7105 & 29\%\\
+\c{c("auto", "shell", "quick", "radix")} & 1,593,169  & 23\%\\
+\c{\{info <- loadingNamespaceInfo(...} & 1,008,632 &       14\%\\
+\c{c("onLoad", "attach", "detach", "onUnload")}   & 470,566 &      6.9\%\\
+\c{c("append", "prepend", "replace")} &              261,587&       3.9\% \\
+\c{c("left", "right", "centre", "none")} & 162,086     & 2.4\%\\
+\c{c("no", "ifany", "always")}   &                71,580 &       1.1\%\\
+\c{c("pearson", "kendall", "spearman")}  & 72,962 &      1.1\%\\
+\c{NULL}& 75330  &      1.1\% \\
+\c{Symbol}&                 6,6279&       1\%\\\hline
+\end{tabular}
+\caption{Top ten eval calls in Core}\label{B}
+\end{table}
 
 The expression \c{\{info <- loadingNamespaceInfo(...} is added by core R
 to a package directory during installation. To load the package, this code is
@@ -1102,26 +1100,24 @@ looked up by evaluating it in a specific environment. The remaining cases arise
 from calls to \c{match.arg} which is used to look up the default choices for a
 variable and match against the choice passed by the caller.
 
-The most frequent ten expressions to eval calls from CRAN packages contribute to
-77.1\% of all \eval calls.
-\begin{table*}[tb]
-  \centering
-  \begin{tabular}{l|rr} \hline
-    Expression & Eval Call & Eval Call \% \\\hline
-    \c{Environment} &                                                              989302   & 61\%\\
-    \c{column[rows] <<- what} &                                                    55677    & 3.5\%\\
-    \c{function(value) freduce(value, `_function_list`)} &                         37251    & 2.3\%\\
-    \c{NULL} &                         32005    & 2\%\\
-    \c{List} &                         22293    & 1.4\%\\
-    \c{c("default", "default2012", "default2011" ...}&                             20610    & 1.3\%\\
-    \c{force(..1)}                                        &                        20461    & 1.3\%\\
-    \c{alist(`_spec`)}                                   &                         18532    & 1.2\%\\
-    \c{inner}                                           &                          18530    & 1.2\%\\
-    \c{String Vector}                           &                           17487     & 1.1\%\\
-  \end{tabular}
-  \caption{Top ten eval calls in CRAN}
-  \label{A}
-\end{table*}
+The most frequent ten expressions to eval calls from CRAN packages
+contribute to 77.1\% of all \eval calls.
+
+\begin{table}[!h]  \centering
+\begin{tabular}{@{}l@{~}|@{~}r@{~}r@{}} \hline
+Expression & Eval Call &  \% \\\hline
+\c{Environment} &                                  989302   & 61\%\\
+\c{column[rows] <<- what} &                        55677    & 3.5\%\\
+\c{function(value) freduce(value, `_function_list`)} & 37251& 2.3\%\\
+\c{NULL} &                         32005    & 2\%\\
+\c{List} &                         22293    & 1.4\%\\
+\c{c("default", "default2012", "default2011" ...}& 20610    & 1.3\%\\
+\c{force(..1)}            &                        20461    & 1.3\%\\
+\c{alist(`_spec`)}       &                         18532    & 1.2\%\\
+\c{inner}               &                          18530    & 1.2\%\\
+\c{String Vector}      &                           17487     & 1.1\%\\
+\end{tabular}\caption{Top ten eval calls in CRAN} \label{C}
+\end{table}
 
 The expression \c{Environment} occurs because of the four callsites
 explained above, \c{ggplot2::ggproto}, \c{R6::generator_funs},
@@ -1145,11 +1141,11 @@ expression for its formal parameter and evaluates it. The \c{force(..1)} and
 \c{alist(`_spec`)} patterns occur in \c{glue::glue_data} function which
 concatenates and interpolates strings. The two patterns occur because the
 function captures unevaluated unnamed arguments and maps the evaluation of
-\c{force(..1)} on them.  The \c{force} function forces
-promises~\cite{oopsla19a} and returns the result of evaluation. The
-\c{inner} pattern arises from \c{glue::identity_transformer} which enables
-the creation of custom transformation functions for affecting the
-interpolation and concatenation of input by the \c{glue} package.
+\c{force(..1)} on them.  The \c{force} function forces promises and returns
+the result of evaluation. The \c{inner} pattern arises from
+\c{glue::identity_transformer} which enables the creation of custom
+transformation functions for affecting the interpolation and concatenation
+of input by the \c{glue} package.
 
 \subsection{Operation Mix}
 In this section, we look at the operations executed by the expressions and
