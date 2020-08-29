@@ -460,6 +460,11 @@ overview_table(
 )
 ```
 
+```{r}
+evals_static
+```
+
+
 ### timeSeries
 
 ```{r}
