@@ -1215,12 +1215,12 @@ and passes it to \eval.
 In the corpus we observe \AllWritesRnd writes to variables of which
 \EvalWritesRnd writes happen inside \eval. However, all writes are not
 dangerous. Only writes to environments not local to the computation spawned
-by \eval are side-effecting. These writes outlive the computation and hence are
-visible outside it. The remaining writes are local to the
-computation. We observe that \EvalSideEffectingWritesRnd writes inside evals are
-side-effecting. This is only \EvalSideEffectingWritesEvalPerc of all variable
-writes inside \eval and \EvalSideEffectingWritesAllPerc of all variable writes
-in the corpus.
+by \eval are side-effecting. These writes outlive the computation and hence
+are visible outside it. The remaining writes are local to the
+computation. We observe that \EvalSideEffectingWritesRnd writes inside evals
+are side-effecting. This is only \EvalSideEffectingWritesEvalPerc of all
+variable writes inside \eval and \EvalSideEffectingWritesAllPerc of all
+variable writes in the corpus.
 
 An \eval is considered side-effecting if it performs a side-effecting write to a
 variable, directly or indirectly. Only \SideEffectingCoreCallPerc \eval calls in
