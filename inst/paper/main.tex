@@ -1,21 +1,18 @@
-\documentclass[conference]{IEEEtran}
-\usepackage{cite}
-\usepackage{amsmath,amssymb,amsfonts}
-\usepackage{algorithmic}
-\usepackage{graphicx}
-\usepackage{textcomp}
+\documentclass[acmsmall=true, screen=true, review=true]{acmart}
+
 \usepackage{listings}
 \usepackage{hyperref}
 \usepackage{multirow}
+\usepackage{paralist}
+\usepackage{xspace}
+\usepackage{url}
+
 \newcommand{\missingTag}[1]{\textcolor{red}{#1}\xspace}
 \newcommand{\missingNumber}{\textcolor{red}{XX}\xspace}
 \newcommand{\missingPercentage}{\textcolor{red}{XX\%}\xspace}
 \newcommand{\missingTable}[1][XX]{\textcolor{red}{Table #1}\xspace}
 \newcommand{\missingGraph}{\textcolor{red}{XXGraph}\xspace}
-\usepackage[usenames,dvipsnames]{xcolor}
-\usepackage{paralist}
-\usepackage{xspace}
-\usepackage{url}
+
 
 %\input{tag/counts.tex}
 \newcommand{\CoreEvalCallCountRnd}{6.3M\xspace}
@@ -395,41 +392,41 @@
 
 \graphicspath{{img/}}
 
-\lstset{ 
- language=R,              % the language of the code
- basicstyle=\small\sffamily,    % the size of the fonts
-% numbers=left,            % where to put the line-numbers
- numberstyle=\color{Blue},% the style that is used for the line-numbers
- stepnumber=1,            % the step between two line-numbers. If it is 1,
-                          % each line will be numbered
- numbersep=2pt,           % how far the line-numbers are from the code
- backgroundcolor=\color{white},  % choose the background color.
- showspaces=false,        % show spaces adding particular underscores
- showstringspaces=false,  % underline spaces within strings
- showtabs=false,          % show tabs within strings adding particular 
-%frame=single,            % adds a frame around the code
- rulecolor=\color{black}, % if not set, the frame-color may be changed on
-                          % line-breaks within not-black text (e.g. commens
-                          % (green here))
- tabsize=2,               % sets default tabsize to 2 spaces
- captionpos=b,            % sets the caption-position to bottom
- breaklines=true,         % sets automatic line breaking
- breakatwhitespace=false, % sets if automatic breaks should only happen at 
- keywordstyle=\color{Blue},    % keyword style
- commentstyle=\color{YellowGreen},  % comment style
- stringstyle=\color{ForestGreen}    % string literal style
+\lstset{language=R}
+
+\definecolor{LightGray}{rgb}{.92,.92,.92}
+\definecolor{Gray}{rgb}{.3,.3,.3}
+\definecolor{DarkGray}{rgb}{.5,.5,.5}
+
+\lstset{ %
+  columns=flexible,
+  captionpos=b,
+  frame=single,
+  framerule=0pt,
+  framexleftmargin=-1mm,
+  framexrightmargin=-1mm,
+  tabsize=2,
+  belowskip=0pt,
+  basicstyle=\small\ttfamily,
+  backgroundcolor=\color{LightGray},
+  emphstyle=\sffamily,
+  keywordstyle=\bfseries,
+  commentstyle=\color{Gray}\em,
+  stringstyle=\color{Gray}
 }
-
-% https://tex.stackexchange.com/questions/351435/table-name-placment-in-tabular-documentclass-ieeetran-conference
-\makeatletter
-\def\@IEEEtablestring{figure}
-\makeatother
-
-\begin{document}
-
-\title{A Large-Scale Study of the Use of Eval in R}
-\author{\vspace{-.8cm}\IEEEauthorblockN{~}} %\IEEEauthorblockA{ dept} \\ \and
-\maketitle
+\lstdefinestyle{R}{ %
+  language=R,
+  deletekeywords={new, env, equal, c, runif, trace, args, exp, t, all, get,
+    names, is, environment, class, substitute, expression, list, null, Internal,
+    sample, diag, length, rep, nrow, stop, offset, pmax, Machine,
+    double, parent, frame, par, methods, end, dir, apply, deparse, missing,
+    plot, as, integer, character, inherits, numeric, paste, eval, quote, call,
+    formula, df, log, sum, c, local, legend, file, scale, round, title, order,
+    drop, which, grid, print, ncol, dim, max, format, sort, rug, matrix, start,
+    unique, mean, df, attr, do, power},
+  otherkeywords={},
+  breaklines=true
+}
 
 \newcommand{\eg}{\emph{e.g.},\xspace}
 \newcommand{\ie}{\emph{i.e.},\xspace}
@@ -462,6 +459,15 @@
 \newcommand{\covr}{\emph{covr}\xspace}
 \newcommand{\runr}{\emph{runr}\xspace}
 
+\bibliographystyle{ACM-Reference-Format}
+\citestyle{acmauthoryear}   %% For author/year citations
+
+\begin{document}
+
+\title{A Large-Scale Study of the Use of Eval in R}
+\author{Anony Mouse}
+\authorsaddresses{Author' email address: anony@mouse.mouse} 
+
 \begin{abstract}
   The \eval function turns text into code. From the point of view of
   reasoning about software system, uses of \eval turn the program's code
@@ -479,6 +485,32 @@
   ways, and safer in others, than what was previously reported for
   JavaScript.
 \end{abstract}
+
+\begin{CCSXML}
+  <ccs2012>
+  <concept>
+  <concept_id>10011007.10011006.10011050.10010517</concept_id>
+  <concept_desc>Software and its engineering~Scripting languages</concept_desc>
+  <concept_significance>500</concept_significance>
+  </concept>
+  <concept>
+  <concept_id>10002944.10011123.10010912</concept_id>
+  <concept_desc>General and reference~Empirical studies</concept_desc>
+  <concept_significance>500</concept_significance>
+  </concept>
+  <concept>
+  <concept_id>10011007.10011006.10011008</concept_id>
+  <concept_desc>Software and its engineering~General programming languages</concept_desc>
+  <concept_significance>500</concept_significance>
+  </concept>
+  </ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Software and its engineering~Scripting languages}
+\ccsdesc[500]{General and reference~Empirical studies}
+\ccsdesc[500]{Software and its engineering~General programming languages}
+
+\maketitle
 
 \section{Introduction}
 
@@ -1500,7 +1532,6 @@ called \c{quosure} for which it implements special evaluation support in
 
 \section{Conclusion}
 
-\bibliographystyle{IEEEtran}
 \bibliography{bib/bibliography,bib/jv}
 
 \end{document}
