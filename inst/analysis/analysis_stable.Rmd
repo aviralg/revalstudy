@@ -447,9 +447,11 @@ eval_calls %>% group_by(caller_package) %>% summarize(max_expr_size = max(expr_e
 ```{r subsample_for_ast}
 #ast_sizes <- eval_calls %>% slice_sample(n=10000) %>% mutate(expr_resolved_nodes = map_int(expr_resolved, expr_size_str))
 # Now precomputed during the tracing
-ast_sizes <- read_fst(path(RUN_DIR, "package-evals-traced.3/summarized-ast-size.fst")) %>% as_tibble() %>% 
-      filter(eval_source_type != "<undefined>") %>% 
-      rename(dataset = eval_source_type)
+#ast_sizes <- read_fst(path(RUN_DIR, "package-evals-traced.3/summarized-ast-size.fst")) %>% as_tibble() %>% 
+#      filter(eval_source_type != "<undefined>") %>% 
+#      rename(dataset = eval_source_type)
+
+ast_sizes <- eval_calls 
 ```
 
 
@@ -640,10 +642,17 @@ r("nb sys call envir", nb_sys_call)
 r("sys call envir percent", ratio(nb_sys_call, nb_eval_calls))
 ```
 
-```{r env_assign}
-eval_calls_env_assign <- eval_calls %>% filter(!is.na(expr_resolved)) %>% mutate(env_assign = pblapply(expr_resolved, is_assign_str, cl = parallel::detectCores() - 2))
+```{r display_frequent_env_core}
+classified_envir_core <- classified_envir %>% filter(dataset == "core") %>% add_count(env_class, wt=nb_ev_calls, sort = TRUE) %>% group_by(env_class)  %>% slice_max(order_by = nb_ev_calls, n = 10) %>% ungroup() 
 
-#eval_calls_env_assign2 <-  eval_calls_env_assign %>% filter(is.logical(env_assign)) %>% hoist("env_assign", env_assign = 1)
+classified_envir_core %>% select(env_class, eval_call_expression, eval_call_srcref, caller_expression, n) %>% distinct() %>% datatable()
+```
+
+
+```{r display_frequent_env_packages}
+classified_envir_packages <- classified_envir %>% filter(dataset == "packages") %>% add_count(env_class, wt=nb_ev_calls, sort = TRUE) %>% group_by(env_class)  %>% slice_max(order_by = nb_ev_calls, n = 10) %>% ungroup() 
+
+classified_envir_packages %>% select(env_class, eval_call_expression, eval_call_srcref, caller_expression, n) %>% distinct() %>% datatable()
 ```
 
 

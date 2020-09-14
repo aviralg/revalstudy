@@ -29,7 +29,7 @@ PACKAGE_TRACE_RUNS_FILE    <- path(DATA_DIR, "run-trace.fst")
 PACKAGE_TRACE_LOG_FILE     <- path(DATA_DIR, "parallel-trace.fst")
 CRAN_PROGRAMS_FILE         <- path(DATA_DIR, "cran-programs.fst")
 
-RUN_TRACE_DIR  <- path(RUN_DIR, "package-evals-traced.2")
+RUN_TRACE_DIR  <- path(RUN_DIR, "package-evals-traced.3")
 RUN_KAGGLE_DIR <- path(RUN_DIR, "kaggle-run")
 
 KAGGLE_DEPENDENCIES_FILE <- path(DATA_DIR, "kaggle-dependencies.txt")
