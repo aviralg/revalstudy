@@ -166,10 +166,6 @@ column_names %>% knitr::kable()
 
 
 
-# Corpus
-
-TODO
-
 # Research Questions
 
 ## RQ1: How many evals are there?
@@ -407,40 +403,6 @@ There are `r count(parsed_base, wt = nb_ev_calls)` `eval` calls with `parse` in 
 ## Size of expressions as arguments to `eval`
 
 
-### String size
-
-```{r}
-eval_calls %>% ggplot() +
-  geom_histogram(aes(x = expr_expression_length, weight = nb_ev_calls), na.rm = TRUE, binwidth=1) +
-  scale_x_log10() +  scale_y_sqrt()
-```
-
-If we remove the outliers:
-```{r}
-eval_calls %>% filter(expr_expression_length < 25000) %>% ggplot() +
-  geom_histogram(aes(x = expr_expression_length, weight = nb_ev_calls), na.rm = TRUE, binwidth=2)  + scale_x_sqrt() +  scale_y_sqrt() 
-```
-
-
-  
-What about the code size of expressions that seem to be generated?
-An approximation of *generated* will be no `srcref` and not in `base`.
-
-
-```{r code_size_srcref}
-eval_calls %>% filter(is.na(eval_call_srcref), caller_package != "base") %>% ggplot() +
-  geom_histogram(aes(x = expr_expression_length, weight = nb_ev_calls), na.rm = TRUE, binwidth=1) + scale_x_sqrt() + scale_y_sqrt()
-```
-
-And the average size per package:
-```{r average_size_package}
-eval_calls %>% group_by(caller_package) %>% summarize(average_expr_size = mean(expr_expression_length, na.rm = TRUE)) %>% arrange(desc(average_expr_size))
-```
-
-If we look at the maxima, the largest ones are in *base*:
-```{r max_size_package}
-eval_calls %>% group_by(caller_package) %>% summarize(max_expr_size = max(expr_expression_length, na.rm = TRUE)) %>% arrange(desc(max_expr_size))
-```
 
 ### AST size
 
@@ -652,7 +614,27 @@ classified_envir_core %>% select(env_class, eval_call_expression, eval_call_srcr
 ```{r display_frequent_env_packages}
 classified_envir_packages <- classified_envir %>% filter(dataset == "packages") %>% add_count(env_class, wt=nb_ev_calls, sort = TRUE) %>% group_by(env_class)  %>% slice_max(order_by = nb_ev_calls, n = 10) %>% ungroup() 
 
-classified_envir_packages %>% select(env_class, eval_call_expression, eval_call_srcref, caller_expression, n) %>% distinct() %>% datatable()
+classified_envir_packages %>% select(env_class, eval_call_expression, eval_call_srcref, caller_expression, caller_srcref, n) %>% distinct() %>% datatable()
+```
+
+
+And per call sites?
+
+```{r frequent_env_per_call_sites}
+classified_envir_prop_core_call_sites <- classified_envir %>% 
+  filter(dataset == "core") %>%
+  group_by(env_class) %>% 
+  summarize(n = vec_unique_count(eval_call_srcref)) %>%
+  arrange(desc(n)) %>% 
+  mutate(proportion = n / sum(n))
+
+classified_envir_prop_packages_call_sites <- classified_envir %>% 
+  filter(dataset == "packages") %>%
+  group_by(env_class) %>% 
+  summarize(n = vec_unique_count(eval_call_srcref)) %>%
+  arrange(desc(n)) %>% 
+  mutate(proportion = n / sum(n))
+
 ```
 
 

@@ -12,8 +12,8 @@
 source("insights.R")
 
 library(fs)
-library(future.apply)
-plan(multiprocess) # multicore (fork) with fallback to multisession (create processes and then copy)
+#library(future.apply)
+#plan(multiprocess) # multicore (fork) with fallback to multisession (create processes and then copy)
 
 deduplicate <- function(dataset)
 {
@@ -31,8 +31,6 @@ add_types <- function(dataset)
 
 add_parse_args <- function(dataset)
 {
-  
-  print("Cluster created. Copying functiond and libraries.")
   return(dataset %>% mutate(parse_args = map(expr_parsed_expression, function(e) 
     { if(!is.na(e) && str_starts(e, "(parse|str2lang|str2expression)\\(")) 
         extract_args_parse(e) 

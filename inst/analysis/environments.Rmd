@@ -1,0 +1,83 @@
+---
+title: "Empirical Evaluation of eval in R"
+author: "Pierre Donat-Bouillud"
+output:
+  rmdformats::readthedown:
+        code_folding: hide
+        lightbox: true
+        gallery: false
+        df_print: paged
+        toc_depth: 3
+date: "`r Sys.Date()`"
+editor_options: 
+  chunk_output_type: console
+params:
+  base_dir: /var/lib/R/project-evalR
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.align = "center",
+                      fig.retina = 2,
+                      fig.width = 10,
+                      cache.lazy = FALSE)
+
+now <- Sys.time() 
+
+library(tidyverse)
+library(fst)
+
+source("insights.R", local = knitr::knit_global())
+source("preprocess.R", local = knitr::knit_global())
+```
+
+# Loading datafiles
+
+```{r loading_fst}
+eval_calls <- read_fst("/var/lib/R/project-evalR/run/package-evals-traced-test/calls.fst") %>%
+  as_tibble() %>%
+  add_types()
+```
+
+# Description of the data files
+
+```{r packages}
+
+```
+
+
+# Classification of environments
+
+We distinguish between 3 main categories of `eval` calls with respect to their `envir` argument:
+
+- `envir` is a list or a data frame
+- `envir` comes from an argument of the caller function
+- `envir` is absolutely computed (with `parent.frame()` or equivalent)
+
+
+##  `envir` as a list or data frame
+
+```{r envir_list}
+eval_calls_env_list <- eval_calls %>% filter(envir_type == "VECSXP")
+```
+
+
+
+## `envir` as an argument from the caller function
+
+```{r envir_arg_caller}
+eval_calls_arg_caller <- eval_calls %>% filter(!is.na(envir_from_arg))
+```
+
+
+## `envir` absolutely computed
+
+
+## `envir` absolutely computed
+
+
+```{r}
+duration <- difftime(Sys.time(), now)
+```
+
+Notebook execution was `r duration` `r units(duration)`.
