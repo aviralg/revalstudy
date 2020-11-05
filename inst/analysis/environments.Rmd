@@ -64,7 +64,7 @@ We distinguish between 4 main categories of `eval` calls with respect to their `
 ```{r envir_default}
 eval_calls_default <- eval_calls %>% filter(is.na(envir_expression))
 
-eval_calls <- eval_calls %>% filter(!is.na(envir_expression))
+eval_calls_explicit <- eval_calls %>% filter(!is.na(envir_expression))
 ```
 
 
@@ -73,7 +73,7 @@ eval_calls <- eval_calls %>% filter(!is.na(envir_expression))
 ##  `envir` as a list or data frame
 
 ```{r envir_list}
-eval_calls_env_list <- eval_calls %>% filter(envir_type == "VECSXP")
+eval_calls_env_list <- eval_calls_explicit %>% filter(envir_type == "VECSXP")
 ```
 
 
@@ -81,7 +81,7 @@ eval_calls_env_list <- eval_calls %>% filter(envir_type == "VECSXP")
 ## `envir` as an argument from the caller function
 
 ```{r envir_arg_caller}
-eval_calls_arg_caller <- eval_calls %>% filter(!is.na(envir_from_arg))
+eval_calls_arg_caller <- eval_calls_explicit %>% filter(!is.na(envir_from_arg))
 ```
 
 
@@ -97,21 +97,28 @@ But all those strange calls are due to Rcpp:
 eval_calls_arg_caller %>% filter(envir_from_arg > 1, !str_detect(expr_expression, "C\\+\\+Constructor|C\\+\\+Field|C\\+\\+OverloadedMethods")) 
 ```
 
-In the current dataset, there are no examples of sandbox usage but we should see adistance of 1 in that case.
+In the current dataset, there are no examples of sandbox usage but we should see a distance of 1 in that case.
 
 
 ## `envir` absolutely computed
 
 ```{r envir_absolute}
-eval_calls_absolute <- eval_calls %>% anti_join(eval_calls_env_list) %>% anti_join(eval_calls_arg_caller)
+eval_calls_absolute <- eval_calls_explicit %>% anti_join(eval_calls_env_list) %>% anti_join(eval_calls_arg_caller)
 ```
 
 Let's do a sanity check: is the environment class the same in that category?
 
 ```{r}
-eval_calls_absolute <- eval_calls_absolute  %>% add_fake_srcref() %>% group_by(eval_call_srcref) %>%  mutate(envir_distinct = n_distinct(environment_class)) %>% ungroup()
+eval_calls_absolute <- eval_calls_absolute  %>% add_fake_srcref() %>% group_by(eval_call_srcref) %>%  mutate(envir_distinct = n_distinct(environment_class)) 
+
+eval_calls_absolute %>% ungroup() %>% count(envir_distinct, sort = TRUE)
 ```
 
+We can also see a few examples:
+
+```{r}
+eval_calls_absolute %>% filter(envir_distinct == 2) %>% select(eval_call_expression, environment_class, envir_distinct)
+```
 
 
 ```{r}
