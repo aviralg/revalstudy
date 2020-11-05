@@ -1391,53 +1391,41 @@ z <- q.f(dp, ...)
   \end{lstlisting}
   or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
-
-\subsection{Comparison with eval in Javascript}
-
-\medskip\noindent\emph{Discussion:} Comparing the use of \eval in R and
-JavaScript is instructive. The use of \eval is more widespread in data
-science code than it was in JavaScript. Any run of an R program seems to
-trigger \eval; moreover package programmers use \eval liberally. On the
-other hand, the authors of Kaggle packages do not use the feature at all.
-This point to a bifurcated user community: experts who write package know
-how to use \eval while end-users do not. An alternative explanation is that
-end-users do not need \eval for simple data analysis tasks. This bifurcation
-was not observed in the JavaScript community, but this may have changed with
-the advent of Node.js ecosystem.  The distribution of input sizes is similar
-to that found in JavaScript, the majority of inputs being rather small.
-
-
-\begin{figure}[!b]
-	\centering
-  \includegraphics[width=\columnwidth]{ast_sizes}
-  \caption{Input sizes} \label{fig:ast-size}
-\end{figure}
-
-To roughly estimate the complexity of the code being evaluated,
-Fig.~\ref{fig:ast-size} shows the distribution of the abstract syntax tree
-size of the \c{expr} argument to \eval. The majority of inputs across core
-and packages (\NbAstOnePercent of \eval calls and \NbAstOneCallSitePercent
-of call sites) have size 1. That is to say, the code being evaluated
-consists of a single variable name or constant. A function call needs at
-least three nodes and a list such as \c{c(1, 2, 3)} counts for 4
-nodes. Inputs smaller than \AstSizeNineFive nodes account for 95\% of all
-calls. Sizes in core are larger than in packages. Most large ASTs originate
-from library \c{VGAM}, which is used for statistical modeling, and also calls functions using \eval from core. It uses
-\eval to evaluate large matrices with values in a given environment.
-
-\subsubsection{Consistency}
-
-We look at how \emph{consistent} the \c{expr} argument of \eval can be, \ie
-how many different types of the resolved \c{expr} there are per call
-sites. Most of the call sites, \ie \PercentMonomorphic, are
-\emph{consistent}, and this is similar to javascript. However, a few ones
-are highly \emph{polymorphic} (10 different types). They are the pipe
-operators \c{\%>\%}, \c{\%<>\%} and \c{\%\$\%} in package \emph{magrittr}. It
-is effectively used to compose functions on their first argument, which can
-be of any type.
-
-
 \subsection{How Dangerous is eval}
+
+\subsubsection{How much code is executed inside eval}
+- measure number of operations inside eval and outside eval.
+- this is useful because if analyzers treat eval as a nop, they may miss X\% of the code.
+
+\subsubsection{Does eval create observable side-effects}
+- measure number of reads and writes by eval outside of its ``bubble''.
+- Since R is lazy, even reads can cause promise evaluation and hence, side-effects.
+- Look at writes to non-local scopes. Compare with total number of writes for
+reference?
+- Categorize side-effects between env passed to eval and other envs.
+
+\subsubsection{Does eval do reflection}
+\eval can access parent scopes via reflection. Find number of times it does that
+and the depth to which it access parent frames.
+
+\subsubsection{Does eval introduce new bindings}
+Find number of times, eval introduces new bindings. There are many ways -- library,
+load, attach, source, and explicitly introduce bindings using super-assign, assign and define.
+
+\subsubsection{Does eval call C code}
+Find number of times, eval makes call to native code using - .Call, .External,
+etc. Find out if there are native functions that are called only from within eval.
+
+\subsubsection{Does eval add finalizers}
+Eval can attach code to be executed when the object goes out of scope or program
+exits. Find if eval does that.
+
+\subsubsection{Does eval do non-local returns}
+Eval can do non-local returns effective bypassing evaluation of the rest of the
+function. This can be useful for static analyzers.
+
+Conclude with number of evals that are ``pure'', i.e. evals which
+could be ignored by a static analyzer without any problem.
 
 \subsubsection{Provenance}
 
@@ -1585,6 +1573,52 @@ h2 <- function(x, y)
     envir = list(x = x, y = y),
     enclos = parent.frame(2))
 \end{lstlisting}
+
+\subsection{Comparison with eval in Javascript}
+
+\medskip\noindent\emph{Discussion:} Comparing the use of \eval in R and
+JavaScript is instructive. The use of \eval is more widespread in data
+science code than it was in JavaScript. Any run of an R program seems to
+trigger \eval; moreover package programmers use \eval liberally. On the
+other hand, the authors of Kaggle packages do not use the feature at all.
+This point to a bifurcated user community: experts who write package know
+how to use \eval while end-users do not. An alternative explanation is that
+end-users do not need \eval for simple data analysis tasks. This bifurcation
+was not observed in the JavaScript community, but this may have changed with
+the advent of Node.js ecosystem.  The distribution of input sizes is similar
+to that found in JavaScript, the majority of inputs being rather small.
+
+
+\begin{figure}[!b]
+	\centering
+  \includegraphics[width=\columnwidth]{ast_sizes}
+  \caption{Input sizes} \label{fig:ast-size}
+\end{figure}
+
+To roughly estimate the complexity of the code being evaluated,
+Fig.~\ref{fig:ast-size} shows the distribution of the abstract syntax tree
+size of the \c{expr} argument to \eval. The majority of inputs across core
+and packages (\NbAstOnePercent of \eval calls and \NbAstOneCallSitePercent
+of call sites) have size 1. That is to say, the code being evaluated
+consists of a single variable name or constant. A function call needs at
+least three nodes and a list such as \c{c(1, 2, 3)} counts for 4
+nodes. Inputs smaller than \AstSizeNineFive nodes account for 95\% of all
+calls. Sizes in core are larger than in packages. Most large ASTs originate
+from library \c{VGAM}, which is used for statistical modeling, and also calls functions using \eval from core. It uses
+\eval to evaluate large matrices with values in a given environment.
+
+\subsubsection{Consistency}
+
+We look at how \emph{consistent} the \c{expr} argument of \eval can be, \ie
+how many different types of the resolved \c{expr} there are per call
+sites. Most of the call sites, \ie \PercentMonomorphic, are
+\emph{consistent}, and this is similar to javascript. However, a few ones
+are highly \emph{polymorphic} (10 different types). They are the pipe
+operators \c{\%>\%}, \c{\%<>\%} and \c{\%\$\%} in package \emph{magrittr}. It
+is effectively used to compose functions on their first argument, which can
+be of any type.
+
+
 
 \subsection{Removing Eval}
 
