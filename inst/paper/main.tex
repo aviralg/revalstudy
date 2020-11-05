@@ -981,8 +981,8 @@ called \c{quosure} for which it implements special evaluation support in
 
 \section{Evaluation}
 
-This section presents the results of our empirical study of \eval in R as
-answers to four research questions.
+This section presents the results of our empirical study of \eval in R in terms
+of four research questions.
 
 \subsection{Use of Eval}
 
@@ -1370,28 +1370,30 @@ for (i in names(opts)) eval(parse(text=paste0("options(",i,"=",opts[i],")")))
   packages use \eval to access private variables and functions from their
   dependencies.
 
-  \subsubsection{Unnecessary use of eval}
+\subsection{Necessity of Eval}
+
+\subsubsection{Unnecessary use of eval}
   Similarly to JavaScript, there are also unnecessary uses of \eval.
   For example, the \c{PerformanceAnalytics} package contains a function
   \c{chart.QQPlot} that uses \eval to resolve a string into function and
   another to call it and assign its results into a variable:
-  \begin{lstlisting}
+\begin{lstlisting}
 function (R, d="norm", dp, ...) {
 q.f <- eval(parse(text=paste("q",d,sep="")))
 z <- NULL
 eval(parse(text=paste("z<-q.f(",dp,",...)")))
 }
-  \end{lstlisting}
+\end{lstlisting}
   In both cases, there is no need for \eval:
-  \begin{lstlisting}
+\begin{lstlisting}
 function (R, d="norm", dp, ...) {
 q.f <- get(paste0("q",d))
 z <- q.f(dp, ...)
 }
-  \end{lstlisting}
+\end{lstlisting}
   or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
-\subsection{How Dangerous is eval}
+\subsection{Power of Eval}
 
 \subsubsection{How much code is executed inside eval}
 - measure number of operations inside eval and outside eval.
@@ -1574,7 +1576,9 @@ h2 <- function(x, y)
     enclos = parent.frame(2))
 \end{lstlisting}
 
-\subsection{Comparison with eval in Javascript}
+\section{Discussion}
+
+\subsection{Comparison with Javascript}
 
 \medskip\noindent\emph{Discussion:} Comparing the use of \eval in R and
 JavaScript is instructive. The use of \eval is more widespread in data
@@ -1617,11 +1621,6 @@ are highly \emph{polymorphic} (10 different types). They are the pipe
 operators \c{\%>\%}, \c{\%<>\%} and \c{\%\$\%} in package \emph{magrittr}. It
 is effectively used to compose functions on their first argument, which can
 be of any type.
-
-
-
-\subsection{Removing Eval}
-
 
 
 \section{Conclusion}
