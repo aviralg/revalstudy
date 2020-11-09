@@ -217,7 +217,7 @@ r("no call sites enrich", no_call_sites)
 # Write
 
 ```{r write_back}
-write_fst(undefined_per_package, PACKAGE_EVALS_UNDEFINED_FILE)
+write_fst(undefined_per_package, EVALS_UNDEFINED_FILE)
 
 write_fst(eval_calls, EVALS_RAW_FILE)
 
