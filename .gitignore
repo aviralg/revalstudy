@@ -441,3 +441,4 @@ TSWLatexianTemp*
 inst/paper/main.pdf
 inst/paper/bib/#jv.bib#
 /inst/analysis/html/
+*.vtc

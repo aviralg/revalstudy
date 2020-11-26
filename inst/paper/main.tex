@@ -461,8 +461,8 @@
 
 \bibliographystyle{plainurl}% the mandatory bibstyle
 
-
-\title{A Large-Scale Study of the Use of Eval in R}
+\title{Why do we Eval?\\[2mm]\Large
+A large-scale study of Eval usage in R}
 \titlerunning{Eval in R}
 
 \author{Anon}{Under review}{}{}{}
@@ -484,9 +484,6 @@
 \SeriesVolume{42}
 \ArticleNo{23}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                          
-
-\bibliographystyle{plainurl}
-
 
 \begin{CCSXML}
   <ccs2012>
@@ -517,21 +514,22 @@
 \maketitle
 
 \begin{abstract}
-  The \eval function turns text into code. From the point of view of
-  reasoning about software system, uses of \eval turn the program's code
-  from a statically known quantity that can be reasoned about and analyzed
-  into one of the inputs to the program. Thus, widespread use of \eval
-  hinders our ability to provide safety and security guarantees for
-  software. Understanding how \eval is used in practice is key to finding
-  ways to mitigate its damage. One question that has not been studied is
-  whether the usage of \eval is dependent on the application domain or other
-  features of the language. This paper is a large-scale study of a corpus of
-  \CorpusAllCodeRnd lines of data science libraries and end-user code written in
-  the R language. We performed a sophisticated dynamic analysis to confirm
-  that \eval is indeed in wide spread use, and categorized patterns of
-  usage. We found that \eval in this code base is more dangerous in some
-  ways, and safer in others, than what was previously reported for
-  JavaScript.
+  \noindent Most dynamic languages allow users to turn text into code
+  using various functions, often named \eval, with language-dependent
+  semantics. The widespread use of these reflective functions hinders
+  static analysis and prevents compilers from performing many
+  optimizations. This paper aims to provide a better sense of why
+  programmers use \eval.  Understanding how \eval is used in practice
+  is key to finding ways to mitigate its negative impact. We have
+  reasons to believe that reflective feature usage is language and
+  application domain specific. In this paper, we focus on data science
+  code written in R, and compare our results to previous work that
+  analyzed web programming in JavaScript.  We conduct a large-scale
+  study of a corpus of \CorpusAllCodeRnd lines of libraries and
+  end-user code on which we performed dynamic analysis to confirm that
+  \eval is indeed in widespread use, and categorized patterns of
+  usage. We found that \eval is more dangerous in some ways, and safer
+  in others, than what was previously reported for JavaScript.
 \end{abstract}
 
 
