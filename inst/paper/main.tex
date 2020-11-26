@@ -1,4 +1,4 @@
-\documentclass[acmsmall=true, screen=true, review=true]{acmart}
+\documentclass[USenglish,cleveref, autoref, thm-restate]{lipics-v2019}
 
 \usepackage{listings}
 \usepackage{hyperref}
@@ -436,7 +436,7 @@
 
 \newcommand{\eval}{\texttt{eval}\xspace}
 \newcommand{\evals}{{\sf eval}s\xspace}
-\newcommand{\parse}{\c{parse}}
+\renewcommand{\parse}{\c{parse}}
 \newcommand{\source}{\c{source}}
 \newcommand{\local}{\c{local}}
 \newcommand{\unlockBinding}{\c{unlockBinding}}
@@ -458,15 +458,37 @@
 \newcommand{\rdyntrace}{\emph{R-dyntrace}\xspace}
 \newcommand{\covr}{\emph{covr}\xspace}
 \newcommand{\runr}{\emph{runr}\xspace}
-
-\bibliographystyle{ACM-Reference-Format}
-\citestyle{acmauthoryear}   %% For author/year citations
+\bibliographystyle{plainurl}% the mandatory bibstyle
 
 \begin{document}
 
 \title{A Large-Scale Study of the Use of Eval in R}
-\author{Anony Mouse}
-\authorsaddresses{Author' email address: anony@mouse.mouse} 
+\titlerunning{Eval in R}
+
+
+\author{Anon}{Under review}{}{}{}
+\authorrunning{Anon}
+\ccsdesc[100]{Something}
+\Copyright{Anon}
+\keywords{R, reflection, eval}
+
+%Editor-only macros:: begin (do not touch as author)%%%%%%%%%%%%%%%%%%%%%%%%%%%\
+%%%%%%%                                                                         
+\EventEditors{Eds.}
+\EventNoEds{2}
+\EventLongTitle{European Conference on Object Oriented Programming (ECOOP 2021)}
+\EventShortTitle{ECOOP 2021}
+\EventAcronym{ECOOP}
+\EventYear{2021}
+\EventDate{December 24--27, 2016}
+\EventLocation{Little Whinging, United Kingdom}
+\EventLogo{}
+\SeriesVolume{42}
+\ArticleNo{23}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                          
+
+
+\maketitle
 
 \begin{abstract}
   The \eval function turns text into code. From the point of view of
@@ -485,32 +507,6 @@
   ways, and safer in others, than what was previously reported for
   JavaScript.
 \end{abstract}
-
-\begin{CCSXML}
-  <ccs2012>
-  <concept>
-  <concept_id>10011007.10011006.10011050.10010517</concept_id>
-  <concept_desc>Software and its engineering~Scripting languages</concept_desc>
-  <concept_significance>500</concept_significance>
-  </concept>
-  <concept>
-  <concept_id>10002944.10011123.10010912</concept_id>
-  <concept_desc>General and reference~Empirical studies</concept_desc>
-  <concept_significance>500</concept_significance>
-  </concept>
-  <concept>
-  <concept_id>10011007.10011006.10011008</concept_id>
-  <concept_desc>Software and its engineering~General programming languages</concept_desc>
-  <concept_significance>500</concept_significance>
-  </concept>
-  </ccs2012>
-\end{CCSXML}
-
-\ccsdesc[500]{Software and its engineering~Scripting languages}
-\ccsdesc[500]{General and reference~Empirical studies}
-\ccsdesc[500]{Software and its engineering~General programming languages}
-
-\maketitle
 
 \section{Introduction}
 
