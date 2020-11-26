@@ -442,3 +442,5 @@ inst/paper/main.pdf
 inst/paper/bib/#jv.bib#
 /inst/analysis/html/
 *.vtc
+inst/paper/macro.tex~
+inst/paper/main.vtc
