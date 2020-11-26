@@ -38,9 +38,11 @@ to a boogeyman as it gets. Yet, for McCarthy, \eval was simply the way
 to write down the definition of LISP, he was surprised that someone
 coded it up and offered it end users.  Since then, reflective
 facilities have been used to parameterize programs over code patterns
-that can be provided after the program is written, when it
-executes. The presence of such a feature in a language is a hallmark
-of dynamism as it is a form of delayed binding.
+that can be provided after the program is written.  The presence of
+such a feature in a language is a hallmark of dynamism as it is a form
+of delayed binding as what any particular call to \eval will do is
+only know at program run-time when that particular call site is
+evaluated.
 
 \vspace{2mm}\noindent\emph{Trouble in Paradise.} Reflective facilities
 hinder most attempt to reason about the code using them, as well as to
@@ -113,41 +115,37 @@ differences in usage between JavaScript and R, and try to explain
 those differences in terms of language features, application domain
 and programmer experience.
 
-\vspace{2mm}\noindent\emph{Our contributions.} 
-TODO
+\vspace{2mm}\noindent\emph{The What and How.}  One significant benefit
+of choosing R is that every package in the CRAN repository is curated
+and comes with examples of typical usage. This gives us a large code
+base that we can analyze dynamically.  To observe \eval we built a
+two-level monitoring infrastructure: we can monitor R programs by
+instrumentation --this gives us access to many user-visible properties
+of R programs-- but we can also monitor the inner working of the R
+interpreter --this allows us to capture details of execution that are
+not exposed at the source level. Dynamic analysis is of course limited
+in that it can only observe behaviors that are triggered by the
+particular inputs passed to the program. Luckily, CRAN libraries come
+with multiple input datasets and use-cases.
 
-
-Our methodology for this work bows to the fact that static analysis of R is
-difficult, instead we focus on dynamic analysis. To observe \eval we have
-built a two-level monitoring infrastructure: we are able to monitor R
-programs by instrumentation -- this gives us access to many user-visible
-properties of R programs -- and we also can monitor the inner working of the
-R interpreter -- this allows us to capture details of execution that are not
-exposed at the source level.
-
-Our corpus has been constructed to reflect the different level of
-sophistication in the R community.
-
-Thus, our
-corpus distinguished between \emph{core packages} (there are
-\CorpusCorePackages such packages that are distributed together with the R
-virtual machine), \emph{CRAN packages} (we selected \CorpusPackages curated
-packages that pass stringent community quality checks and are equipped with
-tests and sample data), \emph{Kaggle scripts} (we used \CorpusFinishedKaggle
+The choice of corpus is crucial for analyses like ours.  Our corpus
+has been constructed to reflect the levels of sophistication of the R
+community.  We distinguish between \emph{core packages} (there are
+\CorpusCorePackages such packages that are distributed together with
+the R virtual machine), \emph{CRAN packages} (\CorpusPackages curated
+packages that pass stringent quality checks and are equipped with
+tests and sample data), \emph{Kaggle scripts} (\CorpusFinishedKaggle
 end-user written programs that performs a particular data analysis
-task). There are reasons to believe that \eval usage patterns may differ
-between these datasets. The core R code is extremely stable, it has only
-been maintained for the last 20 years with very few far reaching
-changes. The libraries represent a more lively ecosystem with new libraries
-added each day.  Finally, end user code is often one-use scripts thrown
-together and sometimes never revisited.
+task). It is reasonable to expect that \eval usage differ between
+these datasets. The core R code is extremely stable, maintained for
+the last 20 years with very few far reaching changes. The libraries
+represent a more lively ecosystem with new libraries added each day.
+Finally, end user code is often one-use scripts thrown together and
+sometimes never revisited.
 
 
-To understand the behavior of \eval we perform a dynamic analysis and manual
-code inspection. The results presented here summarize our findings.
-
-Our infrastructure is publicly available, released in open source, and our
-code, and data will be submitted for artifact evaluation.
+Our infrastructure is publicly available, released in open source, and
+our code, and data will be submitted for artifact evaluation.
 
 
 \section{Background and Related Work}
