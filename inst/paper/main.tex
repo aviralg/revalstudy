@@ -1,635 +1,151 @@
-\documentclass[a4paper,USenglish,cleveref, autoref, thm-restate]{lipics-v2019}
-% This is a template for producing LIPIcs articles. 
-% See lipics-manual.pdf for further information.
-% for A4 paper format use option "a4paper", for US-letter use option "letterpaper"
-% for british hyphenation rules use option "UKenglish", for american hyphenation rules use option "USenglish"
-% for section-numbered lemmas etc., use "numberwithinsect"
-% for enabling cleveref support, use "cleveref"
-% for enabling autoref support, use "autoref"
-% for anonymousing the authors (e.g. for double-blind review), add "anonymous"
-% for enabling thm-restate support, use "thm-restate"
+\documentclass[USenglish,cleveref, autoref, thm-restate]{lipics-v2019}
+\usepackage{listings,hyperref,multirow,paralist,xspace,url}
+\input{macro}
 
-% \graphicspath{{./graphics/}}%helpful if your graphic files are in another directory
+\title{Why do we Eval?\\[2mm]\Large A large-scale study of Eval usage in R}
+\titlerunning{Eval in R}
 
-\usepackage{listings}
-\usepackage{hyperref}
-\usepackage{multirow}
-\usepackage{paralist}
-\usepackage{xspace}
-\usepackage{url}
-
-\newcommand{\missingTag}[1]{\textcolor{red}{#1}\xspace}
-\newcommand{\missingNumber}{\textcolor{red}{XX}\xspace}
-\newcommand{\missingPercentage}{\textcolor{red}{XX\%}\xspace}
-\newcommand{\missingTable}[1][XX]{\textcolor{red}{Table #1}\xspace}
-\newcommand{\missingGraph}{\textcolor{red}{XXGraph}\xspace}
-
-
-%\input{tag/counts.tex}
-\newcommand{\CoreEvalCallCountRnd}{6.3M\xspace}
-\newcommand{\CoreEvalCallCount}{6,282,429\xspace}
-\newcommand{\CoreEvalSiteCountRnd}{185\xspace}
-\newcommand{\CoreEvalSiteCount}{185\xspace}
-\newcommand{\CoreEvalParentCallCountRnd}{186K\xspace}
-\newcommand{\CoreEvalParentCallCount}{186,275\xspace}
-\newcommand{\CoreEvalParentSiteCountRnd}{13\xspace}
-\newcommand{\CoreEvalParentSiteCount}{13\xspace}
-\newcommand{\CoreEvalqCallCountRnd}{132K\xspace}
-\newcommand{\CoreEvalqCallCount}{132,891\xspace}
-\newcommand{\CoreEvalqSiteCountRnd}{20K\xspace}
-\newcommand{\CoreEvalqSiteCount}{20,460\xspace}
-\newcommand{\CoreLocalCallCountRnd}{175K\xspace}
-\newcommand{\CoreLocalCallCount}{175,079\xspace}
-\newcommand{\CoreLocalSiteCountRnd}{920\xspace}
-\newcommand{\CoreLocalSiteCount}{920\xspace}
-\newcommand{\PackageEvalCallCountRnd}{1.6M\xspace}
-\newcommand{\PackageEvalCallCount}{1,582,738\xspace}
-\newcommand{\PackageEvalSiteCountRnd}{1.5K\xspace}
-\newcommand{\PackageEvalSiteCount}{1,459\xspace}
-\newcommand{\PackageEvalParentCallCountRnd}{13K\xspace}
-\newcommand{\PackageEvalParentCallCount}{13,230\xspace}
-\newcommand{\PackageEvalParentSiteCountRnd}{249\xspace}
-\newcommand{\PackageEvalParentSiteCount}{249\xspace}
-\newcommand{\PackageEvalqCallCountRnd}{2\xspace}
-\newcommand{\PackageEvalqCallCount}{2\xspace}
-\newcommand{\PackageEvalqSiteCountRnd}{1\xspace}
-\newcommand{\PackageEvalqSiteCount}{1\xspace}
-\newcommand{\PackageLocalCallCountRnd}{2.2K\xspace}
-\newcommand{\PackageLocalCallCount}{2,228\xspace}
-\newcommand{\PackageLocalSiteCountRnd}{15\xspace}
-\newcommand{\PackageLocalSiteCount}{15\xspace}
-\newcommand{\KaggleEvalCallCountRnd}{0\xspace}
-\newcommand{\KaggleEvalCallCount}{0\xspace}
-\newcommand{\KaggleEvalSiteCountRnd}{0\xspace}
-\newcommand{\KaggleEvalSiteCount}{0\xspace}
-\newcommand{\KaggleEvalParentCallCountRnd}{0\xspace}
-\newcommand{\KaggleEvalParentCallCount}{0\xspace}
-\newcommand{\KaggleEvalParentSiteCountRnd}{0\xspace}
-\newcommand{\KaggleEvalParentSiteCount}{0\xspace}
-\newcommand{\KaggleEvalqCallCountRnd}{0\xspace}
-\newcommand{\KaggleEvalqCallCount}{0\xspace}
-\newcommand{\KaggleEvalqSiteCountRnd}{0\xspace}
-\newcommand{\KaggleEvalqSiteCount}{0\xspace}
-\newcommand{\KaggleLocalCallCountRnd}{0\xspace}
-\newcommand{\KaggleLocalCallCount}{0\xspace}
-\newcommand{\KaggleLocalSiteCountRnd}{0\xspace}
-\newcommand{\KaggleLocalSiteCount}{0\xspace}
-\newcommand{\CoreAllCallCountRnd}{6.8M\xspace}
-\newcommand{\CoreAllCallCount}{6,776,674\xspace}
-\newcommand{\CoreAllSiteCountRnd}{21.6K\xspace}
-\newcommand{\CoreAllSiteCount}{21,578\xspace}
-\newcommand{\KaggleAllCallCountRnd}{0\xspace}
-\newcommand{\KaggleAllCallCount}{0\xspace}
-\newcommand{\KaggleAllSiteCountRnd}{0\xspace}
-\newcommand{\KaggleAllSiteCount}{0\xspace}
-\newcommand{\PackageAllCallCountRnd}{1.6M\xspace}
-\newcommand{\PackageAllCallCount}{1,598,198\xspace}
-\newcommand{\PackageAllSiteCountRnd}{1.7K\xspace}
-\newcommand{\PackageAllSiteCount}{1,724\xspace}
-\newcommand{\AllEvalCallCountRnd}{7.9M\xspace}
-\newcommand{\AllEvalCallCount}{7,865,167\xspace}
-\newcommand{\AllEvalSiteCountRnd}{1.6K\xspace}
-\newcommand{\AllEvalSiteCount}{1,644\xspace}
-\newcommand{\AllEvalParentCallCountRnd}{199.5K\xspace}
-\newcommand{\AllEvalParentCallCount}{199,505\xspace}
-\newcommand{\AllEvalParentSiteCountRnd}{262\xspace}
-\newcommand{\AllEvalParentSiteCount}{262\xspace}
-\newcommand{\AllEvalqCallCountRnd}{132.9K\xspace}
-\newcommand{\AllEvalqCallCount}{132,893\xspace}
-\newcommand{\AllEvalqSiteCountRnd}{20.5K\xspace}
-\newcommand{\AllEvalqSiteCount}{20,461\xspace}
-\newcommand{\AllLocalCallCountRnd}{177.3K\xspace}
-\newcommand{\AllLocalCallCount}{177,307\xspace}
-\newcommand{\AllLocalSiteCountRnd}{935\xspace}
-\newcommand{\AllLocalSiteCount}{935\xspace}
-\newcommand{\AllAllCallCountRnd}{8.4M\xspace}
-\newcommand{\AllAllCallCount}{8,374,872\xspace}
-\newcommand{\AllAllSiteCountRnd}{23.3K\xspace}
-\newcommand{\AllAllSiteCount}{23,302\xspace}
-\newcommand{\TotalFileCountRnd}{18.3K\xspace}
-\newcommand{\TotalFileCount}{18,258\xspace}
-\newcommand{\NoEvalFileCountRnd}{89\xspace}
-\newcommand{\NoEvalFileCount}{89\xspace}
-\newcommand{\NoEvalFilePerc}{0.5\%\xspace}
-\newcommand{\CoreEvalFileCountRnd}{12.3K\xspace}
-\newcommand{\CoreEvalFileCount}{12,307\xspace}
-\newcommand{\CoreEvalFilePerc}{67.4\%\xspace}
-\newcommand{\PackageEvalFileCountRnd}{0\xspace}
-\newcommand{\PackageEvalFileCount}{0\xspace}
-\newcommand{\PackageEvalFilePerc}{0\%\xspace}
-\newcommand{\AllEvalFileCountRnd}{5.9K\xspace}
-\newcommand{\AllEvalFileCount}{5,862\xspace}
-\newcommand{\AllEvalFilePerc}{32.1\%\xspace}
-\newcommand{\EightyCoreEvalFileCountRnd}{3.8K\xspace}
-\newcommand{\EightyCoreEvalFileCount}{3,769\xspace}
-\newcommand{\EightyCoreEvalFilePerc}{64.3\%\xspace}
-\newcommand{\TopTenPackageCallCountRnd}{1.4M\xspace}
-\newcommand{\TopTenPackageCallCount}{1,425,902\xspace}
-\newcommand{\TopTenPackageCallPerc}{89.2\%\xspace}
-\newcommand{\TopTenPackageSiteCountRnd}{282\xspace}
-\newcommand{\TopTenPackageSiteCount}{282\xspace}
-\newcommand{\TopTenPackageSitePerc}{16\%\xspace}
-\newcommand{\TopTenPackageNameA}{ggplot2\xspace}
-\newcommand{\TopTenPackageCallsiteCountARnd}{2\xspace}
-\newcommand{\TopTenPackageCallsiteCountA}{2\xspace}
-\newcommand{\TopTenPackageCallCountARnd}{987K\xspace}
-\newcommand{\TopTenPackageCallCountA}{987,946\xspace}
-\newcommand{\TopTenPackageCallPercA}{61\%\xspace}
-\newcommand{\TopTenPackageNameB}{magrittr\xspace}
-\newcommand{\TopTenPackageCallsiteCountBRnd}{5\xspace}
-\newcommand{\TopTenPackageCallsiteCountB}{5\xspace}
-\newcommand{\TopTenPackageCallCountBRnd}{139K\xspace}
-\newcommand{\TopTenPackageCallCountB}{139,346\xspace}
-\newcommand{\TopTenPackageCallPercB}{8.7\%\xspace}
-\newcommand{\TopTenPackageNameC}{plyr\xspace}
-\newcommand{\TopTenPackageCallsiteCountCRnd}{11\xspace}
-\newcommand{\TopTenPackageCallsiteCountC}{11\xspace}
-\newcommand{\TopTenPackageCallCountCRnd}{68K\xspace}
-\newcommand{\TopTenPackageCallCountC}{68,671\xspace}
-\newcommand{\TopTenPackageCallPercC}{4.3\%\xspace}
-\newcommand{\TopTenPackageNameD}{glue\xspace}
-\newcommand{\TopTenPackageCallsiteCountDRnd}{5\xspace}
-\newcommand{\TopTenPackageCallsiteCountD}{5\xspace}
-\newcommand{\TopTenPackageCallCountDRnd}{62K\xspace}
-\newcommand{\TopTenPackageCallCountD}{62,564\xspace}
-\newcommand{\TopTenPackageCallPercD}{3.9\%\xspace}
-\newcommand{\TopTenPackageNameE}{data.table\xspace}
-\newcommand{\TopTenPackageCallsiteCountERnd}{31\xspace}
-\newcommand{\TopTenPackageCallsiteCountE}{31\xspace}
-\newcommand{\TopTenPackageCallCountERnd}{47K\xspace}
-\newcommand{\TopTenPackageCallCountE}{47,464\xspace}
-\newcommand{\TopTenPackageCallPercE}{3\%\xspace}
-\newcommand{\TopTenPackageNameF}{statnet.common\xspace}
-\newcommand{\TopTenPackageCallsiteCountFRnd}{12\xspace}
-\newcommand{\TopTenPackageCallsiteCountF}{12\xspace}
-\newcommand{\TopTenPackageCallCountFRnd}{30K\xspace}
-\newcommand{\TopTenPackageCallCountF}{30,581\xspace}
-\newcommand{\TopTenPackageCallPercF}{1.9\%\xspace}
-\newcommand{\TopTenPackageNameG}{VGAM\xspace}
-\newcommand{\TopTenPackageCallsiteCountGRnd}{97\xspace}
-\newcommand{\TopTenPackageCallsiteCountG}{97\xspace}
-\newcommand{\TopTenPackageCallCountGRnd}{23K\xspace}
-\newcommand{\TopTenPackageCallCountG}{23,796\xspace}
-\newcommand{\TopTenPackageCallPercG}{1.5\%\xspace}
-\newcommand{\TopTenPackageNameH}{copula\xspace}
-\newcommand{\TopTenPackageCallsiteCountHRnd}{21\xspace}
-\newcommand{\TopTenPackageCallsiteCountH}{21\xspace}
-\newcommand{\TopTenPackageCallCountHRnd}{22K\xspace}
-\newcommand{\TopTenPackageCallCountH}{22,794\xspace}
-\newcommand{\TopTenPackageCallPercH}{1.4\%\xspace}
-\newcommand{\TopTenPackageNameI}{nlme\xspace}
-\newcommand{\TopTenPackageCallsiteCountIRnd}{97\xspace}
-\newcommand{\TopTenPackageCallsiteCountI}{97\xspace}
-\newcommand{\TopTenPackageCallCountIRnd}{21K\xspace}
-\newcommand{\TopTenPackageCallCountI}{21,483\xspace}
-\newcommand{\TopTenPackageCallPercI}{1.3\%\xspace}
-\newcommand{\TopTenPackageNameJ}{R6\xspace}
-\newcommand{\TopTenPackageCallsiteCountJRnd}{1\xspace}
-\newcommand{\TopTenPackageCallsiteCountJ}{1\xspace}
-\newcommand{\TopTenPackageCallCountJRnd}{21K\xspace}
-\newcommand{\TopTenPackageCallCountJ}{21,257\xspace}
-\newcommand{\TopTenPackageCallPercJ}{1.3\%\xspace}
-
-\input{tag/corpus.tex}
-%\input{tag/side-effects.tex}
-\newcommand{\AllWritesRnd}{9.4G\xspace}
-\newcommand{\AllWrites}{9,427,046,091\xspace}
-\newcommand{\EvalWritesRnd}{1.1G\xspace}
-\newcommand{\EvalWrites}{1,065,212,013\xspace}
-\newcommand{\EvalSideEffectingWritesRnd}{45M\xspace}
-\newcommand{\EvalSideEffectingWrites}{45,701,209\xspace}
-\newcommand{\EvalSideEffectingWritesEvalPerc}{4.3\%\xspace}
-\newcommand{\EvalSideEffectingWritesAllPerc}{.5\%\xspace}
-\newcommand{\SideEffectingCoreCallPerc}{4.4\%\xspace}
-\newcommand{\SideEffectingPackageCallPerc}{7.5\%\xspace}
-
-%\input{tag/operations.tex}
-\newcommand{\AllValueInputEvalCallPerc}{17\%\xspace}
-\newcommand{\AllExpressionInputEvalCallPerc}{82\%\xspace}
-\newcommand{\AllExpressionInputEvalSitePerc}{14\%\xspace}
-\newcommand{\AllValueInputEvalSitePerc}{3\%\xspace}
-\newcommand{\AllPolymorphicInputEvalSitePerc}{82\%\xspace}
-\newcommand{\PackageEnvironmentInputEvalCallPerc}{62\%\xspace}
-\newcommand{\AllClosureCallCountRnd}{2.9G\xspace}
-\newcommand{\AllClosureCallCount}{2,886,992,072\xspace}
-\newcommand{\EvalClosureCallCountRnd}{125M\xspace}
-\newcommand{\EvalClosureCallCount}{125,469,701\xspace}
-\newcommand{\AllNativeCallCountRnd}{463M\xspace}
-\newcommand{\AllNativeCallCount}{463,803,879\xspace}
-\newcommand{\EvalNativeCallCountRnd}{31M\xspace}
-\newcommand{\EvalNativeCallCount}{31,164,219\xspace}
-
-%\input{tag/events.tex}
-\newcommand{\AllEventCountRnd}{39G\xspace}
-\newcommand{\AllEventCount}{38,991,360,760\xspace}
-\newcommand{\EvalEventCountRnd}{2G\xspace}
-\newcommand{\EvalEventCount}{1,973,736,718\xspace}
-\newcommand{\EventsMaxCountRnd}{17M\xspace}
-\newcommand{\EventsMaxCount}{17,656,694\xspace}
-\newcommand{\EvalEventAllPerc}{5\%\xspace}
-\newcommand{\EventsMinRangeARnd}{0\xspace}
-\newcommand{\EventsMinRangeA}{0\xspace}
-\newcommand{\EventsMaxRangeARnd}{100\xspace}
-\newcommand{\EventsMaxRangeA}{100\xspace}
-\newcommand{\EventsCoreEvalCountARnd}{5M\xspace}
-\newcommand{\EventsCoreEvalCountA}{5,659,053\xspace}
-\newcommand{\EventsCoreEvalPercA}{88\%\xspace}
-\newcommand{\EventsPackageEvalCountARnd}{1.5M\xspace}
-\newcommand{\EventsPackageEvalCountA}{1,514,222\xspace}
-\newcommand{\EventsPackageEvalPercA}{93\%\xspace}
-\newcommand{\EventsMinRangeBRnd}{101\xspace}
-\newcommand{\EventsMinRangeB}{101\xspace}
-\newcommand{\EventsMaxRangeBRnd}{10K\xspace}
-\newcommand{\EventsMaxRangeB}{10,000\xspace}
-\newcommand{\EventsCoreEvalCountBRnd}{769K\xspace}
-\newcommand{\EventsCoreEvalCountB}{769,341\xspace}
-\newcommand{\EventsCoreEvalPercB}{12\%\xspace}
-\newcommand{\EventsPackageEvalCountBRnd}{100K\xspace}
-\newcommand{\EventsPackageEvalCountB}{100,141\xspace}
-\newcommand{\EventsPackageEvalPercB}{6\%\xspace}
-\newcommand{\EventsMinRangeCRnd}{10K\xspace}
-\newcommand{\EventsMinRangeC}{10,001\xspace}
-\newcommand{\EventsMaxRangeCRnd}{20M\xspace}
-\newcommand{\EventsMaxRangeC}{20,000,000\xspace}
-\newcommand{\EventsCoreEvalCountCRnd}{3K\xspace}
-\newcommand{\EventsCoreEvalCountC}{2,997\xspace}
-\newcommand{\EventsCoreEvalPercC}{0\%\xspace}
-\newcommand{\EventsPackageEvalCountCRnd}{14K\xspace}
-\newcommand{\EventsPackageEvalCountC}{14,209\xspace}
-\newcommand{\EventsPackageEvalPercC}{.9\%\xspace}
-
-%\input{tag/analysisStable.tex}
-\newcommand{\UniqueCallsRnd}{1.3M\xspace}
-\newcommand{\UniqueCalls}{1,277,948\xspace}
-\newcommand{\MatchArgNumberRnd}{5M\xspace}
-\newcommand{\MatchArgNumber}{5,029,351\xspace}
-\newcommand{\MatchArgPercent}{60\%\xspace}
-\newcommand{\NbAstOnePercent}{15\%\xspace}
-\newcommand{\NbAstOneCallSitePercent}{96\%\xspace}
-\newcommand{\AstSizeNineFiveRnd}{42\xspace}
-\newcommand{\AstSizeNineFive}{42\xspace}
-\newcommand{\AstSizeNineFiveExactPercent}{95\%\xspace}
-\newcommand{\DefaultEnvirExprRnd}{1.1M\xspace}
-\newcommand{\DefaultEnvirExpr}{1,054,124\xspace}
-\newcommand{\DefaultEnvirExprPercent}{12\%\xspace}
-\newcommand{\DefaultEnvirCallSitesPercent}{9.3\%\xspace}
-\newcommand{\DefaultEnvirCoreExprPercent}{10\%\xspace}
-\newcommand{\DefaultEnvirPackagesExprPercent}{20\%\xspace}
-\newcommand{\CoreEnvClassA}{2\xspace}
-\newcommand{\CoreCountARnd}{5M\xspace}
-\newcommand{\CoreCountA}{5,079,433\xspace}
-\newcommand{\CoreProportionA}{83\%\xspace}
-\newcommand{\CoreEnvClassB}{list\xspace}
-\newcommand{\CoreCountBRnd}{229K\xspace}
-\newcommand{\CoreCountB}{229,249\xspace}
-\newcommand{\CoreProportionB}{3.8\%\xspace}
-\newcommand{\CoreEnvClassC}{3\xspace}
-\newcommand{\CoreCountCRnd}{199K\xspace}
-\newcommand{\CoreCountC}{199,497\xspace}
-\newcommand{\CoreProportionC}{3.3\%\xspace}
-\newcommand{\CoreEnvClassD}{global+\xspace}
-\newcommand{\CoreCountDRnd}{183K\xspace}
-\newcommand{\CoreCountD}{183,631\xspace}
-\newcommand{\CoreProportionD}{3\%\xspace}
-\newcommand{\CoreEnvClassE}{1+\xspace}
-\newcommand{\CoreCountERnd}{175K\xspace}
-\newcommand{\CoreCountE}{175,151\xspace}
-\newcommand{\CoreProportionE}{2.9\%\xspace}
-\newcommand{\CoreEnvClassF}{global\xspace}
-\newcommand{\CoreCountFRnd}{124K\xspace}
-\newcommand{\CoreCountF}{124,673\xspace}
-\newcommand{\CoreProportionF}{2.1\%\xspace}
-\newcommand{\CoreEnvClassG}{sys.call(sys.parent())\xspace}
-\newcommand{\CoreCountGRnd}{32K\xspace}
-\newcommand{\CoreCountG}{32,349\xspace}
-\newcommand{\CoreProportionG}{.5\%\xspace}
-\newcommand{\CoreEnvClassH}{loop\xspace}
-\newcommand{\CoreCountHRnd}{24K\xspace}
-\newcommand{\CoreCountH}{24,286\xspace}
-\newcommand{\CoreProportionH}{.4\%\xspace}
-\newcommand{\PackagesEnvClassA}{global+\xspace}
-\newcommand{\PackagesCountARnd}{943K\xspace}
-\newcommand{\PackagesCountA}{943,682\xspace}
-\newcommand{\PackagesProportionA}{74\%\xspace}
-\newcommand{\PackagesEnvClassB}{3\xspace}
-\newcommand{\PackagesCountBRnd}{71K\xspace}
-\newcommand{\PackagesCountB}{71,037\xspace}
-\newcommand{\PackagesProportionB}{5.6\%\xspace}
-\newcommand{\PackagesEnvClassC}{2\xspace}
-\newcommand{\PackagesCountCRnd}{67K\xspace}
-\newcommand{\PackagesCountC}{67,555\xspace}
-\newcommand{\PackagesProportionC}{5.3\%\xspace}
-\newcommand{\PackagesEnvClassD}{5\xspace}
-\newcommand{\PackagesCountDRnd}{49K\xspace}
-\newcommand{\PackagesCountD}{49,782\xspace}
-\newcommand{\PackagesProportionD}{3.9\%\xspace}
-\newcommand{\PackagesEnvClassE}{list\xspace}
-\newcommand{\PackagesCountERnd}{44K\xspace}
-\newcommand{\PackagesCountE}{44,194\xspace}
-\newcommand{\PackagesProportionE}{3.5\%\xspace}
-\newcommand{\PackagesEnvClassF}{2+\xspace}
-\newcommand{\PackagesCountFRnd}{32K\xspace}
-\newcommand{\PackagesCountF}{32,931\xspace}
-\newcommand{\PackagesProportionF}{2.6\%\xspace}
-\newcommand{\PackagesEnvClassG}{global\xspace}
-\newcommand{\PackagesCountGRnd}{22K\xspace}
-\newcommand{\PackagesCountG}{22,825\xspace}
-\newcommand{\PackagesProportionG}{1.8\%\xspace}
-\newcommand{\PackagesEnvClassH}{base+\xspace}
-\newcommand{\PackagesCountHRnd}{18K\xspace}
-\newcommand{\PackagesCountH}{18,538\xspace}
-\newcommand{\PackagesProportionH}{1.5\%\xspace}
-\newcommand{\NbEnclosEnvirRnd}{274K\xspace}
-\newcommand{\NbEnclosEnvir}{274,370\xspace}
-\newcommand{\EnclosEnvirPercent}{3.3\%\xspace}
-\newcommand{\NbSysCallEnvirRnd}{33K\xspace}
-\newcommand{\NbSysCallEnvir}{33,650\xspace}
-\newcommand{\SysCallEnvirPercent}{.4\%\xspace}
-\newcommand{\NbMonomorphicRnd}{23.1K\xspace}
-\newcommand{\NbMonomorphic}{23,069\xspace}
-\newcommand{\PercentMonomorphic}{99\%\xspace}
-\newcommand{\PercentParsedEvals}{.9\%\xspace}
-\newcommand{\PercentParsedCallSites}{1\%\xspace}
-\newcommand{\NbParseFilesRnd}{10\xspace}
-\newcommand{\NbParseFiles}{10\xspace}
-\newcommand{\PercentParseFileCallSites}{.01\%\xspace}
-\newcommand{\PasteParsedEvals}{39\%\xspace}
-\newcommand{\PasteParsedCallSite}{51\%\xspace}
-\newcommand{\NbCoreEvalCallSitesRnd}{310\xspace}
-\newcommand{\NbCoreEvalCallSites}{310\xspace}
-\newcommand{\MaxCallSitePackageRnd}{2.4K\xspace}
-\newcommand{\MaxCallSitePackage}{2,372\xspace}
-\newcommand{\OneCallSitePackageRnd}{48\xspace}
-\newcommand{\OneCallSitePackage}{48\xspace}
-\newcommand{\NoCallSitePackagesRnd}{233\xspace}
-\newcommand{\NoCallSitePackages}{233\xspace}
-
-%\input{tag/enrichDataset.tex}
-\newcommand{\UndefinedEvalsRnd}{285K\xspace}
-\newcommand{\UndefinedEvals}{285,289\xspace}
-\newcommand{\PercentUndefinedEval}{3.3\%\xspace}
-\newcommand{\UndefinedEvalExpressionsRnd}{262\xspace}
-\newcommand{\UndefinedEvalExpressions}{262\xspace}
-\newcommand{\UndefinedOutOfCorpusRnd}{0\xspace}
-\newcommand{\UndefinedOutOfCorpus}{0\xspace}
-\newcommand{\UndefinedOutOfCoprusPercent}{0\%\xspace}
-\newcommand{\MaxCallSitesEnrich}{114\xspace}
-\newcommand{\OneCallSitesEnrich}{61\xspace}
-\newcommand{\NoCallSitesEnrich}{297\xspace}
-%\input{tag/patterns.tex}
-\newcommand{\PatternLibRnd}{4K\xspace}
-\newcommand{\PatternLib}{4,278\xspace}
-\newcommand{\PatternLibRatio}{.05\%\xspace}
-\newcommand{\PatternLibSourceRnd}{370\xspace}
-\newcommand{\PatternLibSource}{370\xspace}
-\newcommand{\PatternLibLocalRnd}{100\xspace}
-\newcommand{\PatternLibLocal}{100\xspace}
-\newcommand{\PatternReadRnd}{59K\xspace}
-\newcommand{\PatternRead}{59,776\xspace}
-\newcommand{\PatternReadRatio}{.7\%\xspace}
-\newcommand{\PatternReadSlotAccessRatio}{88\%\xspace}
-\newcommand{\PatternReadDatatableRatio}{27\%\xspace}
-\newcommand{\PatternAssignRnd}{68K\xspace}
-\newcommand{\PatternAssign}{68,754\xspace}
-\newcommand{\PatternAssignRatio}{.9\%\xspace}
-\newcommand{\PatternAssignArrowRatio}{18\%\xspace}
-\newcommand{\PatternAssignArrowMagrittrRatio}{59\%\xspace}
-\newcommand{\PatternAssignSuperarrowRatio}{81\%\xspace}
-\newcommand{\PatternAssignSuperarrowPlyrRatio}{99\%\xspace}
-\newcommand{\PatternManualPackagesRnd}{20\xspace}
-\newcommand{\PatternManualPackages}{20\xspace}
-\newcommand{\PatternManualCallsitesRnd}{161\xspace}
-\newcommand{\PatternManualCallsites}{161\xspace}
-
-\graphicspath{{img/}}
-
-\lstset{language=R}
-
-\definecolor{LightGray}{rgb}{.92,.92,.92}
-\definecolor{Gray}{rgb}{.3,.3,.3}
-\definecolor{DarkGray}{rgb}{.5,.5,.5}
-
-\lstset{ %
-  columns=flexible,
-  captionpos=b,
-  frame=single,
-  framerule=0pt,
-  framexleftmargin=-1mm,
-  framexrightmargin=-1mm,
-  tabsize=2,
-  belowskip=0pt,
-  basicstyle=\small\ttfamily,
-  backgroundcolor=\color{LightGray},
-  emphstyle=\sffamily,
-  keywordstyle=\bfseries,
-  commentstyle=\color{Gray}\em,
-  stringstyle=\color{Gray}
-}
-\lstdefinestyle{R}{ %
-  language=R,
-  deletekeywords={new, env, equal, c, runif, trace, args, exp, t, all, get,
-    names, is, environment, class, substitute, expression, list, null, Internal,
-    sample, diag, length, rep, nrow, stop, offset, pmax, Machine,
-    double, parent, frame, par, methods, end, dir, apply, deparse, missing,
-    plot, as, integer, character, inherits, numeric, paste, eval, quote, call,
-    formula, df, log, sum, c, local, legend, file, scale, round, title, order,
-    drop, which, grid, print, ncol, dim, max, format, sort, rug, matrix, start,
-    unique, mean, df, attr, do, power, \$},
-  otherkeywords={},
-  breaklines=true
-}
-
-\newcommand{\eg}{\emph{e.g.},\xspace}
-\newcommand{\ie}{\emph{i.e.},\xspace}
-\newcommand{\cf}{\emph{cf.}\xspace}
-\newcommand{\summary}[1]{{\csname #1\endcsname} ({\csname #1Min\endcsname} / {\csname #1Mean\endcsname} / {\csname #1Max\endcsname})}
-\newcommand{\summaryrnd}[1]{{\csname #1Rnd\endcsname} ({\csname #1MinRnd\endcsname} / {\csname #1MeanRnd\endcsname} / {\csname #1MaxRnd\endcsname})}
-
-\newcommand{\eval}{\texttt{eval}\xspace}
-\newcommand{\evals}{{\sf eval}s\xspace}
-\renewcommand{\parse}{\c{parse}}
-\newcommand{\source}{\c{source}}
-\newcommand{\local}{\c{local}}
-\newcommand{\unlockBinding}{\c{unlockBinding}}
-\newcommand{\substitute}{\c{substitute}}
-\newcommand{\datatable}{\c{data.table}}
-\newcommand{\mlogit}{\c{mlogit}}
-\newcommand{\mboost}{\c{mboost}}
-\newcommand{\metafor}{\c{metafor}}
-\newcommand{\lavaan}{\c{lavaan}}
-\newcommand{\mclust}{\c{mclust}}
-\newcommand{\gamlss}{\c{gamlss}}
-\newcommand{\ggproto}{\c{ggproto}}
-\newcommand{\ggplot}{\c{ggplot2}}
-\newcommand{\base}{\c{base}}
-\renewcommand{\c}[1]{\lstinline{#1}\xspace}
-\newcommand{\miss}[1]{{\textcolor{red}{#1}}\xspace}
-\newcommand{\evil}{\emph{evil}\xspace}
-\newcommand{\instrumentr}{\emph{instrumentr}\xspace}
-\newcommand{\rdyntrace}{\emph{R-dyntrace}\xspace}
-\newcommand{\covr}{\emph{covr}\xspace}
-\newcommand{\runr}{\emph{runr}\xspace}
-
-\bibliographystyle{plainurl}
-
-\title{A Large-Scale Study of the Use of Eval in R}
-
-%\author{Aviral Goel}{Northeastern University, [optional: Address], Country \and My second affiliation, Country \and \url{http://www.myhomepage.edu} }{goel.aviral@gmail.com}{https://orcid.org/0000-0002-0814-5015}{(Optional) author-specific funding acknowledgements}%TODO mandatory, please use full name; only 1 author per \author macro; first two parameters are mandatory, other parameters can be empty. Please provide at least the name of the affiliation and the country. The full address is optional
-
-%\author{Joan R. Public\footnote{Optional footnote, e.g. to mark corresponding author}}{Department of Informatics, Dummy College, [optional: Address], Country}{joanrpublic@dummycollege.org}{[orcid]}{[funding]}
-
-\authorrunning{J.\,Q. Public and J.\,R. Public} %TODO mandatory. First: Use abbreviated first/middle names. Second (only in severe cases): Use first author plus 'et al.'
-
-\Copyright{Aviral Goel, Pierre Donat-Bouillud, Filip Křikava, Christoph Kirsch and Jan Vitek}
-% TODO mandatory, please use full first names. LIPIcs license is "CC-BY";  http://creativecommons.org/licenses/by/3.0/
-
-\begin{CCSXML}
-  <ccs2012>
-  <concept>
-  <concept_id>10011007.10011006.10011050.10010517</concept_id>
-  <concept_desc>Software and its engineering~Scripting languages</concept_desc>
-  <concept_significance>500</concept_significance>
-  </concept>
-  <concept>
-  <concept_id>10002944.10011123.10010912</concept_id>
-  <concept_desc>General and reference~Empirical studies</concept_desc>
-  <concept_significance>500</concept_significance>
-  </concept>
-  <concept>
-  <concept_id>10011007.10011006.10011008</concept_id>
-  <concept_desc>Software and its engineering~General programming languages</concept_desc>
-  <concept_significance>500</concept_significance>
-  </concept>
-  </ccs2012>
-\end{CCSXML}
-
-\ccsdesc[500]{Software and its engineering~Scripting languages}
-\ccsdesc[500]{General and reference~Empirical studies}
-\ccsdesc[500]{Software and its engineering~General programming languages}
-
-
-\keywords{Dummy keyword} %TODO mandatory; please add comma-separated list of keywords
-
-\category{} %optional, e.g. invited paper
-
-\relatedversion{} %optional, e.g. full version hosted on arXiv, HAL, or other respository/website
-%\relatedversion{A full version of the paper is available at \url{...}.}
-
-\supplement{}%optional, e.g. related research data, source code, ... hosted on a repository like zenodo, figshare, GitHub, ...
-
-%\funding{(Optional) general funding statement \dots}%optional, to capture a funding statement, which applies to all authors. Please enter author specific funding statements as fifth argument of the \author macro.
-
-\acknowledgements{I want to thank \dots}%optional
-
-%\nolinenumbers %uncomment to disable line numbering
-
-%\hideLIPIcs  %uncomment to remove references to LIPIcs series (logo, DOI, ...), e.g. when preparing a pre-final version to be uploaded to arXiv or another public repository
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-\begin{document}
-
-\maketitle
+\begin{document}\maketitle
 
 \begin{abstract}
-  The \eval function turns text into code. From the point of view of
-  reasoning about software system, uses of \eval turn the program's code
-  from a statically known quantity that can be reasoned about and analyzed
-  into one of the inputs to the program. Thus, widespread use of \eval
-  hinders our ability to provide safety and security guarantees for
-  software. Understanding how \eval is used in practice is key to finding
-  ways to mitigate its damage. One question that has not been studied is
-  whether the usage of \eval is dependent on the application domain or other
-  features of the language. This paper is a large-scale study of a corpus of
-  \CorpusAllCodeRnd lines of data science libraries and end-user code written in
-  the R language. We performed a sophisticated dynamic analysis to confirm
-  that \eval is indeed in wide spread use, and categorized patterns of
-  usage. We found that \eval in this code base is more dangerous in some
-  ways, and safer in others, than what was previously reported for
-  JavaScript.
+  \noindent Most dynamic languages allow users to turn text into code
+  using various functions, often named \eval, with language-dependent
+  semantics. The widespread use of these reflective functions hinders
+  static analysis and prevents compilers from performing many
+  optimizations. This paper aims to provide a better sense of why
+  programmers use \eval.  Understanding how \eval is used in practice
+  is key to finding ways to mitigate its negative impact. We have
+  reasons to believe that reflective feature usage is language and
+  application domain specific. In this paper, we focus on data science
+  code written in R, and compare our results to previous work that
+  analyzed web programming in JavaScript.  We conduct a large-scale
+  study of a corpus of \CorpusAllCodeRnd lines of libraries and
+  end-user code on which we performed dynamic analysis to confirm that
+  \eval is indeed in widespread use. We found that \eval is more
+  dangerous in some ways, and safer in others, than what was
+  previously reported for JavaScript.
 \end{abstract}
+
 
 \section{Introduction}
 
-Traditional program analysis techniques are based on sound reasoning about
-program behavior, a program analyzer computes an over-approximation of the
-set of possible operations performed by the system being
-analyzed~\cite{cc77}.  This is predicated on knowing the program's code, and
-computing that code's behavior for all possible inputs. The presence of
-\eval entails that the program's input, any string variable, may be
-reflected into its code giving rise to \emph{any} behavior allowed by the
-language semantics. In many dynamic languages, \eval can redefine most
-user-defined and built-in functions resulting in a complete loss of
-precision for any operation following \eval. A group of influential
-researchers argued to give up on soundness and, instead, to
-under-approximate dynamic features~\cite{soundy} In their words ``a
-practical analysis, therefore, may pretend that \eval does nothing, unless
-it can precisely resolve its string argument at compile time.''  Assuming
-that \eval does not have side-effects may be too optimistic. We rather
-propose to study what \eval does in practice, in real-world code, so as to
-give researchers data about how to better under-approximate uses of that
-feature.
+Most dynamic languages provide their users with a facility to
+transform unstructured text into executable code, and to evaluate that
+code. In this paper we refer to this reflective facility of a language
+as \eval bowing to its origins in LISP in 1956~\cite{lisp}. \Eval has
+been much maligned over the years. In computing lore, it is as close
+to a boogeyman as it gets. Yet, for McCarthy, \eval was simply the way
+to write down the definition of LISP, he was surprised that someone
+coded it up and offered it end users.  Since then, reflective
+facilities have been used to parameterize programs over code patterns
+that can be provided after the program is written.  The presence of
+such a feature in a language is a hallmark of dynamism as it is a form
+of delayed binding as what any particular call to \eval will do is
+only know at program run-time when that particular call site is
+evaluated.
 
-While there has been previous work investigating the usage of \eval in web
-programming and JavaScript~\cite{ecoop11}, there are no other studies that
-shed light on the usage of \eval in other programming languages and
-application domains.  It is thus reasonable to wonder if the results from
-previous work can be carried over to other contexts. For this paper, we have
-picked the data science language R~\cite{r} as our object of study. R is
-both different from JavaScript in linguistic terms and in terms of its user
-base. JavaScript was designed to run untrusted code in browser, while R was
-designed for statistical computing on a desktop. JavaScript is used as a
-general purpose language by a wide community of programmers; while R is used
-for scientific computing by data scientists and domain experts with, often,
-limited programming experience.
+\vspace{2mm}\noindent\emph{Trouble in Paradise.} Reflective facilities
+hinder most attempt to reason about the code using them, as well as to
+apply meaning-preserving program transformations. In practice this
+means that static analysis techniques will loose so much precision as
+to become pointless and that anything but the most trivial, local,
+compiler optimizations will be unsound. Furthermore the addition of
+new code --code that could have been obtained from a network
+connection-- as the program is running is a security vulnerability
+waiting to happen.
 
-This paper sets out to highlight the differences in usage patterns of \eval
-between these two languages and user communities. Our results are broadly
-applicable as they increase our understanding of the range of uses of \eval,
-present new use-cases, and, hopefully, provide insights into reasonable
-under-approximations. More narrowly, for researchers interested in static
-analysis of data science code, we provide a publicly available corpus of
-programs and a toolchain that can be customized to deliver fine-grained
-information about the usage and impact of \eval.
+To further illustrate the challenges at hand, consider the interaction
+between a static analysis tool and a dynamic language. An abstract
+interpretation-based program analyzer computes an over-approximation
+of the set of possible behaviors exhibited by the system under
+study~\cite{cc77}. The presence of a reflective operation entails that
+the operation may have \emph{any} behavior that can be expressed in
+the target language; i.e. as if we replaced it by any legal sequence
+of instructions.  As dynamic languages tend to be permissive, the
+analysis has to, for example, assume that many (and sometimes all)
+functions in scope may have been redefined, e.g. that \texttt{`+`} now
+opens an Internet connection or something equally surprising. This
+means that a single occurrence of \eval causes the static analyzer to
+loose all information about the program state and the meaning of
+identifiers. This loss of precision can sometimes be mitigated by
+analyzing the string passed to \eval~\cite{} to bound its possible
+behavior but when the string comes from outside the program not much
+can be done.  A frustrated group researchers argued giving up on
+soundness and, instead, under-approximating dynamic
+features (soundiness)~\cite{soundy}. In their words ``a practical analysis,
+therefore, may pretend that \eval does nothing, unless it can
+precisely resolve its string argument at compile time.''  Alas,
+assuming that \eval does not have side-effects, or that side-effects
+will not affect the results of the analysis, may be unduly optimistic.
 
-Our methodology for this work bows to the fact that static analysis of R is
-difficult, instead we focus on dynamic analysis. To observe \eval we have
-built a two-level monitoring infrastructure: we are able to monitor R
-programs by instrumentation -- this gives us access to many user-visible
-properties of R programs -- and we also can monitor the inner working of the
-R interpreter -- this allows us to capture details of execution that are not
-exposed at the source level.
+\vspace{2mm}\noindent\emph{Is Past Prologue?} Previous work
+investigated how \eval is used in web programming, specifically in web
+sites that use JavaScript~\cite{pldi10a}. In 2010, 17 of the largest
+web site used the feature. In 2011, 82\% of the 10,000 most accessed
+sites used \eval~\cite{ecoop11}.  Yet, the strings passed to \eval,
+and their behaviors when executed, are far from random; it was shown
+that when one can observe several calls to \eval, the ``shape'' of
+future calls can be predicted with 97\% accuracy~\cite{oopsla12b}.
+Overall, practical usage suggested that most reflective calls were
+relatively harmless. While this backs up the soundiness squad's
+approach, does it generalize to other application domains than web
+programming and to other languages?
 
-Our corpus has been constructed to reflect the different level of
-sophistication in the R community. We distinguish between the core
-implementers of the language, developers with both extensive programming
-experience and keen understanding of the language semantics, library
-implementers, developers with some programming experience and a working
-knowledge of R, and end-users, who are typically not expert programmers and
-often have only a cursory knowledge of the language.\footnote{To illustrate
-  the above consider that R uses lazy evaluation like Haskell. The authors
-  have informally surveyed end-users, including computer scientists, and did
-  not find a single one aware of this fact. Library developers, on the other
-  hand, know about laziness and program defensively around it.}  Thus, our
-corpus distinguished between \emph{core packages} (there are
-\CorpusCorePackages such packages that are distributed together with the R
-virtual machine), \emph{CRAN packages} (we selected \CorpusPackages curated
-packages that pass stringent community quality checks and are equipped with
-tests and sample data), \emph{Kaggle scripts} (we used \CorpusFinishedKaggle
+\vspace{2mm}\noindent\emph{The here and now.}  In this study, we
+investigate the usage of \eval in programs written in the R
+programming language. R is language designed by statisticians for
+applications in data science~\cite{r}. What makes looking at R after
+JavaScript interesting is that, while both languages are dynamic, they
+are quite different. While one can program in an object-oriented style
+in R, like in JavaScript, R is primarily a lazy, untyped, functional
+language.  JavaScript was designed to run untrusted code in browser,
+while R is used for statistical computing on desktops. JavaScript is a
+general purpose language used by a wide community of programmers;
+while R is used for scientific computing by data scientists and domain
+experts with, often, limited programming experience. One can
+distinguish between library implementers, developers with some
+programming experience and a working knowledge of R, and end-users,
+who are typically not expert programmers and often have only a cursory
+knowledge of the language.\footnote{Consider that R evaluates function
+argument lazily, just like Haskell. We informally surveyed end-users,
+including computer scientists, and did not find a single user aware of
+this fact. Library developers, on the other hand, know about laziness
+and program defensively around it.} Our goal is thus to highlight the
+differences in usage between JavaScript and R, and try to explain
+those differences in terms of language features, application domain
+and programmer experience.
+
+\vspace{2mm}\noindent\emph{The What and How.}  One significant benefit
+of choosing R is that every package in the CRAN repository is curated
+and comes with examples of typical usage. This gives us a large code
+base that we can analyze dynamically.  To observe \eval we built a
+two-level monitoring infrastructure: we can monitor R programs by
+instrumentation --this gives us access to many user-visible properties
+of R programs-- but we can also monitor the inner working of the R
+interpreter --this allows us to capture details of execution that are
+not exposed at the source level. Dynamic analysis is of course limited
+in that it can only observe behaviors that are triggered by the
+particular inputs passed to the program. Luckily, CRAN libraries come
+with multiple input datasets and use-cases.
+
+The choice of corpus is crucial for analyses like ours.  Our corpus
+has been constructed to reflect the levels of sophistication of the R
+community.  We distinguish between \emph{core packages} (there are
+\CorpusCorePackages such packages that are distributed together with
+the R virtual machine), \emph{CRAN packages} (\CorpusPackages curated
+packages that pass stringent quality checks and are equipped with
+tests and sample data), \emph{Kaggle scripts} (\CorpusFinishedKaggle
 end-user written programs that performs a particular data analysis
-task). There are reasons to believe that \eval usage patterns may differ
-between these datasets. The core R code is extremely stable, it has only
-been maintained for the last 20 years with very few far reaching
-changes. The libraries represent a more lively ecosystem with new libraries
-added each day.  Finally, end user code is often one-use scripts thrown
-together and sometimes never revisited.
+task). It is reasonable to expect that \eval usage differ between
+these datasets. The core R code is extremely stable, maintained for
+the last 20 years with very few far reaching changes. The libraries
+represent a more lively ecosystem with new libraries added each day.
+Finally, end user code is often one-use scripts thrown together and
+sometimes never revisited.
 
 
-To understand the behavior of \eval we perform a dynamic analysis and manual
-code inspection. The results presented here summarize our findings.
-
-Our infrastructure is publicly available, released in open source, and our
-code, and data will be submitted for artifact evaluation.
+Our infrastructure is publicly available, released in open source, and
+our code, and data will be submitted for artifact evaluation.
 
 
 \section{Background and Related Work}
