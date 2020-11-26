@@ -36,9 +36,9 @@ source("preprocess.R", local = knitr::knit_global())
 ```{r loading_fst}
 eval_calls <- read_fst("/var/lib/R/project-evalR/run/package-evals-traced-test/calls.fst") %>%
   as_tibble() %>%
-  deduplicate() %>% 
-  add_types() %>%
-  add_eval_source(eval_calls_raw) %>% add_eval_source_type()
+  deduplicate()
+
+eval_calls <-   add_eval_source(eval_calls) %>% add_eval_source_type()
 ```
 
 # Description of the data files

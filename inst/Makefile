@@ -13,7 +13,7 @@ RUN_PACKAGE_METADATA_DIR      := $(RUN_DIR)/package-metadata
 RUN_PACKAGE_COVERAGE_DIR      := $(RUN_DIR)/package-coverage
 RUN_KAGGLE_DIR                := $(RUN_DIR)/kaggle-run
 RUN_PACKAGE_EVALS_DIR         := $(RUN_DIR)/package-evals-static
-RUN_PACKAGE_TRACE_DIR         := $(RUN_DIR)/package-evals-traced.4
+RUN_PACKAGE_TRACE_DIR         := $(RUN_DIR)/package-evals-traced.5
 RUN_PACKAGE_RUNNABLE_CODE_DIR := $(RUN_DIR)/package-runnable-code-eval
 
 # raw files
@@ -142,7 +142,7 @@ calls: $(RUN_CALLS_FILE) $(RUN_PROGRAM_FILE)
 
 # FIXME: why does it run twice
 #enrich: $(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE) $(RUN_RAW_FILE)
-enrich:  $(RUN_CALLS_FILE) $(RUN_KAGGLE_CALLS_FILE) 
+enrich:  $(RUN_CALLS_FILE) $(RUN_KAGGLE_CALLS_FILE)
 	$(call RENDER_RMD,$(ANALYSIS_DIR)/enrich_dataset.Rmd)
 
 analysis: $(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE)

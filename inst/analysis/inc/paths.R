@@ -28,7 +28,7 @@ PACKAGE_TRACE_RUNS_FILE    <- path(DATA_DIR, "run-trace.fst")
 PACKAGE_TRACE_LOG_FILE     <- path(DATA_DIR, "parallel-trace.fst")
 CRAN_PROGRAMS_FILE         <- path(DATA_DIR, "cran-programs.fst")
 
-RUN_TRACE_DIR  <- path(RUN_DIR, "package-evals-traced.4")
+RUN_TRACE_DIR  <- path(RUN_DIR, "package-evals-traced.5")
 RUN_KAGGLE_DIR <- path(RUN_DIR, "kaggle-run")
 
 KAGGLE_DEPENDENCIES_FILE <- path(DATA_DIR, "kaggle-dependencies.txt")
@@ -40,8 +40,8 @@ KAGGLE_CALLS_FILE        <- path(RUN_KAGGLE_DIR, "calls.fst")
 ## OUTPUTs
 
 # TODO: rename to corpus-stage1.*
-CORPUS_S1_FILE         <- path(DATA_DIR, "corpus-1000.txt")
-CORPUS_S1_DETAILS_FILE <- path(DATA_DIR, "corpus-1000.fst")
+CORPUS_S1_FILE         <- path(DATA_DIR, "corpus-stage1.txt")
+CORPUS_S1_DETAILS_FILE <- path(DATA_DIR, "corpus-stage1.fst")
 CORPUS_FILE            <- path(DATA_DIR, "corpus.txt")
 CORPUS_DETAILS_FILE    <- path(DATA_DIR, "corpus.fst")
 CORPUS_PLOT            <- path(PLOT_DIR, "corpus.pdf")
@@ -61,9 +61,9 @@ EVALS_UNDEFINED_FILE     <- path(RUN_TRACE_DIR, "summarized-evals-undefined.fst"
 ################################################################################
 
 # number of packages to select for the stage 1 - for runs
-CORPUS_S1_NUM_PKGS <- 1000
+CORPUS_S1_NUM_PKGS <- 1500
 # final number of packages
-CORPUS_NUM_PKGS <- 500
+CORPUS_NUM_PKGS <- 1000
 # which reverse dependencies shall be considered
 WHICH_DEPENDENCIES <- c("Depends", "Imports")
 # local cran mirror
