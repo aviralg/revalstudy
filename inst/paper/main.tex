@@ -79,13 +79,13 @@ assuming that \eval does not have side-effects, or that side-effects
 will not affect the results of the analysis, may be unduly optimistic.
 
 \vspace{2mm}\noindent\emph{Is Past Prologue?} Previous work
-investigated how \eval is used in web programming, specifically in web
-sites that use JavaScript~\cite{pldi10a}. In 2010, 17 of the largest
-web site used the feature. In 2011, 82\% of the 10,000 most accessed
-sites used \eval~\cite{ecoop11}.  Yet, the strings passed to \eval,
-and their behaviors when executed, are far from random; it was shown
-that when one can observe several calls to \eval, the ``shape'' of
-future calls can be predicted with 97\% accuracy~\cite{oopsla12b}.
+investigated how \eval is used in web programming, specifically in
+websites that use JavaScript~\cite{pldi10a}. In 2010, 17 of the
+largest website used the feature. In 2011, 82\% of the 10,000 most
+accessed sites used \eval~\cite{ecoop11}.  Yet, the strings passed to
+\eval, and their behaviors when executed, are far from random; it was
+shown that when one can observe several calls to \eval, the ``shape''
+of future calls can be predicted with 97\% accuracy~\cite{oopsla12b}.
 Overall, practical usage suggested that most reflective calls were
 relatively harmless. While this backs up the soundiness squad's
 approach, does it generalize to other application domains than web
@@ -174,6 +174,46 @@ triggers evaluation and the computed value is captured for future
 reference.
 
 \subsection{Eval Semantics}
+Originally, \eval was limited to interpreted languages, but with the
+advent of just-in-time compilation this restriction was gradually
+lifted.
+
+Some languages have chosen to restrict \eval. The essential difference
+between languages relates to scoping of variables that can be accessed
+from code executed by \eval.  Java and Julia are among the more
+restrictive languages. In Java, \eval must be synthesized as a
+combination of dynamic loading and reflection.\footnote{While Java
+does not have \eval built-in, one can take the input to \eval, wrap it
+in a static method of an anonymous class, generate bytecode for that
+class, invoke the Java class loader to dynamically install the new
+code, and then use reflection to call the new method.} Julia provides
+\eval more directly but limits its scope to top level variables and
+methods. JavaScript supports both a, so-called, global \eval, and a
+local \eval, where the latter has acces to local variables of the
+function being executed (as well as variables of lexically enclosing
+scopes). Finally, languages such as R allow \eval to even manipulate
+variables defined in the caller environment of the function in which
+\eval is invoked.
+
+The difference between these design choices has an impact on the
+ability of compilers to optimize, and of analysis tools to reason
+about code. The impact of a top level \eval is that any global
+variable may be modified, but currently running functions can continue
+to execute unchanged. A local \eval, may change the values of local
+variables, their types, or even their presence. This is a much more
+invasive change, one that may invalidate currently executing functions
+as it may change the results of common optimizations such as constant
+folding or copy propagation. The designers of the Julia programming
+language were aware of this difference and purposefully chose to
+restrict \eval to the top level in order to preserve their ability to
+optimize code~\cite{oopsla18a}. They even added a versioning mechanism
+to function definitions to ensure that code added during an \eval
+would not invalidate optimizations such as inlining.  R's ability to
+affect any one of the callers of a function is even more invasive as
+the impact of \eval is non-local. Such unfettered power is difficult
+to deal with.
+
+
 
 R supports reflection and meta-programming. The function
 \c{substitute(e,envir)} yields the parse tree of the expression \c{e}
@@ -251,92 +291,48 @@ that are otherwise not aware of the use of \eval may be deeply impacted.
 
 
 \subsection{Previous Work}
-Originally, \eval was limited to interpreted languages, but with the
-advent of just-in-time compilation this restriction was gradually
-lifted.
-
-Some languages have chosen to restrict \eval. The essential difference
-between languages relates to scoping of variables that can be accessed
-from code executed by \eval.  Java and Julia are among the more
-restrictive languages. In Java, \eval must be synthesized as a
-combination of dynamic loading and reflection.\footnote{While Java
-does not have \eval built-in, one can take the input to \eval, wrap it
-in a static method of an anonymous class, generate bytecode for that
-class, invoke the Java class loader to dynamically install the new
-code, and then use reflection to call the new method.} Julia provides
-\eval more directly but limits its scope to top level variables and
-methods. JavaScript supports both a, so-called, global \eval, and a
-local \eval, where the latter has acces to local variables of the
-function being executed (as well as variables of lexically enclosing
-scopes). Finally, languages such as R allow \eval to even manipulate
-variables defined in the caller environment of the function in which
-\eval is invoked.
-
-The difference between these design choices has an impact on the
-ability of compilers to optimize, and of analysis tools to reason
-about code. The impact of a top level \eval is that any global
-variable may be modified, but currently running functions can continue
-to execute unchanged. A local \eval, may change the values of local
-variables, their types, or even their presence. This is a much more
-invasive change, one that may invalidate currently executing functions
-as it may change the results of common optimizations such as constant
-folding or copy propagation. The designers of the Julia programming
-language were aware of this difference and purposefully chose to
-restrict \eval to the top level in order to preserve their ability to
-optimize code~\cite{oopsla18a}. They even added a versioning mechanism
-to function definitions to ensure that code added during an \eval
-would not invalidate optimizations such as inlining.  R's ability to
-affect any one of the callers of a function is even more invasive as
-the impact of \eval is non-local. Such unfettered power is difficult
-to deal with.
 
 Richards et al.~\cite{ecoop11} provided the first large-scale study of
-the runtime behavior of \eval in JavaScript. They analyzed a corpus of
-the 10,000 most popular websites. They used an instrumented web
-browser to gather execution traces and performed a dynamic analysis.
-Their results show that \eval is pervasive with 82\% of the most
-popular websites using it. The reasons for using \eval include the
-desire to load code on demand (to reduce the time it takes to display
-a page), the deserialization of JSON data (about 37\% of all calls)
-and lightweight meta-programming to customize web pages.  While many
-uses \eval were legitimate, many were unnecessary and could be
-replaced with equivalent and safer code.  They reported on a
-categorization of inputs to \eval that covers the vast majority of
-input strings.  Restricting themselves to \eval in which all named
-variables refer to the global scope, many patterns could be replaced
-by more disciplined code~\cite{oopsla12b}.  The limitation of that
-work are that there was no measure of code coverage, so the numbers
-presented can be a lower bound on the possible behaviors.  Furthermore
-in 2011, JavaScript usage was quite different from today. Their work
-captured very few libraries and none of the more recent Node.js
-ecosystem.  More details about dynamic analysis of JavaScript can be
-found in~\cite{liang}.
+the runtime behavior of \eval in JavaScript. They dynamically analyzed
+a corpus of the 10,000 most popular websites with an instrumented web
+browser to gather execution traces.  They show that \eval is pervasive
+with 82\% of the most popular websites using it. The reasons for its
+use include the desire to load code on demand, deserialization of JSON
+dataq and lightweight meta-programming to customize web pages.  While
+many uses were legitimate, just as many were unnecessary and could be
+replaced with equivalent and safer code.  They categorized inputs to
+\eval so as to cover the vast majority of input strings.  Restricting
+themselves to \eval in which all named variables refer to the global
+scope, many patterns could be replaced by more disciplined
+code~\cite{oopsla12b}.  The work did not measure code coverage, so the
+numbers presented are a lower bound on the possible behaviors.
+Furthermore, JavaScript usage in 2011 is likely different from today,
+e.g. Node.js was not covered by Richards.  More details about dynamic
+analysis of JavaScript can be found in~\cite{liang}.
 
-Wang et al.~\cite{wang} analyzed usage of dynamic features in 18
-Python programs include dynamic code generation to find if they affect
-file change-proneness.  They reported that files with dynamic features
-are significantly more likely to be the subject of changes, than other
-files.  Chen et al. looked at the correlation between code changes and
-dynamic features, including \eval, in 17 Python
-programs~\cite{chen}. They did not observe many uses of \eval.  Callau
-et al.~\cite{oscar} performed an empirical study of the usage of
-dynamic features in the 1,000 largest Smalltalk projects in the
-Squeaksource repository, accounting for more than 4 million lines of
-code~\cite{oscar}. While \eval itself is not present, Smalltalk has a
-rich reflective interface that gives programmer great
-flexibility. Their work was based on a static analysis.
+Wang et al.~\cite{wang} analyzed use of dynamic features in 18 Python
+programs to find if they affect file change-proneness.  Files with
+dynamic features are significantly more likely to be the subject of
+changes, than other files.  Chen et al. looked at the correlation
+between code changes and dynamic features, including \eval, in 17
+Python programs~\cite{chen}. They did not observe many uses of \eval.
+Callau et al.~\cite{oscar} performed an empirical study of the usage
+of dynamic features in 1,000 Smalltalk projects. While \eval itself is
+not present, Smalltalk has a rich reflective interface that gives
+programmer great flexibility. Their work was based on a static
+analysis.  %% TODO:: Say someting meaningfull about OSCAR
 
 Morandat et al.~\cite{ecoop12} had a short section on the usage of
-\eval in R. They found the \eval function to be widely used in R code
-with 8500 call sites in CRAN and 2.2 million dynamic calls. The 15
-most frequent call sites account for 88\% of eval. The \c{match.arg}
-function is the highest used one with 54\% of all calls. In the other
-call sites, they saw two uses cases. The most common is the evaluation
-of the source code of a promise retrieved by \c{substitute} in a new
-environment. This is done in the \c{with} function. The other use case
-is the invocation of a function whose name or arguments are determined
-dynamically. For this purpose, R provides \c{do.call} and thus using
-\eval is overkill.
+\eval in R. They found the it widely used in R code with 8500 call
+sites in CRAN and 2.2 million dynamic calls. The 15 most frequent call
+sites account for 88\% of those. The \c{match.arg} function is the
+highest used one with 54\% of all calls. In the other call sites, they
+saw two uses cases. The most common is the evaluation of the source
+code of a promise retrieved by \c{substitute} in a new environment;
+e.g. as done in the \c{with} function. The other use case is the
+invocation of a function whose name or arguments are determined
+dynamically. For this purpose, R provides \c{do.call} and thus \eval
+is overkill.
 
 
 
