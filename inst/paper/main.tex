@@ -89,25 +89,33 @@ relatively harmless. While this backs up the soundiness squad's
 approach, does it generalize to other application domains than web
 programming and to other languages?
 
+\vspace{2mm}\noindent\emph{The here and now.}  In this study, we
+investigate the usage of \eval in programs written in the R
+programming language. R is language designed by statisticians for
+applications in data science~\cite{r}. What makes looking at R after
+JavaScript interesting is that, while both languages are dynamic, they
+are quite different. While one can program in an object-oriented style
+in R, like in JavaScript, R is primarily a lazy, untyped, functional
+language.  JavaScript was designed to run untrusted code in browser,
+while R is used for statistical computing on desktops. JavaScript is a
+general purpose language used by a wide community of programmers;
+while R is used for scientific computing by data scientists and domain
+experts with, often, limited programming experience. One can
+distinguish between library implementers, developers with some
+programming experience and a working knowledge of R, and end-users,
+who are typically not expert programmers and often have only a cursory
+knowledge of the language.\footnote{Consider that R evaluates function
+argument lazily, just like Haskell. We informally surveyed end-users,
+including computer scientists, and did not find a single user aware of
+this fact. Library developers, on the other hand, know about laziness
+and program defensively around it.} Our goal is thus to highlight the
+differences in usage between JavaScript and R, and try to explain
+those differences in terms of language features, application domain
+and programmer experience.
 
-application domains.  It is thus reasonable to wonder if the results from
-previous work can be carried over to other contexts. For this paper, we have
-picked the data science language R~\cite{r} as our object of study. R is
-both different from JavaScript in linguistic terms and in terms of its user
-base. JavaScript was designed to run untrusted code in browser, while R was
-designed for statistical computing on a desktop. JavaScript is used as a
-general purpose language by a wide community of programmers; while R is used
-for scientific computing by data scientists and domain experts with, often,
-limited programming experience.
+\vspace{2mm}\noindent\emph{Our contributions.} 
+TODO
 
-This paper sets out to highlight the differences in usage patterns of \eval
-between these two languages and user communities. Our results are broadly
-applicable as they increase our understanding of the range of uses of \eval,
-present new use-cases, and, hopefully, provide insights into reasonable
-under-approximations. More narrowly, for researchers interested in static
-analysis of data science code, we provide a publicly available corpus of
-programs and a toolchain that can be customized to deliver fine-grained
-information about the usage and impact of \eval.
 
 Our methodology for this work bows to the fact that static analysis of R is
 difficult, instead we focus on dynamic analysis. To observe \eval we have
@@ -118,16 +126,9 @@ R interpreter -- this allows us to capture details of execution that are not
 exposed at the source level.
 
 Our corpus has been constructed to reflect the different level of
-sophistication in the R community. We distinguish between the core
-implementers of the language, developers with both extensive programming
-experience and keen understanding of the language semantics, library
-implementers, developers with some programming experience and a working
-knowledge of R, and end-users, who are typically not expert programmers and
-often have only a cursory knowledge of the language.\footnote{To illustrate
-  the above consider that R uses lazy evaluation like Haskell. The authors
-  have informally surveyed end-users, including computer scientists, and did
-  not find a single one aware of this fact. Library developers, on the other
-  hand, know about laziness and program defensively around it.}  Thus, our
+sophistication in the R community.
+
+Thus, our
 corpus distinguished between \emph{core packages} (there are
 \CorpusCorePackages such packages that are distributed together with the R
 virtual machine), \emph{CRAN packages} (we selected \CorpusPackages curated
