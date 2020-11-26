@@ -17,7 +17,6 @@ R_LIBS_DIR <- path(params$base_dir, "library", "4.0")
 ## INPUTs
 
 PACKAGE_EVALS_DYNAMIC_FILE <- path(DATA_DIR, "evals-dynamic.fst")
-PACKAGE_EVALS_UNDEFINED_FILE <- path(DATA_DIR, "evals-undefined.fst")
 PACKAGE_EVALS_FILE         <- path(DATA_DIR, "evals.fst")
 PACKAGE_COVERAGE_FILE      <- path(DATA_DIR, "coverage.fst")
 PACKAGE_METADATA_FILE      <- path(DATA_DIR, "metadata.fst")
@@ -29,7 +28,7 @@ PACKAGE_TRACE_RUNS_FILE    <- path(DATA_DIR, "run-trace.fst")
 PACKAGE_TRACE_LOG_FILE     <- path(DATA_DIR, "parallel-trace.fst")
 CRAN_PROGRAMS_FILE         <- path(DATA_DIR, "cran-programs.fst")
 
-RUN_TRACE_DIR  <- path(RUN_DIR, "package-evals-traced.3")
+RUN_TRACE_DIR  <- path(RUN_DIR, "package-evals-traced.4")
 RUN_KAGGLE_DIR <- path(RUN_DIR, "kaggle-run")
 
 KAGGLE_DEPENDENCIES_FILE <- path(DATA_DIR, "kaggle-dependencies.txt")
@@ -55,6 +54,7 @@ EVALS_SUM_CORE_FILE      <- path(RUN_TRACE_DIR, "summarized-core.fst")
 EVALS_SUM_PKGS_FILE      <- path(RUN_TRACE_DIR, "summarized-packages.fst")
 EVALS_SUM_KAGGLE_FILE    <- path(RUN_TRACE_DIR, "summarized-kaggle.fst")
 EVALS_SUM_EXTERNALS_FILE <- path(RUN_TRACE_DIR, "summarized-externals.fst")
+EVALS_UNDEFINED_FILE     <- path(RUN_TRACE_DIR, "summarized-evals-undefined.fst")
 
 ################################################################################
 # GLOBALS

@@ -10,104 +10,172 @@
 #   - summarized-packages.fst
 
 source("insights.R")
+source("inc/paths.R")
 
 library(fs)
-#library(future.apply)
-#plan(multiprocess) # multicore (fork) with fallback to multisession (create processes and then copy)
+
 
 deduplicate <- function(dataset)
 {
-  return(dataset %>% count(across(c(-eval_call_id, -starts_with("caller_stack"))), name = "nb_ev_calls"))
+  return(dataset %>% count(across(c(
+    -eval_call_id,-starts_with("caller_stack")
+  )), name = "nb_ev_calls"))
 }
 
 add_types <- function(dataset)
 {
-  return(dataset %>%
-           resolve_sexp_name(expr_expression_type) %>%
-           resolve_sexp_name(expr_resolved_type) %>%
-           resolve_sexp_name(enclos_type) %>%
-           resolve_sexp_name(envir_type))
+  return(
+    dataset %>%
+      resolve_sexp_name(expr_expression_type) %>%
+      resolve_sexp_name(expr_resolved_type) %>%
+      resolve_sexp_name(enclos_type) %>%
+      resolve_sexp_name(envir_type)
+  )
 }
 
 add_parse_args <- function(dataset)
 {
-  return(dataset %>% mutate(parse_args = map(expr_parsed_expression, function(e) 
-    { if(!is.na(e) && str_starts(e, "(parse|str2lang|str2expression)\\(")) 
-        extract_args_parse(e) 
-      else list() }))  %>% unnest_wider(parse_args))
-}
-
-eval_base_functions <- c("autoload", "autoloader", "bquote", "by.default", "by.data.frame", "invokeRestartInteractively", "Ops.data.frame", "dget", 
-                         "eval", "eval.parent", "evalq", "local", "with.default", "within.data.frame", "within.list", "replicate", "subset.data.frame",
-                         "subset.matrix", "transform.data.frame", "match.arg", "char.expand", "max.col", "parseNamespaceFile", "source", "sys.source",
-                         "stopifnot", "as.data.frame.table", "match.fun", "trace", "untrace", ".doTrace", "Vectorize")
-
-
-find_package_name <- function(caller_function, caller_package, caller_expression, srcref, file)
-{
-  if(caller_function %in% eval_base_functions)
-    return("core") #"Actually base but we generalize
-  else
+  return(dataset %>% mutate(parse_args = map(expr_parsed_expression, function(e)
   {
-    tempPack <- extract_package_name(srcref, file)
-    if(tempPack == "base?") # It means the srcref was NA
-    {
-       if(caller_package == "foreach" && caller_expression == "e$fun(obj, substitute(ex), parent.frame(), e$data)")
-       {
-         # This eval is defined in function doSEQ in do.R of package foreach
-         return("foreach")
-       }
-      else
-      {
-        return("base?")
-      }
-    }
+    if (!is.na(e) &&
+        str_starts(e, "(parse|str2lang|str2expression)\\("))
+      extract_args_parse(e)
     else
-      return(tempPack)
-  }
+      list()
+  }))  %>% unnest_wider(parse_args))
 }
 
-find_package_name_second_chance <- function(file, caller_stack_expr, caller_stack_expr_srcref)
-{
-  new_srcref <- package_name_from_call_stack(caller_stack_expr, caller_stack_expr_srcref)
-  return(extract_package_name(new_srcref, file))
-}
+eval_base_functions <-
+  c(
+    "autoload",
+    "autoloader",
+    "bquote",
+    "by.default",
+    "by.data.frame",
+    "invokeRestartInteractively",
+    "Ops.data.frame",
+    "dget",
+    "eval",
+    "eval.parent",
+    "evalq",
+    "local",
+    "with.default",
+    "within.data.frame",
+    "within.list",
+    "replicate",
+    "subset.data.frame",
+    "subset.matrix",
+    "transform.data.frame",
+    "match.arg",
+    "char.expand",
+    "max.col",
+    "parseNamespaceFile",
+    "source",
+    "sys.source",
+    "stopifnot",
+    "as.data.frame.table",
+    "match.fun",
+    "trace",
+    "untrace",
+    ".doTrace",
+    "Vectorize"
+  )
+
+
+find_package_name <-
+  function(caller_function,
+           caller_package,
+           caller_expression,
+           srcref,
+           file)
+  {
+    if (caller_function %in% eval_base_functions)
+      return("core") #"Actually base but we generalize
+    else
+    {
+      tempPack <- extract_package_name(srcref, file)
+      if (tempPack == "base?")
+        # It means the srcref was NA
+      {
+        if (caller_package == "foreach" &&
+            caller_expression == "e$fun(obj, substitute(ex), parent.frame(), e$data)")
+        {
+          # This eval is defined in function doSEQ in do.R of package foreach
+          return("foreach")
+        }
+        else
+        {
+          return("base?")
+        }
+      }
+      else
+        return(tempPack)
+    }
+  }
+
+find_package_name_second_chance <-
+  function(file,
+           caller_stack_expr,
+           caller_stack_expr_srcref)
+  {
+    new_srcref <-
+      package_name_from_call_stack(caller_stack_expr, caller_stack_expr_srcref)
+    return(extract_package_name(new_srcref, file))
+  }
 
 add_eval_source <- function(dataset, dataset_with_stacks)
-{ 
-  dataset_c <- dataset %>% 
-           mutate(eval_source = pmap_chr(list(caller_function, caller_package, caller_expression, eval_call_srcref, file),
-                                                         find_package_name)) 
-  
-  # dataset_stacks <- dataset_c %>% filter(eval_source == "base?") %>% 
-  #     left_join(select(dataset_with_stacks, -ends_with("_type"))) %>% 
-  #     select(-eval_call_id, -caller_stack_expression_raw) %>% 
+{
+  dataset_c <- dataset %>%
+    mutate(eval_source = pmap_chr(
+      list(
+        caller_function,
+        caller_package,
+        caller_expression,
+        eval_call_srcref,
+        file
+      ),
+      find_package_name
+    ))
+
+  # dataset_stacks <- dataset_c %>% filter(eval_source == "base?") %>%
+  #     left_join(select(dataset_with_stacks, -ends_with("_type"))) %>%
+  #     select(-eval_call_id, -caller_stack_expression_raw) %>%
   #     distinct()
-  # dataset_stacks <- dataset_stacks %>% 
-  #   distinct(file, caller_stack_expression, caller_stack_expression_srcref) %>% 
+  # dataset_stacks <- dataset_stacks %>%
+  #   distinct(file, caller_stack_expression, caller_stack_expression_srcref) %>%
   #   mutate(eval_source = pmap_chr(list(file, caller_stack_expression, caller_stack_expression_srcref),
-  #                                 find_package_name_second_chance)) %>% 
+  #                                 find_package_name_second_chance)) %>%
   #   select(-starts_with("caller_stack_")) %>%
   #   distinct() # There might be a problem with duplicated rows with same nb_ev_calls?
-  
+
   #dataset_c <- bind_rows(dataset_c %>% filter(eval_source != "base?"), dataset_stacks)
-    
+
   return(dataset_c)
 }
 
 add_eval_source_type <- function(dataset)
 {
-  return(dataset %>% 
-           mutate(eval_source_type = case_when(eval_source %in% c("base", "core") ~ "core",
-                                               eval_source == "base?"  ~ "<undefined>", 
-                                               TRUE ~ "package" )))
+  return(dataset %>%
+           mutate(
+             eval_source_type = case_when(
+               eval_source %in% c("base", "core") ~ "core",
+               eval_source == "base?"  ~ "<undefined>",
+               TRUE ~ "package"
+             )
+           ))
 }
 
 add_fake_srcref <- function(dataset)
 {
   return(dataset %>%
-           mutate(eval_call_srcref = if_else(is.na(eval_call_srcref) & eval_source_type != "<undefined>", 
-                                             str_c(eval_source, caller_function, eval_call_expression, sep="::"), eval_call_srcref)))
+           mutate(
+             eval_call_srcref = if_else(
+               is.na(eval_call_srcref) & eval_source_type != "<undefined>",
+               str_c(eval_source, caller_function, eval_call_expression, sep =
+                       "::"),
+               eval_call_srcref
+             )
+           ))
 }
 
 
@@ -121,11 +189,12 @@ add_ast_size <- function(dataset)
   cluster_copy(cluster, "expr_size_str")
   cluster_library(cluster, "tidyverse")
   print("Functions and libraries copied. Partitionning.")
-  dataset_c <- dataset %>% select(expr_resolved) %>% distinct() %>% group_by(expr_resolved) %>% partition(cluster)
+  dataset_c <-
+    dataset %>% select(expr_resolved) %>% distinct() %>% group_by(expr_resolved) %>% partition(cluster)
   print("Partionned. Computing.")
-  dataset_c <- dataset_c %>% 
-           mutate(expr_resolved_ast_size = map_int(expr_resolved, expr_size_str)) %>%
-           collect()
+  dataset_c <- dataset_c %>%
+    mutate(expr_resolved_ast_size = map_int(expr_resolved, expr_size_str)) %>%
+    collect()
   print("Finished computing. Left joining.")
   dataset <- dataset %>% left_join(dataset_c)
   print("Finished.")
@@ -134,23 +203,156 @@ add_ast_size <- function(dataset)
 
 add_package <- function(dataset)
 {
-  mutate(
-    dataset, 
-    package = basename(dirname(dirname(file)))
-  )
+  mutate(dataset,
+         package = basename(dirname(dirname(file))))
 }
 
 
 
 keep_only_corpus <- function(dataset, corpus_files)
 {
-  return(dataset %>% 
+  return(dataset %>%
            filter(eval_source %in% c(corpus_files, "core", "base", "base?")))
 }
 
 get_externals <- function(dataset, corpus_files)
 {
-  return(dataset %>% 
+  return(dataset %>%
            filter(!eval_source %in% c(corpus_files, "core", "base", "base?")))
 }
+
+undefined_packages <- function(dataset)
+{
+  undefined_evals <- eval_calls %>% filter(eval_source_type == "<undefined>")
+  undefined_per_package <- undefined_evals %>% group_by(package) %>% summarize(n = n_distinct(eval_call_expression))
+  known_packages <- setdiff(eval_calls$package, undefined_per_package$package) %>% as_tibble_col(column_name = "package")
+  known_packages <- known_packages %>% mutate(n = 0)
+
+  undefined_per_package <- bind_rows(undefined_per_package, known_packages) %>% arrange(desc(n))
+
+  return(undefined_per_package)
+}
+
+
+known_call_sites <- function(eval_calls_corpus, corpus_file)
+{
+  call_sites_per_package <- eval_calls_corpus %>%
+    filter(eval_source_type == "package", eval_source %in% corpus_files) %>%
+    group_by(eval_source) %>%
+    summarize(n = n_distinct(eval_call_srcref))
+
+  known_packages <- setdiff(corpus_files, call_sites_per_package$eval_source) %>% as_tibble_col(column_name = "eval_source")
+
+  known_packages <- known_packages %>% mutate(n = 0)
+
+  call_sites_per_package <- bind_rows(call_sites_per_package, known_packages) %>%
+    rename(package = eval_source) %>%
+    arrange(desc(n))
+
+  return(call_sites_per_package)
+}
+
+### Command line and preprocessing pipeline
+
+usage <- function()
+{
+  print("preprocess corpus_file calls_file kaggle_calls_file package_evals_dynamic_file
+        evals_undefined_file evals_raw_file evals_summarized_core_file evals_summarized_pkgs_file
+        evals_summarized_externals_file.
+
+        The command has 10 arguments. The first 3 ones are input files, the last 7 ones are output files.
+        ")
+}
+
+main <- function(argv) {
+
+  if(length(argv) != 10)
+  {
+    usage()
+  }
+
+  corpus_file <- argv[1]
+  calls_file <- argv[2]
+  kaggle_calls_file <- argv[3]
+  package_evals_dynamic_file <- argv[4]
+  evals_undefined_file <- argv[5]
+  evals_raw_file <- argv[6]
+  evals_summarized_core_file <- argv[7]
+  evals_summarized_pkgs_file <- argv[8]
+  evals_summarized_kaggle_file <- argv[9]
+  evals_summarized_externals_file <- argv[10]
+
+
+  # Read and validate input files
+
+  corpus <- read_fst(corpus_file)
+  stopifnot(length(corpus) != 29)
+  stopifnot(!package %in% names(corpus)) # for preprocess, we mainly care about the package names
+
+  eval_calls_raw <-
+    read_fst(calls_file) %>%
+    as_tibble() %>%
+    mutate(
+      package=basename(dirname(dirname(file))),
+      corpus="cran"
+    ) %>%
+    semi_join(corpus, by="package") # There might be more packages traced than what is in the corpus
+  stopifnot(length(eval_calls_raw) != 52)
+
+  eval_calls_kaggle_raw <-
+    read_fst(kaggle_calls_file) %>%
+    as_tibble() %>%
+    mutate(
+      package=basename(dirname(file)),
+      corpus="kaggle"
+    )
+  stopifnot(length(eval_calls_kaggle_raw) != 52)
+
+  eval_calls_raw <- bind_rows(eval_calls_raw, eval_calls_kaggle_raw)
+
+  # Preprocessing pipeline
+
+  eval_calls <- eval_calls_raw %>% deduplicate()
+  eval_calls <- eval_calls %>% add_types()
+  eval_calls <- eval_calls %>% add_eval_source(eval_calls_raw) %>% add_eval_source_type()
+  eval_calls <- eval_calls %>% add_fake_srcref()
+  eval_calls <- eval_calls %>% add_parse_args()
+
+  # This seems to be already performed by the semijoin above. To remove?
+  corpus_files <- corpus %>% select(package)
+  eval_calls_corpus <- eval_calls %>% keep_only_corpus(corpus_files)
+  eval_calls_externals <- eval_calls %>% get_externals(corpus_files)
+
+  # Separate datasets
+  eval_calls_core <- eval_calls_corpus %>% filter(eval_source_type == "core")
+  eval_calls_packages <- eval_calls_corpus %>% filter(eval_source_type == "package" )
+  eval_calls_kaggle <- eval_calls_corpus %>% filter(eval_source_type == "kaggle")
+
+  # Some other interesting data
+  undefined_per_package <- undefined_packages(eval_calls)
+
+  calls_site_per_package <- known_call_sites(eval_calls_corpus, corpus_file)
+
+  # Write output files
+
+  write_fst(undefined_per_package, evals_undefined_file)
+
+  write_fst(eval_calls, evals_raw_file)
+
+  write_fst(eval_calls_core, evals_summarized_core_file)
+
+  write_fst(eval_calls_packages, evals_summarized_pkgs_file)
+
+  write_fst(eval_calls_kaggle, evals_summarized_kaggle_file)
+
+  write_fst(eval_calls_externals, evals_summarized_externals_file)
+
+  write_fst(calls_site_per_package, package_evals_dynamic_file)
+
+}
+
+
+#Only execute if it is launched as a script
+if (identical (environment (), globalenv ()))
+  quit (status=main (commandArgs (trailingOnly = TRUE)))
 

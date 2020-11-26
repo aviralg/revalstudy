@@ -444,3 +444,8 @@ inst/paper/bib/#jv.bib#
 *.vtc
 inst/paper/macro.tex~
 inst/paper/main.vtc
+
+
+
+# macOS stuff
+.DS_Store

@@ -40,10 +40,8 @@ glue
 boot
 numDeriv
 assertthat
-ape
 curl
 lme4
-mgcv
 stringi
 htmltools
 RCurl
@@ -72,7 +70,6 @@ matrixStats
 randomForest
 DT
 xts
-psych
 rJava
 yaml
 tidyselect
@@ -85,7 +82,6 @@ quadprog
 colorspace
 png
 R.utils
-caret
 corpcor
 gplots
 maptools
@@ -124,7 +120,6 @@ crul
 expm
 rjags
 msm
-future
 KernSmooth
 leaflet
 moments
@@ -136,7 +131,6 @@ lpSolve
 reticulate
 miniUI
 ade4
-VGAM
 openssl
 pROC
 FNN
@@ -282,7 +276,6 @@ DescTools
 party
 pryr
 leaps
-furrr
 qgraph
 GA
 colourpicker
@@ -300,7 +293,6 @@ ggmap
 git2r
 fdrtool
 orthopolynom
-ggridges
 entropy
 arm
 miscTools
@@ -323,7 +315,6 @@ flextable
 ncvreg
 minqa
 fastcluster
-pscl
 gamlss
 R.oo
 mvnfast
@@ -378,13 +369,11 @@ bookdown
 rARPACK
 vcd
 elasticnet
-quanteda
 mapproj
 tframe
 modeltools
 DiceKriging
 extraDistr
-RandomFields
 VennDiagram
 fGarch
 dismo
@@ -395,7 +384,6 @@ remotes
 infotheo
 colorRamps
 brew
-sampling
 functional
 PerformanceAnalytics
 tensor
@@ -426,7 +414,6 @@ rpart.plot
 seriation
 triangle
 stabledist
-gam
 ParamHelpers
 tiff
 rio
@@ -462,7 +449,6 @@ tidygraph
 writexl
 parallelMap
 RMySQL
-taxize
 RPostgreSQL
 rematch2
 proto
@@ -470,7 +456,6 @@ systemfit
 fracdiff
 cvTools
 outliers
-neuralnet
 TTR
 flexclust
 dbscan
