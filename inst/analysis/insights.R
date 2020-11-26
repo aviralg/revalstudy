@@ -1,4 +1,4 @@
-library(rlang)
+suppressPackageStartupMessages(library(rlang))
 
 
 
@@ -6,10 +6,10 @@ library(rlang)
 nb_eval_call_sites <- function(eval_calls)
 {
   # Two cases: with srcref, without srcref
-  
+
   nb_with_srcref <- eval_calls %>% select(eval_call_srcref) %>% n_distinct(na.rm = TRUE)
   nb_without_srcref <- eval_calls %>% filter(is.na(eval_call_srcref)) %>% select(caller_package, caller_function) %>% n_distinct(na.rm = TRUE)
-  
+
   return(nb_with_srcref + nb_without_srcref)
 }
 
@@ -29,16 +29,16 @@ get_expr <- function(eval_call)
   {
     eval_call
   }
-  
+
   exp <- NA
-  # Would fail for instance for 
+  # Would fail for instance for
   # "`$<-`(new(\"C++Field\", .xData = <environment>), \"read_only\", TRUE)" (classInt package)
   # exp <- tryCatch(
   #   parse(text = escaped_eval_call)[[1]],
   #   error = function(e) {return(NA)})
   try(exp <- parse(text = escaped_eval_call)[[1]], silent = TRUE)
 
-  
+
   return(exp)
 }
 
@@ -68,17 +68,17 @@ parse_only <- function(code) {}
 .myparse <- function(text) {}
 parse_all <- function(x, filename,allow_error) {}
 
-extract_args_parse <- function(eval_call) 
+extract_args_parse <- function(eval_call)
 {
   exp <- get_expr(eval_call)
   exp <- tryCatch(call_standardise(exp),
-                  error = function(c) 
+                  error = function(c)
                     if(length(exp) >= 2 && exp[[2]] == "...") { names(exp)[[2]] <- "dots" ; return(exp)}
                     else stop(paste0("extract_arg failed with: ", eval_call))
   )
   args <- map_chr(as.list(exp[-1]), function(chr) { paste(deparse(chr), collapse = "\n")})
   names(args) <- map_chr(names(args), function(chr) paste0("parse_args_", chr))
-  
+
   return(args[str_detect(names(args), "^parse_args_(file|text|n|s|keep\\.source|srcfile|dots)$")])# "file|text|n|s|prompt|keep.source|srcfile|code"
 }
 
@@ -236,14 +236,14 @@ package_name_from_call_stack <- function(caller_stack_expr, caller_stack_expr_sr
 {
   stack_expr <- str_split(caller_stack_expr, fixed("\n"))
   stack_srcref <- str_split(caller_stack_expr_srcref, fixed("\n"))
-  
+
   eval_pos <- detect_index(stack_expr[[1]], is_eval)
   if(eval_pos != 0)
   {
     srcref <- stack_srcref[[1]][[eval_pos]]
     return(if(srcref == "NA") "base?" else srcref)
   }
-  
+
   return("base?")
 }
 
@@ -268,7 +268,7 @@ extract_package_name <- function(src_ref, file)
   )
 }
 
-replaceable_functions <- c("+", "*", "/", "-", "%%", 
+replaceable_functions <- c("+", "*", "/", "-", "%%",
                            "<-", "[[<-", "[<-", "$<-", "<<-", "=",
                            "[", "[[", "$",
                            "@<-",
@@ -287,7 +287,7 @@ is_replaceable <- function(expr)
     function_name <- expr[[1]]
     function_args <- expr[-1]
     return(as.character(function_name) %in% replaceable_functions && every(function_args, is_replaceable))
-    
+
   }
   else if(is.expression(expr))
   {
@@ -337,7 +337,7 @@ is_replaceable_str <- function(expr)
   return(is_replaceable(e))
 }
 
-expr_depth <- function(expr) 
+expr_depth <- function(expr)
 {
   if(is.call(expr))
   {
@@ -426,7 +426,7 @@ extract_envir <- function(env_class, envir_type, envir_expression)
     str_ends(env_class, fixed("base")) ~ c(extract_write_envir(env_class), "base"),
     str_ends(env_class, fixed("callee")) ~ c(extract_write_envir(env_class), "callee"),
     str_ends(env_class, fixed("empty")) ~ c(extract_write_envir(env_class), "empty"),
-    str_ends(env_class, "caller-.*") ~ c(extract_write_envir(env_class), str_extract(env_class, "caller-[0-9]*")), 
+    str_ends(env_class, "caller-.*") ~ c(extract_write_envir(env_class), str_extract(env_class, "caller-[0-9]*")),
     str_ends(env_class, "loop") ~ c("loop", "loop"),
     str_ends(env_class, "package:.*") ~ c(extract_write_envir(env_class), str_extract(env_class, "package:.*"))
   )

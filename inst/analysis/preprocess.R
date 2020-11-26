@@ -1,18 +1,20 @@
+#!/usr/bin/env Rscript
+
 # Preprocess the dataset:
 # - remove duplicates
+# - correct src refs
 # - add some columns (such as `eval_call_package`)
 # - cut the dataset into smaller ones
 
-# Datasets
-# Input: raw.fst
-# Outputs:
-#   - summarized-core.fst
-#   - summarized-packages.fst
 
-source("insights.R")
-source("inc/paths.R")
-
+suppressPackageStartupMessages(library(tidyverse))
 library(fs)
+library(fst)
+
+
+
+# Rather relative source because here it depends on where we launch the script...
+source("revalstudy/inst/analysis/insights.R")
 
 
 deduplicate <- function(dataset)
@@ -256,19 +258,24 @@ known_call_sites <- function(eval_calls_corpus, corpus_file)
 
 usage <- function()
 {
-  print("preprocess corpus_file calls_file kaggle_calls_file package_evals_dynamic_file
-        evals_undefined_file evals_raw_file evals_summarized_core_file evals_summarized_pkgs_file
-        evals_summarized_externals_file.
+  cat("USAGE:
+./preprocess <corpus_file> <calls_file> <kaggle_calls_file> <package_evals_dynamic_file> <evals_undefined_file> <evals_raw_file> <evals_summarized_core_file> <evals_summarized_pkgs_file> <evals_summarized_kaggle_file> <evals_summarized_externals_file>.
 
-        The command has 10 arguments. The first 3 ones are input files, the last 7 ones are output files.
-        ")
+The command has 10 arguments. The first 3 ones are input files, the last 7 ones are output files. All files are assumed to be fst files.
+
+Example:
+./preprocess revalstudy/inst/data/corpus.fst run/package-evals-traced.4/calls.fst run/kaggle-run/calls.fst revalstudy/inst/data/evals-dynamic.fst run/package-evals-traced.4/summarized-evals-undefined.fst run/package-evals-traced.4/raws.fst run/package-evals-traced.4/summarized-core.fst run/package-evals-traced.4/summarized-packages.fst run/package-evals-traced.4/summarized-kaggle.fst run/package-evals-traced.4/summarized-externals.fst
+\n")
 }
 
 main <- function(argv) {
 
+  argv <- argv[-1] # Remove the command name
   if(length(argv) != 10)
   {
+    cat("Only ", length(argv), " arguments. Missing arguments!\n")
     usage()
+    quit(save = "no", status = 1)
   }
 
   corpus_file <- argv[1]
@@ -283,11 +290,11 @@ main <- function(argv) {
   evals_summarized_externals_file <- argv[10]
 
 
-  # Read and validate input files
+  cat("Reading and validating input files\n")
 
   corpus <- read_fst(corpus_file)
-  stopifnot(length(corpus) != 29)
-  stopifnot(!package %in% names(corpus)) # for preprocess, we mainly care about the package names
+  stopifnot(length(corpus) == 29)
+  stopifnot("package" %in% names(corpus)) # for preprocess, we mainly care about the package names
 
   eval_calls_raw <-
     read_fst(calls_file) %>%
@@ -297,7 +304,7 @@ main <- function(argv) {
       corpus="cran"
     ) %>%
     semi_join(corpus, by="package") # There might be more packages traced than what is in the corpus
-  stopifnot(length(eval_calls_raw) != 52)
+  #stopifnot(length(eval_calls_raw) == 52)
 
   eval_calls_kaggle_raw <-
     read_fst(kaggle_calls_file) %>%
@@ -306,16 +313,21 @@ main <- function(argv) {
       package=basename(dirname(file)),
       corpus="kaggle"
     )
-  stopifnot(length(eval_calls_kaggle_raw) != 52)
+  #stopifnot(length(eval_calls_kaggle_raw) == 52)
 
   eval_calls_raw <- bind_rows(eval_calls_raw, eval_calls_kaggle_raw)
 
   # Preprocessing pipeline
 
+  cat("Deduplicating\n")
   eval_calls <- eval_calls_raw %>% deduplicate()
+  cat("Adding types\n")
   eval_calls <- eval_calls %>% add_types()
+  cat("Correcting srcrefs\n")
   eval_calls <- eval_calls %>% add_eval_source(eval_calls_raw) %>% add_eval_source_type()
   eval_calls <- eval_calls %>% add_fake_srcref()
+
+  cat("Adding parse args\n")
   eval_calls <- eval_calls %>% add_parse_args()
 
   # This seems to be already performed by the semijoin above. To remove?
@@ -324,17 +336,20 @@ main <- function(argv) {
   eval_calls_externals <- eval_calls %>% get_externals(corpus_files)
 
   # Separate datasets
+  cat("Separating datasets\n")
   eval_calls_core <- eval_calls_corpus %>% filter(eval_source_type == "core")
   eval_calls_packages <- eval_calls_corpus %>% filter(eval_source_type == "package" )
   eval_calls_kaggle <- eval_calls_corpus %>% filter(eval_source_type == "kaggle")
 
   # Some other interesting data
+  cat("Undefined calls per package\n")
   undefined_per_package <- undefined_packages(eval_calls)
 
+  cat("Number of call sites per package\n")
   calls_site_per_package <- known_call_sites(eval_calls_corpus, corpus_file)
 
   # Write output files
-
+  cat("Writing output files\n")
   write_fst(undefined_per_package, evals_undefined_file)
 
   write_fst(eval_calls, evals_raw_file)
