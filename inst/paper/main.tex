@@ -57,28 +57,39 @@ between a static analysis tool and a dynamic language. An abstract
 interpretation-based program analyzer computes an over-approximation
 of the set of possible behaviors exhibited by the system under
 study~\cite{cc77}. The presence of a reflective operation entails that
-the operation may have any behavior that can be expressed in the
-language; as if we replaced it by any legal sequence of instructions.
-As dynamic languages tend to be permissive, the analysis has to assume
-that many (and sometimes all) functions in scope may have been
-redefined, e.g. that \texttt{`+`} now opens an Internet connection or
-something equally surprising. This means that a single occurrence of
-\eval will cause the static analyzer to loose all information about
-the program state and the meaning of identifiers. This loss of
-precision can sometimes be mitigated by analyzing the string passed to
-\eval~\cite{} to bound its possible behavior but when the string comes
-from outside the program not much can be done.  A group researchers
-argued giving up on soundness and, instead, under-approximate dynamic
-features~\cite{soundy} In their words ``a practical analysis,
+the operation may have \emph{any} behavior that can be expressed in
+the target language; i.e. as if we replaced it by any legal sequence
+of instructions.  As dynamic languages tend to be permissive, the
+analysis has to, for example, assume that many (and sometimes all)
+functions in scope may have been redefined, e.g. that \texttt{`+`} now
+opens an Internet connection or something equally surprising. This
+means that a single occurrence of \eval causes the static analyzer to
+loose all information about the program state and the meaning of
+identifiers. This loss of precision can sometimes be mitigated by
+analyzing the string passed to \eval~\cite{} to bound its possible
+behavior but when the string comes from outside the program not much
+can be done.  A frustrated group researchers argued giving up on
+soundness and, instead, under-approximating dynamic
+features (soundiness)~\cite{soundy}. In their words ``a practical analysis,
 therefore, may pretend that \eval does nothing, unless it can
-precisely resolve its string argument at compile time.''  Alas
-assuming that \eval does not have side-effects may be unduly
-optimistic.
+precisely resolve its string argument at compile time.''  Alas,
+assuming that \eval does not have side-effects, or that side-effects
+will not affect the results of the analysis, may be unduly optimistic.
+
+\vspace{2mm}\noindent\emph{Is Past Prologue?} Previous work
+investigated how \eval is used in web programming, specifically in web
+sites that use JavaScript~\cite{pldi10a}. In 2010, 17 of the largest
+web site used the feature. In 2011, 82\% of the 10,000 most accessed
+sites used \eval~\cite{ecoop11}.  Yet, the strings passed to \eval,
+and their behaviors when executed, are far from random; it was shown
+that when one can observe several calls to \eval, the ``shape'' of
+future calls can be predicted with 97\% accuracy~\cite{oopsla12b}.
+Overall, practical usage suggested that most reflective calls were
+relatively harmless. While this backs up the soundiness squad's
+approach, does it generalize to other application domains than web
+programming and to other languages?
 
 
-While there has been previous work investigating the usage of \eval in web
-programming and JavaScript~\cite{ecoop11}, there are no other studies that
-shed light on the usage of \eval in other programming languages and
 application domains.  It is thus reasonable to wonder if the results from
 previous work can be carried over to other contexts. For this paper, we have
 picked the data science language R~\cite{r} as our object of study. R is
