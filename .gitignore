@@ -441,3 +441,7 @@ TSWLatexianTemp*
 inst/paper/main.pdf
 inst/paper/bib/#jv.bib#
 /inst/analysis/html/
+
+
+# macOS stuff
+.Ds_Store
