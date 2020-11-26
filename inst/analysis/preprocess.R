@@ -12,7 +12,8 @@
 source("insights.R")
 
 library(fs)
-#library(multidplyr)
+#library(future.apply)
+#plan(multiprocess) # multicore (fork) with fallback to multisession (create processes and then copy)
 
 deduplicate <- function(dataset)
 {
@@ -39,7 +40,7 @@ add_parse_args <- function(dataset)
 eval_base_functions <- c("autoload", "autoloader", "bquote", "by.default", "by.data.frame", "invokeRestartInteractively", "Ops.data.frame", "dget", 
                          "eval", "eval.parent", "evalq", "local", "with.default", "within.data.frame", "within.list", "replicate", "subset.data.frame",
                          "subset.matrix", "transform.data.frame", "match.arg", "char.expand", "max.col", "parseNamespaceFile", "source", "sys.source",
-                         "stopifnot", "as.data.frane.table", "match.fun", "trace", "untrace", ".doTrace", "Vectorize")
+                         "stopifnot", "as.data.frame.table", "match.fun", "trace", "untrace", ".doTrace", "Vectorize")
 
 
 find_package_name <- function(caller_function, caller_package, caller_expression, srcref, file)

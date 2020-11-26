@@ -19,7 +19,7 @@ knitr::knit_hooks$set(time_it = local({
       # calculate the time difference after a chunk
       res <- difftime(Sys.time(), now)
       # return a character string to show the time
-      paste("Time for this code chunk to run:", res, unit(res))
+      paste("Time for this code chunk to run:", res, units(res))
     }
   }
 }))
@@ -31,9 +31,7 @@ knitr::opts_chunk$set(echo = TRUE,
                       time_it = TRUE)
 
 
-
 now <- Sys.time() 
-
 library(tidyverse)
 library(stringr)
 library(viridis)
@@ -42,6 +40,7 @@ library(DT)
 library(fst)
 library(fs)
 library(parallel)
+
 
 source("inc/paths.R")
 source("inc/latextags.R")
@@ -107,9 +106,6 @@ eval_calls <- eval_calls %>% add_fake_srcref()
 eval_calls <- eval_calls %>% add_parse_args()
 ```
 
-```{r ast_size}
-#eval_calls <- eval_calls %>% add_ast_size()
-```
 
 ```{r add_package}
 # The package is already added when the files are loaded
@@ -140,9 +136,11 @@ The core dataset has `r nrow(eval_calls_core)` unique calls, the packages datase
 ```
 
 ```{r}
-eval_calls_ast_size <- eval_calls_corpus %>% select(eval_call_srcref, caller_package, caller_function, eval_source_type, expr_resolved_nodes, nb_ev_calls)
+# Used when using dataset 2 which has incorrect AST sizes.
 
-write_fst(eval_calls_ast_size, path(RUN_TRACE_DIR, "summarized-ast-size.fst"))
+#eval_calls_ast_size <- eval_calls_corpus %>% select(eval_call_srcref, caller_package, caller_function, eval_source_type, expr_resolved_nodes, nb_ev_calls)
+
+#write_fst(eval_calls_ast_size, path(RUN_TRACE_DIR, "summarized-ast-size.fst"))
 ```
 
 
@@ -206,7 +204,13 @@ write_fst(call_sites_per_package, PACKAGE_EVALS_DYNAMIC_FILE)
 
 ```{r}
 max_call_sites <- max(call_sites_per_package$n)
-r("max call sites enrich")
+r("max call sites enrich", max_call_sites)
+
+one_call_sites <- nrow(call_sites_per_package %>% filter(n == 1))
+r("one call sites enrich", one_call_sites)
+
+no_call_sites <- nrow(call_sites_per_package %>% filter(n == 0))
+r("no call sites enrich", no_call_sites)
 ```
 
 

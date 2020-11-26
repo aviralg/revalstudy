@@ -7,8 +7,9 @@ is_outlier <- function(x, m=1.5) {
 }
 
 show_url <- Vectorize(function(path, name=basename(path), hostname=params$hostname, port=params$port) {
+  browser()
   str_glue('<a href="http://{hostname}:{port}/{URLencode(path)}">{name}</a>')
-}, vectorize.args = "path")
+}, vectorize.args=c("path", "name"))
 
 read_task_result <- function(path) {
   read_fst(path) %>% as_tibble() %>% mutate(package=basename(package))
