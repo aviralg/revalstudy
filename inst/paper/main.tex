@@ -61,7 +61,7 @@ of the set of possible behaviors exhibited by the system under
 study~\cite{cc77}. The presence of a reflective operation entails that
 the operation may have \emph{any} behavior that can be expressed in
 the target language; i.e. as if we replaced it by any legal sequence
-of instructions.  As dynamic languages tend to be permissive, the
+of instructions. As dynamic languages tend to be permissive, the
 analysis has to, for example, assume that many (and sometimes all)
 functions in scope may have been redefined, e.g. that \texttt{`+`} now
 opens an Internet connection or something equally surprising. This
@@ -70,11 +70,11 @@ loose all information about the program state and the meaning of
 identifiers. This loss of precision can sometimes be mitigated by
 analyzing the string passed to \eval~\cite{} to bound its possible
 behavior but when the string comes from outside the program not much
-can be done.  A frustrated group researchers argued giving up on
-soundness and, instead, under-approximating dynamic
-features (soundiness)~\cite{soundy}. In their words ``a practical analysis,
+can be done. A frustrated group researchers argued giving up on
+soundness and, instead, under-approximating dynamic features
+(soundiness)~\cite{soundy}. In their words ``a practical analysis,
 therefore, may pretend that \eval does nothing, unless it can
-precisely resolve its string argument at compile time.''  Alas,
+precisely resolve its string argument at compile time.'' Alas,
 assuming that \eval does not have side-effects, or that side-effects
 will not affect the results of the analysis, may be unduly optimistic.
 
@@ -148,25 +148,29 @@ our code, and data will be submitted for artifact evaluation.
 
 \section{Background and Previous work}
 
+This section provides a short introduction to R as it has a few
+surprising features that impact the use of reflective features of the
+language. We then look at the semantics of \eval in R and discuss some
+design choices. Lastly, we put this paper in context of previous work.
 
 \subsection{R in a nutshell}
 
 R is a lazy functional programming language~\cite{ecoop12} with
-dynamic features that allow to write object-oriented code.  Most data
+dynamic features that allow to write object-oriented code. Most data
 types are vectorized. Values are constructed by the \c{c(...)}
-function, e.g. \c{c("hi","ho")} creates a vector of two strings.  To
+function, e.g. \c{c("a","bc")} creates a vector of two strings. To
 enable equational reasoning, R copies values accessible through
-multiple variables when they are written to.  Values can be tagged by
+multiple variables when they are written to. Values can be tagged by
 user-defined attributes. For instance, one can attach the attribute
 \c{dim} to the value \c{x<-c(1,2,3,4)} with \c{attr(x,"dim")<-c(2,2)}.
 This causes arithmetic functions to treat \c x as a $2 \times 2$
 matrix. Another attribute is \c{class} which can be bound to a list of
 names, e.g., \c{class(x)<-"human"}. This sets the class of \c{x} to
-\c{human}; classes are used for object-oriented dispatch.  Every R
+\c{human}; classes are used for object-oriented dispatch. Every R
 linguistic construct is desugared to a function call, even control
 flow statements, assignments, and bracketing. Furthermore, all
 functions can be redefined in user code. This makes R both flexible
-and challenging to compile~\cite{dls19}.  Arguments to user-defined
+and challenging to compile~\cite{dls19}. Arguments to user-defined
 functions are bundled into thunks called \emph{promises}. Logically, a
 promise combines an expression's code, its environment, and its value.
 To access the value of a promise, one must force it. Forcing a promise
@@ -175,56 +179,68 @@ reference.
 
 \subsection{Eval Semantics}
 
-There are two outstanding differences that set
-the design of \eval in R apart from JavaScript. On the usability side, \eval
-does not take a string, but an AST and an environment. This is slightly more
-involved than just taking a string and may discourage some casual users.
-The second substantial difference is the control that R gives over the
-choice of environment in which the AST is evaluated in. Beside traditional
-choices such as the top level or current lexical environment, R allows
-programmers to choose a fresh, empty, environment or any environment on the
-call stack. This is a significant increase in expressive power as functions
-that are otherwise not aware of the use of \eval may be deeply impacted.
+The expressive power of \eval depends on a number of choices made by
+the programming language designers. The two axes that are the most
+relevant here are:
+\begin{itemize}
+\item {\bf Scoping:} What environment does the string passed to \eval
+  execute in? JavaScript and R evaluate the expression in the current
+  scope. This means that local variables and parameters are exposed to
+  \eval, breaking the abstraction boundary of the enclosing function.
+  Julia takes a more restrictive approach by running \eval at the
+  ``top level'', i.e. in the global environment, outside of any
+  function's environment. JavaScript has a global \eval that behaves
+  like Julia, it also has a ``strict mode'' in which \eval is allowed
+  to access local variables, but fobidden from injecting new variables
+  in the local environment. In Java, one can implement \eval but the
+  expression will execute in new environment.\footnote{While \eval
+  used to be available only in interpreted languages, the advent of
+  just-in-time compilation gradually lifted this restriction. To
+  implement \eval in Java requires wrapping its input in a static
+  method of an anonymous class, generating bytecode for that class,
+  invoking the class loader to install the code, and then using
+  reflection to call the new method. }
+\item {\bf Reflective API:} What other reflective operations are
+  exposed to user code? JavaScript does provides few reflective
+  functions (other than being able to enumerate the properties of an
+  object and to access properties with strings), the string passed to
+  \eval is thus limited to what can be expressed in JavaScript. R, on
+  the other hand, has a rich reflective interface. For example, R
+  allows user code to walk the call stack and arbitrarily add and
+  delete local variables in any environment.
+\end{itemize}
+
+\noindent
+These design choices impact our ability to reason about code. More
+expressive power for \eval translates directly into additional
+restriction for program analysis and transformation tools. The reason
+Julia has restricts \eval to execute in top level environment is that
+they wanted to preserve their compiler's ability to optimize
+functions~\cite{oopsla18a}. What they wanted to prevent was the case
+where \eval changed the type of local variables as this would require
+recompilation of the method (or prevent optimization). Julia even adds
+a versoning mechanism, called world age, to ensure that code added
+during an \eval does not invalidate optimizations such as
+inlining~\cite{oopsla20a}.
+
+R's ability to affect any one of the callers of a function is even
+more invasive as the impact of \eval is non-local. Such unfettered
+power is difficult to deal with.
 
 
-Originally, \eval was limited to interpreted languages, but with the
-advent of just-in-time compilation this restriction was gradually
-lifted.
 
-Some languages have chosen to restrict \eval. The essential difference
-between languages relates to scoping of variables that can be accessed
-from code executed by \eval.  Java and Julia are among the more
-restrictive languages. In Java, \eval must be synthesized as a
-combination of dynamic loading and reflection.\footnote{While Java
-does not have \eval built-in, one can take the input to \eval, wrap it
-in a static method of an anonymous class, generate bytecode for that
-class, invoke the Java class loader to dynamically install the new
-code, and then use reflection to call the new method.} Julia provides
-\eval more directly but limits its scope to top level variables and
-methods. JavaScript supports both a, so-called, global \eval, and a
-local \eval, where the latter has acces to local variables of the
-function being executed (as well as variables of lexically enclosing
-scopes). Finally, languages such as R allow \eval to even manipulate
-variables defined in the caller environment of the function in which
-\eval is invoked.
+There are two outstanding differences that set the design of \eval in
+R apart from JavaScript. On the usability side, \eval does not take a
+string, but an AST and an environment. This is slightly more involved
+than just taking a string and may discourage some casual users. The
+second substantial difference is the control that R gives over the
+choice of environment in which the AST is evaluated in. Beside
+traditional choices such as the top level or current lexical
+environment, R allows programmers to choose a fresh, empty,
+environment or any environment on the call stack. This is a
+significant increase in expressive power as functions that are
+otherwise not aware of the use of \eval may be deeply impacted.
 
-The difference between these design choices has an impact on the
-ability of compilers to optimize, and of analysis tools to reason
-about code. The impact of a top level \eval is that any global
-variable may be modified, but currently running functions can continue
-to execute unchanged. A local \eval, may change the values of local
-variables, their types, or even their presence. This is a much more
-invasive change, one that may invalidate currently executing functions
-as it may change the results of common optimizations such as constant
-folding or copy propagation. The designers of the Julia programming
-language were aware of this difference and purposefully chose to
-restrict \eval to the top level in order to preserve their ability to
-optimize code~\cite{oopsla18a}. They even added a versioning mechanism
-to function definitions to ensure that code added during an \eval
-would not invalidate optimizations such as inlining.  R's ability to
-affect any one of the callers of a function is even more invasive as
-the impact of \eval is non-local. Such unfettered power is difficult
-to deal with.
 
 
 
@@ -234,7 +250,7 @@ after performing substitutions defined by the bindings in the
 \c{envir} parameter.
 
 \begin{lstlisting}
-> substitute(expression(a+b), list(a=1)))  
+> substitute(expression(a+b), list(a=1)))
 expression(1+b)
 \end{lstlisting}
 
@@ -250,7 +266,7 @@ function. There are three alternative forms  of \eval in the \c{base} package:
       envir = parent.frame(),
       enclos = if(is.list(envir) || is.pairlist(envir))
                parent.frame() else baseenv())
-\end{lstlisting}           
+\end{lstlisting}
 
 \c{expr} is the value to be evaluated, \c{envir}
 is the environment in which it is to be evaluated, and \c{enclos} is
@@ -869,7 +885,7 @@ for (i in names(opts)) eval(parse(text=paste0("options(",i,"=",opts[i],")")))
   \subsubsection{Miscellaneous} \eval is also used in R packages to get around
   various limitations. For example, in \datatable package, \eval is used to
   modify a binding in the \base package of R. Bindings in the \base package are
-  locked for modification and require explicit unlocking using 
+  locked for modification and require explicit unlocking using
   function \unlockBinding. However, directly using this function triggers a
   restricted-function-use warning during package build, preventing the package
   to be accepted by CRAN. The \datatable gets around this limitation by
@@ -997,7 +1013,7 @@ One of the main differences of the R \eval with the javascript one is how it
 interacts with \emph{scope}, or environments in R. In Javascript, \eval can
 access the local scope and the global scope. In R, \eval has an argument
 \c{envir} to indicate in which environment its first argument must be evaluated.
-By default, it is equal to \c{parent.frame()}, 
+By default, it is equal to \c{parent.frame()},
 which is the parent environment of \eval call. This default argument
 happens in \DefaultEnvirExprPercent of the eval calls.
 

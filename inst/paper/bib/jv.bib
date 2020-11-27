@@ -1,3 +1,19 @@
+@string{OOPSLA = "Conference on Object-Oriented Programming Systems, Languages and Applications (OOPSLA)"}
+@string{ECOOP  = {European Conference on Object-Oriented Programming (ECOOP)}}
+@string{POPL  = {Symposium on Principles of Programming Languages (POPL)}}
+@string{PACMPL = {Proc. ACM Program. Lang.}}
+
+@article{oopsla20a,
+  author = {Julia Belyakova and Benjamin Chung and Jack Gelinas and
+           Jameson Nash and Ross Tate and Jan Vitek },
+  year = 2020,
+  title = {{World Age in Julia: Optimizing Method Dispatch in the
+                  Presence of Eval}},
+  journal = PACMPL,
+  number = {{OOPSLA}},
+  volume = 4,
+  doi = {10.1145/3428275}}
+
 @inproceedings{dls19,
   author    = {Olivier Fl{\"{u}}ckiger and Guido Chari and Jan Jecmen and
                   Ming{-}Ho Yee and Jakob Hain and Jan Vitek},
@@ -8,15 +24,11 @@
   doi       = {10.1145/3359619.3359744}}
 
 
-@string{OOPSLA = "Conference on Object-Oriented Programming Systems, Languages and Applications (OOPSLA)"}
-@string{ECOOP  = {European Conference on Object-Oriented Programming (ECOOP)}}
-@string{POPL  = {Symposium on Principles of Programming Languages (POPL)}}
-@string{PACMPL = {Proc. ACM Program. Lang.}}
-
 @article {oopsla19a,
   author = {Aviral Goel and Jan Vitek},
   year = 2019,
-  title = {On the {D}esign, {I}mplementation, and {U}se of {L}aziness in {R}},
+  title = {On the {D}esign, {I}mplementation, and {U}se of {L}aziness
+                  in {R}},
   journal = PACMPL,
   number = {{OOPSLA}},
   volume = 3,
@@ -30,18 +42,18 @@
  title = "Julia: {D}ynamism and {P}erformance {R}econciled by {D}esign",
  journal = PACMPL,
  number = {{OOPSLA}},
- volume  = 2, 
+ volume  = 2,
  doi = {10.1145/3276490}}
 
 @article{oopsla18b,
-  author = {Francesco {Zappa Nardelli} and 
+  author = {Francesco {Zappa Nardelli} and
             Julia Belyakova and  Artem Pelenitsyn
            and  Benjamin Chung and Jeff Bezanson and Jan Vitek},
  year =  2018,
  title = "Julia Subtyping: A Rational Reconstruction",
  journal = PACMPL,
  number = {{OOPSLA}},
- volume  = 2, 
+ volume  = 2,
  doi = {10.1145/3276483}}
 
 
@@ -50,7 +62,7 @@
                Gabriel Scherer and Ming{-}Ho Yee and
                Aviral Goel and Amal Ahmed and
                Jan Vitek},
-  title     = {Correctness of speculative optimizations with 
+  title     = {Correctness of speculative optimizations with
                 dynamic deoptimization},
  journal = PACMPL,
  number    = {{POPL}},
@@ -65,12 +77,12 @@
   booktitle = ECOOP,
   year      = {2018},
   doi       = {10.4230/LIPIcs.ECOOP.2018.12}}
-                  
+
 @inproceedings{etaps18,
   author    = {Juliana Franco and Sylvan Clebsch and
                Sophia Drossopoulou and Jan Vitek and
                Tobias Wrigstad},
-  title     = {Correctness of a Concurrent Object Collector for 
+  title     = {Correctness of a Concurrent Object Collector for
                 Actor Languages},
   booktitle = {European Symposium on Programming (ESOP)},
   year      = {2018},
@@ -78,7 +90,7 @@
 
 @inproceedings{issta18,
   author    = {Filip Krikava and  Jan Vitek},
-  title     = {Tests from traces: automated unit test extraction 
+  title     = {Tests from traces: automated unit test extraction
                for {R}},
   booktitle = {International Symposium on
                Software Testing and Analysis (ISSTA)},
@@ -100,7 +112,7 @@
 
 @article{oopsla17a,
   author = {Crista Lopes and  Petr Maj and Pedro Martins
-           and  Di Yang and  Jakub Zitny and Hitesh Sajnani 
+           and  Di Yang and  Jakub Zitny and Hitesh Sajnani
            and Jan Vitek},
   title = {{D\'ej\`a  Vu}: A Map of Code Duplicates on {GitHub}},
  journal = {Proc. ACM Program. Lang.},
@@ -114,7 +126,7 @@
                Lindsey Kuper and Ehsan Totoni and
                Jan Vitek and Tatiana Shpeisman},
   title     = {Parallelizing Julia with a Non-Invasive {DSL}},
-  booktitle = ECOOP,                  
+  booktitle = ECOOP,
   year      = 2017,
   doi       = {10.4230/LIPIcs.ECOOP.2017.4},
 }
@@ -124,7 +136,7 @@
             Delphine Demange and  Gustavo Petri and
             David Pichardie and Suresh Jagannathan
             and Jan Vitek",
-  title = "Verifying a Concurrent Garbage Collector 
+  title = "Verifying a Concurrent Garbage Collector
               Using a Rely-Guarantee Methodology",
    booktitle = {Interactive Theorem Proving  (ITP)},
   year      = {2017},
@@ -176,7 +188,7 @@
 
 
 @inproceedings{ecoop15,
- author     = "Gregor Richards and Francesco {Zappa Nardelli} 
+ author     = "Gregor Richards and Francesco {Zappa Nardelli}
                and Jan Vitek",
  title      = "Concrete Types for {TypeScript}",
  booktitle  = ECOOP,
@@ -236,7 +248,7 @@
 
 @inproceedings{vee14,
    author    ="Toms Kalibera and Petr Maj and Floreal Morandat and Jan Vitek",
-   title     ="A Fast Abstract Syntax Tree Interpreter for {R}", 
+   title     ="A Fast Abstract Syntax Tree Interpreter for {R}",
    booktitle ="Conference on Virtual Execution Environments (VEE)",
    doi       ="10.1145/2576195.2576205",
    year      = 2014}
@@ -244,7 +256,7 @@
 @inproceedings{icse13,
   author =      {Daniel Marino and Christian Hammer and  Julian Dolby
                  and  Mandana Vaziri and  Frank Tip and  Jan Vitek},
-  title  =      {Detecting deadlock in programs with data-centric 
+  title  =      {Detecting deadlock in programs with data-centric
                  synchronization},
   booktitle =   {International Conference on Software Engineering (ICSE)},
   year      =   2013,
@@ -271,7 +283,7 @@
   title =   {Terra: a multi-stage language for high-performance computing},
   authors = {Zachary DeVito and James Hegarty and
              Jan Vitek and Alex Aiken and Pat Hanrahan},
-  booktitle = "Proceedings of the ACM Programming Language Design  
+  booktitle = "Proceedings of the ACM Programming Language Design
              and Implementation Conference (PLDI)",
   mon = jun,
   year = 2013}
@@ -296,11 +308,11 @@ author = {Morandat, Flor{\'e}al and Hill, Brandon and Osvald, Leo and Vitek, Jan
  title = {Evaluating the {D}esign of the {R} {L}anguage: {O}bjects and {F}unctions for {D}ata {A}nalysis},
  booktitle = {European Conference on Object-Oriented Programming (ECOOP)},
  year = {2012},
- doi = {10.1007/978-3-642-31057-7\_6}} 
+ doi = {10.1007/978-3-642-31057-7\_6}}
 
 @inproceedings{user12,
   title = "TraceR: A framework for understanding R performance",
-  author = "Ryan Macnak and Flor\'eal Morandat and Brandon Hill and Leo Osvald 
+  author = "Ryan Macnak and Flor\'eal Morandat and Brandon Hill and Leo Osvald
             and Jan Vitek",
   booktitle = "International R Users Meeting (UseR!)",
   year = 2012}
@@ -314,7 +326,7 @@ author = {Morandat, Flor{\'e}al and Hill, Brandon and Osvald, Leo and Vitek, Jan
   title = "Memory Safety for Safety Critical Java",
   pages = "235--254"}
 
-@incollection{breitman12, 
+@incollection{breitman12,
   booktitle = "Patterns, Programming and Everything",
   editor = "Karin Breitman and Nigel Horspool",
   title = "Atomicity in Real-time Computing",
@@ -345,7 +357,7 @@ author = {Morandat, Flor{\'e}al and Hill, Brandon and Osvald, Leo and Vitek, Jan
   title     = {Static Dominance Inference},
   year      = {2011},
   doi       = {10.1007/978-3-642-21952-8_16},
-  booktitle = {International Conference on Objects, 
+  booktitle = {International Conference on Objects,
                 Models, Components, Patterns  (TOOLS'49)},
 }
 
@@ -422,7 +434,7 @@ author = {Morandat, Flor{\'e}al and Hill, Brandon and Osvald, Leo and Vitek, Jan
   year = {2010},
   pages = {326--333},
   doi = {10.1145/1774088.1774158}}
-					
+
 
 @article {CPE10,
 author = {Kalibera, Tomas and Hagelberg, Jeff and Maj, Petr and Pizlo, Filip and Titzer, Ben and Vitek, Jan},
@@ -443,17 +455,17 @@ year = 2011
 
 @InProceedings{jtres10a,
     title = "Developing {Safety Critical Java} applications with {oSCJ/L0}",
-    author = "Ales Plsek and Lei Zhao and {Veysel H.} Sahin and  Daniel 
+    author = "Ales Plsek and Lei Zhao and {Veysel H.} Sahin and  Daniel
               Tang and  Tomas Kalibera and Jan Vitek",
     year = 2010,
-    booktitle = {Proceedings of the International Workshop on Java 
+    booktitle = {Proceedings of the International Workshop on Java
                 Technologies for Real-time and Embedded Systems (JTRES)}}
 
 @InProceedings{jtres10b,
     title = "Static Checking of Safety Critical {Java} Annotations",
     author = "Daniel Tang and Ales Plsek and Jan Vitek",
     year = 2010,
-    booktitle = {Proceedings of the International Workshop on Java 
+    booktitle = {Proceedings of the International Workshop on Java
                 Technologies for Real-time and Embedded Systems (JTRES)}}
 
 @inproceedings{popl10,
@@ -476,7 +488,7 @@ year = 2011
   title     = {Challenge benchmarks for verification of real-time programs},
   year      = 2010,
   pages     = {57-62},
-  booktitle     = {Programming Languages meets Program Verification 
+  booktitle     = {Programming Languages meets Program Verification
                Workshop (PLPV)}}
 
 @InProceedings{eurosys10,
@@ -488,10 +500,10 @@ year = 2011
   booktitle = "EuroSys Conference"}
 
 @InProceedings{pldi10a,
-  author = "Gregor Richards and Sylvain Lesbrene and Brian Burg and 
+  author = "Gregor Richards and Sylvain Lesbrene and Brian Burg and
             Jan Vitek",
   title = {An {A}nalysis of the {D}ynamic {B}ehavior of {JavaScript} {P}rograms},
- booktitle = "Proceedings of the ACM Programming Language Design  
+ booktitle = "Proceedings of the ACM Programming Language Design
              and Implementation Conference (PLDI)",
   month = jun,
   year  = 2010}
@@ -500,7 +512,7 @@ year = 2011
   author = "Filip Pizlo and Ethan Blanton and Anthony Hosking
             and Petr Maj and Jan Vitek and Lukas Ziarek",
   title = "SCHISM: Fragmentation-Tolerant Real-Time Garbage Collection",
- booktitle = "Proceedings of the ACM Programming Language Design  
+ booktitle = "Proceedings of the ACM Programming Language Design
              and Implementation Conference (PLDI)",
   month = jun,
   year  = 2010}
@@ -509,7 +521,7 @@ year = 2011
   author = "Tomas Kalibera and Filip Pizlo and {Antony L.} Hosking and
             Jan Vitek",
   title  = "Scheduling Hard Real-time Garbage Collection",
-  booktitle = "Proceedings of the IEEE Real-Time 
+  booktitle = "Proceedings of the IEEE Real-Time
                Systems Symposium (RTSS)",
   month = dec,
   year = 2009}
@@ -525,9 +537,9 @@ year = 2011
 
 
 @Article{tces09,
-   title = "Reflexes: Abstractions for Integrating Highly 
-            Responsive Tasks into {Java} Applications", 
-   author = "Jesper Honig Spring and Filip Pizlo and Jean Privat and 
+   title = "Reflexes: Abstractions for Integrating Highly
+            Responsive Tasks into {Java} Applications",
+   author = "Jesper Honig Spring and Filip Pizlo and Jean Privat and
              Rachid Guerraoui and Jan Vitek",
     journal  = {ACM Transactions in Embedded Computing Systems (TECS)},
    year = 2009}
@@ -537,7 +549,7 @@ year = 2011
     title = "CDx: A Family of Real-time {Java} Benchmarks",
     author = "Tomas Kalibera and Jeff Hagelberg and Filip Pizlo
             and  Ales Plsek and Ben Titzer and, Jan Vitek",
-   booktitle = "International Workshop on Java Technologies for Real-time and 
+   booktitle = "International Workshop on Java Technologies for Real-time and
                 Embedded Systems (JTRES)",
    month = "September",
    year = 2009}
@@ -545,7 +557,7 @@ year = 2011
 @InProceedings{jtresTCK,
     title = "A Technology Compatibility Kit for Safety Critical {Java}",
     author = "Lei Zhao and Daniel Tang  and Jan Vitek",
-   booktitle = "International Workshop on Java Technologies for Real-time and 
+   booktitle = "International Workshop on Java Technologies for Real-time and
                 Embedded Systems (JTRES)",
    month = "September",
    year = 2009}
@@ -553,7 +565,7 @@ year = 2011
 @InProceedings{jtresFVM,
     title = "Towards {Java} on Bare Metal with the {Fiji VM}" ,
     author = "Filip Pizlo and  Lukasz Ziarek and Jan Vitek",
-   booktitle = "International Workshop on Java Technologies for Real-time and 
+   booktitle = "International Workshop on Java Technologies for Real-time and
                Embedded Systems (JTRES)",
    month = "September",
    year = 2009}
@@ -561,7 +573,7 @@ year = 2011
 
 @InProceedings{stopHard,
     title = "Software Hardening: A Research Agenda",
-    author = "Tobias Wrigstad and Patrick Eugster and John Field and 
+    author = "Tobias Wrigstad and Patrick Eugster and John Field and
               Nate Nystrom and Jan Vitek",
     booktitle = "International Workshop on Script to Program Evolution (STOP)",
     month = jul,
@@ -578,7 +590,7 @@ year = 2011
 
 @InProceedings{oopsla09,
   title = "Thorn: Robust, Concurrent, Extensible Scripting on the {JVM}",
-  author = {Bard Bloom and John Field and  Nathaniel Nystrom and  Johan 
+  author = {Bard Bloom and John Field and  Nathaniel Nystrom and  Johan
             \"Ostlund and Gregor Richards and Rok Strnisa and Jan Vitek
             and Tobias Wrigstad},
    booktitle = OOPSLA,
@@ -589,13 +601,13 @@ year = 2011
   author = "Thomas Henties and James Hunt and Doug Locke and Kelvin Nilsen
             and  Martin Schoeberl and Jan Vitek",
    title = "{Java} for Safety-Critical Applications",
-   booktitle = "Certification of Safety-Critical Software Controlled 
-                Systems (SafeCert)", 
+   booktitle = "Certification of Safety-Critical Software Controlled
+                Systems (SafeCert)",
    month = "March",
    year = 2009}
 
 @Article{cpe09,
-  author = "Jason Baker and Antonio Cunei and Tomas Kabilera and 
+  author = "Jason Baker and Antonio Cunei and Tomas Kabilera and
             Filip Pizlo and Jan Vitek",
   title = "Accurate Garbage Collection in Uncooperative Environments Revisited",
   journal = "Concurrency and Computation: Practice and Experience",
@@ -614,7 +626,7 @@ year = 2011
            and Jesper Honig Spring and  Jean Privat
            and Jan Vitek",
    title = "High-Performance Transactional Event Processing",
-   booktitle = "International Conference on Coordination Models 
+   booktitle = "International Conference on Coordination Models
 and Languages (COORDINATION)",
    month = "June",
    year =  2009}
@@ -682,8 +694,8 @@ and Languages (COORDINATION)",
   title     = {Matchete: Paths through the Pattern Matching Jungle},
   year      = {2008},
   pages     = {150-166},
-  booktitle     = {10th International Symposium on 
-               Practical Aspects of Declarative Languages (PADL)}, 
+  booktitle     = {10th International Symposium on
+               Practical Aspects of Declarative Languages (PADL)},
   publisher = {Springer}}
 
 @InProceedings{jtres07,
@@ -694,7 +706,7 @@ and Languages (COORDINATION)",
    year = 2007}
 
 @article{rsj07,
- author  = "Chris Andreae and Yvonne Coady and Celina Gibbs 
+ author  = "Chris Andreae and Yvonne Coady and Celina Gibbs
             and James Noble and Jan Vitek and Tian Zhao",
  title   = "Scoped Types and Aspects for Real-time {J}ava Memory Management",
  journal = "Realtime Systems Journal",
@@ -709,14 +721,14 @@ and Languages (COORDINATION)",
    author    = "Jesper H. Spring and Jean Privat  and
                 Rachid Guerraoui  and Jan Vitek",
    booktitle = OOPSLA,
-  year       = 2007} 
+  year       = 2007}
 
 @article{spe07,
   author  = "Antonio Cunei and Jan Vitek",
-  title   = "An Efficient and Flexible Toolkit for 
+  title   = "An Efficient and Flexible Toolkit for
              Composing Customized Method Dispatchers",
-  volume  = 38, 
-  number  =  1, 
+  volume  = 38,
+  number  =  1,
   pages   = "33--73",
   month   = jan,
   journal = "Software--Practice \& Experience",
@@ -727,7 +739,7 @@ and Languages (COORDINATION)",
   title  = "Hierarchical Real-time Garbage Collection",
   year   = 2007,
   booktitle = "Proceeedings of
-           ACM SIGPLAN/SIGBED 2007 Conference on Languages, 
+           ACM SIGPLAN/SIGBED 2007 Conference on Languages,
            Compilers, and Tools for Embedded Systems (LCTES)",
   pages  = {123--133},
   location = {San Diego, CA},
@@ -736,7 +748,7 @@ and Languages (COORDINATION)",
 
 
 @inproceedings{vee07,
-  author = "{Jesper Honig} Spring and Filip Pizlo and 
+  author = "{Jesper Honig} Spring and Filip Pizlo and
             Rachid Guerraoui and  Jan Vitek",
   title = "Reflexes: Abstractions for Highly Responsive Systems",
   year = 2007,
@@ -767,17 +779,17 @@ and Languages (COORDINATION)",
 
 @inproceedings{rtss:06,
    author = "Filip Pizlo and Jan Vitek",
-   title = "An Empirical Evalutation of Memory Management 
+   title = "An Empirical Evalutation of Memory Management
             Alternatives for {R}eal-time {J}ava",
-   booktitle = "Proceedings of the 27th IEEE Real-Time 
+   booktitle = "Proceedings of the 27th IEEE Real-Time
                  Systems Symposium (RTSS)",
    month = dec,
    year = {2006},
 }
 
 @article{tecs:06,
-    author = "Austin Armbuster and Jason Baker and Antonio Cunei and   
-              David Holmes and Chapman Flack and Filip Pizlo and Edward Pla  
+    author = "Austin Armbuster and Jason Baker and Antonio Cunei and
+              David Holmes and Chapman Flack and Filip Pizlo and Edward Pla
               and Marek Prochazka  and Jan Vitek",
     title="A {R}eal-time {J}ava Virtual Machine with Applications in Avionics",
     journal  = {ACM Transactions in Embedded Computing Systems (TECS)},
@@ -879,7 +891,7 @@ Programming Languages and Systems (APLAS)",
             Jagannathan and Marek Prochazka and Bin Xin and Jan Vitek",
   title = "Preemptible Atomic Regions for Real-time {Java}",
   booktitle     = {Proceedings of the 26th IEEE Real-Time Systems Symposium
-               (RTSS)}, 
+               (RTSS)},
   month =  dec,
   year      = {2005},
 }
@@ -994,7 +1006,7 @@ Programming Languages and Systems (APLAS)",
 @article{ovmir:05,
   author  = "Krzysztof Palacz and Jason Baker and Chapman Flack and
                   Christian Grothoff and Hiroshi Yamauchi and Jan Vitek",
-  title  = "Engineering a common intermediate representation for the 
+  title  = "Engineering a common intermediate representation for the
             {Ovm} framework",
   journal= "The Science of Computer Programming",
   volume = 57,
@@ -1019,7 +1031,7 @@ Programming Languages and Systems (APLAS)",
 @inproceedings{zhao:04,
       author = "Tian Zhao and James Noble and Jan Vitek",
       title = "Scoped Types for Real-time {Java}",
-      booktitle = "Proceedings of the 25th IEEE 
+      booktitle = "Proceedings of the 25th IEEE
                    International Real-Time Systems Symposium (RTSS)",
       address = "Lisbon, Portugal",
       month = dec,
@@ -1070,7 +1082,7 @@ Programming Languages and Systems (APLAS)",
 }
 
 @article{olga:04,
-   author = "Olga Vitek and  Jan Vitek and Bruce Craig and 
+   author = "Olga Vitek and  Jan Vitek and Bruce Craig and
              Chris Bailey-Kellogg",
     title = "Model-based assignment and inference of protein backbone nuclear
              magnetic resonances",
@@ -1086,15 +1098,15 @@ Programming Languages and Systems (APLAS)",
  author   = "Suresh Jagannathan and Marek Prochazka and
              Filip Pizlo and Jan Vitek",
  title    = "Transactional Lock-Free Objects for Real-time {Java}",
- booktitle= "Workshop on Synchronization and  Currency in {Java} 
+ booktitle= "Workshop on Synchronization and  Currency in {Java}
              Programs (CSJP)",
  year     = 2004}
 
 @inproceedings{secon:04,
-   author = "Bogdan C\u{a}rbunar and Ananth Grama and Jan Vitek and 
+   author = "Bogdan C\u{a}rbunar and Ananth Grama and Jan Vitek and
              Octavian C\u{a}rbunar",
    title = {Redundancy and Coverage Detection in Sensor Networks},
-   booktitle = "First IEEE International conference on Sensor 
+   booktitle = "First IEEE International conference on Sensor
              and Ad Hoc Communications and Networks",
    month = oct,
    year = 2004,
@@ -1115,7 +1127,7 @@ Programming Languages and Systems (APLAS)",
 		 Networks",
   author =	"Bogdan C\u{a}rbunar and Ananth Grama and Jan Vitek",
   year = 	"2004",
-  booktitle =	"Proceedings of the 10th International Conference on Parallel 
+  booktitle =	"Proceedings of the 10th International Conference on Parallel
                  an Distributed Systems (ICPADS)",
   URL =  	"http://doi.ieeecomputersociety.org/10.1109/ICPADS.2004.34",
 }
@@ -1124,7 +1136,7 @@ Programming Languages and Systems (APLAS)",
 
 @InProceedings{chotia04,
   author = "Tom Chothia and Dominic Duggan and Jan Vitek",
-  title  = "Principals, Policies and Keys in a Secure Distributed 
+  title  = "Principals, Policies and Keys in a Secure Distributed
             Programming Language",
   booktitle = "Foundations of Computer Security (FCS)",
   address= "Turku, Finland",
@@ -1168,7 +1180,7 @@ Programming Languages and Systems (APLAS)",
 @InProceedings{duggan.vitek:03,
    author =    "Tom Chothia and Dominic Duggan and Jan Vitek",
    title =     "Type-Based Distributed Access Control",
-   booktitle = {Proceedings of the 16th IEEE Computer 
+   booktitle = {Proceedings of the 16th IEEE Computer
                 Security Foundations Workshop (CSFW)},
    year  =  2003,
    month = jun,
@@ -1266,9 +1278,9 @@ Programming Languages and Systems (APLAS)",
 
 @INPROCEEDINGS{sewell.vitek:csfw00,
   author   = "Peter Sewell and Jan Vitek",
-  title    = "Secure Composition of Untrusted Code: 
+  title    = "Secure Composition of Untrusted Code:
               Wrappers and Causality Types",
-   booktitle = {Proceedings of the 13th IEEE Computer 
+   booktitle = {Proceedings of the 13th IEEE Computer
                Security Foundations Workshop (CSFW-13)},
    year      =   2000,
    location  =   {Cambridge, U.K.},
@@ -1287,7 +1299,7 @@ Programming Languages and Systems (APLAS)",
 @InProceedings{vitek.bryce99,
     author   =  "Jan Vitek and Ciar\'an Bryce",
     title    =  {The {JavaSeal} Mobile Agent Kernel},
-    booktitle = "Proceedings of the 1st International Symposium on 
+    booktitle = "Proceedings of the 1st International Symposium on
               Agent Systems and Applications
                / 3rd International Symposium on Mobile Agents (ASA/MA)",
   month = oct,
@@ -1297,7 +1309,7 @@ Programming Languages and Systems (APLAS)",
 @INPROCEEDINGS{sewell.vitek:csfw99,
     author =    {Peter Sewell and Jan Vitek},
     title =    "Secure Composition of Insecure Components",
-    booktitle = {Proceedings of the 12th IEEE Computer 
+    booktitle = {Proceedings of the 12th IEEE Computer
                  Security Foundations Workshop (CSFW-12)},
    year =       {1999},
    location =    "Mordano, Italy",
@@ -1350,7 +1362,7 @@ Programming Languages and Systems (APLAS)",
 @Techreport{vbb98,
     author = {Jan Vitek and Ciar\'an Bryce and Walter Binder},
     title =   "Designing {JavaSeal, or how to make Java} safe for agents",
-    institution = "In {\emph{Electronic Commerce Objects}},  
+    institution = "In {\emph{Electronic Commerce Objects}},
                    D. Tsichritzis (Ed.),
                  Centre Universitaire d'Informatique, University of Geneva",
     month = jul,
@@ -1518,7 +1530,7 @@ Programming Languages and Systems (APLAS)",
 @InProceedings{vitek.horspool:1992:SAP,
   author =       "R. Nigel Horspool and Jan Vitek",
   title =        "Static analysis of {Postscript} code",
-  booktitle =    "Proceedings of the 1992 International Conference on   
+  booktitle =    "Proceedings of the 1992 International Conference on
                    Computer Languages (ICCL)",
   pages =        "14--23",
   year =         1992,
