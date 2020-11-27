@@ -63,24 +63,6 @@ function_arguments <- function(eval_call)
   return(NA)
 }
 
-# placeholder for the `parse_only` function of library xfun
-parse_only <- function(code) {}
-.myparse <- function(text) {}
-parse_all <- function(x, filename,allow_error) {}
-
-extract_args_parse <- function(eval_call)
-{
-  exp <- get_expr(eval_call)
-  exp <- tryCatch(call_standardise(exp),
-                  error = function(c)
-                    if(length(exp) >= 2 && exp[[2]] == "...") { names(exp)[[2]] <- "dots" ; return(exp)}
-                    else stop(paste0("extract_arg failed with: ", eval_call))
-  )
-  args <- map_chr(as.list(exp[-1]), function(chr) { paste(deparse(chr), collapse = "\n")})
-  names(args) <- map_chr(names(args), function(chr) paste0("parse_args_", chr))
-
-  return(args[str_detect(names(args), "^parse_args_(file|text|n|s|keep\\.source|srcfile|dots)$")])# "file|text|n|s|prompt|keep.source|srcfile|code"
-}
 
 # See extract_inner_exp which takes a str
 # This one takes an expression
@@ -157,49 +139,6 @@ check_call <- function(arg)
 }
 
 
-SEXP_TYPES <- tribble(~sexp_type, ~name,
-                      0, "NILSXP",
-                      1, "SYMSXP",
-                      2, "LISTSXP",
-                      3, "CLOSXP",
-                      4, "ENVSXP",
-                      5, "PROMSXP",
-                      6, "LANGSXP",
-                      7, "SPECIALSXP",
-                      8, "BUILTINSXP",
-                      9, "CHARSXP",
-                      10, "LGLSXP",
-                      13, "INTSXP",
-                      14, "REALSXP",
-                      15, "CPLXSXP",
-                      16, "STRSXP",
-                      17, "DOTSXP",
-                      18, "ANYSXP",
-                      19, "VECSXP",
-                      20, "EXPRSXP",
-                      21, "BCODESXP",
-                      22, "EXTPTRSXP",
-                      23, "WEAKREFSXP",
-                      24, "RAWSXP",
-                      25, "S4SXP",
-                      30, "NEWSXP",
-                      31, "FREESXP",
-                      99, "FUNSXP"
-)
-
-
-SEXP_TYPES <- SEXP_TYPES %>% mutate(name = factor(name))
-
-resolve_sexp_name <- function(df, var) {
-  en_var <- enquo(var)
-  by <- "sexp_type"
-  names(by) <- as.character(substitute(var))
-  df %>%
-    left_join(SEXP_TYPES, by=by) %>%
-    select(-!!en_var) %>%
-    rename(!!en_var:=name)
-}
-
 R_LIB_SRC <- "/var/lib/R/project-evalR/R-4.0.2/src/library"
 CORE_PACKAGES <- c(
   "compiler",
@@ -224,49 +163,7 @@ core_package_files <- map_dfr(CORE_PACKAGES, function(x) {
   tibble(package=x, file=f)
 })
 
-# match eval that are not called (but passed to a higher order function)
-is_eval <- function(s)
-{
-  return(!is.na(s) && str_detect(s, "(eval(q|\\.parent)?|local)[^\\(_\\.q]"))
-}
 
-# To use if srcref is NA and caller_function is not one of the base ones
-# Will not always work but should work for lapply ones
-package_name_from_call_stack <- function(caller_stack_expr, caller_stack_expr_srcref)
-{
-  stack_expr <- str_split(caller_stack_expr, fixed("\n"))
-  stack_srcref <- str_split(caller_stack_expr_srcref, fixed("\n"))
-
-  eval_pos <- detect_index(stack_expr[[1]], is_eval)
-  if(eval_pos != 0)
-  {
-    srcref <- stack_srcref[[1]][[eval_pos]]
-    return(if(srcref == "NA") "base?" else srcref)
-  }
-
-  return("base?")
-}
-
-extract_package_name <- function(src_ref, file)
-{
-  # There are 5 possibilities for a srcref:
-  # - NA
-  # - /tmp/Rtmp..../R.INSTALL....../packagename/R/file:linenumbers
-  # - /mnt/nvme0/R/project-evalR/library/4.0/instrumentr/srcref/packagename/4.0.4/file:linenumbers
-  # - /R/* : core packages (we cannot distinguish between them yet so we write core for the package name)
-  # - /testit/... or /testthat/... : it is the testit or testthat packages
-  # - :/R : extract the package name from the file path in the column path
-  # - .../kaggle-run/<id>/run.R:...
-  case_when(
-    is.na(src_ref) ~ "base?",
-    str_starts(src_ref, fixed("./R/")) ~ "core",
-    str_starts(src_ref, fixed("/tmp/")) ~ str_match(src_ref, "/tmp/Rtmp[^/]*/R\\.INSTALL[^/]*/([^/]+)/.*")[[2]],
-    str_starts(src_ref, fixed("/mnt/nvme0/")) ~ "base",
-    str_starts(src_ref, fixed("test")) ~ str_match(src_ref, "([^/]*)/.*")[[2]],
-    str_starts(src_ref, fixed("/:")) ~ str_match(file, "[^/]*/[^/]*/([^/]*)/.*")[[2]],
-    TRUE ~ "unknown"
-  )
-}
 
 replaceable_functions <- c("+", "*", "/", "-", "%%",
                            "<-", "[[<-", "[<-", "$<-", "<<-", "=",
