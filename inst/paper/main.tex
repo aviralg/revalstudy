@@ -312,16 +312,24 @@ e.g. Node.js was not covered by Richards.  More details about dynamic
 analysis of JavaScript can be found in~\cite{liang}.
 
 Wang et al.~\cite{wang} analyzed use of dynamic features in 18 Python
-programs to find if they affect file change-proneness.  Files with
+programs to find if they affect file change-proneness. Files with
 dynamic features are significantly more likely to be the subject of
-changes, than other files.  Chen et al. looked at the correlation
+changes, than other files. Chen et al. looked at the correlation
 between code changes and dynamic features, including \eval, in 17
 Python programs~\cite{chen}. They did not observe many uses of \eval.
 Callau et al.~\cite{oscar} performed an empirical study of the usage
 of dynamic features in 1,000 Smalltalk projects. While \eval itself is
-not present, Smalltalk has a rich reflective interface that gives
-programmer great flexibility. Their work was based on a static
-analysis.  %% TODO:: Say someting meaningfull about OSCAR
+not present, Smalltalk has a rich reflective interface. The authors
+found that reflective are used in less than 2\% of methods. The most
+common reflective method is \c{perform:}; it send a message that is
+specified by a string. These features are mostly used in the core
+libraries.
+
+Bodden et al.~\cite{bodden} looked at usage of reflection in the Java
+DaCapo benchmark suite. They found that dynamic loading was triggered
+by the benchmark harness. The harness then executes methods via
+reflection, this caused static analysis tools to generate an incorrect
+call graph for the programs in DaCapo.
 
 Morandat et al.~\cite{ecoop12} had a short section on the usage of
 \eval in R. They found the it widely used in R code with 8500 call
@@ -335,159 +343,178 @@ invocation of a function whose name or arguments are determined
 dynamically. For this purpose, R provides \c{do.call} and thus \eval
 is overkill.
 
-
-
-\begin{figure}[!t]\hspace{-5mm}\includegraphics[width=1.05\linewidth]
-{pipeline.pdf}\caption{Analysis Pipeline}\label{fig:pipeline}
-\end{figure}
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Methodology}
 
-\subsection{Infrastructure}
-
-Our infrastructure consists of a dynamic analysis pipeline to record the
-calls to \eval and RMarkdown notebooks for data analysis and visualization.
-Figure~\ref{fig:pipeline} shows the main steps of the pipeline. We provide
-the runtime, input and output data size for each step. All runs are done on
-a single server Intel Xeon 6140, 2.30GHz with 72 cores and 256GB of RAM.
-
-The pipeline begins with downloading and installing open source R packages
-from CRAN for the corpus along with their dependencies. The Kaggle programs
-are downloaded from \href{http://www.kaggle.com}{Kaggle} separately by a
-crawler.  Next, code size and coverage metrics from the installed packages
-are extracted using the \href{ https://github.com/r-lib/covr}{\covr}
-package. This is followed by extraction of runnable programs from R
-packages: tests, examples and vignettes as well as from Kaggle. The code of
-each extracted program is wrapped into a call to dynamic analyzer
-\emph{evil} (\emph{Ev}al \emph{I}nspection \emph{L}ibrary) that collects eval
-usage. The reason for this is that we only want to record eval usage for the
-extracted code. Without this, the data would include eval calls from the
-unit testing frameworks as well as from bootstrapping R virtual machine
-itself. To avoid any interference, each program is run in its own R
-instance. The \emph{evil} framework is implemented as a R package in 2K lines of
-R and 400 lines of C++ code.
-
-The dynamic analyzer builds upon the dynamic analysis framework, \instrumentr
-that we have implemented to enable us to write dynamic analysis logic in R. It
-is an R package implemented in 2.5K lines of R and 6K lines of C++ code. It
-internally uses a modified R interpreter, \rdyntrace~\cite{oopsla19a}, that
-exposes hooks from within the interpreter implementation for events of interest.
-\instrumentr serves as an intermediary between \rdyntrace and \evil, it
-intercepts the hooks exposed by \rdyntrace and attaches R functions exported by
-\evil as callbacks. The \evil callbacks execute on corresponding interpreter
-events.
-
-All steps of this pipeline are parallelized using GNU
-parallel~\cite{GNUparallel} and orchestrated by GNU make. To schedule and
-parallelize extraction and analysis of programs, we use the \runr
-package. Furthermore, \runr gracefully handles and reports failures across
-large-scale program runs which greatly aids debugging of the analysis
-pipeline.  The data extracted by \evil from each program is concatenated,
-cleaned and summarized in the post-processing phase by custom R
-scripts. Finally, the summarized data is analyzed in RMarkdown notebooks to
-gather insights. Apart from the figures, the data points included in the
-paper are also generated by RMarkdown notebooks as latex macros.
+This section explains our methodology for selecting the corpus that
+will be analyzed and how we implemented our dynamic analysis.
 
 \subsection{Corpus}
 
-In this study, we report on a corpus of \CorpusCorePackages R core and
-\CorpusPackages CRAN packages with \CorpusAllCodeRnd lines of source code
-(native + R).  We run \CorpusAllProgramsRnd programs extracted from those
-packages as well as from the user-written data-analyses shared on the Kaggle
-platform. In this section we describe this corpus and methodology used to
-assemble it.
+Our corpus is assembled out of two set of programs, one consisting of
+popular libraries obtained from the Comprehensive R Archive
+Network\footnote{CRAN is the largest repository of R code with over
+\CorpusAllCranRnd packages. It receives about 6 new package
+submissions a day~\cite{Ligges2017}. Unlike other open code
+repositories such as GitHub, CRAN is a curated repository. Each
+submitted package must abide to a number of well-formedness rules that
+are automatically checked asserting certain quality. Most relevant for
+this work is that all of the runnable code is tested and only a
+successfully running package is admitted in the archive.} (we refer to
+it as {\bf CRAN}) and the other from the Kaggle data science
+competition (written {\bf Kaggle}). The intent here is to contrast
+code written by experienced developpers (CRAN) with code authored by
+typical end users of the language (Kaggle).
+
+All the code in our is runnable, i.e. we have scripts that invoke the
+CRAN packages and the Kaggle programs have input data. Clearly code
+coverage will vary; as is the case for any dynamic analysis, the
+quality of results is predicated on how representative the executions
+we can observe are with respect to all possible runs of the corpus. To
+mitigate the threat to validity attached to limited coverage, we
+obtain clients that will generate multiple \emph{runs} of CRAN
+packages. In this context, a run is the execution of a CRAN package or
+Kaggle program with a particular set of input values.
+
+\medskip\noindent\emph{CRAN Packages.} The packages that are included
+in this study are the top \CorpusPackages packages based on their
+reverse dependencies. The set of reverse dependencies for some package
+\emph{P} is transitive closure of packages that import \emph{P}. The
+hypothesis underlying that choice is that packages with a large set of
+reverse depencies are likely to be higher in quality and their tests
+will provide better coverage. The packages are implemented in R with
+some C and Fortran code. Using \c{cloc}, we measure a total
+\CorpusRCodeRnd lines of R code and \CorpusNativeCodeRnd lines of
+native code. For each package, we use its runnable code (tests, etc.)
+to compute code coverage. On average, the cde coverage is
+\CorpusMeanExprCoverage which is acceptable without being exhaustive.
+Figure~\ref{fig:corpus} shows these packages, the size of the dots
+reflects the project's size in lines of code. The x-axis indicates
+code coverage in percents and the y-axis gives the number of call
+sites to \eval that were traced, in log scale. Dotted lines indicate
+means. Packages with over \CorpusEvalsPackageTreshold eval call sites
+are named.
 
 \begin{figure}[!h]\centering\includegraphics[width=.7\linewidth]
   {corpus.pdf}\caption{CRAN packages}\label{fig:corpus}
 \end{figure}
 
-\subsubsection{CRAN Packages}
+To analyze a package, we need client code that invokes its methods.
+There are three sources of built-in runnable code that come with each
+CRAN package: \emph{tests, examples} and \emph{vignettes}. They are,
+respectively, traditional unit tests, code snippets from the
+documentation, and long-form use-cases written in Rmarkdown. Examples
+and vignettes are automatically extracted and turned into scripts,
+their input is bundled with the package. Most tests had to be discared
+due to a limitation of our pipeline: the \c{testthat} harness uses
+\eval and thus causes the entire test to register as an \eval call.
+The selected packages are bundled with \CorpusPackagePrograms
+programs; \CorpusExamplesProgramsRnd examples and
+\CorpusVignettesProgramsRnd vignettes.
 
-We have selected the TOP \CorpusPackages packages based on their reverse
-dependencies, \ie how many other packages depend on them.\footnote{Extracted
-  from package metadata using a builtin function.}  This helps us find
-packages which should be better written and have better code coverage.  The
-resulting set contains \CorpusRCodeRnd lines of R code and
-\CorpusNativeCodeRnd lines of native code.\footnote{Excluding comments and
-  blank lines using \url{github.com/AlDanial/cloc}.}  For each package we
-use its runnable code to compute the package code coverage.\footnote{Computed
-  using \url{ https://github.com/r-lib/covr}.} On average, across the
-\CorpusPackages packages, it is \CorpusMeanExprCoverage.
-Figure~\ref{fig:corpus} shows these packages, the size of the dots reflects
-the project's size in lines of code.  The x-axis indicates code coverage in
-percents and the y-axis gives the number of call sites to \eval that were traced, in log
-scale. Dotted lines indicate means. Packages with over
-\CorpusEvalsPackageTreshold eval call sites are named.
+\medskip\noindent\emph{Kaggle Scripts.} Kaggle is an online platform
+for data-science and machine-learning. The website allows people to
+submit data-analysis problems, users compete to find the best
+solution. The solutions are uploaded to the platform as either plain
+scripts or notebooks. We chose one of the most popular competition,
+predicting the survival of passengers the
+Titanic\footnote{\url{https://www.kaggle.com/c/titanic}}. Unlike CRAN,
+Kaggle is not curated. After downloading the \CorpusKaggle solutions
+and extracting the R code, we found that \CorpusDuplicatedKaggle were
+duplicates. From the remaining \CorpusRunnableKaggle solutions,
+\CorpusFailedKaggle failed to execute. Next to various runtime
+exceptions, common problems were parse errors and misspelled package
+names. The final set contains \CorpusFinishedKaggle programs
+implemented in \CorpusFinishedKaggleCodeRnd lines of R code.
 
-All included packages come from the Comprehensive R Archive Network
-(CRAN\footnote{\url{http://cran.r-project.org}}), the largest repository of R
-code with over \CorpusAllCranRnd packages.\footnote{CRAN receives about 6 new
-  package submissions a day~\cite{Ligges2017}.} Unlike other open code
-repositories such as GitHub, CRAN is a curated repository. Each submitted
-package must abide to a number of well-formedness rules that are automatically
-checked asserting certain quality. Most relevant for this work is that all of
-the \emph{runnable code} is tested and only a successfully running package is
-admitted in the archive. This is important as we use this runnable code for the
-dynamic analysis of eval calls.
 
-There are three sources of runnable code in a R package. Next to the package
-\emph{tests},\footnote{We had to exclude most tests because the {testthat}
-  harness uses \eval and thus causes the entire test to register as an \eval
-  call.} there are also \emph{examples} and \emph{vignettes}. Examples are R
-code snippets extracted from package documentation into scripts files.
-Vignettes are long-form description of package functionality written using
-literate-programming style in \LaTeX\xspace or Rmarkdown with chunks of R
-code that can be similarly extracted into R scripts. R provides builtin
-functions for tangling the embedded code into files.  The selected packages
-contain \CorpusPackagePrograms programs with \CorpusPackageProgramsCodeRnd
-lines of R code: \CorpusExamplesProgramsRnd examples with
-\CorpusExamplesCodeRnd lines of code, and \CorpusVignettesProgramsRnd
-vignettes.
 
-\subsubsection{Kaggle Scripts}
+\subsection{Infrastructure}
 
-To represent end-user code in the corpus, we turned to Kaggle, an online
-platform for data-science and machine-learning. The website allows people to
-share data-science competitions, a data-analysis problem together with data,
-for which users try to find the best solution. The solutions, called
-{kernels}, are then shared back to the platform in the form of either plain
-scripts or as notebooks.  One of the most popular competition is about
-predicting passenger survival on
-Titanic\footnote{\url{https://www.kaggle.com/c/titanic}} with \CorpusKaggle
-kernels in R (over 1/4 of all available R kernels) which we used for our
-corpus.
+The results presented in this paper are the result of an automated
+analysis pipeline that acquires the code of packages, extract
+metadata, executes programs, traces their behavior and summarizes the
+observations. Figure~\ref{fig:pipeline} shows the main steps of the
+pipeline along with approximate time to execute each step, the data
+size, and the number of elements manipulated by the stage. Timings are
+for runs on an Intel Xeon 6140, 2.30GHz with 72 cores and 256GB of
+RAM.
 
-Unlike CRAN, Kaggle is not a curated repository and therefore there are no
-guarantees about the quality of the code. After downloading all of the
-\CorpusKaggle kernels and extracting the R code from the various
-formats,\footnote{We use {\sf rmarkdown} to convert from notebooks to R.} we
-found that \CorpusDuplicatedKaggle were whole-file duplicates. From
-\CorpusRunnableKaggle kernels, \CorpusFailedKaggle failed to execute. Next
-to various runtime exceptions, common problems were parse errors and
-misspelled package names.  The final set contains \CorpusFinishedKaggle
-kernels with \CorpusFinishedKaggleCodeRnd lines of R code.
+\begin{figure}[!h]\hspace{-5mm}\includegraphics[width=1.05\linewidth]
+{pipeline.pdf}\caption{Analysis Pipeline}\label{fig:pipeline}
+\end{figure}
 
-\subsection{Threats to Validity}
-The primary threat to validity is the issue of
-code coverage, a cause of concern for any dynamic approach. We mitigate this
-by including focusing on R packages that have high code coverage. We turn
-off the bytecode compiler for this study. The bytecode compiler can also
-call \eval. We do not get source locations for \UndefinedEvalsRnd eval
+The first step in the pipeline consist of downloading CRAN packages
+along with their dependencies and acquiring Kaggle programs with the
+help of a web crawler. The second step, is to compute code size and
+coverage metrics for the CRAN packages (we use the \covr package for
+coverage). The third step consist in extracting runnable programs from
+packages: i.e. the tests, examples and vignettes. Each extracted
+program is wrapped into a call to our dynamic analyzer --- the tool is
+called \emph{evil} for \underline{ev}al \underline{i}nspection
+\underline{l}ibrary. This step is needed to ensure that we record
+\eval usage only for the target package. Without this, the data would
+include eval calls from the unit testing frameworks as well as from
+bootstrapping R virtual machine itself. To avoid any interference,
+each program is run in its own R instance.
+The fourth step in the pipeline is to perform dynamic analysis for
+each run of a CRAN package or Kaggle program.
+
+The dynamic analyzer builds upon the dynamic analysis framework,
+\instrumentr that we have implemented to enable us to write dynamic
+analysis logic in R. \instrumentr serves as an intermediary between
+\rdyntrace and \evil, it intercepts the hooks exposed by \rdyntrace
+and attaches R functions exported by \evil as callbacks. The \evil
+callbacks execute on corresponding interpreter events.
+
+
+The data extracted by \evil from each program is
+concatenated, cleaned and summarized in the post-processing phase by
+custom R scripts. Finally, the summarized data is analyzed in
+RMarkdown notebooks to gather insights. Apart from the figures, the
+data points included in the paper are also generated by RMarkdown
+notebooks as latex macros.
+
+
+The \emph{evil} framework is implemented as a R package in 2K lines of
+R and 400 lines of C++ code. \instrumentr is an R package implemented
+in 2.5K lines of R and 6K lines of C++ code. It internally uses a
+modified R interpreter, \rdyntrace~\cite{oopsla19a}, that exposes
+hooks from within the interpreter implementation for events of
+interest.
+
+All steps of this pipeline are parallelized using GNU
+parallel~\cite{GNUparallel} and orchestrated by GNU make. To schedule
+and parallelize extraction and analysis of programs, we use the \runr
+package. Furthermore, \runr gracefully handles and reports failures
+across large-scale program runs which greatly aids debugging of the
+analysis pipeline.
+
+
+
+\medskip\noindent\emph{Limitations.}
+The primary threat to validity is the issue of code coverage, a cause
+of concern for any dynamic approach. We mitigate this by including
+focusing on R packages that have high code coverage. We turn off the
+bytecode compiler for this study. The bytecode compiler can also call
+\eval. We do not get source locations for \UndefinedEvalsRnd \eval
 calls. In these cases \eval is either passed as an argument to a
 higher-order functions or is defined in a function returned by a
-higher-order function and the R parser does not retain location information
-for \eval. However, this is a meager \PercentUndefinedEval of all eval calls
-and is unlikely to affect our analysis. We ignore calls to the native \eval
-function exposed by R. We also ignore the \c{rlang::tidy_eval} function
-which uses native \eval internally because \c{rlang} is used to implement a
-DSL for data analysis in R. It introduces a new first-class promise object
-called \c{quosure} for which it implements special evaluation support in
-\c{tidy_eval}.
+higher-order function and the R parser does not retain location
+information for \eval. However, this is a meager \PercentUndefinedEval
+of all \eval calls and is unlikely to affect our analysis. We ignore
+calls to the native \eval function exposed by R. We also ignore the
+\c{rlang::tidy_eval} function which uses native \eval internally
+because \c{rlang} is used to implement a DSL for data analysis in R.
+It introduces a new first-class promise object called \c{quosure} for
+which it implements special evaluation support in \c{tidy_eval}.
 
 \section{Evaluation}
 
-This section presents the results of our empirical study of \eval in R in terms
-of four research questions.
+This section presents the results of our empirical study of \eval in R
+in terms of four research questions.
 
 \subsection{Use of Eval}
 
