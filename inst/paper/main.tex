@@ -3,7 +3,7 @@
 \input{macro}
 
 \title{Why do we Eval?\\[2mm]\Large A large-scale study of Eval usage in R}
-\titlerunning{Eval in R}
+\titlerunning{Why Eval (in R)?}
 
 \begin{document}\maketitle
 
@@ -50,8 +50,8 @@ apply meaning-preserving program transformations. In practice this
 means that static analysis techniques will loose so much precision as
 to become pointless and that anything but the most trivial, local,
 compiler optimizations will be unsound. Furthermore the addition of
-new code --code that could have been obtained from a network
-connection-- as the program is running is a security vulnerability
+new code --- code that could have been obtained from a network
+connection --- as the program is running is a security vulnerability
 waiting to happen.
 
 To further illustrate the challenges at hand, consider the interaction
@@ -120,9 +120,9 @@ of choosing R is that every package in the CRAN repository is curated
 and comes with examples of typical usage. This gives us a large code
 base that we can analyze dynamically.  To observe \eval we built a
 two-level monitoring infrastructure: we can monitor R programs by
-instrumentation --this gives us access to many user-visible properties
-of R programs-- but we can also monitor the inner working of the R
-interpreter --this allows us to capture details of execution that are
+instrumentation --- this gives us access to many user-visible properties
+of R programs --- but we can also monitor the inner working of the R
+interpreter --- this allows us to capture details of execution that are
 not exposed at the source level. Dynamic analysis is of course limited
 in that it can only observe behaviors that are triggered by the
 particular inputs passed to the program. Luckily, CRAN libraries come
@@ -221,46 +221,33 @@ where \eval changed the type of local variables as this would require
 recompilation of the method (or prevent optimization). Julia even adds
 a versoning mechanism, called world age, to ensure that code added
 during an \eval does not invalidate optimizations such as
-inlining~\cite{oopsla20a}.
+inlining~\cite{oopsla20a}. More permissive languages such as R are
+much harder to deal with from a compiler's perspective.
 
-R's ability to affect any one of the callers of a function is even
-more invasive as the impact of \eval is non-local. Such unfettered
-power is difficult to deal with.
-
-
-
-There are two outstanding differences that set the design of \eval in
-R apart from JavaScript. On the usability side, \eval does not take a
-string, but an AST and an environment. This is slightly more involved
-than just taking a string and may discourage some casual users. The
-second substantial difference is the control that R gives over the
-choice of environment in which the AST is evaluated in. Beside
-traditional choices such as the top level or current lexical
-environment, R allows programmers to choose a fresh, empty,
-environment or any environment on the call stack. This is a
-significant increase in expressive power as functions that are
-otherwise not aware of the use of \eval may be deeply impacted.
-
-
-
-
-R supports reflection and meta-programming. The function
-\c{substitute(e,envir)} yields the parse tree of the expression \c{e}
-after performing substitutions defined by the bindings in the
+\medskip\noindent{\it Eval in R.} There are four reflective functions
+that take abstract syntax trees (called expressions), parse it as
+code, and evaluate it. These functions are \c{eval}, \c{evalq},
+\c{eval.parent}, and \c{local}. Unlike other languages, R's \eval does
+not take a string, but rather an expression. As this is slightly more
+involved, it may discourage some casual users. There are two ways to
+obtain an expression. Given a string, the \c{parse()} function retuns
+an unevaluated expression. The other way is to use the function
+\c{substitute(e,envir)}, it yields the parse tree of the expression
+\c{e} after performing substitutions defined by the bindings in the
 \c{envir} parameter.
 
 \begin{lstlisting}
-> substitute(expression(a+b), list(a=1)))
-expression(1+b)
+ > substitute(expression(a+b), list(a=1)))
+ expression(1+b)
 \end{lstlisting}
 
 \noindent
-R allows programmatic manipulation of parse trees, which are themselves
-first class objects. They are evaluated using the \c{eval()}
-function. There are three alternative forms  of \eval in the \c{base} package:
-\c{evalq}, \c{eval.parent} and \c{local}.
+This function is widely used in conjunction with \eval, as it can
+leverage R's laziness for metaprogramming. R allows programmatic
+manipulation of parse trees, which are themselves first class objects.
+Expressions are evaluated using \eval (or one its variants). The \eval
+function takes three arguments:
 
-\eval function in R takes three arguments as shown below.
 \begin{lstlisting}
  eval(expr,
       envir = parent.frame(),
@@ -268,45 +255,40 @@ function. There are three alternative forms  of \eval in the \c{base} package:
                parent.frame() else baseenv())
 \end{lstlisting}
 
-\c{expr} is the value to be evaluated, \c{envir}
-is the environment in which it is to be evaluated, and \c{enclos} is
-relevant when \c{envir} is a list or a data frame, then it specifies where R
-looks for objects not found in \c{envir}. This can be \c{NULL} (interpreted
-as the base package environment, \c{baseenv()}) or an environment.
+\noindent
+This code is part of the definition of \eval, it specifies that the
+function takes an \c{expr} which is the value to be evaluated,
+\c{envir} is the environment in which evaluation happes, and
+\c{enclos} is relevant when \c{envir} is a list or a data frame, then
+it specifies where R looks for objects not found in \c{envir}. This
+can be \c{NULL} (interpreted as the base package environment,
+\c{baseenv()}) or an environment. Thus, the expression \c{expr}
+evaluates in the environment \c{envir} and returns the computed value.
+If \c{envir} is missing, then the default is \c{parent.frame()} (the
+environment where the call to \eval was made). Values to be evaluated
+can be of types \c{call} (function calls) or \c{expression} (arbitrary
+expressions), \c{name} (when the symbol is looked up in the current
+scope and its binding is evaluated), promise, or any of the basic
+types such as vectors and environments (which are returned unchanged).
 
-When called, \eval evaluates \c{expr} in the environment specified by
-\c{envir} and returns the computed value. If \c{envir} is missing, then the
-default is \c{parent.frame()} (the environment where the call to \eval was
-made).  Values to be evaluated can be of types \c{call} (AST for function
-calls) or \c{expression} (AST nodes for arbitrary expressions), \c{name}
-(when the symbol is looked up in the current scope and its binding is
-evaluated), promise, or any of the basic types such as vectors and
-environments (which are returned unchanged).
+The \c{evalq} form is equivalent to \c{eval(quote(expr), ...)}.
+Quoting that argument prevents if from being evaluated in the current
+environment. \c{eval.parent(expr, n)} is a shorthand for \c{eval(expr,
+  parent.frame(n))}. \c{local} evaluates an expression in a local
+environment. It is equivalent to evalq except that its default
+argument creates a new, empty environment. This is useful to create
+anonymous recursive functions and as a kind of limited namespace
+feature since variables defined in the environment are hidden.
 
-The \c{evalq} form is equivalent to \c{eval(quote(expr), ...)}.  Quoting
-that argument prevents if from being evaluated in the current environment.
-In the following code snippet, variable \c{r} is first looked up in
-the current scope with \eval whereas it is looked up in \c{env} with
-\c{evalq}.
 
-\begin{lstlisting}
-> r <- 5
-> env <- new.env()
-> env$r <- 9
-> eval(r, envir = env)
-[1] 5
-> evalq(r, envir = env)
-[1] 9
-\end{lstlisting}
-% $
 
-\c{eval.parent(expr, n)} is a shorthand for \c{eval(expr, parent.frame(n))}.
-\c{local} evaluates an expression in a local environment. It is equivalent
-to evalq except that its default argument creates a new, empty
-environment. This is useful to create anonymous recursive functions and as a
-kind of limited namespace feature since variables defined in the environment
-are not visible from the outside.
-
+The second substantial difference is the control that R gives over the
+choice of environment in which the AST is evaluated in. Beside
+traditional choices such as the top level or current lexical
+environment, R allows programmers to choose a fresh, empty,
+environment or any environment on the call stack. This is a
+significant increase in expressive power as functions that are
+otherwise not aware of the use of \eval may be deeply impacted.
 
 
 \subsection{Previous Work}
