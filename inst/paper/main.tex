@@ -494,10 +494,15 @@ analysis pipeline.
 
 
 
-\medskip\noindent\emph{Limitations.}
-The primary threat to validity is the issue of code coverage, a cause
-of concern for any dynamic approach. We mitigate this by including
-focusing on R packages that have high code coverage. We turn off the
+\medskip\noindent\emph{Limitations.} Dynamic analysis can only observe
+calls that are triggered by the program's input. We believe that
+focusing on R packages with high code coverage does mitigate this to
+some extent. The results we report here were obtained with R's
+bytecode compiler turned off, this should not affect the results as
+the compiler does not optimize \eval.
+
+
+. We turn off the
 bytecode compiler for this study. The bytecode compiler can also call
 \eval. We do not get source locations for \UndefinedEvalsRnd \eval
 calls. In these cases \eval is either passed as an argument to a
