@@ -177,16 +177,6 @@ To access the value of a promise, one must force it. Forcing a promise
 triggers evaluation and the computed value is captured for future
 reference.
 
-\textit{Environments.} In R, environments can be accessed, manipulated and created at will. Each function has a corresponding environment, which inherits from its calling function. In the scope of the function, it can be accessed with \c{environment()}.  A new environment, which by default inherits from the current environment, is created with \c{new.env}. Contrary to other values, environments in R follow a \emph{reference semantics}, not a \emph{copy semantics}. The chain of inheriting environments can be climbed up with \c{parent.env}, and ultimately, one arrives at \c{emptyenv}, the empty environment. Functions such as \c{parent.frame} and \c{sys.frame} also make it possible to access environments further up in the calling stack, up to the global environment \c{.GlobalEnv}, enabling \emph{dynamic scoping}.
-One can also directly read, modify or create new bindings in any environments. Given an environment \c{e}:
-
-\begin{itemize}
-	\item  \c{e$v} or \c{get("v", envir = e)} reads variable \c{v} in \c{e};
-	\item \c{e$v <- 2} or \c{assign("v", 2, envir = e)} writes value 2 in variable \c{v} in \c{e}. \c{v} is created if it did not exist in \c{e}. %if argument inherits = TRUE, then if v exists in a parent environment, that binding is modified, instead of creating a new one
-\end{itemize}
-
-It means that for instance, one can directly modify a variable in the scope of its calling function, and there is even a special assignment operator for that purpose, \c{<<-}, \ie \c{v <<- 2} will search for a definition of \c{v} in all the parent environments, redefine the value, or create a new definition in the global environment.
-Explicit environments are used in R as hashtables, or to maintain state across function calls, or to create package namespaces.
 
 \subsection{Eval Semantics}
 
@@ -291,15 +281,34 @@ argument creates a new, empty environment. This is useful to create
 anonymous recursive functions and as a kind of limited namespace
 feature since variables defined in the environment are hidden.
 
+\medskip\noindent\textit{Environments.} In R, environments can be
+accessed, manipulated and created at will. Each function has a
+corresponding environment, which inherits from its calling function.
+In the scope of the function, it can be accessed with
+\c{environment()}. A new environment, which by default inherits from
+the current environment, is created with \c{new.env}. Contrary to
+other values, environments in R follow a \emph{reference semantics},
+not a \emph{copy semantics}. The chain of inheriting environments can
+be climbed up with \c{parent.env}, and ultimately, one arrives at
+\c{emptyenv}, the empty environment. Functions such as
+\c{parent.frame} and \c{sys.frame} also make it possible to access
+environments further up in the calling stack, up to the global
+environment \c{.GlobalEnv}, enabling \emph{dynamic scoping}. One can
+also directly read, modify or create new bindings in any environments.
+Given an environment \c{e}:
 
+\begin{itemize}
+	\item  \c{e$v} or \c{get("v", envir = e)} reads variable \c{v} in \c{e};
+	\item \c{e$v <- 2} or \c{assign("v", 2, envir = e)} writes value 2 in variable \c{v} in \c{e}. \c{v} is created if it did not exist in \c{e}.
+\end{itemize}
 
-The second substantial difference is the control that R gives over the
-choice of environment in which the AST is evaluated in. Beside
-traditional choices such as the top level or current lexical
-environment, R allows programmers to choose a fresh, empty,
-environment or any environment on the call stack. This is a
-significant increase in expressive power as functions that are
-otherwise not aware of the use of \eval may be deeply impacted.
+It means that for instance, one can directly modify a variable in the
+scope of its calling function, and there is even a special assignment
+operator for that purpose, \c{<<-}, \ie \c{v <<- 2} will search for a
+definition of \c{v} in all the parent environments, redefine the
+value, or create a new definition in the global environment. Explicit
+environments are used in R as hashtables, or to maintain state across
+function calls, or to create package namespaces.
 
 
 \subsection{Previous Work}
