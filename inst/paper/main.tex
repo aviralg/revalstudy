@@ -30,48 +30,45 @@
 \section{Introduction}
 
 Most dynamic languages provide their users with a facility to
-transform unstructured text into executable code, and to evaluate that
-code. In this paper we refer to this reflective facility of a language
-as \eval bowing to its origins in LISP in 1956~\cite{lisp}. \Eval has
-been much maligned over the years. In computing lore, it is as close
-to a boogeyman as it gets. Yet, for McCarthy, \eval was simply the way
-to write down the definition of LISP, he was surprised that someone
-coded it up and offered it to end users.  Since then, reflective
-facilities have been used to parameterize programs over code patterns
-that can be provided after the program is written.  The presence of
-such a feature in a language is a hallmark of dynamism as it is a form
-of delayed binding as what any particular call to \eval will do is
-only know at program run-time when that particular call site is
+transform unstructured text into executable code and evaluate that
+code. We refer to this reflective facility as \eval bowing to its
+origins in LISP, all the way back in 1956~\cite{lisp}. \Eval has been
+much maligned over the years. In computing lore, it is as close to a
+boogeyman as it gets. Yet, for McCarthy, \eval was simply the way to
+write down the definition of LISP, he was surprised that someone coded
+it up and offered it to end users. Since then, reflective facilities
+have been used to parameterize programs over code patterns that can be
+provided after the program is written. The presence of such a feature
+in a language is a hallmark of dynamism; it is a form of delayed
+binding as the behavior of any particular call to \eval will only be
+known when the program is run and that particular call site is
 evaluated.
 
 \vspace{2mm}\noindent\emph{Trouble in Paradise.} Reflective facilities
-hinder most attempt to reason about the code using them, as well as to
-apply meaning-preserving program transformations. In practice this
-means that static analysis techniques will loose so much precision as
-to become pointless and that anything but the most trivial, local,
-compiler optimizations will be unsound. Furthermore the addition of
-new code --- code that could have been obtained from a network
-connection --- as the program is running is a security vulnerability
-waiting to happen.
-
-To further illustrate the challenges at hand, consider the interaction
-between a static analysis tool and a dynamic language. An abstract
-interpretation-based program analyzer computes an over-approximation
-of the set of possible behaviors exhibited by the system under
-study~\cite{cc77}. The presence of a reflective operation entails that
-the operation may have \emph{any} behavior that can be expressed in
-the target language; i.e. as if we replaced it by any legal sequence
-of instructions. As dynamic languages tend to be permissive, the
-analysis has to, for example, assume that many (and sometimes all)
-functions in scope may have been redefined, e.g. that \texttt{`+`} now
-opens an Internet connection or something equally surprising. This
-means that a single occurrence of \eval causes the static analyzer to
-loose all information about the program state and the meaning of
-identifiers. This loss of precision can sometimes be mitigated by
-analyzing the string passed to \eval~\cite{} to bound its possible
-behavior but when the string comes from outside the program not much
-can be done. A frustrated group researchers argued giving up on
-soundness and, instead, under-approximating dynamic features
+hinder most attempts to reason about, or apply meaning-preserving
+transformation to, the code using them. In practice, \eval causes
+static analysis techniques to loose so much precision as to become
+pointless. For compilers, anything but the most trivial, local,
+optimizations are unsound after a use of \eval. Furthermore, the
+addition of arbitrary code --- code that could have been obtained from
+a network connection --- as a program is running is a security
+vulnerability waiting to happen. To illustrate these challenges,
+consider the interaction of a static analysis tool with a dynamic
+language. An abstract interpretation-based program analyzer computes
+an over-approximation of the set of possible behaviors exhibited by
+the program under study~\cite{cc77}. A reflective may have \emph{any}
+behavior that can be expressed in the target language; i.e. \eval can
+be replaced by any legal sequence of instructions. As dynamic
+languages tend to be permissive, the analysis has to, for example,
+assume that many (or all) functions in scope may have been redefined,
+e.g. that \texttt{`+`} now opens a network connection or something
+equally surprising. A single occurrence of \eval causes the static
+analyzer to loose all information about program state and
+meaning of identifiers. This loss of precision can sometimes be
+mitigated by analyzing the string argument~\cite{moller03} to bound its
+possible behavior but when the string comes from outside the program
+not much can be done. A frustrated group researchers argued giving up
+on soundness and, instead, under-approximating dynamic features
 (soundiness)~\cite{soundy}. In their words ``a practical analysis,
 therefore, may pretend that \eval does nothing, unless it can
 precisely resolve its string argument at compile time.'' Alas,
@@ -91,42 +88,46 @@ relatively harmless. While this backs up the soundiness squad's
 approach, does it generalize to other application domains than web
 programming and to other languages?
 
-\vspace{2mm}\noindent\emph{The here and now.}  In this study, we
+\vspace{2mm}\noindent\emph{The Here and Now.} In this study, we
 investigate the usage of \eval in programs written in the R
 programming language. R is language designed by statisticians for
-applications in data science~\cite{r,R96}. What makes looking at R after
-JavaScript interesting is that, while both languages are dynamic, they
-are quite different. While one can program in an object-oriented style
-in R, like in JavaScript, R is primarily a lazy, untyped, functional
-language.  JavaScript was designed to run untrusted code in browser,
-while R is used for statistical computing on desktops. JavaScript is a
-general purpose language used by a wide community of programmers;
-while R is used for scientific computing by data scientists and domain
-experts with, often, limited programming experience. One can
-distinguish between library implementers, developers with some
-programming experience and a working knowledge of R, and end-users,
-who are typically not expert programmers and often have only a cursory
-knowledge of the language.\footnote{Consider that R evaluates function
-argument lazily, just like Haskell. We informally surveyed end-users,
-including computer scientists, and did not find a single user aware of
-this fact. Library developers, on the other hand, know about laziness
-and program defensively around it.} Our goal is thus to highlight the
-differences in usage between JavaScript and R, and try to explain
-those differences in terms of language features, application domain
-and programmer experience.
+applications in data science~\cite{r,R96}. What makes looking at R
+after JavaScript interesting is that, while both languages are
+dynamic, they are quite different. While one can program in an
+object-oriented style in R, like in JavaScript, R is primarily a lazy,
+untyped, functional language. JavaScript was designed to run untrusted
+code in browser, while R is used for statistical computing on
+desktops. JavaScript is a general purpose language used by a wide
+community of programmers; while R is used for scientific computing by
+data scientists and domain experts with, often, limited programming
+experience. One can distinguish between library implementers,
+developers with some programming experience and a working knowledge of
+R, and end-users, who are typically not expert programmers and often
+have only a cursory knowledge of the language.\footnote{Consider that
+R evaluates function argument lazily, just like Haskell. We informally
+surveyed end-users, including computer scientists, and did not find a
+single user aware of this fact. Library developers, on the other hand,
+know about laziness and program defensively around it.} Our goal is
+thus to highlight the differences in usage between JavaScript and R,
+and try to explain those differences in terms of language features,
+application domain and programmer experience. Hopefully some of our
+observations will generalize to other languages.
 
-\vspace{2mm}\noindent\emph{The What and How.}  One significant benefit
+\vspace{2mm}\noindent\emph{The What and How.} One significant benefit
 of choosing R is that every package in the CRAN repository is curated
 and comes with examples of typical usage. This gives us a large code
-base that we can analyze dynamically.  To observe \eval we built a
-two-level monitoring infrastructure: we can monitor R programs by
-instrumentation --- this gives us access to many user-visible properties
-of R programs --- but we can also monitor the inner working of the R
-interpreter --- this allows us to capture details of execution that are
-not exposed at the source level. Dynamic analysis is of course limited
-in that it can only observe behaviors that are triggered by the
-particular inputs passed to the program. Luckily, CRAN libraries come
-with multiple input datasets and use-cases.
+base that we can analyze dynamically. To observe \eval we built a
+two-level monitoring infrastructure:\footnote{Our infrastructure is
+open source and publicly available, our anonymized code is at {\tt
+  http://url.com}, a more complete artifact will be submitted to the
+artifact evaluation committee. } we can monitor R programs by
+instrumentation --- this gives us access to many user-visible
+properties of R programs --- but we can also monitor the inner working
+of the R interpreter --- this allows us to capture details of
+execution that are not exposed at the source level. Dynamic analysis
+is of course limited in that it can only observe behaviors that are
+triggered by the particular inputs passed to the program. Luckily,
+CRAN libraries come with multiple input datasets and use-cases.
 
 The choice of corpus is crucial for analyses like ours.  Our corpus
 has been constructed to reflect the levels of sophistication of the R
@@ -143,8 +144,10 @@ represent a more lively ecosystem with new libraries added each day.
 Finally, end user code is often one-use scripts thrown together and
 sometimes never revisited.
 
-Our infrastructure is publicly available, released in open source, and
-our code, and data will be submitted for artifact evaluation.
+
+\vspace{2mm}\noindent\emph{Why do we Eval?} {\bf A short summary of the
+results should go here.}
+
 
 \section{Background and Previous work}
 
@@ -180,59 +183,61 @@ reference.
 
 \subsection{Eval Semantics}
 
-The expressive power of \eval depends on a number of choices made by
-the programming language designers. The two axes that are the most
-relevant here are:
+The expressive power of \eval depends on choices made by the language
+designers along the following two axes:
 \begin{itemize}
 \item {\bf Scoping:} What environment does the string passed to \eval
-  execute in? JavaScript and R evaluate the expression in the current
-  scope. This means that local variables and parameters are exposed to
-  \eval, breaking the abstraction boundary of the enclosing function.
-  Julia takes a more restrictive approach by running \eval at the
-  ``top level'', i.e. in the global environment, outside of any
-  function's environment. JavaScript has a global \eval that behaves
-  like Julia, it also has a ``strict mode'' in which \eval is allowed
-  to access local variables, but fobidden from injecting new variables
-  in the local environment. In Java, one can implement \eval but the
+  execute in? JavaScript and R evaluate it in the current environment,
+  thus exposing local variables and parameters to \eval and breaking
+  the abstraction boundary of the enclosing function. Julia is more
+  restrictive, it runs \eval at the ``top level'', in the global
+  environment. JavaScript has a global \eval that behaves like Julia,
+  it also has a ``strict mode'' in which \eval is allowed to access
+  local variables, but fobidden from injecting new variables in the
+  local environment. In Java, one can implement \eval but the
   expression will execute in new environment.\footnote{While \eval
-  used to be available only in interpreted languages, the advent of
-  just-in-time compilation gradually lifted this restriction. To
-  implement \eval in Java requires wrapping its input in a static
-  method of an anonymous class, generating bytecode for that class,
-  invoking the class loader to install the code, and then using
-  reflection to call the new method. }
+  used the purview of interpreted languages, the advent of
+  just-in-time compilation lifted this restriction. To implement \eval
+  in Java requires wrapping its input in a static method of a new
+  anonymous class, generating bytecode for that class, invoking the
+  class loader to install that code, and finally reflectively calling
+  the new method. }
 \item {\bf Reflective API:} What other reflective operations are
-  exposed to user code? JavaScript does provides few reflective
-  functions (other than being able to enumerate the properties of an
-  object and to access properties with strings), the string passed to
-  \eval is thus limited to what can be expressed in JavaScript. R, on
-  the other hand, has a rich reflective interface. For example, R
-  allows user code to walk the call stack and arbitrarily add and
-  delete local variables in any environment.
+  exposed to user code? JavaScript provides few reflective functions
+  (other than enumeration of the properties of an object and access to
+  properties with strings), \eval is thus limited to what can be
+  expressed in JavaScript code. R, on the other hand, has a rich
+  reflective interface. For example, R allows user code to walk the
+  call stack and arbitrarily add and delete local variables in any
+  environment. This reflective API means that there are few limits to
+  what can do.
 \end{itemize}
 
 \noindent
-These design choices impact our ability to reason about code. More
-expressive power for \eval translates directly into additional
-restriction for program analysis and transformation tools. The reason
-Julia has restricts \eval to execute in top level environment is that
-they wanted to preserve their compiler's ability to optimize
-functions~\cite{oopsla18a}. What they wanted to prevent was the case
-where \eval changed the type of local variables as this would require
-recompilation of the method (or prevent optimization). Julia even adds
-a versoning mechanism, called world age, to ensure that code added
-during an \eval does not invalidate optimizations such as
-inlining~\cite{oopsla20a}. More permissive languages such as R are
-much harder to deal with from a compiler's perspective.
+These design choices impact our ability to reason about code when
+reflection is used. A more expressive \eval translates directly into
+additional restrictions for program analysis and transformation tools.
+The reason Julia restricts \eval to the top level environment is to
+preserve the compiler's ability to optimize
+functions~\cite{oopsla18a}. What the Julia designers wanted was to
+prevent \eval from modifying the type of local variables as this would
+require recompilation of the method. Julia even adds a versoning
+mechanism, called world age, to ensure that code added during an \eval
+does not invalidate optimizations such as inlining~\cite{oopsla20a}.
+More permissive languages such as R are much harder to deal with from
+a compiler's perspective.
 
 \medskip\noindent{\it Eval in R.} There are four reflective functions
-that take abstract syntax trees (called expressions), parse it as
-code, and evaluate it. These functions are \c{eval}, \c{evalq},
-\c{eval.parent}, and \c{local}. Unlike other languages, R's \eval does
-not take a string, but rather an expression. As this is slightly more
-involved, it may discourage some casual users. There are two ways to
-obtain an expression. Given a string, the \c{parse()} function retuns
-an unevaluated expression. The other way is to use the function
+that take abstract syntax trees (called expressions), parse them as
+code, and evaluate the result. These functions are \c{eval},
+\c{evalq}, \c{eval.parent}, and \c{local}. Taking an expression rather
+than a string, may discourage some casual users as manipulating
+expressions is slightly more involved.\footnote{The rationale for
+\eval taking expressions is explained by the main use case for \eval,
+namely extending the language by reinterpretation of promises; R gives
+access to the code of a promise as an expression.} There are two ways
+to obtain an expression. Given a string, the \c{parse()} function
+retuns an unevaluated expression. The other way is to use the function
 \c{substitute(e,envir)}, it yields the parse tree of the expression
 \c{e} after performing substitutions defined by the bindings in the
 \c{envir} parameter.
@@ -310,20 +315,20 @@ state across function calls, or to create package namespaces.
 Richards et al.~\cite{ecoop11} provided the first large-scale study of
 the runtime behavior of \eval in JavaScript. They dynamically analyzed
 a corpus of the 10,000 most popular websites with an instrumented web
-browser to gather execution traces.  They show that \eval is pervasive
+browser to gather execution traces. They show that \eval is pervasive
 with 82\% of the most popular websites using it. The reasons for its
 use include the desire to load code on demand, deserialization of JSON
-dataq and lightweight meta-programming to customize web pages.  While
+dataq and lightweight meta-programming to customize web pages. While
 many uses were legitimate, just as many were unnecessary and could be
-replaced with equivalent and safer code.  They categorized inputs to
-\eval so as to cover the vast majority of input strings.  Restricting
+replaced with equivalent and safer code. They categorized inputs to
+\eval so as to cover the vast majority of input strings. Restricting
 themselves to \eval in which all named variables refer to the global
 scope, many patterns could be replaced by more disciplined
-code~\cite{oopsla12b}.  The work did not measure code coverage, so the
-numbers presented are a lower bound on the possible behaviors.
-Furthermore, JavaScript usage in 2011 is likely different from today,
-e.g. Node.js was not covered by Richards.  More details about dynamic
-analysis of JavaScript can be found in~\cite{liang}.
+code~\cite{oopsla12b, moller12}. The work did not measure code
+coverage, so the numbers presented are a lower bound on the possible
+behaviors. Furthermore, JavaScript usage in 2011 is likely different
+from today, e.g. Node.js was not covered by Richards. More details
+about dynamic analysis of JavaScript can be found in~\cite{liang}.
 
 Wang et al.~\cite{wang} analyzed use of dynamic features in 18 Python
 programs to find if they affect file change-proneness. Files with
