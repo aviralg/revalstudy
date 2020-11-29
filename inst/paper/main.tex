@@ -11,19 +11,20 @@
   \noindent Most dynamic languages allow users to turn text into code
   using various functions, often named \eval, with language-dependent
   semantics. The widespread use of these reflective functions hinders
-  static analysis and prevents compilers from performing many
+  static analysis and prevents compilers from performing
   optimizations. This paper aims to provide a better sense of why
-  programmers use \eval.  Understanding how \eval is used in practice
+  programmers use \eval. Understanding why \eval is used in practice
   is key to finding ways to mitigate its negative impact. We have
   reasons to believe that reflective feature usage is language and
-  application domain specific. In this paper, we focus on data science
-  code written in R, and compare our results to previous work that
-  analyzed web programming in JavaScript.  We conduct a large-scale
-  study of a corpus of \CorpusAllCodeRnd lines of libraries and
-  end-user code on which we performed dynamic analysis to confirm that
-  \eval is indeed in widespread use. We found that \eval is more
-  dangerous in some ways, and safer in others, than what was
-  previously reported for JavaScript.
+  application domain specific; we focus on data science code written
+  in R, and compare our results to previous work that analyzed web
+  programming in JavaScript. Dynamic analysis of a corpus of
+  \CorpusAllCodeRnd lines of libraries and end-user code confirms that
+  \eval is indeed in widespread use; R's \eval is more dangerous in
+  some ways, and safer in others, than what was previously reported
+  for JavaScript.
+  %% TODO ::: Add a sentance about summarizing why users resort to
+  %% eval -- Jan
 \end{abstract}
 
 
@@ -177,51 +178,84 @@ reference.
 
 \subsection{Eval Semantics}
 
-The expressive power of \eval depends on choices made by the language
-designers along the following two axes:
+The expressive power of \eval depends on design decisions along two
+axes:
 \begin{itemize}
-\item {\bf Scoping:} What environment does the string passed to \eval
-  execute in? JavaScript and R evaluate it in the current environment,
-  thus exposing local variables and parameters to \eval and breaking
-  the abstraction boundary of the enclosing function. Julia is more
-  restrictive, it runs \eval at the ``top level'', in the global
-  environment. JavaScript has a global \eval that behaves like Julia,
-  it also has a ``strict mode'' in which \eval is allowed to access
-  local variables, but fobidden from injecting new variables in the
-  local environment. In Java, one can implement \eval but the
-  expression will execute in new environment.\footnote{While \eval
-  used the purview of interpreted languages, the advent of
-  just-in-time compilation lifted this restriction. To implement \eval
-  in Java requires wrapping its input in a static method of a new
-  anonymous class, generating bytecode for that class, invoking the
-  class loader to install that code, and finally reflectively calling
-  the new method. }
+\item {\bf Scoping:} What environment does \eval executes its argument
+  in? JavaScript and R evaluate it in the current environment, thus
+  exposing local variables and parameters and breaking the caller's
+  abstraction boundary. Julia is more restrictive, \eval runs at the
+  ``top level'', in the global environment. JavaScript has a global
+  \eval that behaves like Julia, and a ``strict mode'' in which \eval
+  may access local variables, but fobidden from injecting new ones in
+  the local environment. In Java, one can implement \eval with
+  Julia-semantics.\footnote{While \eval used to be the purview of
+  interpreted languages, just-in-time compilation lifted this
+  restriction. \Eval takes its input, wraps it in a static method of a
+  new anonymous class, generates bytecode for that class, invokes
+  the class loader to install that code, and finally reflectively
+  calls the method. }
 \item {\bf Reflective API:} What other reflective operations are
   exposed to user code? JavaScript provides few reflective functions
-  (other than enumeration of the properties of an object and access to
-  properties with strings), \eval is thus limited to what can be
-  expressed in JavaScript code. R, on the other hand, has a rich
-  reflective interface. For example, R allows user code to walk the
-  call stack and arbitrarily add and delete local variables in any
-  environment. This reflective API means that there are few limits to
-  what can do.
+  (other than enumeration of an object's properties and string-based
+  indexing), the impact of \eval is thus limited. R, on the other
+  hand, has a rich reflective API. For example, R allows user code to
+  walk the call stack and arbitrarily add and delete local variables.
+  This means that there are few limits to the side-effects of an
+  \eval.
 \end{itemize}
 
 \noindent
 These design choices impact our ability to reason about code when
 reflection is used. A more expressive \eval translates directly into
 additional restrictions for program analysis and transformation tools.
-The reason Julia restricts \eval to the top level environment is to
-preserve the compiler's ability to optimize
-functions~\cite{oopsla18a}. What the Julia designers wanted was to
-prevent \eval from modifying the type of local variables as this would
-require recompilation of the method. Julia even adds a versoning
-mechanism, called world age, to ensure that code added during an \eval
-does not invalidate optimizations such as inlining~\cite{oopsla20a}.
-More permissive languages such as R are much harder to deal with from
-a compiler's perspective.
+The reason Julia restricts \eval to the top level is to preserve the
+compiler's ability to optimize code~\cite{oopsla18a}. In particular,
+\eval had to be prevented from changing the type of local variables as
+this would require recompilation of the method. Julia even adds a
+versoning mechanism, called world age, to ensure that code added
+during an \eval does not invalidate inlining
+optimizations~\cite{oopsla20a}. More permissive languages such as R
+are much harder to deal with from a compiler's perspective.
 
-\medskip\noindent{\it Eval in R.} There are four reflective functions
+\medskip\noindent{\it Eval in R.} The reflective interface exposed by
+R is somewhat complex. The core library exports four functions with
+slightly different semantics, \c{eval}, \c{evalq}, \c{eval.parent},
+and \c{local}. \Eval is the more general function, and, unlike in
+JavaScript, it takes three arguments, an expression, its environment
+and the enclosing environment. The following discussion simplify some
+details which are not relevant to this paper. For the interested
+reader we recommend the excellent book by Hadley
+Wickham~\cite{hadley}. The definition of \eval starts as follows:
+
+\begin{lstlisting}
+ eval
+   <- function(expr,
+                envir = parent.frame(),
+                enclos = if(is.list(envir)) parent.frame() else baseenv())
+          { ...body... }
+\end{lstlisting}
+The parameters are \c{expr}, the value to be evaluated, \c{envir}, the
+environment in which evaluation happens, and \c{enclos}, the
+environment to look up objects not found in \c{envir} (by default
+either the top level, \c{baseenv} or the environment of the caller).
+The \c{expr} parameter can take values of different type, for our
+purposes we focus on the most common, {\tt expression}s. It is easiest
+to think of an \c{expression} as an abstract syntax tree as returned
+by R's parser. The simplest way to create an \c{expression} is to call
+\c{quote} passing some R expression:
+\begin{lstlisting}
+  > quote(a + b)
+  # a + b
+\end{lstlisting}
+Here the return value is an abstract syntax tree. From a
+string, use  the \c{parse} function:
+\begin{lstlisting}
+  > parse(text="a+b")
+  # expression(a+b)
+\end{lstlisting}
+
+There are four reflective functions
 that take abstract syntax trees (called expressions), parse them as
 code, and evaluate the result. These functions are \c{eval},
 \c{evalq}, \c{eval.parent}, and \c{local}. Taking an expression rather
@@ -248,28 +282,6 @@ manipulation of parse trees, which are themselves first class objects.
 Expressions are evaluated using \eval (or one its variants). The \eval
 function takes three arguments:
 
-\begin{lstlisting}
- eval(expr,
-      envir = parent.frame(),
-      enclos = if(is.list(envir) || is.pairlist(envir))
-               parent.frame() else baseenv())
-\end{lstlisting}
-
-\noindent
-This code is part of the definition of \eval, it specifies that the
-function takes an \c{expr} which is the value to be evaluated,
-\c{envir} is the environment in which evaluation happes, and
-\c{enclos} is relevant when \c{envir} is a list or a data frame, then
-it specifies where R looks for objects not found in \c{envir}. This
-can be \c{NULL} (interpreted as the base package environment,
-\c{baseenv()}) or an environment. Thus, the expression \c{expr}
-evaluates in the environment \c{envir} and returns the computed value.
-If \c{envir} is missing, then the default is \c{parent.frame()} (the
-environment where the call to \eval was made). Values to be evaluated
-can be of types \c{call} (function calls) or \c{expression} (arbitrary
-expressions), \c{name} (when the symbol is looked up in the current
-scope and its binding is evaluated), promise, or any of the basic
-types such as vectors and environments (which are returned unchanged).
 
 The \c{evalq} form is equivalent to \c{eval(quote(expr), ...)}.
 Quoting that argument prevents if from being evaluated in the current
