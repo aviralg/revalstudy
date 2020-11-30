@@ -1,11 +1,11 @@
 MAKEFLAGS += --no-builtin-rules
 
 .SUFFIXES:
-.PHONY: calls corpus kaggle enrich analysis
+.PHONY: calls corpus kaggle preprocess analysis
 
 ANALYSIS_DIR := analysis
 HTML_DIR     := $(ANALYSIS_DIR)/html
-DATA_DIR     := data
+DATA_DIR     ?= data
 BASE_DIR     := ../..
 RUN_DIR      := $(BASE_DIR)/run
 
@@ -13,7 +13,7 @@ RUN_PACKAGE_METADATA_DIR      := $(RUN_DIR)/package-metadata
 RUN_PACKAGE_COVERAGE_DIR      := $(RUN_DIR)/package-coverage
 RUN_KAGGLE_DIR                := $(RUN_DIR)/kaggle-run
 RUN_PACKAGE_EVALS_DIR         := $(RUN_DIR)/package-evals-static
-RUN_PACKAGE_TRACE_DIR         := $(RUN_DIR)/package-evals-traced.5
+RUN_PACKAGE_TRACE_DIR         ?= $(RUN_DIR)/package-evals-traced.5
 RUN_PACKAGE_RUNNABLE_CODE_DIR := $(RUN_DIR)/package-runnable-code-eval
 
 # raw files
@@ -24,10 +24,12 @@ RUN_PACKAGE_TRACE_LOG_FILE     := $(RUN_PACKAGE_TRACE_DIR)/parallel.log
 RUN_CALLS_FILE                 := $(RUN_PACKAGE_TRACE_DIR)/calls.fst
 RUN_PROGRAM_FILE               := $(RUN_PACKAGE_TRACE_DIR)/program.fst
 
-RUN_SUM_CORE_FILE    := $(RUN_PACKAGE_TRACE_DIR)/summarized-core.fst
-RUN_SUM_KAGGLE_FILE  := $(RUN_PACKAGE_TRACE_DIR)/summarized-kaggle.fst
-RUN_SUM_PKGS_FILE    := $(RUN_PACKAGE_TRACE_DIR)/summarized-packages.fst
-RUN_RAW_FILE         := $(RUN_PACKAGE_TRACE_DIR)/raw.fst
+RUN_SUM_CORE_FILE   	:= $(RUN_PACKAGE_TRACE_DIR)/summarized-core.fst
+RUN_SUM_KAGGLE_FILE 	:= $(RUN_PACKAGE_TRACE_DIR)/summarized-kaggle.fst
+RUN_SUM_PKGS_FILE   	:= $(RUN_PACKAGE_TRACE_DIR)/summarized-packages.fst
+RUN_RAW_FILE        	:= $(RUN_PACKAGE_TRACE_DIR)/raw.fst
+RUN_SUM_EXTERNALS_FILE	:= $(RUN_PACKAGE_TRACE_DIR)/summarized-externals.fst
+RUN_SUM_UNDEFINED_FILE  := $(RUN_PACKAGE_TRACE_DIR)/summarized-evals-undefined.fst
 
 PACKAGE_EVALS_FILE         := $(DATA_DIR)/evals.fst
 PACKAGE_COVERAGE_FILE      := $(DATA_DIR)/coverage.fst
@@ -55,6 +57,9 @@ RUN_KAGGLE_SCRIPTS_FILE     := $(RUN_KAGGLE_DIR)/scripts.txt
 RUN_KAGGLE_KERNEL_FILE      := $(RUN_KAGGLE_DIR)/kernels.csv
 RUN_KAGGLE_PROGRAM_FILE     := $(RUN_KAGGLE_DIR)/program.fst
 
+# preprocess runtime artifacts
+PACKAGE_EVALS_DYNAMIC_FILE	:= $(DATA_DIR)/evals-dynamic.fst
+
 R_DIR        := $(realpath $(BASE_DIR))/R-dyntrace
 R_BIN        := $(R_DIR)/bin/R
 R_SCRIPT_BIN := $(R_DIR)/bin/Rscript
@@ -65,7 +70,7 @@ MERGE_CSV  := $(R_SCRIPT_BIN) $(BASE_DIR)/runr/inst/merge-csv.R
 TSV_TO_FST  = $(R) 'fst::write_fst(readr::read_tsv("$<"), "$@", compress=100)'
 RENDER_RMD  = $(R) 'rmarkdown::render("$(1)", output_dir="$(HTML_DIR)")'
 
-all: kaggle enrich
+all: kaggle preprocess
 
 ################################################################################
 ## CORPUS
@@ -95,7 +100,7 @@ $(PACKAGE_TRACE_LOG_FILE): $(RUN_PACKAGE_TRACE_LOG_FILE)
 	$(TSV_TO_FST)
 
 # TODO can there be a rule from csv to fst and from tsv to fst?
-data/%.fst: 
+data/%.fst:
 	$(R) 'fst::write_fst(readr::read_csv("$<"), "$@", compress=100)'
 
 $(CORPUS_FILE): \
@@ -142,8 +147,8 @@ calls: $(RUN_CALLS_FILE) $(RUN_PROGRAM_FILE)
 
 # FIXME: why does it run twice
 #enrich: $(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE) $(RUN_RAW_FILE)
-enrich:  $(RUN_CALLS_FILE) $(RUN_KAGGLE_CALLS_FILE)
-	$(call RENDER_RMD,$(ANALYSIS_DIR)/enrich_dataset.Rmd)
+preprocess:  $(RUN_CALLS_FILE) $(RUN_KAGGLE_CALLS_FILE)
+	$(R_SCRIPT_BIN) $(ANALYSIS_DIR)/preprocess.R $(CORPUS_FILE) $(RUN_CALLS_FILE) $(RUN_KAGGLE_CALLS_FILE) $(PACKAGE_EVALS_DYNAMIC_FILE) $(RUN_SUM_UNDEFINED_FILE) $(RUN_RAW_FILE) $(RUN_SUM_CORE_FILE) $(RUN_SUM_PKGS_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_EXTERNALS_FILE)
 
 analysis: $(RUN_SUM_CORE_FILE) $(RUN_SUM_KAGGLE_FILE) $(RUN_SUM_PKGS_FILE)
 	$(call RENDER_RMD,$(ANALYSIS_DIR)/analysis_stable.Rmd)

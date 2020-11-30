@@ -16,7 +16,7 @@ library(fst)
 
 get_expr <- function(eval_call) {
   if (is.na(eval_call)) {
-    return(NA)
+    return(NA_character_)
   }
   # Special case for expressions starting with _ (such as _inherit in ggproto)
   escaped_eval_call <- if (startsWith(eval_call, "_")) {
@@ -26,7 +26,7 @@ get_expr <- function(eval_call) {
     eval_call
   }
 
-  exp <- NA
+  exp <- NA_character_
   # Would fail for instance for
   # "`$<-`(new(\"C++Field\", .xData = <environment>), \"read_only\", TRUE)" (classInt package)
   try(exp <- parse(text = escaped_eval_call)[[1]], silent = TRUE)
@@ -421,7 +421,6 @@ Example:
 }
 
 main <- function(argv) {
-  argv <- argv[-1] # Remove the command name
   if (length(argv) != 10) {
     cat("Only ", length(argv), " arguments. Missing arguments!\n")
     usage()
@@ -471,8 +470,8 @@ main <- function(argv) {
 
   cat("Deduplicating\n")
   eval_calls <- eval_calls_raw %>% deduplicate()
-  cat("Adding types\n")
-  eval_calls <- eval_calls %>% add_types()
+  # cat("Adding types\n")
+  # eval_calls <- eval_calls %>% add_types() # This step is now useless as there are directly strings
   cat("Correcting srcrefs\n")
   eval_calls <-
     eval_calls %>%
