@@ -398,23 +398,25 @@
   framexrightmargin=-1mm,
   tabsize=2,
   belowskip=0pt,
-  basicstyle=\small\ttfamily,
+  basicstyle=\ttfamily,
   backgroundcolor=\color{LightGray},
   emphstyle=\sffamily,
-  keywordstyle=\bfseries,
+  keywordstyle=\ttfamily,
   commentstyle=\color{Gray}\em,
   stringstyle=\color{Gray}
 }
 \lstdefinestyle{R}{ %
   language=R,
-  deletekeywords={new, env, equal, c, runif, trace, args, exp, t, all, get,
-    names, is, environment, class, substitute, expression, list, null, Internal,
-    sample, diag, length, rep, nrow, stop, offset, pmax, Machine,
-    double, parent, frame, par, methods, end, dir, apply, deparse, missing,
-    plot, as, integer, character, inherits, numeric, paste, eval, quote, call,
-    formula, df, log, sum, c, local, legend, file, scale, round, title, order,
-    drop, which, grid, print, ncol, dim, max, format, sort, rug, matrix, start,
-    unique, mean, df, attr, do, power, \$},
+  deletekeywords={new, env, equal, c, runif, trace, args, exp, t, all,
+    get, names, is, environment, class, substitute, expression, list,
+    null, Internal, sample, diag, length, rep, nrow, stop, offset,
+    pmax, Machine, double, parent, frame, par, methods, end, dir,
+    apply, deparse, missing, plot, as, integer, character, inherits,
+    numeric, paste, eval, quote, call, formula, df, log, sum, c,
+    local, legend, file, scale, round, title, order, drop, which,
+    grid, print, ncol, dim, max, format, sort, rug, matrix, start,
+    unique, mean, df, attr, do, power, eval, evalq, eval.parent,
+    local, parent.frame, expression, subsitute},
   otherkeywords={},
   breaklines=true
 }
@@ -454,7 +456,7 @@
 
 \bibliographystyle{plainurl}% the mandatory bibstyle
 %Editor-only macros:: begin (do not touch as author)%%%%%%%%%%%%%%%%%%%%%%%%%%%\
-%%%%%%%                                                                         
+%%%%%%%
 \EventEditors{Eds.}
 \EventNoEds{2}
 \EventLongTitle{European Conference on Object Oriented Programming (ECOOP 2021)}
@@ -466,7 +468,7 @@
 \EventLogo{}
 \SeriesVolume{42}
 \ArticleNo{23}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                          
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{CCSXML}
   <ccs2012>
@@ -499,5 +501,3 @@
 \Copyright{Anon}
 
 \keywords{R, reflection, eval}
-
-
