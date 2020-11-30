@@ -622,6 +622,9 @@ calls originate from statistical modeling packages such as \mlogit,
 
 \section{A Taxonomy of Eval}
 
+The previous section gave a quantitative view of the usage of \eval;
+in this section we try to elucidate \emph{what} it does.
+
 
 In this section we turn our attention to the expression passed for
 evaluation to \eval. The \eval function accepts all types of R objects
@@ -677,8 +680,8 @@ receive mostly environments as inputs. In fact,
 receive environments as input expressions. There are only four
 callsites in package evals that receive environments as expressions.
 \begin{compactitem}[$-$]
-\item \c{ggplot2::ggproto} contributes to 99.9\% of package \eval calls that
-  receive environments as input.
+\item \c{ggplot2::ggproto} contributes to 99.9\% of package \eval
+  calls that receive environments as input.
 \item \c{R6::generator_funs} function contributes to only 936 \eval
   calls and implements the same functionality as \c{ggplot2::ggproto}
   but for the \emph{R6} OOP system.
@@ -773,30 +776,6 @@ creation of custom transformation functions for affecting the
 interpolation and concatenation of input by the \c{glue} package.
 
 
-\subsubsection{Operation Mix}
-
-The JavaScript paper reported on the operation mix within \evals. This
-means the proportion of read, write, and call bytecodes performed by
-the JavaScript interpreter. They found that some web pages were
-creating objects more frequently and writing into their fields. In R,
-nearly every operation performed in the interpreter is a function
-call. We observe 2.9G calls and, of those 125M happen inside \eval
-(there are 463M native calls, of which only 31M are in \eval).
-
-{\bf there is no good reason for not counting reads and writes, we can...}
-
-
-%% ...The following is fluff ...
-
-%% Qualitatively, we observe all kinds of operations being executed
-%% inside \eval calls, from numerical computing for statistical
-%% modeling to reflection and metaprogramming for implementing DSLs.
-%% Even testing frameworks such \c{genthat} heavily rely upon \eval to
-%% execute test code snippets. The core R implementation is rife with
-%% uses of \eval for mundane things like accessing default values of
-%% formal parameters and in statistical packages for computation.
-
-
 \subsubsection{Usage Patterns}
 
 Richards et al.~\cite{ecoop11} identified a number of frequently
@@ -826,8 +805,8 @@ used mostly because the language provides dedicated features for it.
 The few calls in Library pattern come mostly from file loading
 functions such as \c{source} and \c{sys.source}.
 %
-\noindent \emph{Read} pattern in JavaScript represented mostly an incorrect
-
+\noindent
+\emph{Read} pattern in JavaScript represented mostly an incorrect
 access to an object's property or local variable both replaceable by
 JavaScript core functions. In the case of R there are \PatternReadRnd
 read \eval calls (\PatternReadRatio). They come from calls like
@@ -856,14 +835,14 @@ we have randomly chosen \PatternManualPackages packages and manually
 looked at \PatternManualCallsites call sites from which we have
 observed the following categories:
 
-\subsubsection{Recording the current call} R provides a \c{match.call} function
-which can return the current call. This is heavily used by the
-statistical model-fitting functions that records the current call that
-is then reevaluated in the different environment. Another pattern is
-to match the current call, adjust some arguments and pass it to
-another function. For example the \c{write.csv} function changes the
-\c{sep} argument in the matched call and reevaluates itself as
-\c{write.table}:
+\subsubsection{Recording the current call}
+R provides a \c{match.call} function which can return the current
+call. This is heavily used by the statistical model-fitting functions
+that records the current call that is then reevaluated in the
+different environment. Another pattern is to match the current call,
+adjust some arguments and pass it to another function. For example the
+\c{write.csv} function changes the \c{sep} argument in the matched
+call and reevaluates itself as \c{write.table}:
 %
 \begin{lstlisting}
     Call <- match.call(expand.dots = TRUE)
@@ -883,53 +862,58 @@ or use the super assignment operator(\c{<<-}) to write to parent
 scope. The \c{local} function which is part of Core R is an example of
 this usage pattern.
 
-\subsubsection{Dynamic Code Loading} The combination of \parse and \eval is
-used to parse text from string or file and evaluate in a custom environment.
-This pattern is used by the \source Core R function to load R code from a
-file in the current workspace. This is quite useful for loading functions
-for interactive data analysis.
+\subsubsection{Dynamic Code Loading}
+The combination of \parse and \eval is used to parse text from string
+or file and evaluate in a custom environment. This pattern is used by
+the \source Core R function to load R code from a file in the current
+workspace. This is quite useful for loading functions for interactive
+data analysis.
 
-\subsubsection{Metaprogramming} The combination of \eval and \substitute is
- used to do metaprogramming in R. \substitute can be used to
- synthesize ASTs by stitching together user inputs. \substitute walks
- over its argument AST and replaces the symbols with their bindings in
- the specified environment and returns this new AST which can then be
- evaluated in custom environments using \eval.
+\subsubsection{Metaprogramming}
+The combination of \eval and \substitute is used to do metaprogramming
+in R. \substitute can be used to synthesize ASTs by stitching together
+user inputs. \substitute walks over its argument AST and replaces the
+symbols with their bindings in the specified environment and returns
+this new AST which can then be evaluated in custom environments using
+\eval.
 
-  \subsubsection{Convenience} Eval is used to make some programming tasks easier (and/or shorter). For example, in \c{data.table}, it is used to set R options from a character vector
+\subsubsection{Convenience}
+Eval is used to make some programming tasks easier (and/or shorter).
+For example, in \c{data.table}, it is used to set R options from a
+character vector
   \begin{lstlisting}
 opts = c("datatable.verbose"="FALSE", ...) for (i in names(opts))
 eval(parse(text=paste0("options(",i,"=",opts[i],")")))
 
   \end{lstlisting}
   %
-  instead of manually calling \c{options(datatable.verbose=FALSE)}
+instead of manually calling \c{options(datatable.verbose=FALSE)}
 
-  \subsubsection{Implementation}
-  The package installation process adds an extra file to the package
-  directory that contains the code to load the package code inside a
-  \local block. It creates a namespace object and injects the package
-  bindings.
+\subsubsection{Implementation}
+The package installation process adds an extra file to the package
+directory that contains the code to load the package code inside a
+\local block. It creates a namespace object and injects the package
+bindings.
 
-  \subsubsection{Miscellaneous}
-  \eval is also used in R packages to get around various limitations.
-  For example, in \datatable package, \eval is used to modify a
-  binding in the \base package of R. Bindings in the \base package are
-  locked for modification and require explicit unlocking using
-  function \unlockBinding. However, directly using this function
-  triggers a restricted-function-use warning during package build,
-  preventing the package to be accepted by CRAN. The \datatable gets
-  around this limitation by enclosing the call to \unlockBinding
-  inside \eval. From the same reason, other packages use \eval to
-  access private variables and functions from their dependencies.
+\subsubsection{Miscellaneous}
+\eval is also used in R packages to get around various limitations.
+For example, in \datatable package, \eval is used to modify a binding
+in the \base package of R. Bindings in the \base package are locked
+for modification and require explicit unlocking using function
+\unlockBinding. However, directly using this function triggers a
+restricted-function-use warning during package build, preventing the
+package to be accepted by CRAN. The \datatable gets around this
+limitation by enclosing the call to \unlockBinding inside \eval. From
+the same reason, other packages use \eval to access private variables
+and functions from their dependencies.
 
 \subsection{Necessity of Eval}
 
 \subsubsection{Unnecessary use of eval}
-  Similarly to JavaScript, there are also unnecessary uses of \eval.
-  For example, the \c{PerformanceAnalytics} package contains a function
-  \c{chart.QQPlot} that uses \eval to resolve a string into function and
-  another to call it and assign its results into a variable:
+Similarly to JavaScript, there are also unnecessary uses of \eval. For
+example, the \c{PerformanceAnalytics} package contains a function
+\c{chart.QQPlot} that uses \eval to resolve a string into function and
+another to call it and assign its results into a variable:
 \begin{lstlisting}
 function (R, d="norm", dp, ...) {
 q.f <- eval(parse(text=paste("q",d,sep="")))
@@ -950,47 +934,47 @@ z <- q.f(dp, ...)
 
 \subsubsection{How much code is executed inside eval}
 - measure number of operations inside eval and outside eval.
-- this is useful because if analyzers treat eval as a nop, they may miss X\% of the code.
+
+- this is useful because if analyzers treat eval as a nop, they may
+miss X\% of the code.
 
 \subsubsection{Does eval create observable side-effects}
 - measure number of reads and writes by eval outside of its ``bubble''.
-- Since R is lazy, even reads can cause promise evaluation and hence, side-effects.
-- Look at writes to non-local scopes. Compare with total number of writes for
-reference?
+
+- Since R is lazy, even reads can cause promise evaluation and hence,
+side-effects.
+
+- Look at writes to non-local scopes. Compare with total number of
+writes for reference?
+
 - Categorize side-effects between env passed to eval and other envs.
 
 \subsubsection{Does eval do reflection}
-\eval can access parent scopes via reflection. Find number of times it does that
-and the depth to which it access parent frames.
+\eval can access parent scopes via reflection. Find number of times it
+does that and the depth to which it access parent frames.
 
 \subsubsection{Does eval introduce new bindings}
-Find number of times, eval introduces new bindings. There are many ways -- library,
-load, attach, source, and explicitly introduce bindings using super-assign, assign and define.
+Find number of times, eval introduces new bindings. There are many
+ways -- library, load, attach, source, and explicitly introduce
+bindings using super-assign, assign and define.
 
 \subsubsection{Does eval call C code}
-Find number of times, eval makes call to native code using - .Call, .External,
-etc. Find out if there are native functions that are called only from within eval.
+Find number of times, eval makes call to native code using - .Call,
+.External, etc. Find out if there are native functions that are called
+only from within eval.
 
 \subsubsection{Does eval add finalizers}
-Eval can attach code to be executed when the object goes out of scope or program
-exits. Find if eval does that.
+Eval can attach code to be executed when the object goes out of scope
+or program exits. Find if eval does that.
 
 \subsubsection{Does eval do non-local returns}
-Eval can do non-local returns effective bypassing evaluation of the rest of the
-function. This can be useful for static analyzers.
+Eval can do non-local returns effective bypassing evaluation of the
+rest of the function. This can be useful for static analyzers.
 
 Conclude with number of evals that are ``pure'', i.e. evals which
 could be ignored by a static analyzer without any problem.
 
 \subsubsection{Provenance}
-
-In JavaScript, the provenance of the string passed into \eval is a matter of
-concern as \eval can be used to breach the security of websites. The main
-danger comes from string that were obtained from external sources. If they
-are allowed to flow into an \eval, then an attacker could hijack the
-program.
-
-{\bf what have they found...}
 
 There are various ways to obtain expressions:
 \begin{itemize}
@@ -1003,9 +987,9 @@ There are various ways to obtain expressions:
 \end{itemize}
 
 We observe 5.2\% cases where \eval directly evaluates the output of
-\c{substitute}, 0.7\% cases where output of \c{parse} is read directly and
-only 704 cases for \c{expression}. Most expressions consumed by \eval are
-generated by other functions.
+\c{substitute}, 0.7\% cases where output of \c{parse} is read directly
+and only 704 cases for \c{expression}. Most expressions consumed by
+\eval are generated by other functions.
 
 \c{eval(parse(...))} can be used for dynamic code loading. This forms
 the core of \c{source} and \c{sys.source} functions in R that are
@@ -1033,10 +1017,11 @@ writes inside evals are side-effecting. This is only
 and \EvalSideEffectingWritesAllPerc of all variable writes in the
 corpus.
 
-An \eval is considered side-effecting if it performs a side-effecting write to a
-variable, directly or indirectly. Only \SideEffectingCoreCallPerc \eval calls in
-Core R are side-effecting and \SideEffectingPackageCallPerc \eval calls in CRAN
-packages are side-effecting.
+An \eval is considered side-effecting if it performs a side-effecting
+write to a variable, directly or indirectly. Only
+\SideEffectingCoreCallPerc \eval calls in Core R are side-effecting
+and \SideEffectingPackageCallPerc \eval calls in CRAN packages are
+side-effecting.
 
 \subsubsection{Scope}
 
@@ -1076,22 +1061,17 @@ environment from mutation. However, it is still possible to mutate the
 extended environment using the \c{\<\<-} or \c{assign} functions; but,
 that happens rarely.
 
-\begin{table}[htbp]{%} \resizebox{\columnwidth}{!}{%
-    \centering
-    \begin{tabular}{c|c|c|c}
-        \hline
-        \multicolumn{2}{c|}{Core} & \multicolumn{2}{|c}{Packages}  \\
-        \hline
-        Environment Class & Eval Calls \% & Environment Class & Eval Calls \% \\
-        \hline
-        \CoreEnvClassA & \CoreProportionA & \PackagesEnvClassA &  \PackagesProportionA\\
-        \CoreEnvClassB & \CoreProportionB & \PackagesEnvClassB &  \PackagesProportionB\\
-        \CoreEnvClassC & \CoreProportionC & \PackagesEnvClassC &  \PackagesProportionC\\
-        \CoreEnvClassD & \CoreProportionD & \PackagesEnvClassD &  \PackagesProportionD\\
-        \CoreEnvClassE & \CoreProportionE & \PackagesEnvClassE &  \PackagesProportionE\\
-        \hline
-    \end{tabular}} \label{tab:environments}
-\caption{Environments in terms of eval calls.}
+\begin{table}[htbp]{ \centering
+\begin{tabular}{c|c|c|c}\hline
+\multicolumn{2}{c|}{Core} & \multicolumn{2}{|c}{Packages}  \\\hline
+Environment Class & Eval Calls \% & Environment Class & Eval Calls\\\hline
+\CoreEnvClassA & \CoreProportionA & \PackagesEnvClassA &  \PackagesProportionA\\
+\CoreEnvClassB & \CoreProportionB & \PackagesEnvClassB &  \PackagesProportionB\\
+\CoreEnvClassC & \CoreProportionC & \PackagesEnvClassC &  \PackagesProportionC\\
+\CoreEnvClassD & \CoreProportionD & \PackagesEnvClassD &  \PackagesProportionD\\
+\CoreEnvClassE & \CoreProportionE & \PackagesEnvClassE &  \PackagesProportionE\\\hline
+\end{tabular}} \label{tab:environments}
+\caption{Environments in terms of \eval calls}
 \end{table}
 
 We observe that a disproportionately high number of core R \eval calls
