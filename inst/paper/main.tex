@@ -254,66 +254,65 @@ string, use  the \c{parse} function:
   > parse(text="a+b")
   # expression(a+b)
 \end{lstlisting}
-
-There are four reflective functions
-that take abstract syntax trees (called expressions), parse them as
-code, and evaluate the result. These functions are \c{eval},
-\c{evalq}, \c{eval.parent}, and \c{local}. Taking an expression rather
-than a string, may discourage some casual users as manipulating
-expressions is slightly more involved.\footnote{The rationale for
-\eval taking expressions is explained by the main use case for \eval,
-namely extending the language by reinterpretation of promises; R gives
-access to the code of a promise as an expression.} There are two ways
-to obtain an expression. Given a string, the \c{parse()} function
-retuns an unevaluated expression. The other way is to use the function
-\c{substitute(e,envir)}, it yields the parse tree of the expression
-\c{e} after performing substitutions defined by the bindings in the
-\c{envir} parameter.
-
+The most common way to create an expression is to extract it from an
+argument. Each argument comes packaged inside a promise which retains
+the source code of the argument. Consider the following function
+definition, \c{f} is a function with a single parameter \c{x}. When
+the call \c{f(a+b)} is evaluated, \c{a+b} is stored inside a newly
+created promise.
 \begin{lstlisting}
- > substitute(expression(a+b), list(a=1)))
- expression(1+b)
+  > f <- function(x) substitute(x), list(a=1)))
+  > f(a+b)
+  # expression(1+b)
 \end{lstlisting}
-
-\noindent
-This function is widely used in conjunction with \eval, as it can
-leverage R's laziness for metaprogramming. R allows programmatic
-manipulation of parse trees, which are themselves first class objects.
-Expressions are evaluated using \eval (or one its variants). The \eval
-function takes three arguments:
-
-
-The \c{evalq} form is equivalent to \c{eval(quote(expr), ...)}.
-Quoting that argument prevents if from being evaluated in the current
-environment. \c{eval.parent(expr, n)} is a shorthand for \c{eval(expr,
-  parent.frame(n))}. \c{local} evaluates an expression in a local
-environment. It is equivalent to evalq except that its default
-argument creates a new, empty environment. This is useful to create
-anonymous recursive functions and as a kind of limited namespace
-feature since variables defined in the environment are hidden.
-
-\medskip\noindent\textit{Environments.} In R, environments can be
-manipulated at will. Each function has an environment that can be
-accessed with \c{environment()}. A new environment, which by default
-inherits from the current environment, is created with \c{new.env}.
-Contrary to other values, environments have reference semantics rather
-than copy semantics. The chain of inheriting environments can be
-traversed with \c{parent.env}, ultimately one arrives at \c{emptyenv}.
+The call to \c{substitute(x)} extracts, from the promise bound to
+\c{x}, the expression corresponding to that argument, i.e., \c{a+b}.
+The general form of the function takes two arguments, the second
+argument is an object that can be used as an environment. This can be
+either a list of named values, a data frame or an actual environment.
+\begin{lstlisting}
+  > environment()
+  # <environment: R_GlobalEnv>
+\end{lstlisting}
+The above shows how to access the current environment, this can belong
+to the current function or, as here, the top level. Environments are
+nested, with each environment having a parent. This nesting is used
+when looking up names. When calling \c{new.env}, the default parent is
+the current environment. The chain of environments can be traversed
+with \c{parent.env}, ultimately one arrives at \c{emptyenv}.
 \c{parent.frame} and \c{sys.frame} grant access to environments
 further up in the calling stack, up to the global environment
 \c{.GlobalEnv}, and packages. One can also directly read, modify or
-create new bindings in any environments. Given an environment \c{e}:
-
+create new bindings, given any environment:
 \begin{itemize}
-\item  \c{e$v} or \c{get("v", envir = e)} reads variable \c{v} in \c{e};
-\item \c{e$v <- 2} or \c{assign("v", 2, envir = e)} writes value 2 in variable \c{v} in \c{e}. \c{v} is created if it did not exist in \c{e}.
+\item \c{env$v} and \c{get("v", envir = env)} read variable \c{v} in
+  \c{e};
+\item \c{env$v <- 2} and \c{assign("v", 2, envir = env)} write 2 in
+  \c{v}. If it did not exist, \c{v} is created in \c{env}.
 \end{itemize}
-\noindent One can directly modify a variable in the scope of its
-calling function, and there is even a special assignment operator for
-that purpose; \c{v <<- 2} will search for \c{v} in parent
-environments, redefine the value, or create a definition in the
-current environment. Environments are used as hashtables, to maintain
-state across function calls, or to create package namespaces.
+\noindent Environments are often used as hashtables by programmers as
+they have reference semantics (other are copy-on-write) and have a
+built-in string look up. across function calls, or to create package
+namespaces.
+\begin{lstlisting}
+  evalq <- function(exp,env,enclos) eval(quote(exp),env,enclos)
+  eval.parent <- function(exp,n) eval(exp,parent.frame(n))
+  local <- function(exp,env,enclos) evalq(exp,new.env())
+\end{lstlisting}
+The above code show simplified implementation for the variants of
+\eval. The \c{evalq} form simply quotes the argument to prevent it
+from being evaluated in the current environment. The
+\c{eval.parent(e,n)} form evaluates \c{e} in the environment of the
+  {\tt n}-th caller up the call stack. Finally \c{local} evaluates an
+  expression in a new environment to avoid polluting the current
+  environment.
+
+%% Taking an expression rather
+%% than a string, may discourage some casual users as manipulating
+%% expressions is slightly more involved.\footnote{The rationale for
+%% \eval taking expressions is explained by the main use case for \eval,
+%% namely extending the language by reinterpretation of promises; R gives
+%% access to the code of a promise as an expression.}
 
 
 \subsection{Previous Work}
