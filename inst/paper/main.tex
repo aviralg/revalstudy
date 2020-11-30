@@ -396,12 +396,46 @@ write.csv <- function (...)
 }
 \end{lstlisting}
 
+In vcrpart package they use this a lot (following is just one instance):
+
+\begin{lstlisting}
+vcrpart::tvcglm <- function(formula, data, family,
+                   weights, subset, offset, na.action = na.omit,
+                   control = tvcglm_control(), ...) {
+    mc <- match.call()
+    mc[[1L]] <- as.name("tvcm")
+    if (!"control" %in% names(mc))
+        mc$control <- formals(tvcglm)$control
+    if ("fit" %in% names(list(...)))
+        warning("inputs for 'fit' in 'tvcglm' are ignored. ",
+                "'fit' is set to 'glm'.")
+    mc$fit <- "glm"
+    return(eval.parent(mc))
+  }
+\end{lstlisting}
+
+The examples above are related to the use of \c{match.call} whose documentation talks about these use cases:
+
+\begin{verbatim}
+‘match.call’ is most commonly used in two circumstances:
+
+        • To record the call for later re-use: for example most
+          model-fitting functions record the call as element ‘call’ of
+          the list they return.  Here the default ‘expand.dots = TRUE’
+          is appropriate.
+
+        • To pass most of the call to another function, often
+          ‘model.frame’.  Here the common idiom is that ‘expand.dots =
+          FALSE’ is used, and the ‘...’ element of the matched call is
+          removed.  An alternative is to explicitly select the
+          arguments to be passed on, as is done in ‘lm’.
+\end{verbatim}
 
 
-creating and evaling strings - here they assemble the call to plot
-function. plot is s3 generic which takes ridiculous amount of
-parameters and in addition their plot function also takes parameters.
-This code could be nicely refactored using do.call.
+creating and evaling strings - here they assemble the call to plot function.
+plot is s3 generic which takes ridiculous amount of parameters and in addition
+their plot function also takes parameters. This code could be nicely refactored
+using do.call.
 \begin{lstlisting}
 wsbackfit::plot.sback <- function(x, composed = TRUE, ask = TRUE, select = NULL, ...) {
  dots <- list(...)
