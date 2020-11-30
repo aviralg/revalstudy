@@ -421,7 +421,6 @@ Example:
 }
 
 main <- function(argv) {
-  argv <- argv[-1] # Remove the command name
   if (length(argv) != 10) {
     cat("Only ", length(argv), " arguments. Missing arguments!\n")
     usage()
