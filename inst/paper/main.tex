@@ -652,24 +652,37 @@ Categorize side-effects between env passed to eval and other envs:
   caller. XXX035.
 \end{itemize}
 
-\subsubsection{Does eval introduce new bindings}
-Find number of times, eval introduces new bindings. There are many
-ways -- library, load, attach, source, and explicitly introduce
-bindings using super-assign, assign and define.
+In the corpus we observe \AllWritesRnd writes to variables of which
+\EvalWritesRnd writes happen inside \eval. However, all writes are not
+dangerous. Only writes to environments not local to the computation
+spawned by \eval are side-effecting. These writes outlive the
+computation and hence are visible outside it. The remaining writes are
+local to the computation. We observe that \EvalSideEffectingWritesRnd
+writes inside evals are side-effecting. This is only
+\EvalSideEffectingWritesEvalPerc of all variable writes inside \eval
+and \EvalSideEffectingWritesAllPerc of all variable writes in the
+corpus.
 
-\subsubsection{Does eval call C code}
-Find number of times, eval makes call to native code using - .Call,
-.External, etc. Find out if there are native functions that are called
-only from within eval.
+An \eval is considered side-effecting if it performs a side-effecting
+write to a variable, directly or indirectly. Only
+\SideEffectingCoreCallPerc \eval calls in Core R are side-effecting
+and \SideEffectingPackageCallPerc \eval calls in CRAN packages are
+side-effecting.
 
-\subsubsection{Does eval add finalizers}
-Eval can attach code to be executed when the object goes out of scope
-or program exits. Find if eval does that.
 
-\subsubsection{Does eval do non-local returns}
+\mypara{New Bindings.} Find number of times, eval introduces new
+bindings. There are many ways -- library, load, attach, source, and
+explicitly introduce bindings using super-assign, assign and define.
+
+\mypara{C Calls.} Find number of times, eval makes call to native code
+using - .Call, .External, etc. Find out if there are native functions
+that are called only from within eval.
+
+\mypara{Non-local returns}
 Eval can do non-local returns effective bypassing evaluation of the
 rest of the function. This can be useful for static analyzers.
 
+\mypara{Purity.}
 Conclude with number of evals that are ``pure'', i.e. evals which
 could be ignored by a static analyzer without any problem.
 
@@ -874,8 +887,6 @@ and functions from their dependencies.
 
 \subsection{Necessity of Eval}
 
-
-
 \subsubsection{Provenance}
 
 There are various ways to obtain expressions:
@@ -906,24 +917,6 @@ calls consume the result of calling \c{parse} on a string. We also
 identified one function in core R, \c{invokeRestartInteractively} that
 prompts the user for input, parses it, and passes it to \eval.
 
-\subsubsection{Side-Effects}
-
-In the corpus we observe \AllWritesRnd writes to variables of which
-\EvalWritesRnd writes happen inside \eval. However, all writes are not
-dangerous. Only writes to environments not local to the computation
-spawned by \eval are side-effecting. These writes outlive the
-computation and hence are visible outside it. The remaining writes are
-local to the computation. We observe that \EvalSideEffectingWritesRnd
-writes inside evals are side-effecting. This is only
-\EvalSideEffectingWritesEvalPerc of all variable writes inside \eval
-and \EvalSideEffectingWritesAllPerc of all variable writes in the
-corpus.
-
-An \eval is considered side-effecting if it performs a side-effecting
-write to a variable, directly or indirectly. Only
-\SideEffectingCoreCallPerc \eval calls in Core R are side-effecting
-and \SideEffectingPackageCallPerc \eval calls in CRAN packages are
-side-effecting.
 
 \subsubsection{Scope}
 
