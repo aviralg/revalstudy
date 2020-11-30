@@ -322,6 +322,64 @@ casual users. \Eval is also being used to reduce boilerplate code and
 provide convenience features for programmers. We now give some
 representative examples of its usage.
 
+Recording calls - this one is more on the misuse than doing something useful. I
+really wonder why they do not use \c{do.call(write.table, Call)} (except that it
+will create additional frames).
+\begin{lstlisting}
+write.csv <- function (...)
+{
+  Call <- match.call(expand.dots = TRUE)
+  for (argname in c("append", "col.names", "sep", "dec", "qmethod"))
+    if (!is.null(Call[[argname]]))
+      warning(gettextf("attempt to set '%s' ignored", argname), domain = NA)
+  rn <- eval.parent(Call$row.names)
+  Call$append <- NULL
+  Call$col.names <- if (is.logical(rn) && !rn) TRUE else NA
+  Call$sep <- ","
+  Call$dec <- "."
+  Call$qmethod <- "double"
+  Call[[1L]] <- as.name("write.table")
+  eval.parent(Call)
+}
+\end{lstlisting}
+
+creating and evaling strings - here they assemble the call to plot function. plot is s3 generic which takes
+ridiculous amount of parameters and in addition their plot function also takes parameters.
+This code could be nicely refactored using do.call.
+\begin{lstlisting}
+wsbackfit::plot.sback <- function(x, composed = TRUE, ask = TRUE, select = NULL, ...) {
+ dots <- list(...)
+ grph.opt <- names(dots)
+...
+ stub <- paste(
+  ifelse("xlab" %in% grph.opt, "", paste(", xlab = \"", var, "\"",sep = "")),
+  ifelse("ylab" %in% grph.opt, "", paste(", ylab = \"", p.functions[i], "\"", sep = "")),
+  ifelse("main" %in% grph.opt, "", main.aux),
+  ifelse("type" %in% grph.opt, "", ", type = \"l\""),
+  ifelse("ylim" %in% grph.opt, "", paste(", ylim = c(", min.ylim,",", max.ylim,")", sep = "")), ",...)",
+  sep = ""
+ )
+
+  if(composed) {
+          plot <- paste("plot(x.data, y.composed", stub, sep = "")
+          eval(parse(text = plot))
+          rug(x$data[,var])
+  } else {
+          plot <- paste("plot(x.data, y.data.nl", stub, sep = "")
+          eval(parse(text = plot))
+
+          stub <- paste(ifelse("lty" %in% grph.opt, "", ",lty = 2"), ",...)", sep = "")
+          lines <- paste("lines(x.data, y.data.l", stub, sep = "")
+          eval(parse(text = lines))
+
+          rug(x$data[,var])
+          stub <- paste(ifelse("lty" %in% grph.opt, "", "lty = 1:2"), ", legend = c(\"Non linear\",\"Linear\"), bty = \"n\"", ", cex = ", dots$cex,")", sep = "")
+          legend <- paste("legend(\"topleft\",", stub, sep = "")
+          eval(parse(text = legend))
+  }
+...
+}
+\end{lstlisting}
 
 
 \subsection{Previous Work}
