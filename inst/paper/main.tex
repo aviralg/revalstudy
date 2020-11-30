@@ -275,7 +275,7 @@ either a list of named values, a data frame or an actual environment.
   # <environment: R_GlobalEnv>
 \end{lstlisting}
 The above shows how to access the current environment, this can belong
-to the current function or, as here, the top level. Environments are
+to the current function or, as above, the top level. Environments are
 nested, with each environment having a parent. This nesting is used
 when looking up names. When calling \c{new.env}, the default parent is
 the current environment. The chain of environments can be traversed
@@ -285,10 +285,10 @@ further up in the calling stack, up to the global environment
 \c{.GlobalEnv}, and packages. One can also directly read, modify or
 create new bindings, given any environment:
 \begin{itemize}
-\item \c{env$v} and \c{get("v", envir = env)} read variable \c{v} in
-  \c{e};
-\item \c{env$v <- 2} and \c{assign("v", 2, envir = env)} write 2 in
-  \c{v}. If it did not exist, \c{v} is created in \c{env}.
+\item \c{env$v} and \c{get("v",envir=env)} read variable \c{v} in
+  environment \c{env};
+\item \c{env$v<-2} and \c{assign("v",2,envir=env)} write 2 in
+  \c{v}. If not found, \c{v} is created in \c{env}.
 \end{itemize}
 \noindent Environments are often used as hashtables by programmers as
 they have reference semantics (other are copy-on-write) and have a
@@ -303,17 +303,19 @@ The above code show simplified implementation for the variants of
 \eval. The \c{evalq} form simply quotes the argument to prevent it
 from being evaluated in the current environment. The
 \c{eval.parent(e,n)} form evaluates \c{e} in the environment of the
-  {\tt n}-th caller up the call stack. Finally \c{local} evaluates an
+  {\tt n}-th caller up the call stack. Finally, \c{local} evaluates an
   expression in a new environment to avoid polluting the current
   environment.
 
-%% Taking an expression rather
-%% than a string, may discourage some casual users as manipulating
-%% expressions is slightly more involved.\footnote{The rationale for
-%% \eval taking expressions is explained by the main use case for \eval,
-%% namely extending the language by reinterpretation of promises; R gives
-%% access to the code of a promise as an expression.}
+\subsection{Eval Usage in R}
 
+The R language was intended to be extensible, the combination of lazy
+evaluation, \c{substitute} and \c{eval} are the tools given to
+developers to this end. This API is slightly more complex than just
+passing a string, it is conceivable that this may discourage some
+casual users. \Eval is also being used to reduce boilerplate code and
+provide convenience features for programmers. We now give some
+representative examples of its usage.
 
 \subsection{Previous Work}
 
