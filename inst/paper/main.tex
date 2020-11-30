@@ -1,6 +1,8 @@
 \documentclass[USenglish,cleveref, autoref, thm-restate]{lipics-v2019}
 \usepackage{listings,hyperref,multirow,paralist,xspace,url}
 \input{macro}
+\newcommand{\mypara}[1]{\medskip\noindent\emph{#1}\xspace}
+\newcommand{\NOTE}[1]{{\it Note: #1}\xspace}
 
 \title{Why do we Eval?\\[2mm]\Large A large-scale study of Eval usage in R}
 \titlerunning{Why Eval (in R)?}
@@ -218,7 +220,7 @@ during an \eval does not invalidate inlining
 optimizations~\cite{oopsla20a}. More permissive languages such as R
 are much harder to deal with from a compiler's perspective.
 
-\medskip\noindent{\it Eval in R.} The reflective interface exposed by
+\mypara{Eval in R.} The reflective interface exposed by
 R is somewhat complex. The core library exports four functions with
 slightly different semantics, \c{eval}, \c{evalq}, \c{eval.parent},
 and \c{local}. \Eval is the more general function, and, unlike in
@@ -409,7 +411,7 @@ obtain clients that will generate multiple \emph{runs} of CRAN
 packages. In this context, a run is the execution of a CRAN package or
 Kaggle program with a particular set of input values.
 
-\medskip\noindent\emph{CRAN Packages.} The packages that are included
+\mypara{CRAN Packages.} The packages that are included
 in this study are the top \CorpusPackages packages based on their
 reverse dependencies. The set of reverse dependencies for some package
 \emph{P} is transitive closure of packages that import \emph{P}. The
@@ -445,7 +447,7 @@ The selected packages are bundled with \CorpusPackagePrograms
 programs; \CorpusExamplesProgramsRnd examples and
 \CorpusVignettesProgramsRnd vignettes.
 
-\medskip\noindent\emph{Kaggle Scripts.} Kaggle is an online platform
+\mypara{Kaggle Scripts.} Kaggle is an online platform
 for data-science and machine-learning. The website allows people to
 submit data-analysis problems, users compete to find the best
 solution. The solutions are uploaded to the platform as either plain
@@ -473,8 +475,9 @@ size, and the number of elements manipulated by the stage. Timings are
 for runs on an Intel Xeon 6140, 2.30GHz with 72 cores and 256GB of
 RAM.
 
-\begin{figure}[!h]\hspace{-5mm}\includegraphics[width=1.05\linewidth]
-{pipeline.pdf}\caption{Analysis Pipeline}\label{fig:pipeline}
+\begin{figure}[!h]\hspace{-5mm}
+  \includegraphics[width=1.05\linewidth]{pipeline.pdf}
+  \caption{Analysis Pipeline}\label{fig:pipeline}
 \end{figure}
 
 The first step in the pipeline consist of downloading CRAN packages
@@ -525,7 +528,7 @@ analysis pipeline.
 
 
 
-\medskip\noindent\emph{Limitations.} Dynamic analysis can only observe
+\mypara{Limitations.} Dynamic analysis can only observe
 calls that are triggered by the program's input. We believe that
 focusing on R packages with high code coverage does mitigate this to
 some extent. The results we report here were obtained with R's
@@ -547,8 +550,6 @@ because \c{rlang} is used to implement a DSL for data analysis in R.
 It introduces a new first-class promise object called \c{quosure} for
 which it implements special evaluation support in \c{tidy_eval}.
 
-
-\newcommand{\mypara}[1]{\medskip\noindent\emph{#1}\xspace}
 
 %%%%%
 \section{Usage Metrics}
@@ -578,7 +579,6 @@ no calls to \eval. These numbers are under-approximations as \eval may
 be aliased, called reflectively and given as argument to a
 higher-order function such as \c{map}.
 
-\newcommand{\NOTE}[1]{{\it Note: #1}\xspace}
 
 \mypara{Number of calls to eval.} We observed an average XXX010 calls
 to \eval per run. \NOTE{this is in packages that had any call to eval.
@@ -909,26 +909,6 @@ and functions from their dependencies.
 
 \subsection{Necessity of Eval}
 
-\subsubsection{Unnecessary use of eval}
-Similarly to JavaScript, there are also unnecessary uses of \eval. For
-example, the \c{PerformanceAnalytics} package contains a function
-\c{chart.QQPlot} that uses \eval to resolve a string into function and
-another to call it and assign its results into a variable:
-\begin{lstlisting}
-function (R, d="norm", dp, ...) {
-q.f <- eval(parse(text=paste("q",d,sep="")))
-z <- NULL
-eval(parse(text=paste("z<-q.f(",dp,",...)")))
-}
-\end{lstlisting}
-  In both cases, there is no need for \eval:
-\begin{lstlisting}
-function (R, d="norm", dp, ...) {
-q.f <- get(paste0("q",d))
-z <- q.f(dp, ...)
-}
-\end{lstlisting}
-  or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
 \subsection{Power of Eval}
 
@@ -1118,9 +1098,46 @@ h2 <- function(x, y)
 
 \section{Case Studies}
 
+5(?) examples from real code.
+
 \section{Why do we Eval}
 
+\subsection{Discussion}
 
+Yeah, why?
+
+\subsection{Can we do without?}
+
+
+We look at how \emph{consistent} the \c{expr} argument of \eval can
+be, \ie how many different types of the resolved \c{expr} there are
+per call sites. Most of the call sites, \ie \PercentMonomorphic, are
+\emph{consistent}, and this is similar to javascript. However, a few
+ones are highly \emph{polymorphic} (10 different types). They are the
+pipe operators \c{\%>\%}, \c{\%<>\%} and \c{\%\$\%} in package
+\emph{magrittr}. It is effectively used to compose functions on their
+first argument, which can be of any type.
+
+
+Similarly to JavaScript, there are also unnecessary uses of \eval. For
+example, the \c{PerformanceAnalytics} package contains a function
+\c{chart.QQPlot} that uses \eval to resolve a string into function and
+another to call it and assign its results into a variable:
+\begin{lstlisting}
+function (R, d="norm", dp, ...) {
+q.f <- eval(parse(text=paste("q",d,sep="")))
+z <- NULL
+eval(parse(text=paste("z<-q.f(",dp,",...)")))
+}
+\end{lstlisting}
+  In both cases, there is no need for \eval:
+\begin{lstlisting}
+function (R, d="norm", dp, ...) {
+q.f <- get(paste0("q",d))
+z <- q.f(dp, ...)
+}
+\end{lstlisting}
+  or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
 \section{Analysis Results}
 
@@ -1131,50 +1148,19 @@ h2 <- function(x, y)
 
 \subsection{Comparison with Javascript}
 
-\medskip\noindent\emph{Discussion:} Comparing the use of \eval in R
-and JavaScript is instructive. The use of \eval is more widespread in
-data science code than it was in JavaScript. Any run of an R program
-seems to trigger \eval; moreover package programmers use \eval
-liberally. On the other hand, the authors of Kaggle packages do not
-use the feature at all. This point to a bifurcated user community:
-experts who write package know how to use \eval while end-users do
-not. An alternative explanation is that end-users do not need \eval
-for simple data analysis tasks. This bifurcation was not observed in
-the JavaScript community, but this may have changed with the advent of
-Node.js ecosystem. The distribution of input sizes is similar to that
-found in JavaScript, the majority of inputs being rather small.
+Comparing the use of \eval in R and JavaScript is instructive. The use
+of \eval is more widespread in data science code than it was in
+JavaScript. Any run of an R program seems to trigger \eval; moreover
+package programmers use \eval liberally. On the other hand, the
+authors of Kaggle packages do not use the feature at all. This point
+to a bifurcated user community: experts who write package know how to
+use \eval while end-users do not. An alternative explanation is that
+end-users do not need \eval for simple data analysis tasks. This
+bifurcation was not observed in the JavaScript community, but this may
+have changed with the advent of Node.js ecosystem. The distribution of
+input sizes is similar to that found in JavaScript, the majority of
+inputs being rather small.
 
-
-\begin{figure}[!b]
-	\centering
-  \includegraphics[width=\columnwidth]{ast_sizes}
-  \caption{Input sizes} \label{fig:ast-size}
-\end{figure}
-
-To roughly estimate the complexity of the code being evaluated,
-Fig.~\ref{fig:ast-size} shows the distribution of the abstract syntax
-tree size of the \c{expr} argument to \eval. The majority of inputs
-across core and packages (\NbAstOnePercent of \eval calls and
-\NbAstOneCallSitePercent of call sites) have size 1. That is to say,
-the code being evaluated consists of a single variable name or
-constant. A function call needs at least three nodes and a list such
-as \c{c(1, 2, 3)} counts for 4 nodes. Inputs smaller than
-\AstSizeNineFive nodes account for 95\% of all calls. Sizes in core
-are larger than in packages. Most large ASTs originate from library
-\c{VGAM}, which is used for statistical modeling, and also calls
-functions using \eval from core. It uses \eval to evaluate large
-matrices with values in a given environment.
-
-\subsubsection{Consistency}
-
-We look at how \emph{consistent} the \c{expr} argument of \eval can
-be, \ie how many different types of the resolved \c{expr} there are
-per call sites. Most of the call sites, \ie \PercentMonomorphic, are
-\emph{consistent}, and this is similar to javascript. However, a few
-ones are highly \emph{polymorphic} (10 different types). They are the
-pipe operators \c{\%>\%}, \c{\%<>\%} and \c{\%\$\%} in package
-\emph{magrittr}. It is effectively used to compose functions on their
-first argument, which can be of any type.
 
 
 \section{Conclusion}
