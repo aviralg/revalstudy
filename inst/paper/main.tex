@@ -264,12 +264,16 @@ created promise.
   > f <- function(x) substitute(x), list(a=1)))
   > f(a+b)
   # expression(1+b)
+  > substitute(a+b,list(a=1,b=2))
+  # 1+2
 \end{lstlisting}
 The call to \c{substitute(x)} extracts, from the promise bound to
-\c{x}, the expression corresponding to that argument, i.e., \c{a+b}.
-The general form of the function takes two arguments, the second
-argument is an object that can be used as an environment. This can be
-either a list of named values, a data frame or an actual environment.
+\c{x}, the expression passed in the call to \c{f}, i.e., \c{a+b}. The
+\c{substitute(exp,env)} function takes two arguments, the second is an
+object that can be used as an environment. This can be either a list
+of named values, a data frame or an actual environment. \c{substitute}
+will look for occurrences of each symbol from \c{env} in \c{exp} and
+replace them with their value taken from \c{env}.
 \begin{lstlisting}
   > environment()
   # <environment: R_GlobalEnv>
@@ -299,13 +303,12 @@ namespaces.
   eval.parent <- function(exp,n) eval(exp,parent.frame(n))
   local <- function(exp,env,enclos) evalq(exp,new.env())
 \end{lstlisting}
-The above code show simplified implementation for the variants of
-\eval. The \c{evalq} form simply quotes the argument to prevent it
-from being evaluated in the current environment. The
-\c{eval.parent(e,n)} form evaluates \c{e} in the environment of the
-  {\tt n}-th caller up the call stack. Finally, \c{local} evaluates an
-  expression in a new environment to avoid polluting the current
-  environment.
+The three \eval variants can be expressed as calls to \eval. The
+\c{evalq} form quotes the argument to prevent it from being evaluated
+in the current environment. The \c{eval.parent(e,n)} form evaluates
+\c{e} in the environment of the {\tt n}-th caller of this function.
+Finally, \c{local} evaluates an \c{exp} in a new environment to
+avoid polluting the current one.
 
 \subsection{Eval Usage in R}
 
@@ -316,6 +319,18 @@ passing a string, it is conceivable that this may discourage some
 casual users. \Eval is also being used to reduce boilerplate code and
 provide convenience features for programmers. We now give some
 representative examples of its usage.
+
+\begin{lstlisting}
+  > library("ggplot2")  # load a library from string
+  > library(ggplot2)     # equivalent, except symbol is not in scope
+
+  library <- function(package, ...) {
+    ...
+    if(!is.character(package))
+      package <- as.character(substitute(package))
+    ...
+  }
+\end{lstlisting}
 
 \subsection{Previous Work}
 
