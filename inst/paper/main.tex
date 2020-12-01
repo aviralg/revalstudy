@@ -322,19 +322,52 @@ casual users. \Eval is also being used to reduce boilerplate code and
 provide convenience features for programmers. We now give some
 representative examples of its usage.
 
-\mypara{Record Current Call.}
-R provides a \c{match.call} function which can return the current
-call. This is heavily used by the statistical model-fitting functions
-that records the current call that is then reevaluated in the
-different environment. Another pattern is to match the current call,
-adjust some arguments and pass it to another function. For example the
-\c{write.csv} function changes the \c{sep} argument in the matched
-call and reevaluates itself as \c{write.table}:
-%
+\mypara{Intercession.} A common use case for \eval is to be combined
+with \c{match.call}. What \c{match.call} does is step up the call
+stack and capture the invocation of the currently executing function
+and return it as an unevaluated expression. The general pattern here
+is that a call to some function \c{f} is transformed to a call to
+another function \c{g} with some arguments retained and others
+modified. An illustration taken from the \c{vcpart} package shows a
+function \c{tvcglm} that is translated to the \c{tvcm} function but
+with two modifications to the argument list, argument \c{control}
+can't be missing and argument \c{fit} is forced to have value \c{glm}.
+The function ends with a call to \c{eval.parent} to ensure that the
+rewritten call is evaluted in the same environment the original call
+was.
 \begin{lstlisting}
-    Call <- match.call(expand.dots = TRUE)
-    Call$sep <- ","; Call[[1L]] <- as.name("write.table")
-    eval.parent(Call)
+ tvcglm <- function(formula, data, family, control=tvcglm_control(), ...) {
+   Call <- match.call()
+   Call[[1L]] <- as.name("tvcm")
+   if (!"control" %in% names(Call)) Call$control<-formals(tvcglm)$control
+   if ("fit" %in% names(list(...))) warning("'fit' is ignored. ")
+   Call$fit <- "glm"
+   return(eval.parent(Call))
+ }
+\end{lstlisting}
+
+\mypara{Code Generation.} The more traditional use of \eval is to
+execute code that was assembled by the programmer into a string. Here
+we show the method \c{plot} for class \c{sback} in package
+\c{wsbackfit}, simplified for explanatory purposes. The function takes
+a long argument list, the names of which are captured in the list
+\c{opt}. The string \c{stub} is composed of a subset of the arguments
+passed to this function; the variable is used to construct a call to
+\c{base::plot} which will draw a plot. \NOTE{This example is a bit
+  messed up. What is var? Does the use of ... in the eval grab the
+  arguments of this call? If yes does it not end up with xlab twice?
+  HELP}
+\begin{lstlisting}
+ plot.sback <- function(x,...) {
+   opt <- names(list(...))
+   stub <- paste(
+    ifelse("xlab" %in% opt,"",paste(",xlab=\"",var,"\"",sep="")),
+    ifelse("main" %in% opt,"",main.aux),
+    ifelse("type" %in% opt,"",",type=\"l\""),
+    sep = "")
+   plot <- paste("plot(x.data,",stub,",...)", sep = "")
+   eval(parse(text=plot))
+   ...
 \end{lstlisting}
 
 \mypara{Sandbox.} The combination of \eval and first class
@@ -374,102 +407,14 @@ eval(parse(text=paste0("options(",i,"=",opts[i],")")))
 
   \end{lstlisting}
   %
-instead of manually calling \c{options(datatable.verbose=FALSE)}
-Recording calls - this one is more on the misuse than doing something useful. I
-really wonder why they do not use \c{do.call(write.table, Call)} (except that it
-will create additional frames).
-\begin{lstlisting}
-write.csv <- function (...)
-{
-  Call <- match.call(expand.dots = TRUE)
-  for (argname in c("append", "col.names", "sep", "dec", "qmethod"))
-    if (!is.null(Call[[argname]]))
-      warning(gettextf("attempt to set '%s' ignored", argname), domain = NA)
-  rn <- eval.parent(Call$row.names)
-  Call$append <- NULL
-  Call$col.names <- if (is.logical(rn) && !rn) TRUE else NA
-  Call$sep <- ","
-  Call$dec <- "."
-  Call$qmethod <- "double"
-  Call[[1L]] <- as.name("write.table")
-  eval.parent(Call)
-}
-\end{lstlisting}
-
-In vcrpart package they use this a lot (following is just one instance):
-
-\begin{lstlisting}
-vcrpart::tvcglm <- function(formula, data, family,
-                   weights, subset, offset, na.action = na.omit,
-                   control = tvcglm_control(), ...) {
-    mc <- match.call()
-    mc[[1L]] <- as.name("tvcm")
-    if (!"control" %in% names(mc))
-        mc$control <- formals(tvcglm)$control
-    if ("fit" %in% names(list(...)))
-        warning("inputs for 'fit' in 'tvcglm' are ignored. ",
-                "'fit' is set to 'glm'.")
-    mc$fit <- "glm"
-    return(eval.parent(mc))
-  }
-\end{lstlisting}
-
-The examples above are related to the use of \c{match.call} whose documentation talks about these use cases:
-
-\begin{verbatim}
-‘match.call’ is most commonly used in two circumstances:
-
-        • To record the call for later re-use: for example most
-          model-fitting functions record the call as element ‘call’ of
-          the list they return.  Here the default ‘expand.dots = TRUE’
-          is appropriate.
-
-        • To pass most of the call to another function, often
-          ‘model.frame’.  Here the common idiom is that ‘expand.dots =
-          FALSE’ is used, and the ‘...’ element of the matched call is
-          removed.  An alternative is to explicitly select the
-          arguments to be passed on, as is done in ‘lm’.
-\end{verbatim}
+ instead of manually calling \c{options(datatable.verbose=FALSE)}
 
 
-creating and evaling strings - here they assemble the call to plot function.
-plot is s3 generic which takes ridiculous amount of parameters and in addition
-their plot function also takes parameters. This code could be nicely refactored
-using do.call.
-\begin{lstlisting}
-wsbackfit::plot.sback <- function(x, composed = TRUE, ask = TRUE, select = NULL, ...) {
- dots <- list(...)
- grph.opt <- names(dots)
-...
- stub <- paste(
-  ifelse("xlab" %in% grph.opt, "", paste(", xlab = \"", var, "\"",sep = "")),
-  ifelse("ylab" %in% grph.opt, "", paste(", ylab = \"", p.functions[i], "\"", sep = "")),
-  ifelse("main" %in% grph.opt, "", main.aux),
-  ifelse("type" %in% grph.opt, "", ", type = \"l\""),
-  ifelse("ylim" %in% grph.opt, "", paste(", ylim = c(", min.ylim,",", max.ylim,")", sep = "")), ",...)",
-  sep = ""
- )
 
-  if(composed) {
-          plot <- paste("plot(x.data, y.composed", stub, sep = "")
-          eval(parse(text = plot))
-          rug(x$data[,var])
-  } else {
-          plot <- paste("plot(x.data, y.data.nl", stub, sep = "")
-          eval(parse(text = plot))
 
-          stub <- paste(ifelse("lty" %in% grph.opt, "", ",lty = 2"), ",...)", sep = "")
-          lines <- paste("lines(x.data, y.data.l", stub, sep = "")
-          eval(parse(text = lines))
 
-          rug(x$data[,var])
-          stub <- paste(ifelse("lty" %in% grph.opt, "", "lty = 1:2"), ", legend = c(\"Non linear\",\"Linear\"), bty = \"n\"", ", cex = ", dots$cex,")", sep = "")
-          legend <- paste("legend(\"topleft\",", stub, sep = "")
-          eval(parse(text = legend))
-  }
-...
-}
-\end{lstlisting}
+
+
 
 
 \subsection{Previous Work}
@@ -715,7 +660,6 @@ for \eval, XXX002 for \c{evalq}, XXX003 for \c{eval.parent} and XXX004 for
 
 XXX005 packages in our corpus call \eval at least once.
 
-
 \mypara{Number of eval call sites.}
 We observed that the number of \eval call sites is small.
 Figure XXX006 shows a violin plot of the distribution of call sites to
@@ -726,7 +670,6 @@ single call site, and one package, \emph{metafor}, has
 no calls to \eval. These numbers are under-approximations as \eval may
 be aliased, called reflectively and given as argument to a
 higher-order function such as \c{map}.
-
 
 \mypara{Number of calls to eval.} We observed an average XXX010 calls
 to \eval per run. \NOTE{this is in packages that had any call to eval.
@@ -774,21 +717,25 @@ calls originate from statistical modeling packages such as \mlogit,
 The previous section gave a quantitative view of the usage of \eval;
 in this section we try to elucidate \emph{what} it does.
 
-
-\mypara{Side-effects.}
-XXX026 total number of reads performed by \eval. \NOTE{What is the definition of a read?  An env lookup?}  XXX027 average number of reads.
-XXX028 total number of writes performed by \eval. Average number XXX029.
+\mypara{Side-effects.} XXX026 total number of reads performed by
+\eval. \NOTE{What is the definition of a read? An env lookup?} XXX027
+average number of reads. XXX028 total number of writes performed by
+\eval. Average number XXX029.
 
 \NOTE{Aviral wrote''measure number of reads and writes by eval outside
   of its bubble'' --- what is the bubble here?}
 
-XXX029 reads to caller environment -- where caller is the caller of \eval.
+XXX029 reads to caller environment -- where caller is the caller of
+\eval.
 
-XXX030 reads to other caller environment -- i.e. envs that are on the call stack.
+XXX030 reads to other caller environment -- i.e. envs that are on the
+call stack.
 
-XXX031 reads to caller environment -- where caller is the caller of \eval.
+XXX031 reads to caller environment -- where caller is the caller of
+\eval.
 
-XXX032 reads to other caller environment -- i.e. envs that are on the call stack.
+XXX032 reads to other caller environment -- i.e. envs that are on the
+call stack.
 
 Categorize side-effects between env passed to eval and other envs:
 \begin{itemize}
@@ -974,8 +921,6 @@ limitation by enclosing the call to \unlockBinding inside \eval. From
 the same reason, other packages use \eval to access private variables
 and functions from their dependencies.
 
-\subsection{Necessity of Eval}
-
 \subsubsection{Provenance}
 
 There are various ways to obtain expressions:
@@ -1005,7 +950,6 @@ consume the result of calling \c{parse} on a file. Most of the eval
 calls consume the result of calling \c{parse} on a string. We also
 identified one function in core R, \c{invokeRestartInteractively} that
 prompts the user for input, parses it, and passes it to \eval.
-
 
 \subsubsection{Scope}
 
