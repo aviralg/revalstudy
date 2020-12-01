@@ -687,9 +687,44 @@ calls originate from statistical modeling packages such as \mlogit,
 
 \NOTE{Talk about the percentage of code executed in eval}
 
+\mypara{Eval Arguments.} Figure~\ref{fig:eval-expression-kind} breaks
+down the expressions passed to \eval by R data type. It separates the
+core packages from CRAN as they have different characteristics. In
+core, XXX036\% of arguments in core are expressions. Whereas, in CRAN
+package XXX037\% are expressions. When the argument is not an
+expression, it is a value. Values are trivial for \eval as they are
+returned unchanged. \PackageEnvironmentInputEvalCallPerc of CRAN
+arguments are environments. This is an anomaly as only four \eval
+call sites dominate this result:
+\begin{compactitem}[$-$]
+\item \c{ggplot2::ggproto} contributes to 99.9\% of package \eval
+  calls that receive environments as input.
+\item \c{R6::generator_funs} function contributes to only 936 \eval
+  calls and implements the same functionality as \c{ggplot2::ggproto}
+  but for the \emph{R6} OOP system.
+\item \c{future::backtrace} function applies \eval to a future object
+  which is implemented as an environment. This is called only once.
+\item \c{RModel::str.RMmodel} function overloads the core \c{str}
+  method for its \c{RModel} objects and maps \eval exactly like
+  \c{str}. This is called only once.
+\end{compactitem}
+
+
+
+\begin{figure}[!h]
+  \centering
+  \includegraphics[width=\columnwidth]{eval-expression-kind}
+  \caption{Type of Expression passed to \eval} \label{fig:eval-expression-kind}
+\end{figure}
+
+
+
+
 \mypara{The case of CORE libraries} ... \NOTE{Give numbers for the
   same things as above but for the base/core libraries} Compare.
 \NOTE{Add XXX016 to XXX025.}
+
+
 
 \section{A Taxonomy of Eval}
 
@@ -762,71 +797,6 @@ could be ignored by a static analyzer without any problem.
 
 \subsection{LEGACY TEXT}
 
-In this section we turn our attention to the expression passed for
-evaluation to \eval. The \eval function accepts all types of R objects
-as inputs, but in the majority of cases
-(\AllExpressionInputEvalCallPerc), it is called with expressions. The
-remaining \AllValueInputEvalCallPerc are values, \ie, they evaluate to
-themselves.
-%
-Passing a value into an eval is effectively an no-op so we look
-closely at the expression types the call sites pass to eval across all
-the runs. \AllValueInputEvalSitePerc of all call sites always pass
-values, \AllExpressionInputEvalSitePerc pass expressions and a very
-large proportion, \AllPolymorphicInputEvalSitePerc, pass both
-expressions and values as inputs across all program runs. We inspected
-the eval callsites that accept only values or both values and
-expression as inputs. The top three of these call sites contribute to
-over ~80\% of all calls to evals. The first one is inside
-\c{match.arg} from core. Given a vector of names as strings, this
-function finds the default values for parameters with those names in
-the caller function. Since the default value for a function parameter
-can be a complex expression or a benign value such as \c{NULL}, the
-\c{match.arg} function evaluates it through a call to \eval. This
-makes the \eval inside \c{match.arg} ``polymorhpic''. The second such
-\eval call originates from \ggplot, a popular R package for making
-plots. \ggplot has it's own object system, \ggproto, which uses \eval
-inside the \ggproto function to determine the super-class from which
-it inherits (the default value is \c{NULL} but in general it could be
-an arbitrarily expression). The third \eval call is in core R \c{str}
-function used to print a summary of R objects. It internally maps
-\eval function on the bindings of an environment which results in
-inputs of multiples types being passed to \eval.
-
-We further investigate the type of input passed to \eval in
-Figure~\ref{fig:eval-expression-kind} by the type of input and the
-source of \eval. In this figure, \emph{Expression} is the type of
-program text, \emph{Environmment} is the type of scopes or
-environments used for binding, \emph{Null} is the type of the unique
-\c{NULL} object, \emph{Vector} is the type assigned to vectors of
-strings, booleans, integers, reals and bytes; \emph{Symbol} is the
-type of unevaluated symbols, and \emph{Function} is the type of
-functions.
-
-\begin{figure}[!h]
-  \centering
-  \includegraphics[width=\columnwidth]{eval-expression-kind}
-  \caption{Type of Expression passed to \eval} \label{fig:eval-expression-kind}
-\end{figure}
-
-From the figure, we observe that majority of inputs to Core \eval
-functions are expressions in contrast to package \eval calls which
-receive mostly environments as inputs. In fact,
-\PackageEnvironmentInputEvalCallPerc of \eval calls in packages
-receive environments as input expressions. There are only four
-callsites in package evals that receive environments as expressions.
-\begin{compactitem}[$-$]
-\item \c{ggplot2::ggproto} contributes to 99.9\% of package \eval
-  calls that receive environments as input.
-\item \c{R6::generator_funs} function contributes to only 936 \eval
-  calls and implements the same functionality as \c{ggplot2::ggproto}
-  but for the \emph{R6} OOP system.
-\item \c{future::backtrace} function applies \eval to a future object
-  which is implemented as an environment. This is called only once.
-\item \c{RModel::str.RMmodel} function overloads the core \c{str}
-  method for its \c{RModel} objects and maps \eval exactly like
-  \c{str}. This is called only once.
-\end{compactitem}
 
 \subsubsection{Usage Patterns}
 
