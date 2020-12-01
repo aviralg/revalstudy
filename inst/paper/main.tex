@@ -323,16 +323,15 @@ provide convenience features for programmers. We now give some
 representative examples of its usage.
 
 \mypara{Intercession.} A common use case for \eval is to be combined
-with \c{match.call}. What \c{match.call} does is step up the call
-stack and capture the invocation of the currently executing function
-and return it as an unevaluated expression. The general pattern here
-is that a call to some function \c{f} is transformed to a call to
-another function \c{g} with some arguments retained and others
-modified. An illustration taken from the \c{vcpart} package shows a
-function \c{tvcglm} that is translated to the \c{tvcm} function but
-with two modifications to the argument list, argument \c{control}
-can't be missing and argument \c{fit} is forced to have value \c{glm}.
-The function ends with a call to \c{eval.parent} to ensure that the
+with \c{match.call}. \c{match.call} walks up the call stack, captures
+the code that invoked the currently executing function, and returns it
+as an unevaluated expression. The pattern is to transform a call to
+some function \c{f} into a call to \c{g} with some arguments retained
+and others modified. As an illustration, consider the \c{vcpart}
+package's function \c{tvcglm} that is translated to a call to \c{tvcm}
+with two modifications to the argument list: argument \c{control}
+can't be missing and \c{fit} is set  \c{"glm"}. The
+function ends with a call to \c{eval.parent} to ensure that the
 rewritten call is evaluted in the same environment the original call
 was.
 \begin{lstlisting}
@@ -373,20 +372,9 @@ workspace.
    eval(parse(text=plot))
    ...
 \end{lstlisting}
-This pattern is recognized by the use of \c{parse} to turn
-a string into an expression.
+This pattern is recognizable by its use of \c{parse} to turn a string
+into an expression.
 
-\mypara{Sandbox.} The combination of \eval and first class
-environments can be used to construct a sandbox for evaluating
-side-effecting expressions. The newly constructed environment can use
-the current environment for its lexical scope. This provides the
-evaluated expression access to all the bindings in the current scope
-but restricts the side-effect to the newly constructed throwaway
-environment. However, this sandboxing is limited because the
-expression can reflectively access any environment in the call stack
-or use the super assignment operator(\c{<<-}) to write to parent
-scope. The \c{local} function which is part of Core R is an example of
-this usage pattern.
 
 \mypara{Debloating.} \Eval is often used as a means to reduce
 boilerplate code; simple and repetitive code can easily be replaced
