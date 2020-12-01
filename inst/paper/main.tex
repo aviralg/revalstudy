@@ -369,6 +369,11 @@ passed to this function; the variable is used to construct a call to
    eval(parse(text=plot))
    ...
 \end{lstlisting}
+The \parse and \eval combination is used by the the \source function
+in the base library to load R code from a file in the current
+workspace.
+
+
 
 \mypara{Sandbox.} The combination of \eval and first class
 environments can be used to construct a sandbox for evaluating
@@ -382,20 +387,6 @@ or use the super assignment operator(\c{<<-}) to write to parent
 scope. The \c{local} function which is part of Core R is an example of
 this usage pattern.
 
-\mypara{Code Loading.}
-The combination of \parse and \eval is used to parse text from string
-or file and evaluate in a custom environment. This pattern is used by
-the \source Core R function to load R code from a file in the current
-workspace. This is quite useful for loading functions for interactive
-data analysis.
-
-\mypara{Metaprogramming.}
-The combination of \eval and \substitute is used to do metaprogramming
-in R. \substitute can be used to synthesize ASTs by stitching together
-user inputs. \substitute walks over its argument AST and replaces the
-symbols with their bindings in the specified environment and returns
-this new AST which can then be evaluated in custom environments using
-\eval.
 
 \mypara{Convenience.}
 Eval is used to make some programming tasks easier (and/or shorter).
@@ -408,11 +399,6 @@ eval(parse(text=paste0("options(",i,"=",opts[i],")")))
   \end{lstlisting}
   %
  instead of manually calling \c{options(datatable.verbose=FALSE)}
-
-
-
-
-
 
 
 
