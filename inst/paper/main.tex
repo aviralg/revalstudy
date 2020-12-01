@@ -345,6 +345,8 @@ was.
    return(eval.parent(Call))
  }
 \end{lstlisting}
+This pattern is recognizable by the fact that the expression is a call
+and the target environment is that of the parent.
 
 \mypara{Code Generation.} The more traditional use of \eval is to
 execute code that was assembled by the programmer into a string. Here
@@ -356,7 +358,9 @@ passed to this function; the variable is used to construct a call to
 \c{base::plot} which will draw a plot. \NOTE{This example is a bit
   messed up. What is var? Does the use of ... in the eval grab the
   arguments of this call? If yes does it not end up with xlab twice?
-  HELP}
+  HELP} The \parse and \eval combination is used by the the \source
+function in the base library to load R code from a file in the current
+workspace.
 \begin{lstlisting}
  plot.sback <- function(x,...) {
    opt <- names(list(...))
@@ -365,15 +369,12 @@ passed to this function; the variable is used to construct a call to
     ifelse("main" %in% opt,"",main.aux),
     ifelse("type" %in% opt,"",",type=\"l\""),
     sep = "")
-   plot <- paste("plot(x.data,",stub,",...)", sep = "")
+   plot <- paste("plot(x.data,",stub,",...)",sep="")
    eval(parse(text=plot))
    ...
 \end{lstlisting}
-The \parse and \eval combination is used by the the \source function
-in the base library to load R code from a file in the current
-workspace.
-
-
+This pattern is recognized by the use of \c{parse} to turn
+a string into an expression.
 
 \mypara{Sandbox.} The combination of \eval and first class
 environments can be used to construct a sandbox for evaluating
@@ -387,20 +388,24 @@ or use the super assignment operator(\c{<<-}) to write to parent
 scope. The \c{local} function which is part of Core R is an example of
 this usage pattern.
 
+\mypara{Debloating.} \Eval is often used as a means to reduce
+boilerplate code; simple and repetitive code can easily be replaced
+with judcious use of \eval. For example, the \c{data.table} package
+uses \eval to calls the \c{options} function with named arguments
+taken from a vector of strings. While the benefits are limited in this
+example, it is an attractive tool for programmers.
+\begin{lstlisting}
+  opts = c("datatable.verbose"="FALSE", # ... many others
+  for (i in names(opts))
+    eval(parse(text=paste0("options(",i,"=",opts[i],")")))
+\end{lstlisting}
+This pattern is a special case of code generation, recognizable by the
+fact that \eval is executed in a loop.
 
-\mypara{Convenience.}
-Eval is used to make some programming tasks easier (and/or shorter).
-For example, in \c{data.table}, it is used to set R options from a
-character vector
-  \begin{lstlisting}
-opts = c("datatable.verbose"="FALSE", ...) for (i in names(opts))
-eval(parse(text=paste0("options(",i,"=",opts[i],")")))
-
-  \end{lstlisting}
-  %
- instead of manually calling \c{options(datatable.verbose=FALSE)}
-
-
+\mypara{Trivial.} When values are passed to \eval, they are returned
+unchanged. They are an example of trivial uses of \eval. Another
+trivial use is the empty expression, often found in JavaScript, but
+rare in R.
 
 
 \subsection{Previous Work}
