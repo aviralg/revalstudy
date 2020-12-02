@@ -795,83 +795,7 @@ rest of the function. This can be useful for static analyzers.
 Conclude with number of evals that are ``pure'', i.e. evals which
 could be ignored by a static analyzer without any problem.
 
-\subsection{LEGACY TEXT}
-
-
-\subsubsection{Usage Patterns}
-
-Table~\ref{table:js-pattens-in-r} shows the ratio of \eval in each of
-these patterns. We included all the original patterns except for
-\emph{JSON} as R uses its own serialization format and for
-\emph{empty} as there were no empty expression passed to \eval:
-
-\begin{table}[ht]%\resizebox{\columnwidth}{!}{%
-  \centering
-\begin{tabular}{r|r|r|r|r}\hline
-\multirow{2}{*}{Pattern} & \multicolumn{2}{c|}{Core} & \multicolumn{2}{c}{Packages} \\
-                       & Calls & Ratio            & Calls & Ratio \\\hline
-\input{tag/table-js-patterns-in-r.tex}
-\end{tabular}
-\caption{JavaScript \eval Patterns in R}
-\label{table:js-pattens-in-r}
-\end{table}
-
-\noindent \emph{Library}, \emph{Typeof} and \emph{Try} are all barely
-used mostly because the language provides dedicated features for it.
-The few calls in Library pattern come mostly from file loading
-functions such as \c{source} and \c{sys.source}.
-%
-\noindent
-\emph{Read} pattern in JavaScript represented mostly an incorrect
-access to an object's property or local variable both replaceable by
-JavaScript core functions. In the case of R there are \PatternReadRnd
-read \eval calls (\PatternReadRatio). They come from calls like
-\c{subset(airquality, select = Temp)} where the variable \c{Temp} will
-be evaluated in the \c{airquality} data frame.
-
-%
-\noindent \emph{Assign} category comprises of assignments to variables
-within an \eval call. We have seen \PatternAssignRnd such calls
-(\PatternAssignRatio). \PatternAssignArrowRatio uses the simple
-assignment (\c{<-}). The majority of cases comes from the
-\c{magrittr}'s \c{\%<>\%} pipe operator
-(\PatternAssignArrowMagrittrRatio) which forwards an object to a
-function on rhs and update lhs with the result. Far more calls used
-the super assignment (\c{<<-}) operator, but almost all come from the
-\c{plyr} package which provides a convenient API for common data
-manipulation problems.
-%
-\noindent \emph{Call} and \emph{Other} together represents the vast
-majority of eval calls in R. The \emph{Other} pattern represents all
-the calls where eval was called with a value instead of with an
-expression. The \emph{Call} pattern contains all the calls that did
-not fall in the previous categories. Without a context it is usually
-difficult to further categorize the intent of these calls. Therefore
-we have randomly chosen \PatternManualPackages packages and manually
-looked at \PatternManualCallsites call sites from which we have
-observed the following categories:
-
-
-\subsubsection{Implementation}
-The package installation process adds an extra file to the package
-directory that contains the code to load the package code inside a
-\local block. It creates a namespace object and injects the package
-bindings.
-
-\subsubsection{Miscellaneous}
-\eval is also used in R packages to get around various limitations.
-For example, in \datatable package, \eval is used to modify a binding
-in the \base package of R. Bindings in the \base package are locked
-for modification and require explicit unlocking using function
-\unlockBinding. However, directly using this function triggers a
-restricted-function-use warning during package build, preventing the
-package to be accepted by CRAN. The \datatable gets around this
-limitation by enclosing the call to \unlockBinding inside \eval. From
-the same reason, other packages use \eval to access private variables
-and functions from their dependencies.
-
-\subsubsection{Provenance}
-
+\myoara{Source.}
 There are various ways to obtain expressions:
 \begin{itemize}
   \item \c{substitute} synthesizes ASTs from expressions by replacing
@@ -900,25 +824,15 @@ calls consume the result of calling \c{parse} on a string. We also
 identified one function in core R, \c{invokeRestartInteractively} that
 prompts the user for input, parses it, and passes it to \eval.
 
-\subsubsection{Scope}
 
-One of the main differences of the R \eval with the javascript one is
-how it interacts with \emph{scope}, or environments in R. In
-Javascript, \eval can access the local scope and the global scope. In
-R, \eval has an argument \c{envir} to indicate in which environment
-its first argument must be evaluated. By default, it is equal to
-\c{parent.frame()}, which is the parent environment of \eval call.
-This default argument happens in \DefaultEnvirExprPercent of the eval
-calls.
-
-This argument can also be \c{NULL}, a \c{List} or a data frame. This
-happens in 3.5\% of the cases: \eval copies the fields of the list or
-data frame and creates bindings for them in a new environment. This
-pattern is used to evaluate formulas which can directly refer to the
-fields of the data. The \c{envir} argument can also be a number $n$.
-It means that the environment in which the expressions is evaluated
-will be the result of \c{sys.call(n)} where $n$ refers to the $n$-th
-stack frame.
+\mypara{Scope.} The environment argument can be \c{NULL}, a \c{List}
+or a data frame. This happens in 3.5\% of the cases: \eval copies the
+fields of the list or data frame and creates bindings for them in a
+new environment. This pattern is used to evaluate formulas which can
+directly refer to the fields of the data. The \c{envir} argument can
+also be a number $n$. It means that the environment in which the
+expressions is evaluated will be the result of \c{sys.call(n)} where
+$n$ refers to the $n$-th stack frame.
 
 The top-level environment in R is called the global environment. New
 environments can be created using \c{new.env}. They can be provided a
@@ -1101,7 +1015,6 @@ pipe operators \c{\%>\%}, \c{\%<>\%} and \c{\%\$\%} in package
 \emph{magrittr}. It is effectively used to compose functions on their
 first argument, which can be of any type.
 
-
 Similarly to JavaScript, there are also unnecessary uses of \eval. For
 example, the \c{PerformanceAnalytics} package contains a function
 \c{chart.QQPlot} that uses \eval to resolve a string into function and
@@ -1122,20 +1035,7 @@ z <- q.f(dp, ...)
 \end{lstlisting}
   or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
-\section{Comparison with Javascript}
-
-Comparing the use of \eval in R and JavaScript is instructive. The use
-of \eval is more widespread in data science code than it was in
-JavaScript. Any run of an R program seems to trigger \eval; moreover
-package programmers use \eval liberally. On the other hand, the
-authors of Kaggle packages do not use the feature at all. This point
-to a bifurcated user community: experts who write package know how to
-use \eval while end-users do not. An alternative explanation is that
-end-users do not need \eval for simple data analysis tasks. This
-bifurcation was not observed in the JavaScript community, but this may
-have changed with the advent of Node.js ecosystem. The distribution of
-input sizes is similar to that found in JavaScript, the majority of
-inputs being rather small.
+\subsection{Comparison with Javascript}
 
 
 
