@@ -223,7 +223,7 @@ extract_package_name <- function(src_ref, file) {
   case_when(
     is.na(src_ref) ~ "base?",
     str_starts(src_ref, fixed("./R/")) ~ "core",
-    str_starts(src_ref, fixed("/tmp/")) ~ str_match(src_ref, "/tmp/Rtmp[^/]*/R\\.INSTALL[^/]*/([^/]+)/.*")[[2]],
+    str_starts(src_ref, fixed("/tmp/")) ~ str_match(src_ref, "/tmp.*/Rtmp[^/]*/R\\.INSTALL[^/]*/([^/]+)/R/.*$")[[2]], #path problem here
     str_starts(src_ref, fixed("/mnt/nvme0/")) ~ "base",
     str_starts(src_ref, fixed("test")) ~ str_match(src_ref, "([^/]*)/.*")[[2]],
     str_starts(src_ref, fixed("/:")) ~ str_match(file, "[^/]*/[^/]*/([^/]*)/.*")[[2]],
@@ -243,6 +243,9 @@ find_package_name <-
     } # "Actually base but we generalize
     else {
       tempPack <- extract_package_name(srcref, file)
+      #It would indicate that one of the regex has failed and
+      # so that probably assumptions made on the paths in the srcref are no longer valid
+      stopifnot(!is.na(tempPack))
       if (tempPack == "base?")
       # It means the srcref was NA
         {
@@ -423,8 +426,9 @@ Example:
 main <- function(argv) {
   if (length(argv) != 10) {
     cat("Only ", length(argv), " arguments. Missing arguments!\n")
+    print(argv)
     usage()
-    quit(save = "no", status = 1)
+    return(1)
   }
 
   corpus_file <- argv[1]
@@ -439,8 +443,10 @@ main <- function(argv) {
   evals_summarized_externals_file <- argv[10]
 
 
+
   cat("Reading and validating input files\n")
 
+  now_first <- Sys.time()
   corpus <- read_fst(corpus_file)
   stopifnot(length(corpus) == 29)
   stopifnot("package" %in% names(corpus)) # for preprocess, we mainly care about the package names
@@ -449,10 +455,11 @@ main <- function(argv) {
     read_fst(calls_file) %>%
     as_tibble() %>%
     mutate(
-      package = basename(dirname(dirname(file))),
+      package = basename(dirname(dirname(dirname(file)))),
       corpus = "cran"
-    ) %>%
-    semi_join(corpus, by = "package") # There might be more packages traced than what is in the corpus
+    )
+  #%>%
+  #semi_join(corpus, by = "package") # There might be more packages traced than what is in the corpus
   # stopifnot(length(eval_calls_raw) == 52)
 
   eval_calls_kaggle_raw <-
@@ -464,48 +471,73 @@ main <- function(argv) {
     )
   # stopifnot(length(eval_calls_kaggle_raw) == 52)
 
-  eval_calls_raw <- bind_rows(eval_calls_raw, eval_calls_kaggle_raw)
+  #eval_calls_raw <- bind_rows(eval_calls_raw, eval_calls_kaggle_raw) # Kaggle has not the right format currently
+  res <- difftime(Sys.time(), now_first)
+  cat("Done in ", res, units(res), "\n")
 
   # Preprocessing pipeline
 
-  cat("Deduplicating\n")
+  cat("Deduplicating from ", nrow(eval_calls_raw), " rows")
+  now <- Sys.time()
   eval_calls <- eval_calls_raw %>% deduplicate()
+  cat(" to ", nrow(eval_calls), " rows\n")
+  res <- difftime(Sys.time(), now)
+  cat("Done in ", res, units(res), "\n")
+
   # cat("Adding types\n")
   # eval_calls <- eval_calls %>% add_types() # This step is now useless as there are directly strings
   cat("Correcting srcrefs\n")
-  eval_calls <-
-    eval_calls %>%
-    add_eval_source(eval_calls_raw) %>%
-    add_eval_source_type()
+  now <- Sys.time()
+  eval_calls <- eval_calls %>% add_eval_source(eval_calls_raw)
+  eval_calls <- eval_calls %>% add_eval_source_type()
   eval_calls <- eval_calls %>% add_fake_srcref()
+  res <- difftime(Sys.time(), now)
+  cat("Done in ", res, units(res), "\n")
 
   cat("Adding parse args\n")
+  now <- Sys.time()
   eval_calls <- eval_calls %>% add_parse_args()
+  res <- difftime(Sys.time(), now)
+  cat("Done in ", res, units(res), "\n")
 
+  cat("only keep eval in corpus\n")
+  now <- Sys.time()
   # This seems to be already performed by the semijoin above. To remove?
   corpus_files <- corpus %>% select(package)
   eval_calls_corpus <- eval_calls %>% keep_only_corpus(corpus_files)
   eval_calls_externals <- eval_calls %>% get_externals(corpus_files)
+  res <- difftime(Sys.time(), now)
+  cat("Done in ", res, units(res), "\n")
 
   # Separate datasets
   cat("Separating datasets\n")
+  now <- Sys.time()
   eval_calls_core <-
     eval_calls_corpus %>% filter(eval_source_type == "core")
   eval_calls_packages <-
     eval_calls_corpus %>% filter(eval_source_type == "package")
   eval_calls_kaggle <-
     eval_calls_corpus %>% filter(eval_source_type == "kaggle")
+  res <- difftime(Sys.time(), now)
+  cat("Done in ", res, units(res), "\n")
 
   # Some other interesting data
   cat("Undefined calls per package\n")
+  now <- Sys.time()
   undefined_per_package <- undefined_packages(eval_calls)
+  res <- difftime(Sys.time(), now)
+  cat("Done in ", res, units(res), "\n")
 
   cat("Number of call sites per package\n")
+  now <- Sys.time()
   calls_site_per_package <-
     known_call_sites(eval_calls_corpus, corpus_file)
+  res <- difftime(Sys.time(), now)
+  cat("Done in ", res, units(res), "\n")
 
   # Write output files
   cat("Writing output files\n")
+  now <- Sys.time()
   write_fst(undefined_per_package, evals_undefined_file)
 
   write_fst(eval_calls, evals_raw_file)
@@ -519,10 +551,30 @@ main <- function(argv) {
   write_fst(eval_calls_externals, evals_summarized_externals_file)
 
   write_fst(calls_site_per_package, package_evals_dynamic_file)
+  res <- difftime(Sys.time(), now)
+  cat("Done in ", res, units(res), "\n")
+
+  res <- difftime(Sys.time(), now_first)
+  cat("Total processing time in ", res, units(res), "\n")
+
+  return(0)
 }
 
+defaultArgs <- c("data/corpus.fst", "../../run/package-evals-traced.7/calls.fst", "../../run/kaggle-run/calls.fst",
+                 "data/evals-dynamic.fst",
+                 "../../run/package-evals-traced.7/summarized-evals-undefined.fst", "../../run/package-evals-traced.7/raw.fst",
+                 "../../run/package-evals-traced.7/summarized-core.fst", "../../run/package-evals-traced.7/summarized-packages.fst",
+                 "../../run/package-evals-traced.7/summarized-kaggle.fst", "../../run/package-evals-traced.7/summarized-externals.fst")
 
 # Only execute if it is launched as a script
 if (identical(environment(), globalenv())) {
-  quit(status = main(commandArgs(trailingOnly = TRUE)))
+
+  if(FALSE) {
+    quit(status = commandArgs(trailingOnly = TRUE))
+  }
+  else {
+    setwd("/var/lib/R/project-evalR/revalstudy/inst/")
+    main(defaultArgs)
+  }
 }
+
