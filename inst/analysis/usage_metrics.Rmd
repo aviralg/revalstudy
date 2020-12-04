@@ -1,13 +1,19 @@
 ---
 title: "Usage metrics"
 author: "Pierre Donat-Bouillud"
-output: html_document
+output:
+    html_document:
+        gallery: false
+        toc: true
+        toc_depth: 3
+        toc_float: true
+        df_print: paged
 date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
   base_dir: /var/lib/R/project-evalR
-  calls_packages_path: /run/package-evals-traced.7/summarized-externals.fst
+  calls_packages_path: /run/package-evals-traced.9/summarized-externals.fst
   corpus_path: /revalstudy/inst/data/corpus.fst
 ---
 
@@ -39,7 +45,7 @@ library(tidyverse)
 library(stringr)
 library(fst)
 library(fs)
-
+library(DT)
 
 source("inc/paths.R")
 source("inc/latextags.R")
@@ -97,7 +103,7 @@ packages_at_least_one_call_site <- call_sites_per_package %>% filter(nb_call_sit
 median_call_sites <- packages_at_least_one_call_site %>% summarise(med = median(nb_call_sites, na.rm = TRUE))
 max_packages <- packages_at_least_one_call_site %>% filter(nb_call_sites == max(nb_call_sites, na.rm = TRUE)) %>% select(eval_source, nb_call_sites)
 
-nb_no_calls_to_eval <- nrow(corpus) - nrow(packages_at_least_one_call_site) # corpus seems to be wrong
+nb_no_calls_to_eval <- nrow(corpus) - n_distinct(select(packages_at_least_one_call_site, eval_source))
 
 r("nb eval call sites", nb_ev_call_sites)
 r("packages no calls to eval", nb_no_calls_to_eval)
@@ -106,19 +112,18 @@ r("packages no calls to eval", nb_no_calls_to_eval)
 
 ```{r call-sites-violin-plot}
 call_sites_per_package %>%
- ggplot(aes(x = eval_source, y = nb_call_sites, fill = eval_function), na.rm = TRUE) +
+ ggplot(aes(x = eval_function, y = nb_call_sites, fill = eval_function), na.rm = TRUE) +
   geom_violin(trim = FALSE, width=1.7)+
-  geom_boxplot(data = slice_sample(call_sites_per_package, n = 100000), width=.03) + # too slow otherwise
-  #scale_y_log10(labels = scales::comma) +
+  #geom_jitter(shape=16, position=position_jitter(0.2)) +
   labs(y="Call sites per package") +
-  theme(
+    theme(
     legend.position=c(0.5, 0.85),
     legend.box.background = element_rect(fill="white", size=0.1),
     legend.box="horizontal",
     axis.title.x=element_blank()
   )
 
-#ggsave(path(PLOT_DIR, "call_sites_per_packages.pdf"))
+ggsave(path(PLOT_DIR, "call_sites_per_packages.pdf"))
 ```
 
 
@@ -155,34 +160,36 @@ r("max eval call package", max_eval_calls$eval_source)
 
 ```{r eval-calls-violin-plot}
 eval_calls_per_package %>%
- ggplot(aes(x = eval_source, y = n), na.rm = TRUE) +
+ ggplot(aes(x = "", y = n, fill = ""), na.rm = TRUE) +
   geom_violin(trim = FALSE, width=1.7)+
-  geom_boxplot(data = slice_sample(eval_calls_per_package, n = 100000), width=.03) + # too slow otherwise
-  #scale_y_log10(labels = scales::comma) +
   labs(y="Eval calls per package") +
   theme(
-    legend.position=c(0.5, 0.85),
-    legend.box.background = element_rect(fill="white", size=0.1),
-    legend.box="horizontal",
-    axis.title.x=element_blank()
-  )
+    legend.position= "none"
+  ) 
 
 ggsave(path(PLOT_DIR, "eval_calls_per_packages.pdf"))
 ```
 
-```{r}
-nb_eval_calls_tot <- eval_calls %>% count(wt = nb_ev_calls)
-```
 
-If we don't exclude dependent calls, there are `r nb_eval_calls_tot` eval calls, so the proper eval calls are `r ratio(nb_eval_calls, nb_eval_calls_tot$n)` of the total.
+<!-- How is the normalized distribution of eval calls?  -->
 
+<!-- ```{r distribution-call-sites} -->
+<!-- eval_calls_per_package %>% -->
+<!--   ggplot(aes(x = n), na.rm = TRUE) + -->
+<!--   geom_density(adjust = 10) + -->
+<!--   scale_y_log10()  -->
+<!-- ``` -->
 
+<!-- (Like the violin plot, but smoothed) -->
+(th)
 
 # Amount of code loaded by eval
 
 ```{r amout-of-code}
 
-weighted.median <- function(x, w) {
+weighted.median <- function(x, w, na.rm=FALSE) {
+  if(na.rm)
+    na.omit(x)
   w <- w[order(x)]
   x <- x[order(x)]
 
@@ -191,8 +198,8 @@ weighted.median <- function(x, w) {
   return(x[ps])
 }
 
-med_size <- own_eval_calls %>% summarise(med = median(expr_expression_length, na.rm = TRUE)) # should be weighted by nb_ev_calls
-max_size <- own_eval_calls %>% summarize(m = max(expr_expression_length, na.rm = TRUE))
+med_size <-  weighted.median(own_eval_calls$expr_expression_length, w = own_eval_calls$nb_ev_calls, na.rm = TRUE)
+max_size <- max(own_eval_calls$expr_expression_length, na.rm = TRUE)
 average_size <- weighted.mean(own_eval_calls$expr_expression_length, na.rm = TRUE, w = own_eval_calls$nb_ev_calls)
 
 sizes_prop <- own_eval_calls %>% count(expr_expression_length, wt = nb_ev_calls) %>%
@@ -230,17 +237,13 @@ r("small events eval", ratio(nb_less_100_events, nb_eval_calls))
 ```
 
 ```{r nb-events-violin-plot}
-own_eval_calls %>%
- ggplot(aes(x = eval_source, y = direct_interpreter_eval), na.rm = TRUE) +
+own_eval_calls %>% filter(direct_interpreter_eval > 0) %>%
+ ggplot(aes(x = "", y = direct_interpreter_eval, fill = ""), na.rm = TRUE) +
   geom_violin(trim = FALSE, width=1.7)+
-  geom_boxplot(data = slice_sample(own_eval_calls, n = 100000), width=.03) + # too slow otherwise
-  #scale_y_log10(labels = scales::comma) +
+  scale_y_log10(labels = scales::comma) +
   labs(y="Number of events in eval per package") +
   theme(
-    legend.position=c(0.5, 0.85),
-    legend.box.background = element_rect(fill="white", size=0.1),
-    legend.box="horizontal",
-    axis.title.x=element_blank()
+    legend.position="none"
   )
 
 ggsave(path(PLOT_DIR, "nb_events_per_packages.pdf"))

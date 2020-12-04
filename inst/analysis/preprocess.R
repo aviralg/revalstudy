@@ -215,7 +215,7 @@ extract_package_name <- function(src_ref, file) {
   # There are 5 possibilities for a srcref:
   # - NA
   # - /tmp/Rtmp..../R.INSTALL....../packagename/R/file:linenumbers
-  # - /mnt/nvme0/R/project-evalR/library/4.0/instrumentr/srcref/packagename/4.0.4/file:linenumbers
+  # - mnt/ocfs_vol_00/project-evalR/library/4.0/instrumentr/srcref/packagename/4.0.4/file:linenumbers
   # - /R/* : core packages (we cannot distinguish between them yet so we write core for the package name)
   # - /testit/... or /testthat/... : it is the testit or testthat packages
   # - :/R : extract the package name from the file path in the column path
@@ -224,7 +224,7 @@ extract_package_name <- function(src_ref, file) {
     is.na(src_ref) ~ "base?",
     str_starts(src_ref, fixed("./R/")) ~ "core",
     str_starts(src_ref, fixed("/tmp/")) ~ str_match(src_ref, "/tmp.*/Rtmp[^/]*/R\\.INSTALL[^/]*/([^/]+)/R/.*$")[[2]], #path problem here
-    str_starts(src_ref, fixed("/mnt/nvme0/")) ~ "base",
+    str_starts(src_ref, fixed("/mnt/ocfs_vol")) ~ "base", #depends on where the shared is mounted!
     str_starts(src_ref, fixed("test")) ~ str_match(src_ref, "([^/]*)/.*")[[2]],
     str_starts(src_ref, fixed("/:")) ~ str_match(file, "[^/]*/[^/]*/([^/]*)/.*")[[2]],
     TRUE ~ "unknown"
@@ -448,7 +448,7 @@ main <- function(argv) {
 
   now_first <- Sys.time()
   corpus <- read_fst(corpus_file)
-  stopifnot(length(corpus) == 29)
+  #stopifnot(length(corpus) == 29)
   stopifnot("package" %in% names(corpus)) # for preprocess, we mainly care about the package names
 
   eval_calls_raw <-
@@ -502,8 +502,10 @@ main <- function(argv) {
 
   cat("only keep eval in corpus\n")
   now <- Sys.time()
-  # This seems to be already performed by the semijoin above. To remove?
-  corpus_files <- corpus %>% select(package)
+  # This is probably useless as there already was a filtering at tracing time.
+  # But this is a sanity check...
+  # Keep if quick
+  corpus_files <- corpus %>% select(package) %>% c()
   eval_calls_corpus <- eval_calls %>% keep_only_corpus(corpus_files)
   eval_calls_externals <- eval_calls %>% get_externals(corpus_files)
   res <- difftime(Sys.time(), now)
@@ -560,11 +562,11 @@ main <- function(argv) {
   return(0)
 }
 
-defaultArgs <- c("data/corpus.fst", "../../run/package-evals-traced.7/calls.fst", "../../run/kaggle-run/calls.fst",
+defaultArgs <- c("../../run/package-evals-traced.8/corpus.fst", "../../run/package-evals-traced.8/calls.fst", "../../run/kaggle-run/calls.fst",
                  "data/evals-dynamic.fst",
-                 "../../run/package-evals-traced.7/summarized-evals-undefined.fst", "../../run/package-evals-traced.7/raw.fst",
-                 "../../run/package-evals-traced.7/summarized-core.fst", "../../run/package-evals-traced.7/summarized-packages.fst",
-                 "../../run/package-evals-traced.7/summarized-kaggle.fst", "../../run/package-evals-traced.7/summarized-externals.fst")
+                 "../../run/package-evals-traced.8/summarized-evals-undefined.fst", "../../run/package-evals-traced.8/raw.fst",
+                 "../../run/package-evals-traced.8/summarized-core.fst", "../../run/package-evals-traced.8/summarized-packages.fst",
+                 "../../run/package-evals-traced.8/summarized-kaggle.fst", "../../run/package-evals-traced.8/summarized-externals.fst")
 
 # Only execute if it is launched as a script
 if (identical(environment(), globalenv())) {

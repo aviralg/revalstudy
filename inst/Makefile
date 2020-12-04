@@ -13,7 +13,7 @@ RUN_PACKAGE_METADATA_DIR      := $(RUN_DIR)/package-metadata
 RUN_PACKAGE_COVERAGE_DIR      := $(RUN_DIR)/package-coverage
 RUN_KAGGLE_DIR                := $(RUN_DIR)/kaggle-run
 RUN_PACKAGE_EVALS_DIR         := $(RUN_DIR)/package-evals-static
-RUN_PACKAGE_TRACE_DIR         ?= $(RUN_DIR)/package-evals-traced.5
+RUN_PACKAGE_TRACE_DIR         ?= $(RUN_DIR)/package-evals-traced.9
 RUN_PACKAGE_RUNNABLE_CODE_DIR := $(RUN_DIR)/package-runnable-code-eval
 
 # raw files
@@ -39,7 +39,8 @@ PACKAGE_FUNCTIONS_FILE     := $(DATA_DIR)/functions.fst
 PACKAGE_RUNNABLE_CODE_FILE := $(DATA_DIR)/runnable-code-metadata.fst
 PACKAGE_TRACE_RUNS_FILE    := $(DATA_DIR)/run-trace.fst
 PACKAGE_TRACE_LOG_FILE     := $(DATA_DIR)/parallel-trace.fst
-CORPUS_FILE                := $(DATA_DIR)/corpus.fst
+#CORPUS_FILE                := $(DATA_DIR)/corpus.fst
+CORPUS_FILE				   := $(RUN_PACKAGE_TRACE_DIR)/corpus.fst
 
 # kaggle corpus
 KAGGLE_KERNELS_FILE := $(DATA_DIR)/kaggle-kernels.fst
