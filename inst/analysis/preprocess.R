@@ -569,8 +569,8 @@ defaultArgs <- c("data/corpus.fst", "../../run/package-evals-traced.7/calls.fst"
 # Only execute if it is launched as a script
 if (identical(environment(), globalenv())) {
 
-  if(FALSE) {
-    quit(status = commandArgs(trailingOnly = TRUE))
+  if(TRUE) {
+    quit(status = main(commandArgs(trailingOnly = TRUE)))
   }
   else {
     setwd("/var/lib/R/project-evalR/revalstudy/inst/")
