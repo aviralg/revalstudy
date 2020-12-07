@@ -106,6 +106,7 @@ max_packages <- packages_at_least_one_call_site %>% filter(nb_call_sites == max(
 nb_no_calls_to_eval <- nrow(corpus) - n_distinct(select(packages_at_least_one_call_site, eval_source))
 
 r("nb eval call sites", nb_ev_call_sites)
+r("nb one call site", nb_packages_one_call_site)
 r("packages no calls to eval", nb_no_calls_to_eval)
 r("nb median call sites", median_call_sites$med)
 r("max call sites", max_packages$nb_call_sites)
