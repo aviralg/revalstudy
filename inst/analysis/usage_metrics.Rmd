@@ -94,7 +94,7 @@ r("nb package eval at least once", eval_at_least_once)
 ```{r nb-eval-call-sites}
 nb_ev_call_sites <- eval_calls %>% select(eval_call_srcref) %>% n_distinct(na.rm = TRUE)
 
-call_sites_per_package <- eval_calls %>% group_by(eval_source) %>% mutate(nb_call_sites = n_distinct(eval_call_srcref, na.rm = TRUE))
+call_sites_per_package <- eval_calls %>% group_by(eval_source) %>% summarize(nb_call_sites = n_distinct(eval_call_srcref, na.rm = TRUE))
 
 nb_packages_one_call_site <- call_sites_per_package %>% filter(nb_call_sites == 1) %>% nrow()
 
@@ -107,11 +107,15 @@ nb_no_calls_to_eval <- nrow(corpus) - n_distinct(select(packages_at_least_one_ca
 
 r("nb eval call sites", nb_ev_call_sites)
 r("packages no calls to eval", nb_no_calls_to_eval)
+r("nb median call sites", median_call_sites$med)
+r("max call sites", max_packages$nb_call_sites)
+r("max call sites package", max_packages$eval_source)
+r("at least one call site", nrow(packages_at_least_one_call_site))
 ```
 
 
 ```{r call-sites-violin-plot}
-call_sites_per_package %>%
+eval_calls %>% group_by(eval_source) %>% mutate(nb_call_sites = n_distinct(eval_call_srcref, na.rm = TRUE)) %>%
  ggplot(aes(x = eval_function, y = nb_call_sites, fill = eval_function), na.rm = TRUE) +
   geom_violin(trim = FALSE, width=1.7)+
   #geom_jitter(shape=16, position=position_jitter(0.2)) +
