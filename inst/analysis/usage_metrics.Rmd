@@ -33,14 +33,16 @@ knitr::knit_hooks$set(time_it = local({
   }
 }))
 
-knitr::opts_chunk$set(echo = TRUE,
-                      fig.retina = 2,
-                      fig.width = 10,
-                      cache.lazy = FALSE,
-                      time_it = TRUE)
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.retina = 2,
+  fig.width = 10,
+  cache.lazy = FALSE,
+  time_it = TRUE
+)
 
 
-now <- Sys.time() 
+now <- Sys.time()
 library(tidyverse)
 library(stringr)
 library(fst)
@@ -51,7 +53,7 @@ source("inc/paths.R")
 source("inc/latextags.R")
 source("inc/setup.R")
 theme_set(theme_minimal())
-create_tags(path(TAGS_DIR, "usage_metrics.tex"), prefix="", default=TRUE)
+create_tags(path(TAGS_DIR, "usage_metrics.tex"), prefix = "", default = TRUE)
 ```
 
 
@@ -69,16 +71,26 @@ corpus <- read_fst(paste0(params$base_dir, params$corpus_path)) %>% as_tibble()
 
 
 ```{r eval-calls-overview}
-#own_eval_calls <- eval_calls %>% filter(eval_source == package) # probably to remove
+# own_eval_calls <- eval_calls %>% filter(eval_source == package) # probably to remove
 own_eval_calls <- eval_calls
 nb_eval_calls <- (own_eval_calls %>% count(wt = nb_ev_calls))$n
 
-nb_eval_pres_calls <- own_eval_calls %>% filter(eval_function == "eval") %>% count(wt = nb_ev_calls)
-nb_evalq_calls <- own_eval_calls %>% filter(eval_function == "evalq") %>% count(wt = nb_ev_calls)
-nb_eval.parent_calls <- own_eval_calls %>% filter(eval_function == "eval.parent") %>% count(wt = nb_ev_calls)
-nb_local_calls <- own_eval_calls %>% filter(eval_function == "local") %>% count(wt = nb_ev_calls)
+nb_eval_pres_calls <- own_eval_calls %>%
+  filter(eval_function == "eval") %>%
+  count(wt = nb_ev_calls)
+nb_evalq_calls <- own_eval_calls %>%
+  filter(eval_function == "evalq") %>%
+  count(wt = nb_ev_calls)
+nb_eval.parent_calls <- own_eval_calls %>%
+  filter(eval_function == "eval.parent") %>%
+  count(wt = nb_ev_calls)
+nb_local_calls <- own_eval_calls %>%
+  filter(eval_function == "local") %>%
+  count(wt = nb_ev_calls)
 
-eval_at_least_once <- own_eval_calls %>% count(package, wt = nb_ev_calls) %>% nrow()
+eval_at_least_once <- own_eval_calls %>%
+  count(package, wt = nb_ev_calls) %>%
+  nrow()
 
 r("nb eval and variant calls", nb_eval_calls)
 r("nb eval calls", nb_eval_pres_calls$n)
@@ -92,16 +104,24 @@ r("nb package eval at least once", eval_at_least_once)
 # Number of eval call sites
 
 ```{r nb-eval-call-sites}
-nb_ev_call_sites <- eval_calls %>% select(eval_call_srcref) %>% n_distinct(na.rm = TRUE)
+nb_ev_call_sites <- eval_calls %>%
+  select(eval_call_srcref) %>%
+  n_distinct(na.rm = TRUE)
 
-call_sites_per_package <- eval_calls %>% group_by(eval_source) %>% summarize(nb_call_sites = n_distinct(eval_call_srcref, na.rm = TRUE))
+call_sites_per_package <- eval_calls %>%
+  group_by(eval_source) %>%
+  summarize(nb_call_sites = n_distinct(eval_call_srcref, na.rm = TRUE))
 
-nb_packages_one_call_site <- call_sites_per_package %>% filter(nb_call_sites == 1) %>% nrow()
+nb_packages_one_call_site <- call_sites_per_package %>%
+  filter(nb_call_sites == 1) %>%
+  nrow()
 
 packages_at_least_one_call_site <- call_sites_per_package %>% filter(nb_call_sites >= 1)
 
 median_call_sites <- packages_at_least_one_call_site %>% summarise(med = median(nb_call_sites, na.rm = TRUE))
-max_packages <- packages_at_least_one_call_site %>% filter(nb_call_sites == max(nb_call_sites, na.rm = TRUE)) %>% select(eval_source, nb_call_sites)
+max_packages <- packages_at_least_one_call_site %>%
+  filter(nb_call_sites == max(nb_call_sites, na.rm = TRUE)) %>%
+  select(eval_source, nb_call_sites)
 
 nb_no_calls_to_eval <- nrow(corpus) - n_distinct(select(packages_at_least_one_call_site, eval_source))
 
@@ -116,16 +136,18 @@ r("at least one call site", nrow(packages_at_least_one_call_site))
 
 
 ```{r call-sites-violin-plot}
-eval_calls %>% group_by(eval_source) %>% mutate(nb_call_sites = n_distinct(eval_call_srcref, na.rm = TRUE)) %>%
- ggplot(aes(x = eval_function, y = nb_call_sites, fill = eval_function), na.rm = TRUE) +
-  geom_violin(trim = FALSE, width=1.7)+
-  #geom_jitter(shape=16, position=position_jitter(0.2)) +
-  labs(y="Call sites per package") +
-    theme(
-    legend.position=c(0.5, 0.85),
-    legend.box.background = element_rect(fill="white", size=0.1),
-    legend.box="horizontal",
-    axis.title.x=element_blank()
+eval_calls %>%
+  group_by(eval_source) %>%
+  mutate(nb_call_sites = n_distinct(eval_call_srcref, na.rm = TRUE)) %>%
+  ggplot(aes(x = eval_function, y = nb_call_sites, fill = eval_function), na.rm = TRUE) +
+  geom_violin(trim = FALSE, width = 1.7) +
+  # geom_jitter(shape=16, position=position_jitter(0.2)) +
+  labs(y = "Call sites per package") +
+  theme(
+    legend.position = c(0.5, 0.85),
+    legend.box.background = element_rect(fill = "white", size = 0.1),
+    legend.box = "horizontal",
+    axis.title.x = element_blank()
   )
 
 ggsave(path(PLOT_DIR, "call_sites_per_packages.pdf"))
@@ -139,7 +161,10 @@ This is the number of eval calls which have a call site in each package, divided
 
 We first compute an approximation of the number of runs per package.
 ```{r runs-per-package}
-runs_package <- own_eval_calls %>% group_by(eval_source) %>% summarise(nb_runs = n_distinct(file)) %>% arrange(desc(nb_runs))
+runs_package <- own_eval_calls %>%
+  group_by(eval_source) %>%
+  summarise(nb_runs = n_distinct(file)) %>%
+  arrange(desc(nb_runs))
 ```
 
 
@@ -152,9 +177,14 @@ runs_package %>% datatable()
 
 ```{r nb-eval-calls}
 # run = package?
-eval_calls_per_package <- own_eval_calls %>% count(eval_source, wt=nb_ev_calls) %>% left_join(runs_package, by = "eval_source") %>% mutate(n = n / nb_runs)
+eval_calls_per_package <- own_eval_calls %>%
+  count(eval_source, wt = nb_ev_calls) %>%
+  left_join(runs_package, by = "eval_source") %>%
+  mutate(n = n / nb_runs)
 
-average_eval_calls <- eval_calls_per_package %>% filter(n > 0) %>% summarise(average = mean(n))
+average_eval_calls <- eval_calls_per_package %>%
+  filter(n > 0) %>%
+  summarise(average = mean(n))
 max_eval_calls <- eval_calls_per_package %>% filter(n == max(n))
 
 r("average eval calls per package", average_eval_calls$average) # average on packages with at least one eval call
@@ -165,12 +195,12 @@ r("max eval call package", max_eval_calls$eval_source)
 
 ```{r eval-calls-violin-plot}
 eval_calls_per_package %>%
- ggplot(aes(x = "", y = n, fill = ""), na.rm = TRUE) +
-  geom_violin(trim = FALSE, width=1.7)+
-  labs(y="Eval calls per package") +
+  ggplot(aes(x = "", y = n, fill = ""), na.rm = TRUE) +
+  geom_violin(trim = FALSE, width = 1.7) +
+  labs(y = "Eval calls per package") +
   theme(
-    legend.position= "none"
-  ) 
+    legend.position = "none"
+  )
 
 ggsave(path(PLOT_DIR, "eval_calls_per_packages.pdf"))
 ```
@@ -192,35 +222,38 @@ ggsave(path(PLOT_DIR, "eval_calls_per_packages.pdf"))
 
 ```{r amout-of-code}
 
-weighted.median <- function(x, w, na.rm=FALSE) {
-  if(na.rm)
+weighted.median <- function(x, w, na.rm = FALSE) {
+  if (na.rm) {
     na.omit(x)
+  }
   w <- w[order(x)]
   x <- x[order(x)]
 
-  prob <- cumsum(w)/sum(w)
+  prob <- cumsum(w) / sum(w)
   ps <- which(abs(prob - .5) == min(abs(prob - .5)))
   return(x[ps])
 }
 
-med_size <-  weighted.median(own_eval_calls$expr_expression_length, w = own_eval_calls$nb_ev_calls, na.rm = TRUE)
+med_size <- weighted.median(own_eval_calls$expr_expression_length, w = own_eval_calls$nb_ev_calls, na.rm = TRUE)
 max_size <- max(own_eval_calls$expr_expression_length, na.rm = TRUE)
 average_size <- weighted.mean(own_eval_calls$expr_expression_length, na.rm = TRUE, w = own_eval_calls$nb_ev_calls)
 
-sizes_prop <- own_eval_calls %>% count(expr_expression_length, wt = nb_ev_calls) %>%
-                      mutate(proportion = n / sum(n)) %>% 
-                      arrange(expr_expression_length) %>% 
-                      mutate(cumulative = cumsum(proportion))
-  
+sizes_prop <- own_eval_calls %>%
+  count(expr_expression_length, wt = nb_ev_calls) %>%
+  mutate(proportion = n / sum(n)) %>%
+  arrange(expr_expression_length) %>%
+  mutate(cumulative = cumsum(proportion))
 
-nb_nodes_many <- sizes_prop %>% filter(cumulative >= 0.95) %>% .[1,] 
+
+nb_nodes_many <- sizes_prop %>%
+  filter(cumulative >= 0.95) %>%
+  .[1, ]
 
 r("median size eval", med_size)
 r("max size eval", max_size)
 r("average size eval", average_size)
 r("size nine five", nb_nodes_many$expr_expression_length)
 r("size nine five exact percent", percent(nb_nodes_many$cumulative))
-
 ```
 
 
@@ -242,17 +275,34 @@ r("small events eval", ratio(nb_less_100_events, nb_eval_calls))
 ```
 
 ```{r nb-events-violin-plot}
-own_eval_calls %>% filter(direct_interpreter_eval > 0) %>%
- ggplot(aes(x = "", y = direct_interpreter_eval, fill = ""), na.rm = TRUE) +
-  geom_violin(trim = FALSE, width=1.7)+
+own_eval_calls %>%
+  filter(direct_interpreter_eval > 0) %>%
+  ggplot(aes(x = "", y = direct_interpreter_eval, fill = ""), na.rm = TRUE) +
+  geom_violin(trim = FALSE, width = 1.7) +
   scale_y_log10(labels = scales::comma) +
-  labs(y="Number of events in eval per package") +
+  labs(y = "Number of events in eval per package") +
   theme(
-    legend.position="none"
+    legend.position = "none"
   )
 
 ggsave(path(PLOT_DIR, "nb_events_per_packages.pdf"))
 ```
+
+# Loops
+
+Here, we try to have an estimation of how often a call site is exercised per run. If it is often, maybe it is a loop!
+
+```{r loops}
+eval_calls_exercised <- eval_calls %>%
+  group_by(file) %>%
+  count(eval_call_srcref, wt = nb_ev_calls)
+
+eval_calls_exercised %>% ggplot(aes(n)) +
+  geom_histogram() +
+  scale_x_log10(labels = scales::comma) +
+  labs(x = "Number of eval calls per srcref per run")
+```
+
 
 # The case of core libraries
 
@@ -262,4 +312,3 @@ duration <- difftime(Sys.time(), now)
 ```
 
 Notebook execution was `r duration` `r units(duration)`.
-
