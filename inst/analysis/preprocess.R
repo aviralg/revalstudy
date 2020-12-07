@@ -363,12 +363,12 @@ add_package <- function(dataset) {
 
 keep_only_corpus <- function(dataset, corpus_files) {
   return(dataset %>%
-    filter(eval_source %in% c(corpus_files, "core", "base", "base?")))
+    filter(eval_source %in% c(corpus_files$package, "core", "base", "base?")))
 }
 
 get_externals <- function(dataset, corpus_files) {
   return(dataset %>%
-    filter(!eval_source %in% c(corpus_files, "core", "base", "base?")))
+    filter(!eval_source %in% c(corpus_files$package, "core", "base", "base?")))
 }
 
 undefined_packages <- function(eval_calls) {
