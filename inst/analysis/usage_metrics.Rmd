@@ -13,7 +13,7 @@ editor_options:
   chunk_output_type: console
 params:
   base_dir: /var/lib/R/project-evalR
-  calls_packages_path: /run/package-evals-traced.9/summarized-externals.fst
+  calls_packages_path: /run/package-evals-traced.9/summarized-packages.fst
   corpus_path: /revalstudy/inst/data/corpus.fst
 ---
 
