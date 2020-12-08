@@ -363,12 +363,12 @@ add_package <- function(dataset) {
 
 keep_only_corpus <- function(dataset, corpus_files) {
   return(dataset %>%
-    filter(eval_source %in% c(corpus_files$package, "core", "base", "base?")))
+           semi_join(corpus_files, by = c("eval_source" = "package")))
 }
 
 get_externals <- function(dataset, corpus_files) {
   return(dataset %>%
-    filter(!eval_source %in% c(corpus_files$package, "core", "base", "base?")))
+           anti_join(corpus_files, by = c("eval_source" = "package")))
 }
 
 undefined_packages <- function(eval_calls) {
@@ -389,9 +389,10 @@ undefined_packages <- function(eval_calls) {
 }
 
 
+# This is performed directly in usage_metrics.Rmd
 known_call_sites <- function(eval_calls_corpus, corpus_files) {
   call_sites_per_package <- eval_calls_corpus %>%
-    filter(eval_source_type == "package", eval_source %in% corpus_files) %>%
+    filter(eval_source_type == "package", eval_source %in% corpus_files$package) %>%
     group_by(eval_source) %>%
     summarize(n = n_distinct(eval_call_srcref))
 
@@ -505,9 +506,7 @@ main <- function(argv) {
   # This is probably useless as there already was a filtering at tracing time.
   # But this is a sanity check...
   # Keep if quick
-  corpus_files <- corpus %>%
-    select(package) %>%
-    c()
+  corpus_files <- select(corpus, package) %>% bind_rows(tribble(~package, "core", "base", "base?"))
   eval_calls_corpus <- eval_calls %>% keep_only_corpus(corpus_files)
   eval_calls_externals <- eval_calls %>% get_externals(corpus_files)
   res <- difftime(Sys.time(), now)
@@ -532,12 +531,12 @@ main <- function(argv) {
   res <- difftime(Sys.time(), now)
   cat("Done in ", res, units(res), "\n")
 
-  cat("Number of call sites per package\n")
-  now <- Sys.time()
-  calls_site_per_package <-
-    known_call_sites(eval_calls_corpus, corpus_file)
-  res <- difftime(Sys.time(), now)
-  cat("Done in ", res, units(res), "\n")
+  # cat("Number of call sites per package\n")
+  # now <- Sys.time()
+  # calls_site_per_package <-
+  #   known_call_sites(eval_calls_corpus, corpus_files)
+  # res <- difftime(Sys.time(), now)
+  # cat("Done in ", res, units(res), "\n")
 
   # Write output files
   cat("Writing output files\n")
