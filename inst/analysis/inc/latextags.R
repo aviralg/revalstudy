@@ -130,7 +130,8 @@ create_tags <- function(filename, prefix="", default=TRUE) {
 }
 
 clear_tags <- function(tags=get_default_tags()) {
-  tags$values <- tibble::tibble(name=character(), value=character(), latex=character())
+  tags$values <- tibble::tibble(name=character(), 
+                                value=character(), latex=character())
 }
 
 tags_filename <- function(tags) {
@@ -242,7 +243,7 @@ generate_latex_command <- function(command_name, value) {
   stopifnot(length(command_name) == length(value))
   
   stringr::str_c(
-    "\\newcommand{\\", command_name, "}{", latex_escape_value(value), "\\xspace}"
+    "\\newcommand{\\", command_name, "}{", latex_escape_value(value),"\\xspace}"
   )
 }
 
@@ -317,7 +318,7 @@ fmt <- function(x, prefix="", suffix="", ...) {
   format(x, big.mark=",", trim=TRUE)
 }
 
-# TODO: make this parameters part of some global options so they can be set globally
+# TODO: make this parameter a global option so it can be set globally
 # TODO: test c(0.0123, 1.123, -0.0123, -1.123)
 .fmt.double <- function(x, digits=1, floor=FALSE, ceiling=FALSE) {
   if (floor) x <- floor(x)

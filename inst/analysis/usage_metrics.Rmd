@@ -17,113 +17,116 @@ params:
   corpus_path: /run/package-evals-traced.9/corpus.fst
 ---
 
+The following is a set up chunk. Currently there is an variable "jan" 
+used to run the script from docker on my machine. This should be
+removed. (TODO)
+
 ```{r setup, include=FALSE}
+library(tidyverse)
+library(fst)
+library(fs)
+library(DT)
+
+jan <- FALSE
+
 knitr::knit_hooks$set(time_it = local({
   now <- NULL
   function(before, options) {
-    if (before) {
-      # record the current time before each chunk
+    if (before) {.       # record the current time before each chunk
       now <<- Sys.time()
-    } else {
-      # calculate the time difference after a chunk
+    } else {             # calculate the time difference after a chunk
       res <- difftime(Sys.time(), now)
-      # return a character string to show the time
+                         # return a character string to show the time
       paste("Time for this code chunk to run:", res, units(res))
-    }
-  }
-}))
-
+}}}))
+now <- Sys.time()
 knitr::opts_chunk$set(
   echo = TRUE,
   fig.retina = 2,
   fig.width = 10,
   cache.lazy = FALSE,
-  time_it = TRUE
-)
+  time_it = TRUE)
 
-
-now <- Sys.time()
-library(tidyverse)
-library(stringr)
-library(fst)
-library(fs)
-library(DT)
-
-source("inc/paths.R")
+if (jan == FALSE) { source("inc/paths.R") }
 source("inc/latextags.R")
 source("inc/setup.R")
 theme_set(theme_minimal())
+if (jan) { TAGS_DIR <- PLOT_DIR <- "." }
 create_tags(path(TAGS_DIR, "usage_metrics.tex"), prefix = "", default = TRUE)
+
+base_dir <- params$base_dir
+# Set the paths, and customize for Jan.
+if(jan) { base_dir <- "/mnt/code/eval" }
+eval_calls_path <- paste0(base_dir, params$calls_packages_path)
+corpus_path <- paste0(base_dir, params$corpus_path)
 ```
 
+Read in the summarized calls data and the file that describes
+which package belong to our corpus.
 
-```{r file-info, echo=FALSE}
-file_info(params$calls_packages_path)
+```{r read}
+read_fst(eval_calls_path) %>% as_tibble() -> E_raw
+read_fst(corpus_path)     %>% as_tibble() -> C_raw
 ```
 
-```{r read-data}
-eval_calls <- read_fst(paste0(params$base_dir, params$calls_packages_path)) %>% as_tibble()
+The two data sets are E and C for conciseness.  C is only used here to compute
+the corpus size. E is used throughout. Recall that E_raw has the source data
+with all columns.
+
+```{r}
+E_raw %>% select(package, eval_function, nb_ev_calls,
+                 eval_call_srcref, file, eval_source, 
+                 expr_expression_length,
+                 direct_interpreter_eval)-> E
+C_raw -> C
+corpus_size <- nrow(C)
 ```
 
-```{r read_corpus}
-corpus <- read_fst(paste0(params$base_dir, params$corpus_path)) %>% as_tibble()
-```
-
+Compute the number of times eval and it variants were called in the entire 
+corpus. This is a dynamic count that aggregates all call sites within
+the corpus.
 
 ```{r eval-calls-overview}
-# own_eval_calls <- eval_calls %>% filter(eval_source == package) # probably to remove
-own_eval_calls <- eval_calls
-nb_eval_calls <- (own_eval_calls %>% count(wt = nb_ev_calls))$n
+nb_calls <- (E %>% count(wt=nb_ev_calls))$n
+eval_calls <- E %>% filter(eval_function=="eval") %>% count(wt=nb_ev_calls)
+evalq_calls <- E %>% filter(eval_function=="evalq") %>% count(wt=nb_ev_calls)
+eval.parent_calls <- E %>% filter(eval_function=="eval.parent") %>%
+  count(wt = nb_ev_calls)
+local_calls <- E %>% filter(eval_function=="local") %>% count(wt = nb_ev_calls)
+eval_at_least_once <- E %>% count(package, wt=nb_ev_calls) 
 
-nb_eval_pres_calls <- own_eval_calls %>%
-  filter(eval_function == "eval") %>%
-  count(wt = nb_ev_calls)
-nb_evalq_calls <- own_eval_calls %>%
-  filter(eval_function == "evalq") %>%
-  count(wt = nb_ev_calls)
-nb_eval.parent_calls <- own_eval_calls %>%
-  filter(eval_function == "eval.parent") %>%
-  count(wt = nb_ev_calls)
-nb_local_calls <- own_eval_calls %>%
-  filter(eval_function == "local") %>%
-  count(wt = nb_ev_calls)
-
-eval_at_least_once <- own_eval_calls %>%
-  count(package, wt = nb_ev_calls) %>%
-  nrow()
-
-r("nb eval and variant calls", nb_eval_calls)
-r("nb eval calls", nb_eval_pres_calls$n)
-r("nb evalq calls", nb_evalq_calls$n)
-r("nb eval parent calls", nb_eval.parent_calls$n)
-r("nb local calls", nb_local_calls$n)
-r("nb package eval at least once", eval_at_least_once)
+r("nb eval and variant calls", nb_calls)
+r("nb eval calls", eval_calls$n)
+r("nb evalq calls", evalq_calls$n)
+r("nb eval parent calls", eval.parent_calls$n)
+r("nb local calls", local_calls$n)
+r("nb package eval at least once", nrow(eval_at_least_once))
 ``` 
 
 
 # Number of eval call sites
 
 ```{r nb-eval-call-sites}
-nb_ev_call_sites <- eval_calls %>%
+nb_ev_call_sites <- E %>%
   select(eval_call_srcref) %>%
   n_distinct(na.rm = TRUE)
 
-call_sites_per_package <- eval_calls %>%
+call_sites_per_package <- E %>%
   group_by(eval_source) %>%
   summarize(nb_call_sites = n_distinct(eval_call_srcref, na.rm = TRUE))
 
 nb_packages_one_call_site <- call_sites_per_package %>%
   filter(nb_call_sites == 1) %>%
   nrow()
-
-packages_at_least_one_call_site <- call_sites_per_package %>% filter(nb_call_sites >= 1)
-
-median_call_sites <- packages_at_least_one_call_site %>% summarise(med = median(nb_call_sites, na.rm = TRUE))
+packages_at_least_one_call_site <- call_sites_per_package %>% 
+  filter(nb_call_sites >= 1)
+median_call_sites <- packages_at_least_one_call_site %>% 
+  summarise(med = median(nb_call_sites, na.rm = TRUE))
 max_packages <- packages_at_least_one_call_site %>%
   filter(nb_call_sites == max(nb_call_sites, na.rm = TRUE)) %>%
   select(eval_source, nb_call_sites)
-
-nb_no_calls_to_eval <- nrow(corpus) - n_distinct(select(packages_at_least_one_call_site, eval_source))
+nb_no_calls_to_eval <- corpus_size - 
+  n_distinct(select(packages_at_least_one_call_site, eval_source))
 
 r("nb eval call sites", nb_ev_call_sites)
 r("nb one call site", nb_packages_one_call_site)
@@ -136,7 +139,7 @@ r("at least one call site", nrow(packages_at_least_one_call_site))
 
 
 ```{r call-sites-violin-plot}
-eval_calls %>%
+E %>%
   group_by(eval_source) %>%
   mutate(nb_call_sites = n_distinct(eval_call_srcref, na.rm = TRUE)) %>%
   ggplot(aes(x = eval_function, y = nb_call_sites, fill = eval_function), na.rm = TRUE) +
@@ -161,7 +164,7 @@ This is the number of eval calls which have a call site in each package, divided
 
 We first compute an approximation of the number of runs per package.
 ```{r runs-per-package}
-runs_package <- own_eval_calls %>%
+runs_package <- E %>%
   group_by(eval_source) %>%
   summarise(nb_runs = n_distinct(file)) %>%
   arrange(desc(nb_runs))
@@ -177,7 +180,7 @@ runs_package %>% datatable()
 
 ```{r nb-eval-calls}
 # run = package?
-eval_calls_per_package <- own_eval_calls %>%
+eval_calls_per_package <- E %>%
   count(eval_source, wt = nb_ev_calls) %>%
   left_join(runs_package, by = "eval_source") %>%
   mutate(n = n / nb_runs)
@@ -198,9 +201,7 @@ eval_calls_per_package %>%
   ggplot(aes(x = "", y = n, fill = ""), na.rm = TRUE) +
   geom_violin(trim = FALSE, width = 1.7) +
   labs(y = "Eval calls per package") +
-  theme(
-    legend.position = "none"
-  )
+  theme(legend.position = "none")
 
 ggsave(path(PLOT_DIR, "eval_calls_per_packages.pdf"))
 ```
@@ -234,11 +235,11 @@ weighted.median <- function(x, w, na.rm = FALSE) {
   return(x[ps])
 }
 
-med_size <- weighted.median(own_eval_calls$expr_expression_length, w = own_eval_calls$nb_ev_calls, na.rm = TRUE)
-max_size <- max(own_eval_calls$expr_expression_length, na.rm = TRUE)
-average_size <- weighted.mean(own_eval_calls$expr_expression_length, na.rm = TRUE, w = own_eval_calls$nb_ev_calls)
+med_size <- weighted.median(E$expr_expression_length, w = E$nb_ev_calls, na.rm = TRUE)
+max_size <- max(E$expr_expression_length, na.rm = TRUE)
+average_size <- weighted.mean(E$expr_expression_length, na.rm = TRUE, w = E$nb_ev_calls)
 
-sizes_prop <- own_eval_calls %>%
+sizes_prop <- E %>%
   count(expr_expression_length, wt = nb_ev_calls) %>%
   mutate(proportion = n / sum(n)) %>%
   arrange(expr_expression_length) %>%
@@ -262,28 +263,26 @@ r("size nine five exact percent", percent(nb_nodes_many$cumulative))
 
 
 ```{r amount_computations}
-nb_events_in_eval <- own_eval_calls %>% summarise(nb_events = sum(direct_interpreter_eval))
+nb_events_in_eval <- E %>% summarise(nb_events = sum(direct_interpreter_eval))
 
-max_events_in_eval <- own_eval_calls %>% summarize(maxi = max(direct_interpreter_eval))
+max_events_in_eval <- E %>% summarize(maxi = max(direct_interpreter_eval))
 
-less_100_events <- own_eval_calls %>% filter(direct_interpreter_eval <= 100)
+less_100_events <- E %>% filter(direct_interpreter_eval <= 100)
 nb_less_100_events <- count(less_100_events, wt = nb_ev_calls)$n
 
 r("nb events eval", nb_events_in_eval$nb_events)
 r("maxi events eval", max_events_in_eval$maxi)
-r("small events eval", ratio(nb_less_100_events, nb_eval_calls))
+r("small events eval", ratio(nb_less_100_events, nb_calls))
 ```
 
 ```{r nb-events-violin-plot}
-own_eval_calls %>%
+E %>%
   filter(direct_interpreter_eval > 0) %>%
   ggplot(aes(x = "", y = direct_interpreter_eval, fill = ""), na.rm = TRUE) +
   geom_violin(trim = FALSE, width = 1.7) +
   scale_y_log10(labels = scales::comma) +
   labs(y = "Number of events in eval per package") +
-  theme(
-    legend.position = "none"
-  )
+  theme(legend.position = "none")
 
 ggsave(path(PLOT_DIR, "nb_events_per_packages.pdf"))
 ```
@@ -293,13 +292,11 @@ ggsave(path(PLOT_DIR, "nb_events_per_packages.pdf"))
 Here, we try to have an estimation of how often a call site is exercised per run. If it is often, maybe it is a loop!
 
 ```{r loops}
-eval_calls_exercised <- eval_calls %>%
-  group_by(file) %>%
+eval_calls_exercised <- E %>% group_by(file) %>%
   count(eval_call_srcref, wt = nb_ev_calls)
 
 eval_calls_exercised %>% ggplot(aes(n)) +
-  geom_histogram() +
-  scale_x_log10(labels = scales::comma) +
+  geom_histogram() + scale_x_log10(labels = scales::comma) +
   labs(x = "Number of eval calls per srcref per run")
 ```
 
