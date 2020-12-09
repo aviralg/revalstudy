@@ -223,8 +223,8 @@ extract_package_name <- function(src_ref, file) {
   case_when(
     is.na(src_ref) ~ "base?",
     str_starts(src_ref, fixed("./R/")) ~ "core",
-    str_starts(src_ref, fixed("/tmp/")) ~ str_match(src_ref, "/tmp.*/Rtmp[^/]*/R\\.INSTALL[^/]*/([^/]+)/R/.*$")[[2]], #path problem here
-    str_starts(src_ref, fixed("/mnt/ocfs_vol")) ~ "base", #depends on where the shared is mounted!
+    str_starts(src_ref, fixed("/tmp/")) ~ str_match(src_ref, "/tmp.*/Rtmp[^/]*/R\\.INSTALL[^/]*/([^/]+)/R/.*$")[[2]], # path problem here
+    str_starts(src_ref, fixed("/mnt/ocfs_vol")) ~ "base", # depends on where the shared is mounted!
     str_starts(src_ref, fixed("test")) ~ str_match(src_ref, "([^/]*)/.*")[[2]],
     str_starts(src_ref, fixed("/:")) ~ str_match(file, "[^/]*/[^/]*/([^/]*)/.*")[[2]],
     TRUE ~ "unknown"
@@ -243,7 +243,7 @@ find_package_name <-
     } # "Actually base but we generalize
     else {
       tempPack <- extract_package_name(srcref, file)
-      #It would indicate that one of the regex has failed and
+      # It would indicate that one of the regex has failed and
       # so that probably assumptions made on the paths in the srcref are no longer valid
       stopifnot(!is.na(tempPack))
       if (tempPack == "base?")
@@ -363,12 +363,12 @@ add_package <- function(dataset) {
 
 keep_only_corpus <- function(dataset, corpus_files) {
   return(dataset %>%
-    filter(eval_source %in% c(corpus_files$package, "core", "base", "base?")))
+           semi_join(corpus_files, by = c("eval_source" = "package")))
 }
 
 get_externals <- function(dataset, corpus_files) {
   return(dataset %>%
-    filter(!eval_source %in% c(corpus_files$package, "core", "base", "base?")))
+           anti_join(corpus_files, by = c("eval_source" = "package")))
 }
 
 undefined_packages <- function(eval_calls) {
@@ -389,9 +389,10 @@ undefined_packages <- function(eval_calls) {
 }
 
 
+# This is performed directly in usage_metrics.Rmd
 known_call_sites <- function(eval_calls_corpus, corpus_files) {
   call_sites_per_package <- eval_calls_corpus %>%
-    filter(eval_source_type == "package", eval_source %in% corpus_files) %>%
+    filter(eval_source_type == "package", eval_source %in% corpus_files$package) %>%
     group_by(eval_source) %>%
     summarize(n = n_distinct(eval_call_srcref))
 
@@ -448,7 +449,7 @@ main <- function(argv) {
 
   now_first <- Sys.time()
   corpus <- read_fst(corpus_file)
-  #stopifnot(length(corpus) == 29)
+  # stopifnot(length(corpus) == 29)
   stopifnot("package" %in% names(corpus)) # for preprocess, we mainly care about the package names
 
   eval_calls_raw <-
@@ -458,8 +459,8 @@ main <- function(argv) {
       package = basename(dirname(dirname(dirname(file)))),
       corpus = "cran"
     )
-  #%>%
-  #semi_join(corpus, by = "package") # There might be more packages traced than what is in the corpus
+  # %>%
+  # semi_join(corpus, by = "package") # There might be more packages traced than what is in the corpus
   # stopifnot(length(eval_calls_raw) == 52)
 
   eval_calls_kaggle_raw <-
@@ -471,7 +472,7 @@ main <- function(argv) {
     )
   # stopifnot(length(eval_calls_kaggle_raw) == 52)
 
-  #eval_calls_raw <- bind_rows(eval_calls_raw, eval_calls_kaggle_raw) # Kaggle has not the right format currently
+  # eval_calls_raw <- bind_rows(eval_calls_raw, eval_calls_kaggle_raw) # Kaggle has not the right format currently
   res <- difftime(Sys.time(), now_first)
   cat("Done in ", res, units(res), "\n")
 
@@ -505,7 +506,7 @@ main <- function(argv) {
   # This is probably useless as there already was a filtering at tracing time.
   # But this is a sanity check...
   # Keep if quick
-  corpus_files <- corpus %>% select(package) %>% c()
+  corpus_files <- select(corpus, package) %>% bind_rows(tribble(~package, "core", "base", "base?"))
   eval_calls_corpus <- eval_calls %>% keep_only_corpus(corpus_files)
   eval_calls_externals <- eval_calls %>% get_externals(corpus_files)
   res <- difftime(Sys.time(), now)
@@ -530,12 +531,12 @@ main <- function(argv) {
   res <- difftime(Sys.time(), now)
   cat("Done in ", res, units(res), "\n")
 
-  cat("Number of call sites per package\n")
-  now <- Sys.time()
-  calls_site_per_package <-
-    known_call_sites(eval_calls_corpus, corpus_file)
-  res <- difftime(Sys.time(), now)
-  cat("Done in ", res, units(res), "\n")
+  # cat("Number of call sites per package\n")
+  # now <- Sys.time()
+  # calls_site_per_package <-
+  #   known_call_sites(eval_calls_corpus, corpus_files)
+  # res <- difftime(Sys.time(), now)
+  # cat("Done in ", res, units(res), "\n")
 
   # Write output files
   cat("Writing output files\n")
@@ -562,16 +563,17 @@ main <- function(argv) {
   return(0)
 }
 
-defaultArgs <- c("../../run/package-evals-traced.8/corpus.fst", "../../run/package-evals-traced.8/calls.fst", "../../run/kaggle-run/calls.fst",
-                 "data/evals-dynamic.fst",
-                 "../../run/package-evals-traced.8/summarized-evals-undefined.fst", "../../run/package-evals-traced.8/raw.fst",
-                 "../../run/package-evals-traced.8/summarized-core.fst", "../../run/package-evals-traced.8/summarized-packages.fst",
-                 "../../run/package-evals-traced.8/summarized-kaggle.fst", "../../run/package-evals-traced.8/summarized-externals.fst")
+defaultArgs <- c(
+  "../../run/package-evals-traced.8/corpus.fst", "../../run/package-evals-traced.8/calls.fst", "../../run/kaggle-run/calls.fst",
+  "data/evals-dynamic.fst",
+  "../../run/package-evals-traced.8/summarized-evals-undefined.fst", "../../run/package-evals-traced.8/raw.fst",
+  "../../run/package-evals-traced.8/summarized-core.fst", "../../run/package-evals-traced.8/summarized-packages.fst",
+  "../../run/package-evals-traced.8/summarized-kaggle.fst", "../../run/package-evals-traced.8/summarized-externals.fst"
+)
 
 # Only execute if it is launched as a script
 if (identical(environment(), globalenv())) {
-
-  if(TRUE) {
+  if (TRUE) {
     quit(status = main(commandArgs(trailingOnly = TRUE)))
   }
   else {
@@ -579,4 +581,3 @@ if (identical(environment(), globalenv())) {
     main(defaultArgs)
   }
 }
-
