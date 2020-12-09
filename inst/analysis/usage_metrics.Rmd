@@ -13,8 +13,8 @@ editor_options:
   chunk_output_type: console
 params:
   base_dir: /var/lib/R/project-evalR
-  calls_packages_path: /run/package-evals-traced.9/summarized-packages.fst
-  corpus_path: /run/package-evals-traced.9/corpus.fst
+  calls_packages_path: /run/package-evals-traced.10/summarized-packages.fst
+  corpus_path: /run/package-evals-traced.10/corpus.fst
 ---
 
 ```{r setup, include=FALSE}
@@ -58,11 +58,11 @@ create_tags(path(TAGS_DIR, "usage_metrics.tex"), prefix = "", default = TRUE)
 
 
 ```{r file-info, echo=FALSE}
-file_info(params$calls_packages_path)
-```
 
-```{r read-data}
-eval_calls <- read_fst(paste0(params$base_dir, params$calls_packages_path)) %>% as_tibble()
+calls_packages_path <- paste0(params$base_dir, params$calls_packages_path)
+file_info(calls_packages_path)
+
+eval_calls <- read_fst(calls_packages_path) %>% as_tibble()
 ```
 
 ```{r read_corpus}
@@ -71,7 +71,6 @@ corpus <- read_fst(paste0(params$base_dir, params$corpus_path)) %>% as_tibble()
 
 
 ```{r eval-calls-overview}
-# own_eval_calls <- eval_calls %>% filter(eval_source == package) # probably to remove
 own_eval_calls <- eval_calls
 nb_eval_calls <- (own_eval_calls %>% count(wt = nb_ev_calls))$n
 

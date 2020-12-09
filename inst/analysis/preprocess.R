@@ -509,7 +509,7 @@ main <- function(argv) {
   corpus_files <- select(corpus, package) %>% bind_rows(tribble(~package, "core", "base", "base?"))
   eval_calls_corpus <- eval_calls %>% keep_only_corpus(corpus_files)
   eval_calls_externals <- eval_calls %>% get_externals(corpus_files)
-  res <- difftime(Sys.time(), now)
+  # res <- difftime(Sys.time(), now)
   cat("Done in ", res, units(res), "\n")
 
   # Separate datasets
@@ -553,7 +553,7 @@ main <- function(argv) {
 
   write_fst(eval_calls_externals, evals_summarized_externals_file)
 
-  write_fst(calls_site_per_package, package_evals_dynamic_file)
+  #write_fst(calls_site_per_package, package_evals_dynamic_file)
   res <- difftime(Sys.time(), now)
   cat("Done in ", res, units(res), "\n")
 
