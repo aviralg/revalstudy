@@ -27,7 +27,7 @@ library(fst)
 library(fs)
 library(DT)
 
-jan <- FALSE
+jan <- TRUE
 
 knitr::knit_hooks$set(time_it = local({
   now <- NULL
