@@ -164,9 +164,10 @@ r("max call sites", max_packages),
 `r TBL`
 
 ```{r call-sites-violin-plot, echo=F}
-E %>%
-  group_by(ev_package) %>%
-  mutate(sites=n_distinct(src_ref)) %>%
+E %>% 
+  select(ev_package, ev_variant, src_ref) %>%
+  group_by(ev_package, ev_variant) %>%
+  summarize(sites=n_distinct(src_ref)) %>%
   ggplot(aes(x=ev_variant, y=sites, fill=ev_variant), na.rm=TRUE) +
   geom_violin(trim=FALSE, width=1.7) +
   # geom_jitter(shape=16, position=position_jitter(0.2)) +
@@ -176,11 +177,12 @@ E %>%
     legend.box.background=element_rect(fill="white", size=0.1),
     legend.box="horizontal",
     axis.title.x=element_blank()
-  )
+  ) -> PLOT
 
 ggsave(path(PLOT_DIR, "call_sites_per_packages.pdf"))
 ```
 
+`r PLOT`
 
 # Numbers of calls to eval
 
