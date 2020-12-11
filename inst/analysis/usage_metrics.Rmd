@@ -17,9 +17,8 @@ params:
   corpus_path: /run/package-evals-traced.9/corpus.fst
 ---
 
-The following is a set up chunk. Currently there is an variable "jan" 
-used to run the script from docker on my machine. This should be
-removed. (TODO)
+The setup chunk has a variable `jan` with setting to run the script on
+docker on Jan's mamchine. This should be removed.
 
 ```{r setup, include=FALSE}
 library(tidyverse)
@@ -37,7 +36,7 @@ knitr::knit_hooks$set(time_it = local({
     } else { # calculate the time difference after a chunk
       res <- difftime(Sys.time(), now)
       # return a character string to show the time
-      paste("Time for this code chunk to run:", res, units(res))
+      paste("Time for this code chunk to run:", round(res,2), units(res))
 }}}))
 now <- Sys.time()
 knitr::opts_chunk$set(
@@ -68,19 +67,15 @@ eval_calls_path <- paste0(base_dir, params$calls_packages_path)
 corpus_path <- paste0(base_dir, params$corpus_path)
 ```
 
-Read in the summarized calls data and the file that describes
-which package belong to our corpus.
+Read in the summarized calls data (`E_raw`) and the file that describes
+which package belong to our corpus (`C_raw`). For conciseness, `E` is
+the input data set with only the columns that we use.
 
-```{r read}
+```{r read,echo=F,cache=F}
 read_fst(eval_calls_path) %>% as_tibble() -> E_raw
 read_fst(corpus_path) %>% as_tibble() -> C_raw
-```
+#read_csv(paste0(base_dir, "/run/package-evals-traced.9/package-eval-static.csv")) -> P
 
-The two data sets are E and C for conciseness.  C is only used here to compute
-the corpus size. E is used throughout. Recall that E_raw has the source data
-with all columns.
-
-```{r}
 E_raw %>% select(
   run_package = package,        # The package which was run to trigger the eval
   ev_variant = eval_function,   # Which eval variant was called
@@ -96,84 +91,91 @@ C_raw -> C
 corpus_size <- nrow(C)
 ```
 
-Compute the number of times eval and it variants were called in the entire 
-corpus. This is a dynamic count that aggregates all call sites within
-the corpus.
+# Eval Calls Overiew
+The corpus has `r corpus_size` packages, and the data set has 
+`r nrow(E)` distinct calls to the `eval` and its variants.
 
-```{r eval-calls-overview}
-nb_calls <- (E %>% count(wt = duplicates))$n
+```{r eval-calls-overview,echo=F}
+nb_calls <- E %>% 
+  count(wt = duplicates) %>%
+  .$n
 eval_calls <- E %>%
   filter(ev_variant == "eval") %>%
-  count(wt = duplicates)
+  count(wt = duplicates)  %>%
+  .$n
 evalq_calls <- E %>%
   filter(ev_variant == "evalq") %>%
-  count(wt = duplicates)
+  count(wt = duplicates) %>%
+  .$n
 eval.parent_calls <- E %>%
   filter(ev_variant == "eval.parent") %>%
-  count(wt = duplicates)
+  count(wt = duplicates)  %>%
+  .$n
 local_calls <- E %>%
   filter(ev_variant == "local") %>%
-  count(wt = duplicates)
+  count(wt = duplicates) %>%
+  .$n
 
-r("nb eval and variant calls", nb_calls)
-r("nb eval calls", eval_calls$n)
-r("nb evalq calls", evalq_calls$n)
-r("nb eval parent calls", eval.parent_calls$n)
-r("nb local calls", local_calls$n)
+TBL <- overview_table(
+r("nb eval and variant calls", nb_calls),
+r("nb eval calls", eval_calls),
+r("nb evalq calls", evalq_calls),
+r("nb eval parent calls", eval.parent_calls),
+r("nb local calls", local_calls)
+)
 ``` 
 
-There so mane calls: `r nb_calls` 
+We recorded `r nb_calls` to eval, out of these, there were `r evalq_calls`
+(`r fmt(ratio(evalq_calls,nb_calls))`) calls to `evalq`, `r eval.parent_calls` 
+(`r fmt(ratio(evalq_calls,nb_calls))`) calls to `eval.parent`,  and
+`r local_calls` (`r fmt(ratio(evalq_calls,nb_calls))`) calls to `local`. 
 
+`r TBL`
 
-# Number of eval call sites
+# Nb eval call sites
 
-```{r nb-eval-call-sites}
-nb_ev_call_sites <- E %>%
-  select(src_ref) %>%
-  n_distinct(na.rm = TRUE)
+```{r nb-eval-call-sites, echo=F}
+stopifnot(sum(is.na(E$src_ref))==0)  # No NAs in scr_ref!
 
-call_sites_per_package <- E %>%
-  group_by(ev_package) %>%
-  summarize(nb_call_sites = n_distinct(src_ref, na.rm = TRUE))
+sites <- E %>%             # src_ref indicates where the call originates from.
+  pull(src_ref) %>% 
+  n_distinct()             # This the number of distinct sites
+  
+sites_per_package <- E %>%
+  count(ev_package, src_ref) %>%
+  count(ev_package)        # All packages have at least one site!
 
-nb_packages_one_call_site <- call_sites_per_package %>%
-  filter(nb_call_sites == 1) %>%
-  nrow()
-packages_at_least_one_call_site <- call_sites_per_package %>%
-  filter(nb_call_sites >= 1)
-median_call_sites <- packages_at_least_one_call_site %>%
-  summarise(med = median(nb_call_sites, na.rm = TRUE))
-max_packages <- packages_at_least_one_call_site %>%
-  filter(nb_call_sites == max(nb_call_sites, na.rm = TRUE)) %>%
-  select(ev_package, nb_call_sites)
-nb_no_calls_to_eval <- corpus_size -
-  n_distinct(select(packages_at_least_one_call_site, ev_package))
-
-# sites triggered over the whole corpus
-r("nb eval call sites", nb_ev_call_sites) 
-# How many packages in the corpus have a single triggered call site
-r("nb one call site", nb_packages_one_call_site)
-r("at least one call site", nrow(packages_at_least_one_call_site))
-r("packages no calls to eval", nb_no_calls_to_eval)
-r("nb median call sites", median_call_sites$med)
-r("max call sites", max_packages$nb_call_sites)
-r("max call sites package", max_packages$ev_package)
+max_packages <- sites_per_package %>%
+  filter(n == max(n)) %>%
+  .$n
+ 
+TBL <- overview_table(
+# Sites triggered over the whole corpus:
+r("nb eval call sites", sites) ,
+# How many packages in the corpus have a single triggered call site:
+r("nb one call site", sites_per_package %>% filter(n==1)),  
+r("at least one call site", sites_per_package),
+r("packages no calls to eval", corpus_size - nrow(sites_per_package)),
+r("nb median call sites",  median(sites_per_package$n)),
+r("max call sites", max_packages),
+)
 ```
 
+`r TBL`
 
-```{r call-sites-violin-plot}
+```{r call-sites-violin-plot, echo=F}
 E %>%
   group_by(ev_package) %>%
-  mutate(nb_call_sites = n_distinct(src_ref, na.rm = TRUE)) %>%
-  ggplot(aes(x = ev_variant, y = nb_call_sites, fill = ev_variant), na.rm = TRUE) +
-  geom_violin(trim = FALSE, width = 1.7) +
+  mutate(sites=n_distinct(src_ref)) %>%
+  ggplot(aes(x=ev_variant, y=sites, fill=ev_variant), na.rm=TRUE) +
+  geom_violin(trim=FALSE, width=1.7) +
   # geom_jitter(shape=16, position=position_jitter(0.2)) +
-  labs(y = "Call sites per package") +
+  labs(y="Call sites per package") +
   theme(
-    legend.position = c(0.5, 0.85),
-    legend.box.background = element_rect(fill = "white", size = 0.1),
-    legend.box = "horizontal",
-    axis.title.x = element_blank()
+    legend.position=c(0.5, 0.85),
+    legend.box.background=element_rect(fill="white", size=0.1),
+    legend.box="horizontal",
+    axis.title.x=element_blank()
   )
 
 ggsave(path(PLOT_DIR, "call_sites_per_packages.pdf"))
@@ -211,7 +213,7 @@ eval_calls_per_package <- E %>%
 average_eval_calls <- eval_calls_per_package %>%
   filter(n > 0) %>%
   summarise(average = mean(n))
-max_eval_calls <- eval_calls_per_package %>% filter(n == max(n))
+max_eval_calls <- eval_calls_per_package %>% filter(n == max(n)) 
 
 r("average eval calls per package", average_eval_calls$average) # average on packages with at least one eval call
 r("max eval calls", max_eval_calls$n)
@@ -229,18 +231,6 @@ eval_calls_per_package %>%
 ggsave(path(PLOT_DIR, "eval_calls_per_packages.pdf"))
 ```
 
-
-<!-- How is the normalized distribution of eval calls?  -->
-
-<!-- ```{r distribution-call-sites} -->
-<!-- eval_calls_per_package %>% -->
-<!--   ggplot(aes(x = n), na.rm = TRUE) + -->
-<!--   geom_density(adjust = 10) + -->
-<!--   scale_y_log10()  -->
-<!-- ``` -->
-
-<!-- (Like the violin plot, but smoothed) -->
-(th)
 
 # Amount of code loaded by eval
 
