@@ -37,18 +37,15 @@ rs <- function(name, value) {
 r <- function(name, value, ...) {
   stopifnot(is.character(name))
   stopifnot(length(name) == 1)
-  
   UseMethod("r", value)  
 }
 
 r.numeric <- function(name, value, ...) {
   raw_str <- fmt(value, ...)
   rnd_str <- fmt(oom(value), ...)
-  
   if (!is.na(value)) {
     tag(str_c(name, " rnd"), rnd_str)
   }
-  
   NextMethod("r", value)
 }
 
@@ -117,15 +114,11 @@ create_tags <- function(filename, prefix="", default=TRUE) {
   tags$filename <- filename
   tags$prefix <- prefix
   clear_tags(tags)
-  
   if (default) {
     set_default_tags(tags)
   }
-  
   writeLines("", filename)
-  
   class(tags) <- "latextags"
-  
   invisible(tags)
 }
 
@@ -195,15 +188,10 @@ rm_tag <- function(name, tags=get_default_tags()) {
   if (is.null(tags)) {
     return(value)
   }
-  
   stopifnot(is.character(name))
-
   removed <- dplyr::semi_join(tags$values, tibble(name), by="name")$name
-  
   tags$values <- dplyr::anti_join(tags$values, tibble(name), by="name")
-  
   save_tag_file(tags)
-  
   invisible(removed)
 }
 
