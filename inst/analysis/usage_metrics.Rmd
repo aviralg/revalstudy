@@ -12,9 +12,10 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: /var/lib/R/project-evalR
-  calls_packages_path: /run/package-evals-traced.9/summarized-packages.fst
-  corpus_path: /run/package-evals-traced.9/corpus.fst
+  base_dir: /var/lib/R/project-evalR/run/package-evals-traced.10/
+  calls_packages_path: summarized-packages.fst
+  corpus_path: corpus.fst
+  static_evals_path: package-evals-static.csv
 ---
 
 The following is a set up chunk. Currently there is an variable "jan" 
@@ -27,7 +28,7 @@ library(fst)
 library(fs)
 library(DT)
 
-jan <- TRUE
+jan <- FALSE
 
 knitr::knit_hooks$set(time_it = local({
   now <- NULL
@@ -66,6 +67,7 @@ if (jan) {
 }
 eval_calls_path <- paste0(base_dir, params$calls_packages_path)
 corpus_path <- paste0(base_dir, params$corpus_path)
+eval_static_path <- paste0(base_dir, params$static_evals_path)
 ```
 
 Read in the summarized calls data and the file that describes
@@ -74,11 +76,13 @@ which package belong to our corpus.
 ```{r read}
 read_fst(eval_calls_path) %>% as_tibble() -> E_raw
 read_fst(corpus_path) %>% as_tibble() -> C_raw
+
+read_csv(eval_static_path) %>% semi_join(C_raw, by = "package") -> E_static
 ```
 
 The two data sets are E and C for conciseness.  C is only used here to compute
 the corpus size. E is used throughout. Recall that E_raw has the source data
-with all columns.
+with all columns. E_static corresponds to static information about the call sites.
 
 ```{r}
 E_raw %>% select(
@@ -178,6 +182,25 @@ E %>%
 
 ggsave(path(PLOT_DIR, "call_sites_per_packages.pdf"))
 ```
+
+
+How many call sites and how many packages did we exercise out of the total number of call sites of the corpus?
+
+```{r exercised-call-sites}
+nb_static_call_sites <- nrow(E_static)
+
+static_call_sites_per_package <- E_static %>%
+  count(package, sort = TRUE)
+
+static_at_least_one_call_site <- static_call_sites_per_package %>%
+  filter(n >= 1)
+
+r("nb static call sites", nb_static_call_sites)
+r("call sites percent", ratio(nb_ev_call_sites, nb_static_call_sites))
+r("nb static at least one call site", nrow(static_at_least_one_call_site))
+r("static at least one call site percent", ratio(nrow(packages_at_least_one_call_site), nrow(static_at_least_one_call_site)))
+```
+
 
 
 # Numbers of calls to eval
