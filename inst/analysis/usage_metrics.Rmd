@@ -27,7 +27,7 @@ library(fst)
 library(fs)
 library(DT)
 
-jan <- FALSE
+jan <- TRUE
 
 knitr::knit_hooks$set(time_it = local({
   now <- NULL
@@ -64,49 +64,54 @@ create_tags(path(TAGS_DIR, "usage_metrics.tex"), prefix = "", default = TRUE)
 base_dir <- params$base_dir
 # Set the paths, and customize for Jan.
 if (jan) {
-  base_dir <- "/mnt/code/eval"
+  base_dir <- "/mnt/code/eval/run/package-evals-traced.9/"
 }
 eval_calls_path <- paste0(base_dir, params$calls_packages_path)
 corpus_path <- paste0(base_dir, params$corpus_path)
 eval_static_path <- paste0(base_dir, params$static_evals_path)
 ```
 
+# Read
+
 Read in the summarized calls data (`E_raw`) and the file that describes
 which package belong to our corpus (`C_raw`). For conciseness, `E` is
 the input data set with only the columns that we use.
 
-```{r read,echo=F,cache=F}
+```{r read,include=F}
 read_fst(eval_calls_path) %>% as_tibble() -> E_raw
 read_fst(corpus_path) %>% as_tibble() -> C_raw
-
 read_csv(eval_static_path) %>% semi_join(C_raw, by = "package") -> P
 ```
 
-The two data sets are E and C for conciseness.  C is only used here to compute
-the corpus size. E is used throughout. Recall that E_raw has the source data
-with all columns. P corresponds to static information about the call sites.
+The two data sets are `E` and `C` for conciseness.  `C` is only used here to 
+compute the corpus size. `E` is used throughout. Recall that `E_raw` has the 
+source data with all columns. `P` corresponds to static information about the
+call sites.
 
 ```{r select-columns,echo=F}
 E_raw %>% select(
-  run_package = package, # The package which was run to trigger the eval
+  run_package = package, #      The package which was run to trigger the eval
   ev_variant = eval_function, # Which eval variant was called
-  duplicates = nb_ev_calls, # Number of identical eval calls (weight)
+  duplicates = nb_ev_calls, #   Number of identical eval calls (weight)
   src_ref = eval_call_srcref, # Source ref for the eval call site
-  file, # Script file name (name of this run)
-  ev_package = eval_source, # Package of the call site
+  file, #                       Script file name (name of this run)
+  ev_package = eval_source, #   Package of the call site
   arg_size = expr_expression_length, # Size in bytes of eval argument string
-  opcodes = direct_interpreter_eval # Non-recursive AST nodes traversed
-) -> E # by the interpreter
+  opcodes = direct_interpreter_eval #  Count of the AST nodes traversed by the
+) -> E #                               interpreter during eval (non-recursive). 
 
 C_raw -> C
 corpus_size <- nrow(P)
 ```
 
-# Eval Calls Overiew
-The corpus has `r corpus_size` packages, and the data set has 
-`r nrow(E)` distinct calls to the `eval` and its variants.
+#  Variants
 
-```{r eval-calls-overview,echo=F}
+The corpus has `r corpus_size` packages, and the data set has `r nrow(E)` 
+distinct calls to the `eval` and its variants. There are 
+`r length(unique(E$ev_package))` corpus packages with `eval` calls (note that
+we may not trigger all `eval`s in a package due to spotty covereage).
+
+```{r variants,echo=F}
 nb_calls <- E %>%
   count(wt = duplicates) %>%
   .$n
@@ -143,9 +148,9 @@ We recorded `r nb_calls` to eval, out of these, there were `r evalq_calls`
 
 `r TBL`
 
-# Nb eval call sites
+# Triggered sites
 
-```{r nb-eval-call-sites, echo=F}
+```{r triggered-sites, include=F}
 stopifnot(sum(is.na(E$src_ref)) == 0) # No NAs in scr_ref!
 
 sites <- E %>% # src_ref indicates where the call originates from.
@@ -174,7 +179,7 @@ TBL <- overview_table(
 
 `r TBL`
 
-```{r call-sites-violin-plot, echo=F}
+```{r call-sites-violin-plot, include=F}
 E %>%
   group_by(ev_package) %>%
   mutate(sites = n_distinct(src_ref)) %>%
@@ -187,16 +192,16 @@ E %>%
     legend.box.background = element_rect(fill = "white", size = 0.1),
     legend.box = "horizontal",
     axis.title.x = element_blank()
-  )
+  ) -> PLOT
 
 ggsave(path(PLOT_DIR, "call_sites_per_packages.pdf"))
 ```
 
-`r PLOT`
+
 
 How many call sites and how many packages did we exercise out of the total number of call sites of the corpus?
 
-```{r exercised-call-sites}
+```{r exercised-call-sites, include=F}
 static_sites <- nrow(P)
 
 static_call_sites_per_package <- P %>%
@@ -265,7 +270,7 @@ ggsave(path(PLOT_DIR, "eval_calls_per_packages.pdf"))
 
 # Amount of code loaded by eval
 
-```{r amout-of-code}
+```{r amout-of-code, include=F}
 
 weighted.median <- function(x, w, na.rm = FALSE) {
   if (na.rm) {
@@ -306,7 +311,7 @@ r("size nine five exact percent", percent(nb_nodes_many$cumulative))
 # Amount of computations via eval
 
 
-```{r amount_computations}
+```{r amount_computations, include=F}
 nb_events_in_eval <- E %>% summarise(nb_events = sum(opcodes))
 
 max_events_in_eval <- E %>% summarize(maxi = max(opcodes))
@@ -319,7 +324,7 @@ r("maxi events eval", max_events_in_eval$maxi)
 r("small events eval", ratio(nb_less_100_events, nb_calls))
 ```
 
-```{r nb-events-violin-plot}
+```{r nb-events-violin-plot,include=F}
 E %>%
   filter(opcodes > 0) %>%
   ggplot(aes(x = "", y = opcodes, fill = ""), na.rm = TRUE) +
