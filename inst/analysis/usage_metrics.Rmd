@@ -27,7 +27,7 @@ library(fst)
 library(fs)
 library(DT)
 
-jan <- TRUE
+jan <- FALSE
 
 knitr::knit_hooks$set(time_it = local({
   now <- NULL
@@ -148,6 +148,30 @@ We recorded `r nb_calls` to eval, out of these, there were `r evalq_calls`
 
 `r TBL`
 
+```{r eval-calls-summary}
+
+eval_calls_table <- E %>% 
+  count(ev_package, wt=duplicates, sort = TRUE)
+
+breaks <- c(0, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000)
+
+group_tags <- cut(eval_calls_table$n,
+                  breaks = breaks,
+                  include.lowest = TRUE)
+
+ev_summary <- summary(group_tags)
+
+r("bin1", ev_summary[[1]])
+r("bin2", ev_summary[[2]])
+r("bin3", ev_summary[[3]])
+r("bin4", ev_summary[[4]])
+r("bin5", ev_summary[[5]])
+r("bin6", ev_summary[[6]])
+r("bin7", ev_summary[[7]])
+r("bin8", ev_summary[[8]])
+```
+
+
 # Triggered sites
 
 ```{r triggered-sites, include=F}
@@ -217,6 +241,40 @@ r("static at least one call site percent", ratio(nrow(sites_per_package %>% filt
 ```
 
 
+And now, by `eval` variant:
+
+```{r exercised-call-site-per-variant}
+
+static_eval <- P %>% filter(call_fun_name == "eval") %>% nrow()
+static_evalq <- P %>% filter(call_fun_name == "evalq") %>% nrow()
+static_eval.parent <- P %>% filter(call_fun_name == "eval.parent") %>% nrow()
+static_local <- P %>% filter(call_fun_name == "local") %>% nrow()
+
+sites_per_variant <- E %>% # src_ref indicates where the call originates from.
+  group_by(ev_variant) %>% 
+  summarize( n = n_distinct(src_ref)) # This the number of distinct sites
+
+trig_eval <- sites_per_variant %>% filter(ev_variant == "eval") %>% .$n
+trig_evalq <- sites_per_variant %>% filter(ev_variant == "evalq") %>% .$n
+trig_eval.parent <- sites_per_variant %>% filter(ev_variant == "eval.parent") %>% .$n
+trig_local <- sites_per_variant %>% filter(ev_variant == "local") %>% .$n
+
+r("static eval", static_eval)
+r("static evalq", static_evalq)
+r("static eval.parent", static_eval.parent)
+r("static local", static_local)
+
+r("triggered eval", trig_eval)
+r("triggered evalq", trig_evalq)
+r("triggered eval.parent", trig_eval.parent)
+r("triggered local", trig_local)
+
+r("eval percent call site", ratio(trig_eval, static_eval))
+r("evalq percent call site", ratio(trig_evalq, static_evalq))
+r("eval.parent percent call site", ratio(trig_eval.parent, static_eval.parent))
+r("local percent call site", ratio(trig_local, static_local))
+```
+
 
 # Numbers of calls to eval
 
@@ -266,6 +324,8 @@ eval_calls_per_package %>%
 
 ggsave(path(PLOT_DIR, "eval_calls_per_packages.pdf"))
 ```
+
+
 
 
 # Amount of code loaded by eval
@@ -349,6 +409,14 @@ eval_calls_exercised %>% ggplot(aes(n)) +
   geom_histogram() +
   scale_x_log10(labels = scales::comma) +
   labs(x = "Number of eval calls per srcref per run")
+```
+
+
+```{r}
+eval_call_triggered <- E %>% 
+  group_by(src_ref) %>%
+  summarize(n_runs = n_distinct(file), n = sum(duplicates), average = n / n_runs) %>%
+  arrange(desc(average))
 ```
 
 
