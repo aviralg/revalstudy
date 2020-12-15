@@ -254,10 +254,39 @@ sites_per_variant <- E %>% # src_ref indicates where the call originates from.
   group_by(ev_variant) %>% 
   summarize( n = n_distinct(src_ref)) # This the number of distinct sites
 
-trig_eval <- sites_per_variant %>% filter(ev_variant == "eval") %>% .$n
-trig_evalq <- sites_per_variant %>% filter(ev_variant == "evalq") %>% .$n
-trig_eval.parent <- sites_per_variant %>% filter(ev_variant == "eval.parent") %>% .$n
+trig_eval <- sites_per_variant %>% filter(ev_variant == "eval")
+trig_eval <- if(nrow(trig_eval) == 0)
+{
+  0
+} else
+{
+  trig_eval$n
+}
+  
+trig_evalq <- sites_per_variant %>% filter(ev_variant == "evalq")
+trig_evalq <- if(nrow(trig_evalq) == 0)
+{
+  0
+} else
+{
+  trig_evalq$n
+}
+trig_eval.parent <- sites_per_variant %>% filter(ev_variant == "eval.parent") 
+trig_eval.parent <- if(nrow(trig_eval.parent) == 0)
+{
+  0
+} else
+{
+  trig_eval.parent$n
+}
 trig_local <- sites_per_variant %>% filter(ev_variant == "local") %>% .$n
+trig_local <- if(nrow(trig_local) == 0)
+{
+  0
+} else
+{
+  trig_local$n
+}
 
 r("static eval", static_eval)
 r("static evalq", static_evalq)
