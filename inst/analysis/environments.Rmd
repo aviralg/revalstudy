@@ -26,15 +26,19 @@ knitr::knit_hooks$set(time_it = local({
       res <- difftime(Sys.time(), now)
       # return a character string to show the time
       paste("Time for this code chunk to run:", res, units(res))
-}}}))
+    }
+  }
+}))
 
-knitr::opts_chunk$set(echo = TRUE,
-                      fig.align = "center",
-                      fig.retina = 2,
-                      fig.width = 10,
-                      cache.lazy = FALSE)
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.align = "center",
+  fig.retina = 2,
+  fig.width = 10,
+  cache.lazy = FALSE
+)
 
-now <- Sys.time() 
+now <- Sys.time()
 
 library(tidyverse)
 library(fst)
@@ -56,7 +60,7 @@ source("insights.R", local = knitr::knit_global())
 eval_calls_path <- paste0(params$base_dir, params$calls_packages_path)
 
 eval_calls <- read_fst(eval_calls_path) %>%
-  as_tibble() 
+  as_tibble()
 ```
 
 # Description of the data files
@@ -101,7 +105,7 @@ There are `r nb_default$n` default calls, which corresponds to `r nb_default_sit
 # `envir` with Rcpp
 
 ```{r envir_rcpp}
-eval_calls_rcpp <- eval_calls_explicit %>% filter(str_detect(expr_expression, "C\\+\\+Constructor|C\\+\\+Field|C\\+\\+OverloadedMethods")) 
+eval_calls_rcpp <- eval_calls_explicit %>% filter(str_detect(expr_expression, "C\\+\\+Constructor|C\\+\\+Field|C\\+\\+OverloadedMethods"))
 
 nb_rcpp <- count(eval_calls_rcpp, wt = nb_ev_calls)
 nb_rcpp_sites <- nb_eval_call_sites(eval_calls_rcpp)
@@ -133,7 +137,9 @@ nb_arg_caller_sites <- nb_eval_call_sites(eval_calls_arg_caller)
 Most of the eval calls directly use the argument, but some seem to modify it a lot:
 
 ```{r}
-eval_calls_arg_caller %>% count(envir_from_arg, wt=nb_ev_calls, sort = TRUE) %>% knitr::kable()
+eval_calls_arg_caller %>%
+  count(envir_from_arg, wt = nb_ev_calls, sort = TRUE) %>%
+  knitr::kable()
 ```
 
 
@@ -143,7 +149,9 @@ In the current dataset, there are no examples of sandbox usage but we should see
 ## `envir` absolutely computed
 
 ```{r envir_absolute}
-eval_calls_absolute <- eval_calls_explicit %>% anti_join(eval_calls_env_list) %>% anti_join(eval_calls_arg_caller)
+eval_calls_absolute <- eval_calls_explicit %>%
+  anti_join(eval_calls_env_list) %>%
+  anti_join(eval_calls_arg_caller)
 
 nb_absolute <- count(eval_calls_absolute, wt = nb_ev_calls)
 nb_absolute_sites <- nb_eval_call_sites(eval_calls_absolute)
@@ -152,15 +160,21 @@ nb_absolute_sites <- nb_eval_call_sites(eval_calls_absolute)
 Let's do a sanity check: is the environment class the same in that category?
 
 ```{r}
-eval_calls_absolute <- eval_calls_absolute %>% group_by(eval_call_srcref) %>%  mutate(envir_distinct = n_distinct(environment_class)) 
+eval_calls_absolute <- eval_calls_absolute %>%
+  group_by(eval_call_srcref) %>%
+  mutate(envir_distinct = n_distinct(environment_class))
 
-eval_calls_absolute %>% ungroup() %>% count(envir_distinct, sort = TRUE)
+eval_calls_absolute %>%
+  ungroup() %>%
+  count(envir_distinct, sort = TRUE)
 ```
 
 We can also see a few examples:
 
 ```{r}
-eval_calls_absolute %>% filter(envir_distinct == 2) %>% select(eval_call_expression, environment_class, envir_distinct)
+eval_calls_absolute %>%
+  filter(envir_distinct == 2) %>%
+  select(eval_call_expression, environment_class, envir_distinct)
 ```
 
 # `envir` is an integer
@@ -192,7 +206,7 @@ Total eval call sites: `r nb_call_sites`
 summary <- tribble(
   ~category, ~calls, ~percent_calls, ~callsites, ~percent_callsites,
   "Default", nb_default$n, ratio(nb_default$n, nb_eval_calls$n), nb_default_sites, ratio(nb_default_sites, nb_call_sites),
-  "Rcpp",  nb_rcpp$n, ratio(nb_rcpp$n, nb_eval_calls$n), nb_rcpp_sites, ratio(nb_rcpp_sites, nb_call_sites),
+  "Rcpp", nb_rcpp$n, ratio(nb_rcpp$n, nb_eval_calls$n), nb_rcpp_sites, ratio(nb_rcpp_sites, nb_call_sites),
   "List or dataframe", nb_env_list$n, ratio(nb_env_list$n, nb_eval_calls$n), nb_env_list_sites, ratio(nb_env_list_sites, nb_call_sites),
   "Argument of caller", nb_arg_caller$n, ratio(nb_arg_caller$n, nb_eval_calls$n), nb_arg_caller_sites, ratio(nb_arg_caller_sites, nb_call_sites),
   "Absolute", nb_absolute$n, ratio(nb_absolute$n, nb_eval_calls$n), nb_absolute_sites, ratio(nb_absolute_sites, nb_call_sites),
@@ -200,7 +214,7 @@ summary <- tribble(
   "Null", nb_null$n, ratio(nb_null$n, nb_eval_calls$n), nb_null_sites, ratio(nb_null_sites, nb_call_sites),
 )
 
-summary %>% datatable(colnames =  c("", "Eval calls", "%", "Call sites", "%"))
+summary %>% datatable(colnames = c("", "Eval calls", "%", "Call sites", "%"))
 ```
 
 

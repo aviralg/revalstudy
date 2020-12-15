@@ -211,6 +211,16 @@ package_name_from_call_stack <-
     return("base?")
   }
 
+
+# we try to find a same combination of caller_package, caller_function and eval_call_expression in both datasets
+# if yes, we inditifed a call site
+# data set undefined should be the packages with missing srcref and which caller_function is not in base
+package_name_from_static <- function(dataset_undefined, static_data) {
+  dataset_undefined %>%
+    semi_join(static_data, by = c("eval_call_expression", "caller_package")) %>%
+    count(eval_call_expression, caller_package, caller_function)
+}
+
 extract_package_name <- function(src_ref, file) {
   # There are 5 possibilities for a srcref:
   # - NA
@@ -313,6 +323,7 @@ add_eval_source_type <- function(dataset) {
     ))
 }
 
+
 add_fake_srcref <- function(dataset) {
   return(dataset %>%
     mutate(
@@ -363,12 +374,12 @@ add_package <- function(dataset) {
 
 keep_only_corpus <- function(dataset, corpus_files) {
   return(dataset %>%
-           semi_join(corpus_files, by = c("eval_source" = "package")))
+    semi_join(corpus_files, by = c("eval_source" = "package")))
 }
 
 get_externals <- function(dataset, corpus_files) {
   return(dataset %>%
-           anti_join(corpus_files, by = c("eval_source" = "package")))
+    anti_join(corpus_files, by = c("eval_source" = "package")))
 }
 
 undefined_packages <- function(eval_calls) {
@@ -553,7 +564,7 @@ main <- function(argv) {
 
   write_fst(eval_calls_externals, evals_summarized_externals_file)
 
-  #write_fst(calls_site_per_package, package_evals_dynamic_file)
+  # write_fst(calls_site_per_package, package_evals_dynamic_file)
   res <- difftime(Sys.time(), now)
   cat("Done in ", res, units(res), "\n")
 
