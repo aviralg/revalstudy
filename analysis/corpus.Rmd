@@ -1,0 +1,297 @@
+---
+title: "Corpus Analysis"
+output: html_document
+params:
+  base_dir: ../../../
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+local(for (x in c(
+  "dplyr", 
+  "DT",
+  "fs",
+  "fst",
+  "ggplot2",
+  "ggthemes",
+  "lubridate",
+  "readr",
+  "purrr",
+  "stringr",
+  "tidyr",
+  "viridis"
+  )) {
+  suppressPackageStartupMessages(library(x, character.only=TRUE))
+})
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.align = "center",
+  fig.retina = 2,
+  fig.width = 10
+)
+
+# TODO: move into the package
+source("inc/paths.R")
+source("inc/setup.R")
+source("inc/latextags.R")
+
+options(repos="https://cran.r-project.org")
+theme_set(theme_minimal())
+create_tags(path(TAGS_DIR, "corpus.tex"), prefix="Corpus", default=TRUE)
+```
+
+## Load data
+
+```{r load corpus}
+evals_dynamic <- read_fst(PACKAGE_EVALS_DYNAMIC_FILE) %>% as_tibble() %>% rename(evals_dyn=n)
+
+corpus <- 
+  read_fst(CORPUS_DETAILS_FILE) %>%
+  as_tibble() %>%
+  left_join(evals_dynamic, by="package") %>%
+  mutate_at(
+    vars(
+      starts_with("runnable_code"),
+      starts_with("runnable_files"),
+      starts_with("package_"),
+      starts_with("funs_"),
+      "evals",
+      "evals_dyn"
+    ), 
+    replace_na, 
+    0
+  )
+```
+
+## CRAN packages
+
+```{r filter out inconsistent programs}
+corpus_programs <-
+  read_fst(CRAN_PROGRAMS_FILE) %>%
+  as_tibble()
+```
+
+```{r summary}
+runnable_code <- 
+  corpus_programs %>%
+  mutate(files=1) %>%
+  pivot_wider(names_from=type, values_from=c(files, code)) %>%
+  select(-file, -runtime, -error, -success, -corpus) %>%
+  group_by(package) %>%
+  summarise_all(sum, na.rm=TRUE) %>%
+  group_by(package) %>%
+  mutate(
+    files=files_examples + files_vignettes,
+    code=code_examples + code_vignettes
+  ) %>%
+  ungroup()
+
+corpus_program_examples <- filter(corpus_programs, type=="examples")
+corpus_programs_tests <- filter(corpus_programs, type=="tests")
+corpus_programs_vignettes <- filter(corpus_programs, type=="vignettes")
+
+overview_table(
+  r("packages",    corpus),
+  rs("revdeps", corpus$revdeps),
+  r("in cranlogs", filter(corpus, !is.na(rank))),
+  
+  rs("package programs",         runnable_code$files),
+  rs("package programs code",    runnable_code$code),
+
+  rs("examples programs",  runnable_code$files_examples),
+  rs("vignettes programs", runnable_code$files_vignettes),
+  
+  rs("examples code",  corpus_program_examples$code),
+  rs("vignettes code", corpus_programs_vignettes$code),
+
+  r("mean expr coverage",   percent(mean(corpus$coverage_expr))),
+  r("median expr coverage", percent(median(corpus$coverage_expr))),
+  
+  r("with R code",      filter(corpus, package_r_code > 0)),
+  r("with native code", filter(corpus, package_native_code > 0)),
+  
+  rs("code",        corpus$package_code),
+  rs("R code",      corpus$package_r_code),
+  rs("native code", corpus$package_native_code),
+
+  rs("functions",          corpus$funs_public + corpus$funs_private),
+  rs("function with eval", corpus$funs_with_eval),
+  rs("public functions",   corpus$funs_public),
+  rs("private functions",  corpus$funs_private),
+  
+  rs("revdes", corpus$revdeps)
+)
+```
+
+```{r generals}
+overview_table(
+  r("all cran", dim(available.packages())[1]),
+  r("core packages", length(CORE_PACKAGES)),
+  r("most downloaded treshold", MOST_DOWNLOADED),
+  r("large package treshold", PACKAGE_SIZE_OUTLIER),
+  r("evals package treshold", PACKAGE_EVALS_OUTLIER)
+)
+```
+
+### Plot
+
+```{r plot corpus}
+coverage_mean   <- mean(corpus$coverage_expr)
+coverage_median <- median(corpus$coverage_expr)
+revdeps_mean    <- mean(corpus$revdeps)
+revdeps_median  <- median(corpus$revdeps)
+funs_with_eval_mean    <- mean(corpus$funs_with_eval)
+funs_with_eval_median  <- median(corpus$funs_with_eval)
+
+size_bins       <- c(0L, 1e3L, 5e3L, 1e4L, 5e4L, 1e5L)
+size_bins_lasb  <- c("< 1000", "1,000 - 4,999", "5,000 - 9,999", "10,000 - 49,999", "> 50,000")
+
+corpus %>%
+  mutate(
+    outlier=evals_dyn > PACKAGE_EVALS_DYN_OUTLIER,# | package_r_code > PACKAGE_SIZE_OUTLIER,
+    label=ifelse(outlier, package, NA),
+    code_size=cut(package_r_code, size_bins, labels=size_bins_lasb, include.lowest=TRUE)
+  ) %>%
+  ggplot(
+    aes(
+      x=coverage_expr, 
+#      y=funs_with_eval,
+      y=evals_dyn,
+      label=label,
+      size=code_size
+    )
+  ) +
+  geom_point(alpha=.4) +
+  geom_text(size=3, check_overlap = T, vjust=-1.5, na.rm = TRUE) + 
+  geom_hline(aes(yintercept=funs_with_eval_mean), linetype="dashed", color="red", size=0.2) +
+  geom_vline(aes(xintercept=coverage_mean), linetype="dashed", color="red", size=0.2) +
+  scale_x_continuous(labels = scales::percent) + 
+  scale_y_continuous(trans=scales::pseudo_log_trans(), breaks=c(0, 1, 2, 5, 10, 20, 50, 100, 200, 500)) +
+  scale_size_discrete(range = c(1, 6)) +
+  theme(
+    legend.position=c(0.15, 0.73),
+    legend.box="horizontal",
+    legend.box.background = element_rect(fill="white", size=0.1)
+  ) +
+  labs(
+    x="Code coverage", 
+    y="Number of eval call sites", 
+    size="Lines of R code",
+    linetype=""
+  ) +
+  guides(
+    size=guide_legend(order=1),
+    color=FALSE,
+    linetype=FALSE
+  ) +
+  expand_limits(y = 300)
+
+ggsave(CORPUS_PLOT)
+```
+
+### List of corpus packages
+
+```{r list of packages, eval=FALSE}
+datatable(
+  corpus, 
+  filter="top", 
+  options=list(
+    pageLength=50,
+    autoWidth=TRUE
+  )
+)
+```
+
+## Kaggle
+
+```{r kaggle dependencies}
+kaggle_dependencies <- tibble(package=read_lines(KAGGLE_DEPENDENCIES_FILE))
+```
+
+
+```{r compute kaggle programs}
+kaggle <- read_fst(KAGGLE_KERNELS_FILE) %>% as_tibble()
+kaggle_programs <-
+  read_fst(KAGGLE_PROGRAMS_FILE) %>% as_tibble() %>% filter(success)
+```
+
+```{r kaggle summary}
+kaggle_code     <- kaggle_programs$code
+
+overview_table(
+  r("kaggle",                 kaggle),
+  r("duplicated kaggle",      nrow(kaggle)-nrow(filter(kaggle, runnable))),
+  r("runnable kaggle",        filter(kaggle, runnable)),
+  r("finished kaggle",        kaggle_programs),
+  r("failed kaggle",          nrow(filter(kaggle, runnable))-nrow(kaggle_programs)),
+  rs("finished kaggle code",  kaggle_code)
+)
+```
+
+```{r}
+setdiff(kaggle_dependencies$package, corpus$package)
+```
+
+
+## Combined
+
+```{r compute programs}
+programs <- bind_rows(
+  corpus_programs %>% select(code, runtime, corpus),
+  kaggle_programs %>% select(code, runtime, corpus)
+)
+```
+
+```{r all summary}
+overview_table(
+  r("all programs",      nrow(kaggle_programs) + nrow(corpus_programs)),
+  r("all runnbale code", sum(kaggle_code) + sum(runnable_code$code)),
+  r("all code",          sum(kaggle_code) + sum(corpus$package_code) + sum(runnable_code$code))
+)
+```
+
+```{r programs-code, eval=F}
+programs %>%
+  ggplot(aes(y=code, x=corpus, fill=corpus)) + 
+  geom_violin() +
+  scale_y_log10(labels = scales::comma) +
+  scale_x_discrete(labels=c("kaggle"="Kaggle", "packages"="Packages")) +
+  scale_fill_viridis(discrete = TRUE) +
+  guides(fill = FALSE) +
+  labs(y="Code size (log)") +
+  theme(
+    legend.box="horizontal",
+    axis.title.x=element_blank()
+  )
+
+ggsave(path(PLOT_DIR, "programs-code.pdf"), width=7, height=5.5)
+```
+
+```{r programs-runtime, eval=F}
+programs %>%
+  ggplot(aes(y=runtime, x=corpus, fill=corpus)) + 
+  geom_flat_violin(trim=FALSE, width=.5) +
+  geom_dotplot(
+    binaxis="y", 
+    dotsize=0.1, 
+    stackdir="down", 
+    binwidth=0.01, 
+    position=position_nudge(-0.025)) +
+  scale_y_log10(labels = function(x, ...) {
+    min <- as.integer(x/60L)
+    sec <- as.integer(x%%60L)
+    sprintf("%.2d:%.2d", min, sec)
+  }) +
+  scale_x_discrete(labels=c("kaggle"="Kaggle", "packages"="Packages")) +
+  scale_fill_viridis(discrete = TRUE) +
+  guides(fill = FALSE) +
+  labs(y="Running time [mm:ss] (log)") +
+  theme(
+    legend.box="horizontal",
+    axis.title.x=element_blank()
+  )
+ggsave(path(PLOT_DIR, "programs-runtime.pdf"), width=3.5, height=5.0)
+```
+

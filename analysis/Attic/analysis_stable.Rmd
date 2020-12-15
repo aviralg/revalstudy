@@ -1,0 +1,939 @@
+---
+title: "Empirical Evaluation of eval in R"
+output:
+  rmdformats::readthedown:
+        code_folding: hide
+        lightbox: true
+        gallery: false
+        df_print: paged
+        toc_depth: 3
+date: "`r Sys.Date()`"
+editor_options: 
+  chunk_output_type: console
+params:
+  #base_dir: /home/pierre/Documents/Articles/ISCE2021
+  base_dir: /var/lib/R/project-evalR
+
+# This makes it possible to generate the html file in the html subfolder
+# knit: (function(inputFile, encoding) {
+#   rmarkdown::render(inputFile, encoding = encoding, output_dir = "html") })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.align = "center",
+                      fig.retina = 2,
+                      fig.width = 10,
+                      cache.lazy = FALSE)
+
+now <- Sys.time() 
+
+library(tidyverse)
+library(stringr)
+library(viridis)
+library(vctrs)
+library(DT)
+library(fst)
+library(fs)
+library(ggthemes)
+library(pbapply)
+
+save_table <- function(df, fname) {
+  df %>%
+    xtable::xtable(align="lXrrrr") %>%
+    print(
+      tabular.environment = "tabularx", 
+      width = "\\textwidth",
+      floating=F,
+      file=fname,
+      include.rownames=F
+    )
+}
+
+source("insights.R", local = knitr::knit_global())
+
+source("inc/paths.R")
+source("inc/latextags.R")
+source("inc/setup.R")
+theme_set(theme_minimal(base_size = 25))
+
+#theme_update(text = element_text(size = 16))
+
+create_tags(path(TAGS_DIR, "analysisStable.tex"), prefix="", default=TRUE)
+
+
+# Temp 
+# RUN_DIR   <- path(params$base_dir, "run")
+# RUN_TRACE_DIR  <- path(RUN_DIR, "package-evals-traced")
+# EVALS_RAW_FILE           <- path(RUN_TRACE_DIR, "raws.fst")
+# EVALS_SUM_CORE_FILE      <- path(RUN_TRACE_DIR, "summarized-core.fst")
+# EVALS_SUM_PKGS_FILE      <- path(RUN_TRACE_DIR, "summarized-packages.fst")
+# EVALS_SUM_KAGGLE_FILE    <- path(RUN_TRACE_DIR, "summarized-kaggle.fst")
+# EVALS_SUM_EXTERNALS_FILE <- path(RUN_TRACE_DIR, "summarized-externals.fst")
+packages_filepath <- EVALS_SUM_PKGS_FILE
+core_filepath <- EVALS_SUM_CORE_FILE
+```
+
+# Data
+
+The analysis is being performed on dataset read from files `r packages_filepath` and `core_filepath`.
+
+```{r file-info-packages, echo=FALSE}
+file_info(packages_filepath)
+```
+
+```{r file-info-core, echo=FALSE}
+file_info(core_filepath)
+```
+
+```{r load-data, echo=FALSE}
+eval_calls_packages <-
+    read_fst(packages_filepath) %>%
+    as_tibble()  %>% 
+    mutate(dataset = "packages")
+
+eval_calls_core <- 
+  read_fst(core_filepath) %>%
+  as_tibble() %>%
+  mutate(dataset = "core")
+
+
+eval_calls_raw <- bind_rows(eval_calls_packages, eval_calls_core)
+```
+
+
+We remove a few columns we do not need here and deduplicate.
+```{r deduplicate}
+# eval_calls <- eval_calls_raw %>% count(across(-c(builtin:indirect_allocation)), name = "nb_ev_calls2") %>%
+#     mutate(nb_ev_calls = nb_ev_calls * nb_ev_calls2) %>% 
+#     select(-nb_ev_calls2)
+
+#
+eval_calls <- eval_calls_raw
+```
+
+
+```{r document}
+# A flexible way to document the dataset: it is quick and easy to document a new column
+c_names <- names(eval_calls)
+column_names <- setNames(data.frame(matrix(ncol = length(c_names), nrow = 0)), c_names)
+
+column_names <- column_names %>% add_row()
+
+column_names["file"] <- "File where the `eval` is executed"
+column_names["eval_call_id"] <- "Unique id of a call" 
+column_names["expr_parsed_expression"] <- "Contains the expression with a call to `parse` if there is one in the `expr` argument somewhere in the call stack."
+column_names["caller_function"] <- "Function in which the `eval` is called."
+column_names["caller_package"] <- "Package in which the `eval` is called."
+column_names["eval_function"] <- "One of `eval`, `evalq`, `eval.parent`, and `local`."
+column_names["eval_call_expression"] <- "The full expression with `eval` that has been traced."
+column_names["eval_call_srcref"] <- "File name and line where the `eval` call is. Might ne NA, especially for calls originating from package base."
+column_names["caller_expression"] <- "Expression in which the `eval` is called."
+column_names["caller_srcref"] <- "File name and line where the caller of the `eval` is located. Might be NA (especially for callers in base)."
+# The following ones were in package-evals-traced-corpus.1/calls.fst
+#column_names["caller_srcref2"] <- "File name and line for some calls for which the caller seemed to be itself (mainly Rcpp and C calls)."
+#column_names["caller_expression_2"] <- "Caller expression when the caller seems to call itself (see `caller_srcref2`)."
+#column_names["caller_expression_2"] <- "Same as `caller_expression_2` but uses `format` to print, not `expr_to_string`."
+column_names["caller_stack_expression"] <-"When `eval_function` == `caller_function`, climb up the stack to find the first different caller."
+column_names["caller_stack_expression_raw"] <- "See `caller_stack_expression`. Does not use `expr_to_str` but `format`."
+column_names["caller_stack_expression_srcref"] <- "srcref for `caller_stack_expression`."
+# To continue
+
+# Pivoting
+
+column_names <- column_names %>% rownames_to_column() %>% 
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname, values_from=value)
+
+column_names <- column_names %>%  rename("Description" = `1`) %>% filter(!is.na(Description))
+
+```
+
+
+```{r unique_calls}
+nb_unique_calls <- nrow(eval_calls)
+
+r("unique calls", nb_unique_calls)
+```
+
+There are `r nb_unique_calls` unique calls;
+
+The columns of the dataset are the following ones:
+```{r column_names}
+column_names %>% knitr::kable()
+```
+
+
+
+
+# Research Questions
+
+## RQ1: How many evals are there?
+
+There are four kinds of `eval` in the `base` package. Their definitions are shown below.
+
+```{r, eval-definition, eval=FALSE}
+base::eval <-
+    function(expr, 
+             envir = parent.frame(), 
+             enclos = if (is.list(envir)||is.pairlist(envir)) parent.frame() else baseenv())
+        .Internal(eval(expr, envir, enclos))
+
+base::evalq <-
+    function (expr, 
+              envir = parent.frame(), 
+              enclos = if (is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv())
+        .Internal(eval(substitute(expr), envir, enclos))
+
+base::eval.parent <-
+    function (expr, n = 1) {
+        p <- parent.frame(n + 1)
+        eval(expr, p)
+    }
+
+base::local <-
+    function (expr, envir = new.env())
+        eval.parent(substitute(eval(quote(expr), envir)))
+```
+
+```{r eval-count-table}
+callsites_with_srcref <-
+    eval_calls %>% 
+    select(eval_call_srcref) %>% 
+    n_distinct(na.rm = TRUE)
+
+callsites_without_srcref <-
+    eval_calls %>% 
+    filter(is.na(eval_call_srcref)) %>% 
+    select(caller_package, caller_function) %>% 
+    n_distinct()
+
+eval_calls <-
+    eval_calls %>%
+    mutate(eval_call_srcref = coalesce(eval_call_srcref, 
+                                       str_c("missing", "::", caller_package, "::", caller_function)))
+eval_count_table <-
+    eval_calls %>%
+    group_by(eval_function, eval_call_srcref) %>%
+    summarize(count = sum(nb_ev_calls)) %>%
+    summarize(call_count = sum(count), callsite_count = n())
+    
+nb_eval_calls <- total_call_count <- sum(eval_count_table$call_count)
+
+nb_call_sites <- total_callsite_count <- sum(eval_count_table$callsite_count)
+    
+eval_count_table <-
+    eval_count_table %>%
+    mutate(call_proportion = 100 * call_count / total_call_count,
+           callsite_proportion = 100 * callsite_count / total_callsite_count) %>%
+    arrange(desc(call_count))
+
+eval_call_proportion <- 
+    eval_count_table %>%
+    filter(eval_function == "eval") %>%
+    pull(call_proportion)
+```
+
+There are `r NA` R function calls with `r total_call_count` calls to the four kinds of eval which accounts for `r NA`% of all R function calls.
+The table below summarizes the proportion of calls to the different kinds of evals.
+
+
+```{r }
+eval_count_table %>%
+select(eval_function, call_count, call_proportion) %>% 
+datatable()
+```
+
+We observe that `r eval_call_proportion`% of the calls are made to the `eval` function.
+
+These `eval` calls originate from `r total_callsite_count` call sites. For the number of call sites, we use line number information attached to the AST by the parser. When it is not available (such as in *base*), we use a combination of `caller_package` and `caller_function`. We assume that:
+
+  - the combination `caller_package` and `caller_function` is unique
+  - there is only one call site per such `caller_function`
+This assumption results in a lower bound for the number of unique callsites for eval.
+
+
+```{r call-site-table}
+eval_callsite_table <-
+    eval_calls %>%
+    count(eval_function, caller_package, eval_call_srcref, name = "call_count") %>%
+    group_by(eval_function, caller_package) %>%
+    summarize(call_count = sum(call_count), callsite_count = n()) %>%
+    ungroup()
+
+eval_callsite_table %>%
+datatable()
+```
+
+```{r call-site-distribution}
+package_callsite_distribution <-
+    eval_callsite_table %>%
+    mutate(callsite_count = if_else(callsite_count <= 5, as.character(callsite_count), "> 5")) %>%
+    group_by(eval_function, callsite_count) %>%
+    summarize(package_count = n())
+    
+package_callsite_distribution %>%
+datatable()
+
+p <-
+    package_callsite_distribution %>%
+    ggplot(aes(callsite_count, package_count)) +
+    geom_col() +
+    facet_wrap(vars(eval_function))
+p
+```
+
+
+To asses how precise the call site estimate is for calls that do not have `srcref`, we compare it on *base* with the actual count given by `grep`.
+
+```{r eval_call_sites_base}
+nb_call_site_base <- eval_calls %>% filter(caller_package == "base") %>% select(caller_function) %>% n_distinct(na.rm = TRUE)
+```
+The estimate for *base* is `r nb_call_site_base` call sites, while `grep` yields 40 `eval` call sites.
+
+For the other packages, ranked by call sites:
+```{r eval_call_sites_per_package}
+eval_calls %>% filter(caller_package != "base") %>% group_by(caller_package) %>% summarize(nb_call_sites =  n_distinct(eval_call_srcref, na.rm = TRUE)) %>% arrange(desc(nb_call_sites))
+```
+
+We probably forget the generated ones here, but should we count them in the _call sites_?
+
+
+What are the packages with the highest number of `eval` calls?
+
+```{r nb_eval_calls_per_package}
+nb_eval_calls_per_package <- eval_calls %>% group_by(caller_package) %>% summarise(nb_eval_calls_package = sum(nb_ev_calls), per_cent = nb_eval_calls_package / nb_eval_calls * 100) %>% arrange(desc(nb_eval_calls_package))
+```
+
+*base* has the highest number of eval calls, i.e. `r nb_eval_calls_per_package[1, "per_cent"][[1]]`% of them.
+
+  
+```{r}
+nb_eval_calls_per_package  %>% datatable()
+```
+
+
+What are the most used caller functions?
+
+
+```{r caller_functions_used}
+caller_function_ranked <- eval_calls %>% count(caller_function, wt = nb_ev_calls, sort = TRUE) %>% mutate(proportion = n / sum(n))
+
+caller_function_ranked %>% datatable()
+
+```
+
+The most used function is `r caller_function_ranked[1, "caller_function"][[1]]`, as much as `r 100 * caller_function_ranked[1, "proportion"][[1]]`%.
+
+```{r match_arg}
+match_arg_r <- caller_function_ranked %>% filter(caller_function == "match.arg")
+
+r("match arg number", match_arg_r[1, "n"][[1]])
+r("match arg percent", percent(match_arg_r[1, "proportion"][[1]]))
+```
+
+
+
+### Excluding *base* from the data set
+
+When using `grep` , we find 30 call sites that use `eval` in *base*.
+We tried to replace the 30 `eval` call sites in *base* and could do it in  50% of the cases. 
+
+
+
+We reckon that `eval` in *base* should be considered apart from the other `eval` calls.
+
+`eval` in *base* does not consume user input, i.e. input coming from `parse`, except in 5 legitimate cases, such as the `sys.source` function that is used to `eval` a file.  
+
+
+| Function name              | File           | Line | Parse ? | Comments                                                                           |
+|----------------------------|----------------|------|---------|------------------------------------------------------------------------------------|
+| autoload                   | autoload       | 25   |         |                                                                                    |
+| autoloader                 | autoload       | 43   |         | To execute a call to library                                                       |
+| autoloader                 | autoload       | 49   |         |                                                                                    |
+| bquote                     | backquote      | 33   |         | In subfunction unquote. To eval what is in .() . Metaprogramming                   |
+| bquote                     | backquote      | 56   |         | idem (in unquote.list, defined inside bquote)                                      |
+| by.default                 | by             | 35   |         | eval(substitute pattern?                                                           |
+| by.data.frame              | by             | 50   |         | idem                                                                               |
+| invokeRestartInteractively | conditions     | 245  | yes     | prompt                                                                             |
+| invokeRestartInteractively | conditions     | 249  | yes     | prompt                                                                             |
+| Ops.data.frame             | dataframe      | 1678 |         | for arithmetic operators on data frames ; do.call could be probably used here also |
+| dget                       | dput           | 32   | yes     | from file                                                                          |
+| eval                       | eval           | 26   |         | Call Internal eval                                                                 |
+| eval.parent                | eval           | 30   |         |                                                                                    |
+| evalq                      | eval           | 36   |         | evalq is basically eval(substitute                                                 |
+| local                      | eval           | 49   |         |                                                                                    |
+| with.default               | eval           | 57   |         |                                                                                    |
+| within.data.frame          | eval           | 63   |         |                                                                                    |
+| within.list                | eval           | 77   |         | evalq                                                                              |
+| replicate                  | replicate      | 21   |         |                                                                                    |
+| subset.data.frame          | frametools     | 25   |         |                                                                                    |
+| subset.data.frame          | frametools     | 34   |         |                                                                                    |
+| subset.matrix              | frametools     | 56   |         |                                                                                    |
+| transform.data.frame       | frametools     | 69   |         |                                                                                    |
+| match.arg                  | match          | 45   |         |                                                                                    |
+| char.expand                | match          | 79   |         |                                                                                    |
+| max.col                    | max            | 22   |         | To access formals                                                                  |
+| parseNamespaceFile         | namespace      | 1315 | yes     | To parse directives                                                                |
+| idem                       | namespace      | 1319 | yes     |                                                                                    |
+| idem                       | namespace      | 1442 | yes     | evaluate a call from a parse                                                       |
+| source                     | source         | 123  | yes     | Use the internal parse function (here it is a comment)                             |
+| source                     | source         | 170  | yes     | comment                                                                            |
+| source                     | source         | 219  | yes     | the actual eval                                                                    |
+| sys.source                 | source         | 277  | yes     | the non-internal parse is used                                                     |
+| stopifnot                  | stop           | 54   |         | change of caller pattern                                                           |
+| as.data.frame.table        | table          | 244  |         | Build a call?                                                                      |
+| match.fun                  | match.fun      | 28   |         | eval.parent                                                                        |
+| trace                      | methodsSupport | 38   |         | eval.parent                                                                        |
+| untrace                    | methodsSupport | 53   |         | eval.parent                                                                        |
+| .doTrace                   | methodsSupport | 78   |         | eval.parent                                                                        |
+
+
+
+```{r parse_in_base}
+parsed_base <- eval_calls %>% filter(!is.na(expr_parsed_expression), eval_source == "base")
+
+nb_call_site_parse_base <-  nb_eval_call_sites(parsed_base)
+```
+
+There are `r count(parsed_base, wt = nb_ev_calls)` `eval` calls with `parse` in *base*, which is `r count(parsed_base, wt = nb_ev_calls) / count(filter(eval_calls, eval_source == "base"), wt=nb_ev_calls)`%. 
+
+
+
+## Size of expressions as arguments to `eval`
+
+
+
+### AST size
+
+```{r subsample_for_ast}
+#ast_sizes <- eval_calls %>% slice_sample(n=10000) %>% mutate(expr_resolved_nodes = map_int(expr_resolved, expr_size_str))
+# Now precomputed during the tracing
+#ast_sizes <- read_fst(path(RUN_DIR, "package-evals-traced.3/summarized-ast-size.fst")) %>% as_tibble() %>% 
+#      filter(eval_source_type != "<undefined>") %>% 
+#      rename(dataset = eval_source_type)
+
+ast_sizes <- eval_calls 
+```
+
+
+```{r}
+# ast_sizes %>% ggplot(aes(x = expr_resolved_nodes, weight = nb_ev_calls, group = dataset)) +
+#   geom_histogram(aes(y = stat(width*density)), na.rm = TRUE, binwidth = 0.1) +
+#   scale_x_log10() +  scale_y_sqrt(labels=scales::percent) +
+#   labs(x = "AST size", y = "relative frequencies") 
+
+# ast_sizes %>% 
+#   ggplot(aes(x = dataset, y = expr_resolved_nodes, fill = dataset, weight = nb_ev_calls)) +
+#   geom_flat_violin(trim=FALSE, width=.5) +
+#   geom_dotplot(
+#     binaxis="y", 
+#     dotsize=0.01, 
+#     stackdir="down", 
+#     binwidth=0.01, 
+#     position=position_nudge(-0.025)) +
+#   scale_y_log10(labels = scales::comma) +
+#   labs(y="AST size (log)") +
+#   theme(
+#     legend.box="horizontal",
+#     axis.title.x=element_blank()
+#   )
+
+ast_sizes %>%
+  ggplot(aes(x = dataset, y = expr_resolved_nodes, fill = dataset, weight = nb_ev_calls), na.rm = TRUE) +
+  geom_violin(trim = FALSE, width=1.7)+
+  geom_boxplot(data = slice_sample(ast_sizes, n = 100000), width=.03) + # too slow otherwise
+  scale_y_log10(labels = scales::comma) +
+  labs(y="AST size (log)") +
+  theme(
+    legend.position=c(0.5, 0.85),
+    legend.box.background = element_rect(fill="white", size=0.1),
+    legend.box="horizontal",
+    axis.title.x=element_blank()
+  )
+
+ggsave(path(PLOT_DIR, "ast_sizes.pdf"))
+
+ast_sizes_prop <- ast_sizes %>% count(expr_resolved_nodes, wt = nb_ev_calls) %>%
+                      mutate(proportion = n / sum(n)) %>% 
+                      arrange(expr_resolved_nodes) %>% 
+                      mutate(cumulative = cumsum(proportion))
+  
+
+ast_size_one <- ast_sizes %>% filter(expr_resolved_nodes == 1) 
+nb_ast_size_one <- count(ast_size_one, wt = nb_ev_calls)$n
+nb_ast_size_one_call_sites <- nb_eval_call_sites(ast_size_one)
+r("nb ast one percent", ratio(nb_ast_size_one, sum(ast_sizes_prop$n)))
+r("nb ast one call site percent", ratio(nb_ast_size_one_call_sites, nb_eval_call_sites(ast_sizes)))
+
+nb_nodes_many <- ast_sizes_prop %>% filter(cumulative >= 0.95) %>% .[1,] 
+
+r("ast size nine five", nb_nodes_many$expr_resolved_nodes)
+r("ast size nine five exact percent", percent(nb_nodes_many$cumulative))
+
+```
+
+
+```{r}
+ast_sizes %>% filter(expr_resolved_nodes > 1000) %>% count(eval_call_srcref, wt = nb_ev_calls, sort = TRUE)
+```
+
+
+## Amount of computations performed in `eval`
+
+## Aliases of `eval`
+
+
+# A taxonomy of `eval`
+
+## The operation mix
+
+## Scope (environments)
+
+One of the main differences of the R \eval with the javascript one is how it interacts with \emph{scope}, or environments in R. In Javascript, \c{eval} can access the local scope and the global scope. In R, \c{eval} has an argument \c{envir} to indicate in which environment its first argument, after being resolved, must be evaluated.
+
+By default, it is equal to \c{parent.frame()}, which is the parent environment of the \c{eval} call.
+
+```{r default_environment}
+default_envir <- eval_calls %>% filter(is.na(envir_expression)) 
+nb_default_envir <- default_envir %>% count(wt = nb_ev_calls)
+nb_call_sites_default_envir <- nb_eval_call_sites(default_envir)
+
+nb_default_envir_core <- count(default_envir %>% filter(dataset == "core"), wt = nb_ev_calls)
+
+nb_eval_calls_core <- count(eval_calls_core, wt = nb_ev_calls)$n
+nb_eval_calls_packages <- count(eval_calls_packages, wt = nb_ev_calls)$n
+
+nb_default_envir_packages <- count(default_envir %>% filter(dataset == "packages"), wt = nb_ev_calls)
+
+r("default envir expr", nb_default_envir$n)
+r("default envir expr percent", ratio(nb_default_envir$n, nb_eval_calls))
+r("default envir  call sites percent", ratio(nb_call_sites_default_envir, nb_call_sites))
+
+r("default envir core expr percent", ratio(nb_default_envir_core$n, nb_eval_calls_core))
+r("default envir packages expr percent", ratio(nb_default_envir_packages$n, nb_eval_calls_packages))
+```
+
+`r ratio(nb_default_envir$n, nb_eval_calls)`% of the calls use the default environment, which corresponds to `r ratio(nb_call_sites_default_envir, nb_call_sites)`% of the call sites.
+
+
+We also classify environments in the following way:
+
+- `base`: environment of a primitive function of *base* package
+- `empty`: empty environment
+- `callee`: same environment (it seems it only happens with `local` )
+- `global`: ` .GlobalEnv` 
+- `package:package_name`: package environment
+- `loop`: there was a loop in the frame
+
+
+```{r environment_hierarchy}
+# classified_envir <- eval_calls %>% filter(!is.na(envir_expression)) %>%
+#       mutate(env_class = pmap(list(environment_class, envir_type, envir_expression), extract_envir)) %>%
+#       hoist(env_class, read_env = 1, write_env = 2, .remove=FALSE) #Quicker when not removing
+
+classified_envir <- eval_calls %>% filter(!is.na(envir_expression)) %>% 
+  mutate(env_class = pmap_chr(list(environment_class, envir_type, envir_expression), simplify_envir)) %>% 
+  mutate(env_class_read = map_chr(env_class, ~ str_match(., "([^\\+]*)\\+?")[[2]]))
+```
+
+
+```{r envirall}
+classified_envir %>% 
+  ggplot() +
+  geom_bar(aes(x =fct_rev(fct_infreq(env_class)), weight = nb_ev_calls )) +
+  coord_flip() +
+  labs(x = "Environments") + 
+  facet_wrap(~dataset)
+
+ggsave(path(PLOT_DIR, "environments.pdf"))
+```
+
+```{r envir_read}
+classified_envir %>% ggplot() +
+  geom_bar(aes(x =fct_rev(fct_infreq(env_class_read)), weight = nb_ev_calls )) +
+  coord_flip() +
+  labs(x = "Environments") + 
+  facet_wrap(~dataset)
+
+ggsave(path(PLOT_DIR, "environments-read.pdf"))
+```
+
+
+```{r}
+classified_envir_prop_core <- classified_envir %>% 
+  filter(dataset == "core") %>%
+  count(env_class, wt = nb_ev_calls, sort = TRUE) %>%
+  mutate(proportion = n / sum(n))
+
+classified_envir_prop_packages <- classified_envir %>% 
+  filter(dataset == "packages") %>%
+  count(env_class, wt = nb_ev_calls, sort = TRUE) %>%
+  mutate(proportion = n / sum(n))
+
+nb_top_envir <- 8
+
+classified_envir_prop_core %>%
+  head(nb_top_envir) %>%
+  add_column(index = toupper(letters)[1:nb_top_envir]) %>%
+  pmap_dfr(function(env_class, n, proportion, index)
+  {
+    r(paste("core", "env class", index), env_class)
+    r(paste("core", "count", index), n)
+    r(paste("core", "proportion", index), percent(proportion))
+  })
+
+classified_envir_prop_packages %>%
+  head(nb_top_envir) %>%
+  add_column(index = toupper(letters)[1:nb_top_envir]) %>%
+  pmap_dfr(function(env_class, n, proportion, index)
+  {
+    r(paste("packages", "env class", index), env_class)
+    r(paste("packages", "count", index), n)
+    r(paste("packages", "proportion", index), percent(proportion))
+  })
+
+envir_enclos <- classified_envir %>% filter(env_class %in% c("NULL", "list"))
+nb_enclos <- count(envir_enclos, wt = nb_ev_calls)$n
+r("nb enclos envir", nb_enclos)
+r("enclos envir percent", ratio(nb_enclos, nb_eval_calls))
+
+envir_sys_call <- classified_envir %>% filter(str_detect(env_class, fixed("sys.call")))
+nb_sys_call <- count(envir_sys_call, wt = nb_ev_calls)$n
+r("nb sys call envir", nb_sys_call)
+r("sys call envir percent", ratio(nb_sys_call, nb_eval_calls))
+```
+
+```{r display_frequent_env_core}
+classified_envir_core <- classified_envir %>% filter(dataset == "core") %>% add_count(env_class, wt=nb_ev_calls, sort = TRUE) %>% group_by(env_class)  %>% slice_max(order_by = nb_ev_calls, n = 10) %>% ungroup() 
+
+classified_envir_core %>% select(env_class, eval_call_expression, eval_call_srcref, caller_expression, n) %>% distinct() %>% datatable()
+```
+
+
+```{r display_frequent_env_packages}
+classified_envir_packages <- classified_envir %>% filter(dataset == "packages") %>% add_count(env_class, wt=nb_ev_calls, sort = TRUE) %>% group_by(env_class)  %>% slice_max(order_by = nb_ev_calls, n = 10) %>% ungroup() 
+
+classified_envir_packages %>% select(env_class, eval_call_expression, eval_call_srcref, caller_expression, caller_srcref, n) %>% distinct() %>% datatable()
+```
+
+
+And per call sites?
+
+```{r frequent_env_per_call_sites}
+classified_envir_prop_core_call_sites <- classified_envir %>% 
+  filter(dataset == "core") %>%
+  group_by(env_class) %>% 
+  summarize(n = vec_unique_count(eval_call_srcref)) %>%
+  arrange(desc(n)) %>% 
+  mutate(proportion = n / sum(n))
+
+classified_envir_prop_packages_call_sites <- classified_envir %>% 
+  filter(dataset == "packages") %>%
+  group_by(env_class) %>% 
+  summarize(n = vec_unique_count(eval_call_srcref)) %>%
+  arrange(desc(n)) %>% 
+  mutate(proportion = n / sum(n))
+
+```
+
+
+## Patterns
+
+We look at the first argument of `eval`, the `expr` argument, after it is resolved. It is the expression to be evaluated. It can be of different types, mainly usual numeric types, vectors, strings, and language types: calls, symbols, promise, bytecode and expressions.
+
+
+`bytecode` refers to bytecode objects, that are generated by the `compile`function:
+
+```{r}
+typeof(compiler::compile(1+1))
+```
+
+Type `expression` is a sequence of calls and symbols.
+
+```{r types_resolved}
+per_expr_resolved_type <- eval_calls %>% count(expr_resolved_type, wt = nb_ev_calls)
+```
+
+
+
+```{r}
+ per_expr_resolved_type %>% mutate(per_cent = n / nb_eval_calls * 100 ) %>% arrange(desc(n)) %>% knitr::kable()
+```
+
+
+```{r}
+per_expr_resolved_type %>% ggplot() +
+  geom_col(aes(x = fct_reorder(expr_resolved_type, n), y = n)) +
+  scale_y_sqrt() + 
+  coord_flip() +
+  labs(title = "Calls per type", y = "n", x = "type" ) 
+```
+
+There is a much larger variety of types for the resolved expressions.
+
+```{r not_unchanged_resolved_eval}
+changed_resolved_evals <- eval_calls %>% mutate(changed =  fct_collapse(expr_resolved_type, lang_types = c("LANGSXP", "EXPRSXP", "SYMSXP", "PROMSXP", "BCODESXP"), other_level = "other_types")) %>% count(changed, wt = nb_eval_calls) %>% mutate(per_cent = n / nb_eval_calls * 100 ) 
+```
+
+We can remove `eval` and leave there the expression in `r changed_resolved_evals[2, "per_cent"][[1]]`% of the eval calls (i.e. `r changed_resolved_evals[2, "n"][[1]]`).
+
+We can do the same analysis as for the non-resolved expressions:
+
+```{r expr_resolved__call_arg}
+expr_resolved_call_arg <- eval_calls %>% filter(expr_resolved_type == "LANGSXP")
+```
+
+The following top level functions are used:
+
+```{r top_level_function_resolved_expr}
+expr_resolved_call_arg %>% count(expr_resolved_function, wt=nb_ev_calls) %>% arrange(desc(n))
+```
+
+We can distinguish a few groups:
+
+- assignments
+- reading (in a data frame, a vector)
+- parsing
+- defusing (`quote`, `substitute` and so on)
+- conversion or creation of new values
+- building calls and calling
+- working with environments
+- class assignments, reads and definitions
+- building logical values
+- formula
+- meta programming on functions (getting access to the body of the function, to the call stack)
+- 'NA' corresponds to no function calls (or that it was not parsed successfully)
+- anonymous functions
+
+```{r group_expr_resolved_functions}
+group_expr_resolved_functions <- expr_resolved_call_arg %>%
+                            mutate(function_expr2 = groupify_function(expr_resolved_function)) %>%
+                            mutate(group_function_expr = fct_collapse(function_expr2, 
+                              assignment = c("<-", "[[<-", "[<-", "$<-", "<<-", "=", "@<-", "assign"),
+                              slot_access = c("[", "[[", "$", "slot", "@", "::", ":::"),
+                              parsing = c("parse", "str2lang", "str2expression", "parse_only", "base::parse"),
+                              defusing = c("quote", "substitute", "bquote", "expr", "quo", "enquo", "expression", "as.name", "as.expression"),
+                              expressions = c("as.list",  "list", "c", "as.data.frame", "as.character", "{", "modify_lang"),
+                              calling = c("call", "as.call", "do.call"),
+                              environment = c("environment", "as.environment"),
+                              logical = c("!", "&", "|", "&&", "||"),
+                              relation = c("<", ">", "is.element", "<=", "=>", "!="),
+                              choice = c("if"),
+                              anonymous = c("anonymous"),
+                              primitive = c("primitive"),
+                              function_meta = c("sys.calls", "function", "body", "missing"),
+                              arithmetic = c("+", "-", "*", "/", "%%", "^"),
+                              formula = c("~", "deriv", "D", "model.frame", "rootftfunc", "contest.lmerModLmerTest", "JacFunc", "gamlss.family", "contest1D.lmerModLmerTest", "contestMD.lmerModLmerTest", "reexpr"),                           
+                              other_level = "other" ))
+```
+
+
+```{r}
+group_expr_resolved_functions %>% count(group_function_expr, wt = nb_ev_calls) %>% arrange(desc(n)) %>% knitr::kable()
+```
+
+```{r}
+group_expr_resolved_functions %>% ggplot() +
+  geom_bar(aes(x = fct_rev(fct_infreq(group_function_expr)), weight = nb_ev_calls)) +
+  scale_y_sqrt() +
+  coord_flip() +
+  labs(title = "Category of calls", y = "n", x = "category" ) 
+```
+
+```{r }
+group_expr_resolved_functions %>% ggplot() +
+  geom_bar(aes(x = fct_rev(fct_infreq(group_function_expr)), weight = nb_ev_calls)) +
+  scale_y_sqrt() +
+  coord_flip() +
+  labs(title = "Category of calls", y = "n", x = "category" ) +
+  facet_wrap(vars(eval_function))
+```
+
+We also look at the arity of the top-level function:
+
+```{r arity_expr_resolved}
+expr_resolved_call_arg %>% count(expr_expression_args_num, sort = TRUE) %>% knitr::kable()
+```
+
+```{r arity_expr_resolved_plot}
+expr_resolved_call_arg %>% ggplot() + 
+  geom_bar(aes(x = expr_resolved_args_num, weight = nb_ev_calls)) +
+  scale_y_sqrt() +
+  coord_flip() + 
+  labs(title = "Arity of calls", x = "arity", y = "n")
+
+```
+
+```{r arity_expr_resolved_plot_per_eval}
+expr_resolved_call_arg %>% ggplot() + 
+  geom_bar(aes(x = expr_resolved_args_num, weight = nb_ev_calls)) + 
+  scale_y_sqrt() +
+  coord_flip() + 
+  labs(title = "Arity of calls", x = "arity", y = "n") +
+  facet_wrap(vars(eval_function))
+```
+
+Another interesting figure is the degreee of polymorphism of the `expr` argument: how many different types (for `expr_resolved`) are there for one call sites?
+
+```{r polymorphism_callsite}
+expr_resolved_polymorphism <- eval_calls %>% group_by(eval_call_srcref) %>%
+        summarise(polym_degree = vec_unique_count(expr_resolved_type))
+
+expr_resolved_monomorphic <- expr_resolved_polymorphism %>% filter(polym_degree == 1)
+nb_monomorphic <- expr_resolved_monomorphic %>% nrow()
+
+r("nb monomorphic", nb_monomorphic)
+r("percent monomorphic", ratio(nb_monomorphic, nb_call_sites))
+```
+
+
+```{r polymorphism}
+expr_resolved_polymorphism %>% ggplot() +
+  geom_bar(aes(x = polym_degree)) +
+  scale_x_continuous(breaks=c(0, 1, 5, 10)) +
+  labs( x = "Number of different types", y = "n") 
+
+ggsave(path(PLOT_DIR, "polymorphism.pdf"))
+```
+
+
+`r nb_monomorphic` call sites are not polymorphic, which represents `r nb_monomorphic / nb_call_sites * 100`% of the call sites.
+
+The maximum number of types is `r max(expr_resolved_polymorphism$polym_degree)`.
+
+```{r}
+highly_polymorphic <- eval_calls %>% semi_join(expr_resolved_polymorphism %>% filter(polym_degree == max(polym_degree)), by ="eval_call_srcref")
+```
+
+```{r}
+highly_polymorphic %>% count(caller_function, wt = nb_ev_calls, sort = TRUE)
+```
+
+
+From the monomorphic functions, we can deduce how many are _replaceable_:
+
+```{r}
+#expr_resolved_replaceable <- expr_resolved_monomorphic %>% left_join(eval_calls) %>% mutate(can_replace = map_lgl(expr_resolved,  is_replaceable_str))
+```
+
+
+## Provenance
+
+Some `eval` result from parsing text (directly or through a file) with `parse`.
+
+```{r eval_from_parse}
+parsed_evals <- eval_calls %>% filter(!is.na(expr_parsed_expression))
+nb_parsed_evals <- parsed_evals %>% count(wt = nb_ev_calls) 
+
+r("percent parsed evals",  ratio(nb_parsed_evals$n, nb_eval_calls))
+```
+
+There are `r nb_parsed_evals` such calls, `r nb_parsed_evals / nb_eval_calls * 100`%.
+
+```{r, echo = FALSE}
+nb_parsed_call_sites <- nb_eval_call_sites(parsed_evals)
+
+r("percent parsed call sites", ratio(nb_parsed_call_sites, nb_call_sites))
+```
+
+In terms of call sites, there are `r nb_parsed_call_sites` i.e. `r nb_parsed_call_sites / nb_call_sites * 100`%.
+
+  
+  We can differentiate further the provenance, i.e. whether the evaluated string comes from `file` or from `text`. 
+
+```{r}
+if("parse_args_file" %in% names(parsed_evals))
+{
+  parsed_files <- parsed_evals %>% filter(!is.na(parse_args_file))
+  nb_file <- parsed_files %>% count(wt = nb_ev_calls)
+  nb_file_call_sites <- nb_eval_call_sites(parsed_files)
+} else
+{
+  nb_file <- 0
+  nb_file_call_sites <- 0
+}
+
+r("nb parse files", nb_file$n)
+r("percent parse file call sites", ratio(nb_file_call_sites, nb_call_sites))
+
+```
+
+```{r}
+parsed_texts <- parsed_evals %>% filter(!is.na(parse_args_text) | !is.na(parse_args_s))
+nb_text <-  parsed_texts %>% count(wt = nb_ev_calls)
+nb_text_call_sites <- nb_eval_call_sites(parsed_texts)
+```
+
+There are `r nb_file` calls with the `file` argument, and `r nb_text` with the `text` argument, i.e. `r  nb_file / nb_parsed_evals * 100`%, and `r nb_text / nb_parsed_evals *100`% respectively.
+
+There are `r nb_file_call_sites` call sites with the `file` argument, and `r nb_text_call_sites` with the `text` argument, i.e. `r  nb_file_call_sites / nb_parsed_call_sites * 100`%, and `r nb_text_call_sites / nb_parsed_call_sites *100`% respectively.
+
+We also look to the occurrences of `paste` (and `parse0`), `glue` and `str_c` in the `parse` argument. It is an indication that meta-pogramming happens.
+
+```{r parse_meta_prog}
+meta_parsed <- parsed_texts %>% filter(str_detect(expr_parsed_expression, "paste|str_c|glue"))
+
+nb_meta_parsed <- meta_parsed %>% count(wt = nb_ev_calls)
+nb_meta_parsed_call_sites <- nb_eval_call_sites(meta_parsed)
+
+r("paste parsed evals", ratio(nb_meta_parsed$n,  nb_parsed_evals$n))
+r("paste parsed call site", ratio(nb_meta_parsed_call_sites,  nb_parsed_call_sites))
+```
+
+
+We can look at the most common meta-programming examples:
+
+```{r parse_meta_prog_ex}
+meta_parsed %>% count(expr_parsed_expression, wt = nb_ev_calls, sort = TRUE)
+```
+
+
+
+## Consistence
+
+# Other faces of `eval`
+
+# Case studies
+
+
+```{r}
+duration <- difftime(Sys.time(), now)
+```
+
+
+Number of eval calls in packages.
+
+```{r call_sites_core}
+
+corpus_files <- read_lines(CORPUS_FILE)
+corpus_size <- length(corpus_files)
+
+program_call_sites <- read_fst(PACKAGE_EVALS_FILE) %>% as_tibble() %>%
+  filter(package %in% c(corpus_files, CORE_PACKAGES))
+
+in_core <- program_call_sites %>% filter(package %in% CORE_PACKAGES)
+
+nb_in_core <- in_core %>% nrow()
+
+r("nb core eval call sites", nb_in_core)
+
+call_sites_per_package <- program_call_sites %>% count(package, sort = TRUE)
+
+max_call_sites <- max(call_sites_per_package$n)
+
+r("max call site package", max_call_sites)
+
+nb_one_call_site <- call_sites_per_package %>% filter(n == 1) %>% nrow()
+
+r("one call site package", nb_one_call_site)
+
+nb_packages_plus_one <- n_distinct(program_call_sites %>% filter(!package %in% CORE_PACKAGES) %>% select(package))
+
+nb_package_none_eval_call_site <- corpus_size - nb_packages_plus_one
+
+r("no call site packages", nb_package_none_eval_call_site)
+```
+
+
+Notebook execution was `r duration` `r units(duration)`.

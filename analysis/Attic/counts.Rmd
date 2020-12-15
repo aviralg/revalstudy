@@ -1,0 +1,349 @@
+---
+title: "Empirical Evaluation of eval in R"
+output: html_document
+params:
+  base_dir: ../../../
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      fig.align = "center",
+                      fig.retina = 2,
+                      fig.width = 10,
+                      cache.lazy = FALSE)
+
+library(tidyverse)
+library(stringr)
+library(viridis)
+library(vctrs)
+library(DT)
+library(fst)
+library(fs)
+library(purrr)
+library(readr)
+library(xtable)
+
+source("inc/paths.R")
+source("inc/setup.R")
+source("inc/latextags.R")
+
+create_tags(path(TAGS_DIR, "counts.tex"), prefix="", default=TRUE)
+```
+
+```{r load programs}
+cran_programs <- read_fst(CRAN_PROGRAMS_FILE) %>% as_tibble() %>% filter(success)
+kaggle_programs <- read_fst(KAGGLE_PROGRAMS_FILE) %>% as_tibble() %>% filter(success)
+programs <- bind_rows(
+  select(cran_programs, file, corpus),
+  select(kaggle_programs, file, corpus)
+)
+```
+
+```{r eval=TRUE}
+core_data <- 
+  read_fst(EVALS_SUM_CORE_FILE) %>%
+  as_tibble() %>%
+  semi_join(programs, by="file")
+
+packages_data <- 
+  read_fst(EVALS_SUM_PKGS_FILE) %>%
+  as_tibble() %>%
+  semi_join(programs, by="file")
+
+# kaggle should be always empty
+kaggle_data <- 
+  read_fst(EVALS_SUM_KAGGLE_FILE) %>%
+  as_tibble() %>%
+  semi_join(programs, by="file")
+
+all_data <- 
+  bind_rows(core_data, packages_data, kaggle_data)
+
+all_data <-
+    all_data %>%
+    mutate(eval_call_srcref = 
+          coalesce(eval_call_srcref, 
+                   str_c("missing", "::", caller_package, "::", caller_function)))
+
+count_summary <-
+    all_data %>%
+    group_by(eval_source_type, eval_function) %>%
+    summarize(call_count = sum(nb_ev_calls),
+              site_count = length(unique(eval_call_srcref))) %>%
+    ungroup() %>%
+    add_row(eval_source_type = "kaggle", eval_function = "eval", call_count = 0, site_count = 0) %>%
+    add_row(eval_source_type = "kaggle", eval_function = "eval.parent", call_count = 0, site_count = 0) %>%
+    add_row(eval_source_type = "kaggle", eval_function = "evalq", call_count = 0, site_count = 0) %>%
+    add_row(eval_source_type = "kaggle", eval_function = "local", call_count = 0, site_count = 0)
+
+eval_source_type_all_summary <-
+    count_summary %>%
+    group_by(eval_source_type) %>%
+    summarize(call_count = sum(call_count),
+              site_count = sum(site_count)) %>%
+    ungroup() %>%
+    mutate(eval_function = "all")
+    
+all_eval_function_summary <-
+    count_summary %>%
+    group_by(eval_function) %>%
+    summarize(call_count = sum(call_count),
+              site_count = sum(site_count)) %>%
+    ungroup() %>%
+    mutate(eval_source_type = "all")
+    
+all_all_summary <- tibble(
+    eval_source_type = "all",
+    eval_function = "all",
+    call_count = sum(count_summary$call_count),
+    site_count = sum(count_summary$site_count)
+)
+
+count_summary <-
+    bind_rows(count_summary, 
+              eval_source_type_all_summary, 
+              all_eval_function_summary, 
+              all_all_summary)
+
+print(count_summary)
+
+count_summary %>%
+pmap_dfr(function(eval_source_type, eval_function, call_count, site_count) {
+    eval_function <- str_replace(eval_function, "\\.", " ")
+    name <- str_c(eval_source_type, " ", eval_function, " ", "call count")
+    r(name, call_count)
+    name <- str_c(eval_source_type, " ", eval_function, " ", "site count")
+    r(name, site_count)
+})
+```
+
+
+```{r run-data, eval=TRUE}
+run_eval_proportion <-
+    all_data %>%
+    group_by(file, eval_source_type) %>%
+    summarize(eval_count = sum(nb_ev_calls)) %>%
+    ungroup() %>%
+    pivot_wider(names_from = "eval_source_type", values_from = "eval_count", values_fill = 0) %>%
+    mutate(all = core + package)
+
+# add the programs that have no evals
+run_eval_proportion <-
+  bind_rows(
+    run_eval_proportion,
+    anti_join(programs, run_eval_proportion, by="file") %>% mutate(core=0, package=0, all=0)
+  )
+
+total_file_count <- length(unique(run_eval_proportion$file))
+stopifnot(total_file_count == nrow(programs))
+# anti_join(run_eval_proportion, programs, by="file")
+
+no_eval_file_count <-
+    run_eval_proportion %>%
+    filter(core == 0 & package == 0)
+
+core_eval_file_count <-
+    run_eval_proportion %>%
+    filter(core != 0 & package == 0)
+    
+package_eval_file_count <-
+    run_eval_proportion %>%
+    filter(core == 0 & package != 0)
+    
+all_eval_file_count <-
+    run_eval_proportion %>%
+    filter(core != 0 & package != 0)
+
+overview_table(    
+  r("total file count", total_file_count),
+  r("no eval file count", no_eval_file_count),
+  r("no eval file perc", ratio(no_eval_file_count, total_file_count)),
+  r("core eval file count", core_eval_file_count),
+  r("core eval file perc", ratio(core_eval_file_count, total_file_count)),
+  r("package eval file count", package_eval_file_count),
+  r("package eval file perc", ratio(package_eval_file_count, total_file_count)),
+  r("all eval file count", all_eval_file_count),
+  r("all eval file perc", ratio(all_eval_file_count, total_file_count))
+)
+
+run_eval_proportion <-
+    run_eval_proportion %>%
+    filter(core != 0 & package != 0) %>%
+    mutate(core_perc = round(core * 100 / all)) %>%
+    group_by(core_perc) %>%
+    summarize(file_count = n()) %>%
+    ungroup() %>%
+    arrange(desc(core_perc)) %>%
+    mutate(file_perc = round(100 * file_count / sum(file_count), 1)) %>%
+    mutate(cumsum_file_perc = cumsum(file_perc)) %>%
+    mutate(cumsum_file_count = cumsum(file_count))
+
+eighty_core_eval_file_count <-
+    run_eval_proportion %>%
+    filter(core_perc == 80) %>%
+    pull(cumsum_file_count)
+    
+r("eighty core eval file count", eighty_core_eval_file_count)
+r("eighty core eval file perc", ratio(eighty_core_eval_file_count, all_eval_file_count))
+
+run_eval_proportion
+```
+
+```{r package-counts, eval=TRUE}
+package_calls <-
+    packages_data %>%
+    filter(eval_source != "base?") %>%
+    group_by(eval_source) %>%
+    summarize(site_count = length(unique(eval_call_srcref)), 
+              call_count = sum(nb_ev_calls)) %>%
+    ungroup() %>%
+    arrange(desc(call_count)) %>%
+    mutate(call_perc = round(100 * call_count / sum(call_count), 1)) %>%
+    mutate(cumsum_call_perc = cumsum(call_perc))
+    
+top_ten_package_calls <-
+    package_calls %>%
+    slice(n = 1:10)
+
+datatable(top_ten_package_calls)
+
+top_ten_package_call_count <- sum(top_ten_package_calls$call_count)
+top_ten_package_site_count <- sum(top_ten_package_calls$site_count)
+total_package_call_count <- sum(package_calls$call_count)
+
+overview_table(
+  r("top ten package call count", top_ten_package_call_count),
+  r("top ten package call perc", ratio(top_ten_package_call_count, total_package_call_count)),
+
+  r("top ten package site count", top_ten_package_site_count),
+  r("top ten package site perc", ratio(top_ten_package_site_count, sum(package_calls$site_count)))
+)
+
+top_ten_package_calls %>%
+add_column(index = toupper(letters)[1:nrow(top_ten_package_calls)]) %>%
+pmap_dfr(function(eval_source, site_count, call_count, call_perc, cumsum_call_perc, index) {
+    r(str_c("top ten package name ", index), eval_source)
+    r(str_c("top ten package callsite count ", index), site_count)
+    r(str_c("top ten package call count ", index), call_count)
+    r(str_c("top ten package call perc ", index), ratio(call_count, total_package_call_count))
+})
+```
+
+```{r callsite-distribution, eval=TRUE}
+package_evals_dynamic <- read_fst(PACKAGE_EVALS_DYNAMIC_FILE) %>% as_tibble()
+eval_callsite_table <-
+  package_evals_dynamic %>%
+  mutate(
+    site_count=cut(
+      n, 
+      breaks=c(0:10, 50, 100, 150, 200, 250, 300, Inf), 
+      labels=c(1:10, "11--50", "51--100", "101--150", "151--200", "201--250", "251--300", "> 300"),
+      include.lowest = T
+    )
+  ) %>%
+  group_by(site_count) %>%
+  summarize(package_count = n())
+
+eval_callsite_table_row <- ceiling(nrow(eval_callsite_table)/3)
+                                   
+eval_callsite_table3 <- map_dfc(seq(1, nrow(eval_callsite_table), eval_callsite_table_row), function(i) {
+  x <- tibble(
+    eval_callsite_table[i:(i+eval_callsite_table_row-1), "site_count"],
+    eval_callsite_table[i:(i+eval_callsite_table_row-1), "package_count"]
+  )
+  colnames(x) <- paste0(colnames(x), i)
+  x
+})
+rownames(eval_callsite_table3) <- NULL
+
+eval_callsite_table3 %>%
+  xtable() %>%
+  print(
+    only.contents=TRUE, 
+    include.colnames=FALSE, 
+    include.rownames=FALSE,
+    hline.after=nrow(eval_callsite_table3),
+    file=path(TAGS_DIR, "table-site-package-summary.tex")
+  )
+
+datatable(eval_callsite_table3)
+```
+
+```{r core-dependent-own-eval}
+cod_data <- 
+  all_data %>%
+  mutate(
+    package=basename(dirname(dirname(file))),
+    core_own_dependent=case_when(
+      eval_source == "core"  ~ "core",
+      eval_source == "base"  ~ "core",
+      package == eval_source ~ "own",
+      TRUE ~ "dependent"
+    )
+  )
+```
+
+```{r}
+programs_cod <-
+  map_dfr(
+    c("core", "own", "dependent"), 
+    ~mutate(
+      programs,
+      core_own_dependent=.,
+      nb_ev_calls=0
+    )
+  )
+  
+cod_data_summary <- 
+  cod_data %>%
+  select(file, core_own_dependent, corpus, nb_ev_calls) %>%
+  right_join(programs_cod, by=c("file", "corpus", "core_own_dependent")) %>%
+  mutate(nb_ev_calls=ifelse(is.na(nb_ev_calls.x), nb_ev_calls.y, nb_ev_calls.x)) %>%
+  select(file, core_own_dependent, corpus, nb_ev_calls)
+
+core_own_dependent <-
+  cod_data_summary %>%
+  group_by(file, core_own_dependent) %>%
+  summarize(corpus=first(corpus), eval_calls = sum(nb_ev_calls)) %>%
+  ungroup()
+
+vars <- expand.grid(corpus=c("cran", "kaggle"), cod=c("core", "own", "dependent"), stringsAsFactors = FALSE)
+map2_dfr(vars$corpus, vars$cod, function(crps, cod) {
+  rs(paste(crps, cod, "eval calls"), filter(core_own_dependent, corpus==crps, core_own_dependent==cod)$eval_calls)
+}) %>%
+  overview_table()
+
+# core_own_dependent  %>%
+#   group_by(corpus, core_own_dependent) %>%
+#   pivot_longer(cols=c(total_eval_calls, max_eval_calls, min_eval_calls, avg_eval_calls))
+# 
+#   xtable::xtable(align="llrrrr") %>%
+#   print(
+#     tabular.environment = "tabularx", 
+#     width = "\\textwidth",
+#     floating=F,
+# #    file=fname,
+#     include.rownames=F
+#   )
+
+# core_own_dependent %>%
+# pmap_dfr(function(corpus, core_own_dependent, total_eval_calls, max_eval_calls, min_eval_calls, avg_eval_calls) {
+#     r(str_c(corpus, " ", core_own_dependent, " total eval calls"), total_eval_calls)
+#     r(str_c(corpus, " ", core_own_dependent, " max eval calls"), max_eval_calls)
+#     r(str_c(corpus, " ", core_own_dependent, " min eval calls"), min_eval_calls)
+#     r(str_c(corpus, " ", core_own_dependent, " avg eval calls"), avg_eval_calls)
+# })
+# 
+# datatable(core_own_dependent)
+# 
+#     xtable::xtable(align="lXrrrr") %>%
+#     print(
+#       tabular.environment = "tabularx", 
+#       width = "\\textwidth",
+#       floating=F,
+#       file=fname,
+#       include.rownames=F
+#     )
+```
