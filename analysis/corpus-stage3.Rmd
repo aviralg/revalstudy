@@ -1,0 +1,42 @@
+---
+title: "Corpus stage 3"
+output: html_document
+params:
+  base_dir: /var/lib/R/project-evalR
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+for (x in c(
+  "dplyr", 
+  "DT",
+  "fs",
+  "fst",
+  "lubridate",
+  "readr",
+  "purrr",
+  "stringr",
+  "tidyr"
+  )) {
+  suppressPackageStartupMessages(library(x, character.only=TRUE))
+}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+# TODO: move into the package
+source("inc/paths.R")
+source("inc/setup.R")
+```
+
+## Load data
+
+```{r}
+calls       <- read_fst(CALLS_FILE) %>% mutate(package=basename(dirname(dirname(file))))
+corpus      <- read_fst(CORPUS_DETAILS_FILE)
+calls_final <- semi_join(calls, corpus, by="package")
+```
+
+```{r export data}
+write_fst(calls_final, "../../run/package-evals-traced/calls-final.fst")
+```
