@@ -2,7 +2,7 @@
 
 # Run docker
 dock:
-	docker run --name rstudio -p 8787:8787 -v "$(pwd):/mnt" -e ROOT=TRUE -e DISABLE_AUTH=true fikovnik/rstudio:4.0.2
+	docker run --rm --name rstudio -p 8787:8787 -v "$$HOME:$$HOME" -e ROOT=TRUE -e DISABLE_AUTH=true fikovnik/rstudio:4.0.2 
 
 # If already in use...
 killrm:
