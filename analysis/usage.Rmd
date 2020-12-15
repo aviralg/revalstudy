@@ -153,7 +153,7 @@ We recorded `r nb_calls` to eval, out of these, there were `r evalq_calls`
 eval_calls_table <- E %>% 
   count(ev_package, wt=duplicates, sort = TRUE)
 
-breaks <- c(0, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000)
+breaks <- c(0, 10^seq(1,8))
 
 group_tags <- cut(eval_calls_table$n,
                   breaks = breaks,
