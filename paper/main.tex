@@ -651,6 +651,19 @@ packages in the corpus, \EvalCallsLessHundred packages have a low frequency of \
 with fewer than 100 of them. On the other hand, \EvalCallsMoreThousand packages call eval
 more than 1,000 times, with one package (\MaxEvalCallPackage) calling it \MaxEvalCallsRnd times.
 
+\begin{table}[h]
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+                       &\eval & \texttt{evalq} & \texttt{eval.parent} & \texttt{local} \\
+        Dynamic & \Evals & \Evalqs & \Eparents & \Locals \\
+        Static      & \Staticeval & \Staticevalq & \Staticevalparent & \Staticlocal \\
+        Triggered & \Triggeredeval & \Triggeredevalq & \Triggeredevalparent & \Triggeredlocal \\
+        \% triggered & \Triggeredevalpercent & \Triggeredevalqpercent & \Triggeredevalparentpercent & \Triggeredlocalpercent \\
+        \hline
+    \end{tabular}
+    \caption{Variants of \eval}
+\end{table}
+
 \end{document}
 
 (\EvalsRnd for \eval, \EvalqsRnd for \c{evalq}, \EparentsRnd for
