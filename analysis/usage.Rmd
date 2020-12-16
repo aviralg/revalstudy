@@ -12,7 +12,7 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: /var/lib/R/project-evalR/run/package-evals-traced.10/
+  base_dir: Data/
   calls_packages_path: summarized-packages.fst
   corpus_path: corpus.fst
   static_evals_path: package-evals-static.csv
@@ -26,8 +26,6 @@ library(tidyverse)
 library(fst)
 library(fs)
 library(DT)
-
-jan <- FALSE
 
 knitr::knit_hooks$set(time_it = local({
   now <- NULL
@@ -50,22 +48,13 @@ knitr::opts_chunk$set(
   time_it = TRUE
 )
 
-if (jan == FALSE) {
-  source("inc/paths.R")
-}
+source("inc/paths.R")
 source("inc/latextags.R")
 source("inc/setup.R")
 theme_set(theme_minimal())
-if (jan) {
-  TAGS_DIR <- PLOT_DIR <- "."
-}
 create_tags(path(TAGS_DIR, "usage_metrics.tex"), prefix = "", default = TRUE)
 
 base_dir <- params$base_dir
-# Set the paths, and customize for Jan.
-if (jan) {
-  base_dir <- "/mnt/code/eval/run/package-evals-traced.9/"
-}
 eval_calls_path <- paste0(base_dir, params$calls_packages_path)
 corpus_path <- paste0(base_dir, params$corpus_path)
 eval_static_path <- paste0(base_dir, params$static_evals_path)
@@ -77,7 +66,7 @@ Read in the summarized calls data (`E_raw`) and the file that describes
 which package belong to our corpus (`C_raw`). For conciseness, `E` is
 the input data set with only the columns that we use.
 
-```{r read,include=F}
+```{r read, message=TRUE, include=F}
 read_fst(eval_calls_path) %>% as_tibble() -> E_raw
 read_fst(corpus_path) %>% as_tibble() -> C_raw
 read_csv(eval_static_path) %>% semi_join(C_raw, by = "package") -> P
@@ -88,7 +77,7 @@ compute the corpus size. `E` is used throughout. Recall that `E_raw` has the
 source data with all columns. `P` corresponds to static information about the
 call sites.
 
-```{r select-columns,echo=F}
+```{r select-columns, message=TRUE, warning=FALSE, include=FALSE}
 E_raw %>% select(
   run_package = package, #      The package which was run to trigger the eval
   ev_variant = eval_function, # Which eval variant was called
@@ -102,14 +91,19 @@ E_raw %>% select(
 
 C_raw -> C
 corpus_size <- nrow(P)
+
+overview_table(
+  r("Corpus",corpus_size)
+) 
 ```
+
+The size of our corpus is `corpus_size` packages.
 
 #  Variants
 
-The corpus has `r corpus_size` packages, and the data set has `r nrow(E)` 
-distinct calls to the `eval` and its variants. There are 
-`r length(unique(E$ev_package))` corpus packages with `eval` calls (note that
-we may not trigger all `eval`s in a package due to spotty covereage).
+The data set has `r nrow(E)`distinct calls to the `eval` and its variants. 
+There are `r length(unique(E$ev_package))` corpus packages with `eval` calls
+(note that we may not trigger all `eval`s in a package due to spotty covereage).
 
 ```{r variants,echo=F}
 nb_calls <- E %>%
@@ -132,13 +126,14 @@ local_calls <- E %>%
   count(wt = duplicates) %>%
   .$n
 
-TBL <- overview_table(
-  r("nb eval and variant calls", nb_calls),
-  r("nb eval calls", eval_calls),
-  r("nb evalq calls", evalq_calls),
-  r("nb eval parent calls", eval.parent_calls),
-  r("nb local calls", local_calls)
-)
+overview_table(
+  r("Allcalls", nb_calls),
+  r("Evals", eval_calls),
+  r("Evalqs", evalq_calls),
+  r("Eparents", eval.parent_calls),
+  r("Locals", local_calls),
+  r("Triggeredpkgs", length(unique(E$ev_package)))
+) -> TBL
 ``` 
 
 We recorded `r nb_calls` to eval, out of these, there were `r evalq_calls`
@@ -148,28 +143,37 @@ We recorded `r nb_calls` to eval, out of these, there were `r evalq_calls`
 
 `r TBL`
 
-```{r eval-calls-summary}
+# Ev-dist 
 
+We compute the frequency of evals by package. This shows that some packages
+hardly use eval while other use it intensily. The numbers are "for all runs",
+this means that a popular package may be triggered by more runs and thus
+have higher frequencies. We will later control for this by looking at individual 
+call sites.
+
+```{r ev-dist, include=FALSE}
 eval_calls_table <- E %>% 
   count(ev_package, wt=duplicates, sort = TRUE)
-
 breaks <- c(0, 10^seq(1,8))
-
 group_tags <- cut(eval_calls_table$n,
                   breaks = breaks,
                   include.lowest = TRUE)
-
 ev_summary <- summary(group_tags)
 
-r("bin1", ev_summary[[1]])
-r("bin2", ev_summary[[2]])
-r("bin3", ev_summary[[3]])
-r("bin4", ev_summary[[4]])
-r("bin5", ev_summary[[5]])
-r("bin6", ev_summary[[6]])
-r("bin7", ev_summary[[7]])
-r("bin8", ev_summary[[8]])
+overview_table(
+r("bina", ev_summary[[1]]),
+r("binb", ev_summary[[2]]),
+r("binc", ev_summary[[3]]),
+r("bind", ev_summary[[4]]),
+r("bine", ev_summary[[5]]),
+r("binf", ev_summary[[6]]),
+r("bing", ev_summary[[7]]),
+r("binh", ev_summary[[8]])) -> TBL
 ```
+
+The distribution of eval calls, each bin represents a power of 10, the number in the bin is the count of packages.
+
+`r TBL`
 
 
 # Triggered sites

@@ -453,3 +453,6 @@ inst/paper/.DS_Store
 
 *.vtc
 analysis/Data
+paper/macro.tex~
+paper/main.pdf
+paper/tag/usage_metrics.tex
