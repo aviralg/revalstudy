@@ -85,7 +85,7 @@ E_raw %>% select(
   ev_package = eval_source, #   Package of the call site
   arg_size = expr_expression_length, # Size in bytes of eval argument string
   opcodes = direct_interpreter_eval #  Count of the AST nodes traversed by the
-) -> E #                               interpreter during eval (non-recursive). 
+) -> E #                               interpreter during eval (non-recursive).
 
 C_raw -> C
 corpus_size <- nrow(P)
@@ -94,9 +94,9 @@ nb_runs <- E %>%
   pull(file) %>%
   n_distinct()
 overview_table(
-  r("Corpus",corpus_size),
+  r("Corpus", corpus_size),
   r("NbRuns", nb_runs)
-) 
+)
 ```
 
 The size of our corpus is `r corpus_size` packages.
@@ -146,46 +146,46 @@ We recorded `r nb_calls` to eval, out of these, there were `r evalq_calls`
 `r TBL`
 
 ```{r exercised-call-site-per-variant}
-static_eval <- P %>% filter(call_fun_name == "eval") %>% nrow()
-static_evalq <- P %>% filter(call_fun_name == "evalq") %>% nrow()
-static_eval.parent <- P %>% filter(call_fun_name == "eval.parent") %>% nrow()
-static_local <- P %>% filter(call_fun_name == "local") %>% nrow()
+static_eval <- P %>%
+  filter(call_fun_name == "eval") %>%
+  nrow()
+static_evalq <- P %>%
+  filter(call_fun_name == "evalq") %>%
+  nrow()
+static_eval.parent <- P %>%
+  filter(call_fun_name == "eval.parent") %>%
+  nrow()
+static_local <- P %>%
+  filter(call_fun_name == "local") %>%
+  nrow()
 
 sites_per_variant <- E %>% # src_ref indicates where the call originates from.
-  group_by(ev_variant) %>% 
-  summarize( n = n_distinct(src_ref)) # This the number of distinct sites
+  group_by(ev_variant) %>%
+  summarize(n = n_distinct(src_ref)) # This the number of distinct sites
 
 trig_eval <- sites_per_variant %>% filter(ev_variant == "eval")
-trig_eval <- if(nrow(trig_eval) == 0)
-{
+trig_eval <- if (nrow(trig_eval) == 0) {
   0
-} else
-{
+} else {
   trig_eval$n
 }
-  
+
 trig_evalq <- sites_per_variant %>% filter(ev_variant == "evalq")
-trig_evalq <- if(nrow(trig_evalq) == 0)
-{
+trig_evalq <- if (nrow(trig_evalq) == 0) {
   0
-} else
-{
+} else {
   trig_evalq$n
 }
-trig_eval.parent <- sites_per_variant %>% filter(ev_variant == "eval.parent") 
-trig_eval.parent <- if(nrow(trig_eval.parent) == 0)
-{
+trig_eval.parent <- sites_per_variant %>% filter(ev_variant == "eval.parent")
+trig_eval.parent <- if (nrow(trig_eval.parent) == 0) {
   0
-} else
-{
+} else {
   trig_eval.parent$n
 }
 trig_local <- sites_per_variant %>% filter(ev_variant == "local")
-trig_local <- if(nrow(trig_local) == 0)
-{
+trig_local <- if (nrow(trig_local) == 0) {
   0
-} else
-{
+} else {
   trig_local$n
 }
 
@@ -217,23 +217,25 @@ have higher frequencies. We will later control for this by looking at individual
 call sites.
 
 ```{r ev-dist, include=FALSE}
-eval_calls_table <- E %>% 
-  count(ev_package, wt=duplicates, sort = TRUE)
-breaks <- c(0, 10^seq(1,8))
+eval_calls_table <- E %>%
+  count(ev_package, wt = duplicates, sort = TRUE)
+breaks <- c(0, 10^seq(1, 8))
 group_tags <- cut(eval_calls_table$n,
-                  breaks = breaks,
-                  include.lowest = TRUE)
+  breaks = breaks,
+  include.lowest = TRUE
+)
 ev_summary <- summary(group_tags)
 
 overview_table(
-r("bina", ev_summary[[1]]),
-r("binb", ev_summary[[2]]),
-r("binc", ev_summary[[3]]),
-r("bind", ev_summary[[4]]),
-r("bine", ev_summary[[5]]),
-r("binf", ev_summary[[6]]),
-r("bing", ev_summary[[7]]),
-r("binh", ev_summary[[8]])) -> TBL
+  r("bina", ev_summary[[1]]),
+  r("binb", ev_summary[[2]]),
+  r("binc", ev_summary[[3]]),
+  r("bind", ev_summary[[4]]),
+  r("bine", ev_summary[[5]]),
+  r("binf", ev_summary[[6]]),
+  r("bing", ev_summary[[7]]),
+  r("binh", ev_summary[[8]])
+) -> TBL
 ```
 
 The distribution of eval calls, each bin represents a power of 10, the number in the bin is the count of packages.
@@ -242,7 +244,9 @@ The distribution of eval calls, each bin represents a power of 10, the number in
 
 ```{r ev-call-precise}
 
-more_1000_calls <- eval_calls_table %>% filter(n > 1000) %>% nrow()
+more_1000_calls <- eval_calls_table %>%
+  filter(n > 1000) %>%
+  nrow()
 
 overview_table(
   r("eval calls less hundred", ev_summary[[1]] + ev_summary[[2]]),
@@ -348,7 +352,7 @@ runs_package %>% datatable()
 # run = package?
 eval_calls_per_package <- E %>%
   count(ev_package, wt = duplicates) %>%
-  left_join(runs_package, by = "ev_package") 
+  left_join(runs_package, by = "ev_package")
 
 
 average_eval_calls <- eval_calls_per_package %>%
@@ -460,7 +464,7 @@ eval_calls_exercised %>% ggplot(aes(n)) +
 
 
 ```{r}
-eval_call_triggered <- E %>% 
+eval_call_triggered <- E %>%
   group_by(src_ref) %>%
   summarize(n_runs = n_distinct(file), n = sum(duplicates), average = n / n_runs) %>%
   arrange(desc(average))
