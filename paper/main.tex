@@ -630,10 +630,10 @@ which it implements special evaluation support in \c{tidy_eval}.
 To provide a picture of \eval usage in R, we recorded \Allcalls
 invocations of \eval and its variants in the CRAN corpus. These calls
 were obtained by \Nbruns runs, with runs that did not trigger \eval
-discarded. Out of the \NbStaticAtLeastOneCallSite CRAN packages(among the \Corpus packages of our corpus) with \eval call sites, we
-observed calls in \Triggeredpkgs packages, the difference can be chalk
-down to incomplete code coverage and occasional failures due to our
-pipeline.
+discarded. Out of the \Staticatleastonecallsite CRAN packages(among
+the \Corpus packages of our corpus) with \eval call sites, we observed
+calls in \Triggeredpkgs packages, the difference can be chalk down to
+incomplete code coverage and occasional failures due to our pipeline.
 
 \begin{wrapfigure}{r}{5.2cm}
 \begin{tabular}{|r@{\,}r@{\,}lr|r@{\,}r@{\,}lr|} \hline
@@ -669,18 +669,24 @@ Invocations & \EvalsRnd & \EvalqsRnd & \EparentsRnd & \LocalsRnd \\\hline
 \end{figure}
 
 
-\begin{figure}[h]
-    \centering
-    \begin{tabular}{|r@{\,}r@{\,}lr|r@{\,}r@{\,}lr|} \hline
-        \tt 0 &--& \tt 50      & \Runbina  & \tt 501 &--&\tt 1000  & \Runbine\\
-        \tt 51 &--& \tt 100    & \Runbinb  & \tt 1001 &--&\tt 1500  & \Runbinf\\
-        \tt 101 &--& \tt 250    & \Runbinc  & \tt 1501 &--&\tt 2000   & \Runbing\\
-        \tt 251 &--& \tt 500    & \Runbind  & \tt 2001 &--& \tt 3000 & \Runbinh\\\hline
-    \end{tabular}
-    \caption{Invocations of \eval per call sites normalized by the number of runs.} \label{tab:callsitesnormalized}
+\begin{figure}[h] \centering
+\begin{tabular}{|r@{\,}r@{\,}lr|r@{\,}r@{\,}lr|} \hline
+\tt 0 &--& \tt 50    & \Runbina & \tt 501 &--&\tt 1000   & \Runbine\\
+\tt 51 &--& \tt 100  & \Runbinb & \tt 1001 &--&\tt 1500  & \Runbinf\\
+\tt 101 &--& \tt 250 & \Runbinc & \tt 1501 &--&\tt 2000  & \Runbing\\
+\tt 251 &--& \tt 500 & \Runbind & \tt 2001 &--& \tt 3000 & \Runbinh\\\hline
+\end{tabular}
+\caption{Normalized invocations} \label{tab:callsitesnormalized}
 \end{figure}
 
-Figure~\ref{tab:callsitesnormalized} shows the number of invocation to \eval and its variants per call sites per run exercising that call site. If that number is high, it can correspond to a function with an \eval call site that is used widely.   If that number is very high, more than 1000, we expect it to correspond to an \eval call site in a loop. Most of the invocations are less than 50 per run per call site. When zooming in, on Figure~\ref{fig:callsitesnormalized}, most call sites have actually only one invocation per run.
+Figure~\ref{tab:callsitesnormalized} shows the number of invocation to
+\eval and its variants per call sites per run exercising that call
+site. If that number is high, it can correspond to a function with an
+\eval call site that is used widely. If that number is very high, more
+than 1000, we expect it to correspond to an \eval call site in a loop.
+Most of the invocations are less than 50 per run per call site. When
+zooming in, on Figure~\ref{fig:callsitesnormalized}, most call sites
+have actually only one invocation per run.
 
 
 \begin{figure}[h]

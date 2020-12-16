@@ -18,7 +18,6 @@ params:
   static_evals_path: package-evals-static.csv
 ---
 
-
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(fst)
@@ -111,7 +110,7 @@ The data set has `r nrow(E)` distinct calls to the `eval` and its variants.
 There are `r length(unique(E$ev_package))` corpus packages with `eval` calls
 (note that we may not trigger all `eval`s in a package due to spotty coverage).
 
-```{r variants,echo=F}
+```{r variants, include=FALSE}
 nb_calls <- E %>%
   count(wt = duplicates) %>%
   .$n
@@ -151,7 +150,7 @@ We recorded `r nb_calls` to eval, out of these, there were `r evalq_calls`
 
 # Exercised vs. Static
 
-Here we compute the number of static call sistes to eval to compare it with
+Here we compute the number of static call sites to compare it with
 the number of call sites with triggered dynamically. The former is larger
 than the latter because code coverage is not perfect.
 
@@ -254,24 +253,6 @@ sites_per_package <- E %>%
   count(ev_package, src_ref) %>%
   count(ev_package) # All packages have at least one site!
 
-TBL <- overview_table(
-  # Sites triggered over the whole corpus:
-  r("nb eval call sites", sites),
-  # How many packages in the corpus have a single triggered call site:
-  r("nb one call site", sites_per_package %>% filter(n == 1)),
-  r("at least one call site", nrow(sites_per_package)),
-  r("packages no calls to eval", corpus_size - nrow(sites_per_package)),
-  r("nb median call sites", median(sites_per_package$n))
-)
-```
-
-`r TBL`
-
-How many call sites and how many packages did we exercise out of the total number of call sites of the corpus?
-
-```{r exercised-call-sites, include=F}
-
-# TODO :: remove?
 static_sites <- nrow(P)
 
 static_call_sites_per_package <- P %>%
@@ -280,10 +261,12 @@ static_call_sites_per_package <- P %>%
 static_at_least_one_call_site <- static_call_sites_per_package %>%
   filter(n >= 1)
 
-r("nb static call sites", static_sites)
-r("call sites percent", ratio(sites, static_sites))
-r("nb static at least one call site", nrow(static_at_least_one_call_site))
-r("static at least one call site percent", ratio(nrow(sites_per_package %>% filter(n >= 1)), nrow(static_at_least_one_call_site)))
+overview_table(
+  r("Sites", sites),
+  r("Staticsites", static_sites),
+  r("Sitespercent", ratio(sites, static_sites)),
+  r("Staticatleastonecallsite", nrow(static_at_least_one_call_site))
+)
 ```
 
 
@@ -292,15 +275,13 @@ r("static at least one call site percent", ratio(nrow(sites_per_package %>% filt
 This is the number of eval calls which have a call site in each package,
 divided by the number of runs for the package.
 
-
 We first compute an approximation of the number of runs per package.
-```{r runs-per-package}
+```{r runs-per-package, include=FALSE}
 runs_package <- E %>%
   group_by(ev_package) %>%
   summarise(nb_runs = n_distinct(file)) %>%
   arrange(desc(nb_runs))
 ```
-
 
 What are the packages with the most runs?
 
@@ -325,12 +306,9 @@ ggsave(path(PLOT_DIR, "eval_calls_per_packages.pdf"))
 ```{r amout-of-code, include=F}
 
 weighted.median <- function(x, w, na.rm = FALSE) {
-  if (na.rm) {
-    na.omit(x)
-  }
+  if (na.rm) { na.omit(x) }
   w <- w[order(x)]
   x <- x[order(x)]
-
   prob <- cumsum(w) / sum(w)
   ps <- which(abs(prob - .5) == min(abs(prob - .5)))
   return(x[ps])
@@ -358,10 +336,7 @@ r("size nine five", nb_nodes_many$arg_size)
 r("size nine five exact percent", percent(nb_nodes_many$cumulative))
 ```
 
-
-
 # Amount of computations via eval
-
 
 ```{r amount_computations, include=F}
 nb_events_in_eval <- E %>% summarise(nb_events = sum(opcodes))
@@ -409,9 +384,7 @@ eval_call_triggered <- E %>%
   group_by(src_ref) %>%
   summarize(n_runs = n_distinct(file), n = sum(duplicates), average = n / n_runs) %>%
   arrange(desc(average))
-```
 
-```{r}
 eval_call_triggered %>% 
   filter(average < 50) %>% 
   ggplot(aes(x = average)) +
@@ -434,9 +407,6 @@ overview_table(
   r("Runbinh", sum[[8]])
 )
 ```
-
-
-# The case of core libraries
 
 
 ```{r}
