@@ -149,6 +149,69 @@ We recorded `r nb_calls` to eval, out of these, there were `r evalq_calls`
 
 `r TBL`
 
+```{r exercised-call-site-per-variant}
+static_eval <- P %>% filter(call_fun_name == "eval") %>% nrow()
+static_evalq <- P %>% filter(call_fun_name == "evalq") %>% nrow()
+static_eval.parent <- P %>% filter(call_fun_name == "eval.parent") %>% nrow()
+static_local <- P %>% filter(call_fun_name == "local") %>% nrow()
+
+sites_per_variant <- E %>% # src_ref indicates where the call originates from.
+  group_by(ev_variant) %>% 
+  summarize( n = n_distinct(src_ref)) # This the number of distinct sites
+
+trig_eval <- sites_per_variant %>% filter(ev_variant == "eval")
+trig_eval <- if(nrow(trig_eval) == 0)
+{
+  0
+} else
+{
+  trig_eval$n
+}
+  
+trig_evalq <- sites_per_variant %>% filter(ev_variant == "evalq")
+trig_evalq <- if(nrow(trig_evalq) == 0)
+{
+  0
+} else
+{
+  trig_evalq$n
+}
+trig_eval.parent <- sites_per_variant %>% filter(ev_variant == "eval.parent") 
+trig_eval.parent <- if(nrow(trig_eval.parent) == 0)
+{
+  0
+} else
+{
+  trig_eval.parent$n
+}
+trig_local <- sites_per_variant %>% filter(ev_variant == "local")
+trig_local <- if(nrow(trig_local) == 0)
+{
+  0
+} else
+{
+  trig_local$n
+}
+
+overview_table(
+  r("StaticEval", static_eval),
+  r("StaticEvalq", static_evalq),
+  r("StaticEvalParent", static_eval.parent),
+  r("StaticLocal", static_local),
+  r("TriggeredEval", trig_eval),
+  r("TriggeredEvalq", trig_evalq),
+  r("Triggeredevalparent", trig_eval.parent),
+  r("Triggeredlocal", trig_local),
+  r("Triggeredevalpercent", ratio(trig_eval, static_eval)),
+  r("Triggeredevalqpercent", ratio(trig_evalq, static_evalq)),
+  r("Triggeredevalparentpercent", ratio(trig_eval.parent, static_eval.parent)),
+  r("Triggeredlocalpercent", ratio(trig_local, static_local))
+) -> TBL
+```
+
+
+`r TBL`
+
 # Ev-dist 
 
 We compute the frequency of evals by package. This shows that some packages
@@ -223,7 +286,7 @@ TBL <- overview_table(
   r("nb eval call sites", sites),
   # How many packages in the corpus have a single triggered call site:
   r("nb one call site", sites_per_package %>% filter(n == 1)),
-  r("at least one call site", sites_per_package$n),
+  r("at least one call site", nrow(sites_per_package)),
   r("packages no calls to eval", corpus_size - nrow(sites_per_package)),
   r("nb median call sites", median(sites_per_package$n)),
   r("max call sites", max_packages),
@@ -272,68 +335,6 @@ r("static at least one call site percent", ratio(nrow(sites_per_package %>% filt
 ```
 
 
-And now, by `eval` variant:
-
-```{r exercised-call-site-per-variant}
-
-static_eval <- P %>% filter(call_fun_name == "eval") %>% nrow()
-static_evalq <- P %>% filter(call_fun_name == "evalq") %>% nrow()
-static_eval.parent <- P %>% filter(call_fun_name == "eval.parent") %>% nrow()
-static_local <- P %>% filter(call_fun_name == "local") %>% nrow()
-
-sites_per_variant <- E %>% # src_ref indicates where the call originates from.
-  group_by(ev_variant) %>% 
-  summarize( n = n_distinct(src_ref)) # This the number of distinct sites
-
-trig_eval <- sites_per_variant %>% filter(ev_variant == "eval")
-trig_eval <- if(nrow(trig_eval) == 0)
-{
-  0
-} else
-{
-  trig_eval$n
-}
-  
-trig_evalq <- sites_per_variant %>% filter(ev_variant == "evalq")
-trig_evalq <- if(nrow(trig_evalq) == 0)
-{
-  0
-} else
-{
-  trig_evalq$n
-}
-trig_eval.parent <- sites_per_variant %>% filter(ev_variant == "eval.parent") 
-trig_eval.parent <- if(nrow(trig_eval.parent) == 0)
-{
-  0
-} else
-{
-  trig_eval.parent$n
-}
-trig_local <- sites_per_variant %>% filter(ev_variant == "local")
-trig_local <- if(nrow(trig_local) == 0)
-{
-  0
-} else
-{
-  trig_local$n
-}
-
-r("static eval", static_eval)
-r("static evalq", static_evalq)
-r("static eval parent", static_eval.parent)
-r("static local", static_local)
-
-r("triggered eval", trig_eval)
-r("triggered evalq", trig_evalq)
-r("triggered eval parent", trig_eval.parent)
-r("triggered local", trig_local)
-
-r("eval percent call site", ratio(trig_eval, static_eval))
-r("evalq percent call site", ratio(trig_evalq, static_evalq))
-r("eval parent percent call site", ratio(trig_eval.parent, static_eval.parent))
-r("local percent call site", ratio(trig_local, static_local))
-```
 
 
 # Numbers of calls to eval
