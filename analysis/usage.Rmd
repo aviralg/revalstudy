@@ -202,8 +202,7 @@ call sites.
 
 ```{r ev-dist, include=FALSE}
 # The calls per package
-pack_calls <- E %>% 
-  count(ev_package, wt=duplicates, sort = TRUE)
+pack_calls <- E %>% count(ev_package, wt=duplicates, sort = TRUE)
 # Create bins at every power of ten
 bins <- cut(pack_calls$n, breaks = c(0, 10^seq(1,8)), include.lowest = TRUE)
 sum <- summary(bins)

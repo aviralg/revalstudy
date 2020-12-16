@@ -652,46 +652,24 @@ frequency of \eval calls, with fewer than 100 of them. On the other
 hand, \Manycalls packages call eval more than 1,000 times, with one
 package (\Maxcallspack) calling it \Maxcalls times.
 
-\begin{figure}[h]
-    \begin{tabular}{|r|r|r|r|r|}
-        \hline
-                       &\eval & \c{evalq} & \c{eval} & \c{local} \\[-2mm]
-                       & & & \c{.parent} & \\
-                       \hline
-       Static    sites  & \Staticeval & \Staticevalq & \Staticevalparent & \Staticlocal \\
-       Exercised sites & \Triggeredeval & \Triggeredevalq & \Triggeredevalparent & \Triggeredlocal \\
-        Invocations & \EvalsRnd & \EvalqsRnd & \EparentsRnd & \LocalsRnd \\
-%        \% triggered & \Triggeredevalpercent & \Triggeredevalqpercent & \Triggeredevalparentpercent & \Triggeredlocalpercent \\
-        \hline
-    \end{tabular}
-    \caption{Variants of \eval} \label{tab:variantseval}
+\begin{figure}[h]\begin{tabular}{|r|r|r|r|r|}\hline
+   &\eval & \c{evalq} & \c{eval} & \c{local} \\[-2mm]
+           & & & \c{.parent} & \\\hline
+Static sites  & \Staticeval & \Staticevalq & \Staticevalparent & \Staticlocal \\
+Exercised sites & \Triggeredeval & \Triggeredevalq & \Triggeredevalparent & \Triggeredlocal \\
+Invocations & \EvalsRnd & \EvalqsRnd & \EparentsRnd & \LocalsRnd \\\hline
+\end{tabular}\caption{Variants}\label{tab:variantseval}
 \end{figure}
 
-Figure~\ref{tab:variantseval} shows, per variant of \eval, the number of static eval call sites in the corpus, the number of call sites among them that are exercised during tracing, and how many invocations to \eval it results to. Most call sites and invocations use the main version of \eval, not its variants.
+Figure~\ref{tab:variantseval} shows, per variant of \eval, the number
+of call sites in the corpus (\emph{static}), the number of call sites
+that were observed during tracing (\emph{exercised}), and the total
+number of dynamic calls (\emph{invocations}). The data clearly shows
+that the variants of \eval are rarely used, in particular \c{evalq}
+and \c{local}.
 
 \end{document}
 
-(\EvalsRnd for \eval, \EvalqsRnd for \c{evalq}, \EparentsRnd for
-\c{eval.parent} and \LocalsRnd for \c{local}).
-
-\NbPackageEvalAtLeastOnce packages in our corpus call \eval at least once.
-
-\mypara{Number of eval call sites.}  We observed that the number of
-\eval call sites is small.  Figure~\ref{fig:callSitesPerPackage} shows
-a violin plot of the distribution of call sites to \eval and its three
-variants. For packages that have call sites, the median is
-\NbMedianCallSites call sites. \NbOneCallSite{} packages have a single
-call site, and one package, \emph{\MaxCallSitesPackage}, has
-\MaxCallSites{} call sites. \PackagesNoCallsToEval{} packages have no
-calls sites to \eval. These numbers are under-approximations as \eval
-may be aliased, called reflectively and given as argument to a
-higher-order function such as \c{map}.
-
-\begin{figure}[h]
-	\centering
-	\includegraphics[width=\textwidth]{call_sites_per_packages}
-	\caption{Violin plot of the call sites per packages per eval function. } \label{fig:callSitesPerPackage}
-\end{figure}
 
 \mypara{Number of calls to eval.} We observed an average \AverageEvalCallsPerPackage{} calls
 to \eval per run. \NOTE{this is in packages that had any call to eval.
