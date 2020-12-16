@@ -65,9 +65,13 @@ which package belong to our corpus (`C_raw`). For conciseness, `E` is
 the input data set with only the columns that we use.
 
 ```{r read, message=TRUE, include=F}
-read_fst(eval_calls_path) %>% as_tibble() -> E_raw
-read_fst(corpus_path) %>% as_tibble() -> C_raw
-read_csv(eval_static_path) %>% semi_join(C_raw, by = "package") -> P
+# This test should allow to re-run the whole script without reading the
+# data again from disk. It assumes the data doesn't change.
+if (exists(eval_calls_path) == FALSE) {
+  read_fst(eval_calls_path) %>% as_tibble() -> E_raw
+  read_fst(corpus_path) %>% as_tibble() -> C_raw
+  read_csv(eval_static_path) %>% semi_join(C_raw, by = "package") -> P
+}
 ```
 
 The two data sets are `E` and `C` for conciseness.  `C` is only used here to 
@@ -88,14 +92,14 @@ E_raw %>% select(
 ) -> E #                               interpreter during eval (non-recursive). 
 
 C_raw -> C
-corpus_size <- nrow(P)
+corpus_size <- nrow(C)
 
 nb_runs <- E %>%
   pull(file) %>%
   n_distinct()
 overview_table(
   r("Corpus",corpus_size),
-  r("NbRuns", nb_runs)
+  r("Nbruns", nb_runs)
 ) 
 ```
 
@@ -148,44 +152,52 @@ We recorded `r nb_calls` to eval, out of these, there were `r evalq_calls`
 # Ev-dist 
 
 We compute the frequency of evals by package. This shows that some packages
-hardly use eval while other use it intensily. The numbers are "for all runs",
+hardly use eval while other use it intensly. The numbers are "for all runs",
 this means that a popular package may be triggered by more runs and thus
 have higher frequencies. We will later control for this by looking at individual 
 call sites.
 
 ```{r ev-dist, include=FALSE}
-eval_calls_table <- E %>% 
+# The calls per package
+pack_calls <- E %>% 
   count(ev_package, wt=duplicates, sort = TRUE)
-breaks <- c(0, 10^seq(1,8))
-group_tags <- cut(eval_calls_table$n,
-                  breaks = breaks,
-                  include.lowest = TRUE)
-ev_summary <- summary(group_tags)
+# Create bins at every power of ten
+bins <- cut(pack_calls$n, breaks = c(0, 10^seq(1,8)), include.lowest = TRUE)
+sum <- summary(bins)
+# Packages with more than 1K calls
+Kcalls <- pack_calls %>% filter(n > 1000) %>% nrow()
+
+# The number of runs per package
+runs <- E %>%
+  group_by(ev_package) %>%
+  summarise(nb_runs = n_distinct(file)) 
+
+# Number of eval calls per package
+ecpp <- pack_calls %>% left_join(runs, by = "ev_package") 
+stopifnot( nrow(filter(ecpp, n==0)) == 0)
+# The package with the most calls
+max_calls <- ecpp %>% filter(n == max(n))
 
 overview_table(
-r("bina", ev_summary[[1]]),
-r("binb", ev_summary[[2]]),
-r("binc", ev_summary[[3]]),
-r("bind", ev_summary[[4]]),
-r("bine", ev_summary[[5]]),
-r("binf", ev_summary[[6]]),
-r("bing", ev_summary[[7]]),
-r("binh", ev_summary[[8]])) -> TBL
+r("bina", sum[[1]]),
+r("binb", sum[[2]]),
+r("binc", sum[[3]]),
+r("bind", sum[[4]]),
+r("bine", sum[[5]]),
+r("binf", sum[[6]]),
+r("bing", sum[[7]]),
+r("binh", sum[[8]]),
+r("Fewcalls", sum[[1]] + sum[[2]]),
+r("Manycalls", Kcalls),
+r("Maxcalls", max_calls$n),
+r("Maxcallspack", max_calls$ev_package)
+) -> TBL
 ```
 
-The distribution of eval calls, each bin represents a power of 10, the number in the bin is the count of packages.
+The distribution of eval calls, each bin represents a power of 10, the number 
+in the bin is the count of packages.
 
 `r TBL`
-
-```{r ev-call-precise}
-
-more_1000_calls <- eval_calls_table %>% filter(n > 1000) %>% nrow()
-
-overview_table(
-  r("eval calls less hundred", ev_summary[[1]] + ev_summary[[2]]),
-  r("eval calls more thousand", more_1000_calls)
-)
-```
 
 
 
@@ -243,6 +255,8 @@ ggsave(path(PLOT_DIR, "call_sites_per_packages.pdf"))
 How many call sites and how many packages did we exercise out of the total number of call sites of the corpus?
 
 ```{r exercised-call-sites, include=F}
+
+# TODO :: remove?
 static_sites <- nrow(P)
 
 static_call_sites_per_package <- P %>%
@@ -345,6 +359,8 @@ runs_package %>% datatable()
 
 ```{r nb-eval-calls}
 # run = package?
+
+### TODO REMOVE
 eval_calls_per_package <- E %>%
   count(ev_package, wt = duplicates) %>%
   left_join(runs_package, by = "ev_package") 
