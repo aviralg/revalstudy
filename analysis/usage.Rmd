@@ -245,18 +245,14 @@ in the bin is the count of packages.
 
 ```{r triggered-sites, include=F}
 stopifnot(sum(is.na(E$src_ref)) == 0) # No NAs in scr_ref!
-
+# Number of eval call sites
 sites <- E %>% # src_ref indicates where the call originates from.
   pull(src_ref) %>%
   n_distinct() # This the number of distinct sites
-
+# Number of call sites per package
 sites_per_package <- E %>%
   count(ev_package, src_ref) %>%
   count(ev_package) # All packages have at least one site!
-
-max_packages <- sites_per_package %>%
-  filter(n == max(n)) %>%
-  .$n
 
 TBL <- overview_table(
   # Sites triggered over the whole corpus:
@@ -265,32 +261,11 @@ TBL <- overview_table(
   r("nb one call site", sites_per_package %>% filter(n == 1)),
   r("at least one call site", nrow(sites_per_package)),
   r("packages no calls to eval", corpus_size - nrow(sites_per_package)),
-  r("nb median call sites", median(sites_per_package$n)),
-  r("max call sites", max_packages),
+  r("nb median call sites", median(sites_per_package$n))
 )
 ```
 
 `r TBL`
-
-```{r call-sites-violin-plot, include=F}
-E %>%
-  group_by(ev_package) %>%
-  mutate(sites = n_distinct(src_ref)) %>%
-  ggplot(aes(x = ev_variant, y = sites, fill = ev_variant), na.rm = TRUE) +
-  geom_violin(trim = FALSE, width = 1.7) +
-  # geom_jitter(shape=16, position=position_jitter(0.2)) +
-  labs(y = "Call sites per package") +
-  theme(
-    legend.position = c(0.5, 0.85),
-    legend.box.background = element_rect(fill = "white", size = 0.1),
-    legend.box = "horizontal",
-    axis.title.x = element_blank()
-  ) -> PLOT
-
-ggsave(path(PLOT_DIR, "call_sites_per_packages.pdf"))
-```
-
-
 
 How many call sites and how many packages did we exercise out of the total number of call sites of the corpus?
 
@@ -312,11 +287,10 @@ r("static at least one call site percent", ratio(nrow(sites_per_package %>% filt
 ```
 
 
-
-
 # Numbers of calls to eval
 
-This is the number of eval calls which have a call site in each package, divided by the number of runs for the package.
+This is the number of eval calls which have a call site in each package,
+divided by the number of runs for the package.
 
 
 We first compute an approximation of the number of runs per package.
@@ -335,26 +309,6 @@ runs_package %>% datatable()
 ```
 
 
-```{r nb-eval-calls}
-# run = package?
-
-### TODO REMOVE
-eval_calls_per_package <- E %>%
-  count(ev_package, wt = duplicates) %>%
-  left_join(runs_package, by = "ev_package")
-
-
-average_eval_calls <- eval_calls_per_package %>%
-  filter(n > 0) %>%
-  summarise(average = mean(n))
-max_eval_calls <- eval_calls_per_package %>% filter(n == max(n))
-
-r("average eval calls per package", average_eval_calls$average) # average on packages with at least one eval call
-r("max eval calls", max_eval_calls$n)
-r("max eval call package", max_eval_calls$ev_package)
-```
-
-
 ```{r eval-calls-violin-plot}
 eval_calls_per_package %>%
   ggplot(aes(x = "", y = n, fill = ""), na.rm = TRUE) +
@@ -364,8 +318,6 @@ eval_calls_per_package %>%
 
 ggsave(path(PLOT_DIR, "eval_calls_per_packages.pdf"))
 ```
-
-
 
 
 # Amount of code loaded by eval
