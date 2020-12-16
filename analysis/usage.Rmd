@@ -101,7 +101,7 @@ E_raw %>% select(
 ) -> E #                               interpreter during eval (non-recursive). 
 
 C_raw -> C
-corpus_size <- nrow(P)
+corpus_size <- nrow(C)
 ```
 
 #  Variants
