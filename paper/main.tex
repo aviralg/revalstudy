@@ -669,6 +669,26 @@ package (\Maxcallspack) calling it \Maxcalls times.
 
 Figure~\ref{tab:variantseval} shows, per variant of \eval, the number of static eval call sites in the corpus, the number of call sites among them that are exercised during tracing, and how many invocations to \eval it results to. Most call sites and invocations use the main version of \eval, not its variants.
 
+\begin{figure}[h]
+    \centering
+    \begin{tabular}{|r@{\,}r@{\,}lr|r@{\,}r@{\,}lr|} \hline
+        \tt 0 &--& \tt 50      & \Runbina  & \tt 501 &--&\tt 1000  & \Runbine\\
+        \tt 51 &--& \tt 100    & \Runbinb  & \tt 1001 &--&\tt 1500  & \Runbinf\\
+        \tt 101 &--& \tt 250    & \Runbinc  & \tt 1501 &--&\tt 2000   & \Runbing\\
+        \tt 251 &--& \tt 500    & \Runbind  & \tt 2001 &--& \tt 3000 & \Runbinh\\\hline
+    \end{tabular}
+    \caption{Invocations of \eval per call sites normalized by the number of runs.} \label{tab:callsitesnormalized}
+\end{figure}
+
+Figure~\ref{tab:callsitesnormalized} shows the number of invocation to \eval and its variants per call sites per run exercising that call site. If that number is high, it can correspond to a function with an \eval call site that is used widely.   If that number is very high, more than 1000, we expect it to correspond to an \eval call site in a loop. Most of the invocations are less than 50 per run per call site. When zooming in, on Figure~\ref{fig:callsitesnormalized}, most call sites have actually only one invocation per run.
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{calls_per_run_per_call_site}
+    \caption{Invocations of \eval per call sites normalized by the number of runs, for less than 50 normalized invocations. Binsize is 1} \label{fig:callsitesnormalized}
+\end{figure}
+
 \end{document}
 
 (\EvalsRnd for \eval, \EvalqsRnd for \c{evalq}, \EparentsRnd for
