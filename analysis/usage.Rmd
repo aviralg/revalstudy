@@ -482,9 +482,26 @@ eval_call_triggered <- E %>%
 
 ```{r}
 eval_call_triggered %>% 
+  filter(average < 50) %>% 
   ggplot(aes(x = average)) +
-  geom_histogram(binwidth = 100) +
-  scale_x_log10()
+  geom_histogram(binwidth =  1) 
+
+ggsave(path(PLOT_DIR, "calls_per_run_per_call_site.pdf"))
+
+
+bins <- cut(eval_call_triggered$average, breaks = c(0, 50, 100, 250,500, 1000, 1500,  2000, 3000), include.lowest = TRUE)
+sum <- summary(bins)
+
+overview_table(
+  r("Runbina", sum[[1]]),
+  r("Runbinb", sum[[2]]),
+  r("Runbinc", sum[[3]]),
+  r("Runbind", sum[[4]]),
+  r("Runbine", sum[[5]]),
+  r("Runbinf", sum[[6]]),
+  r("Runbing", sum[[7]]),
+  r("Runbinh", sum[[8]])
+)
 ```
 
 
