@@ -652,21 +652,22 @@ frequency of \eval calls, with fewer than 100 of them. On the other
 hand, \Manycalls packages call eval more than 1,000 times, with one
 package (\Maxcallspack) calling it \Maxcalls times.
 
-\begin{figure}[h]\begin{tabular}{|r|r|r|r|r|}\hline
-   &\eval & \c{evalq} & \c{eval} & \c{local} \\[-2mm]
-           & & & \c{.parent} & \\\hline
-Static sites  & \Staticeval & \Staticevalq & \Staticevalparent & \Staticlocal \\
-Exercised sites & \Triggeredeval & \Triggeredevalq & \Triggeredevalparent & \Triggeredlocal \\
-Invocations & \EvalsRnd & \EvalqsRnd & \EparentsRnd & \LocalsRnd \\\hline
-\end{tabular}\caption{Variants}\label{tab:variantseval}
-\end{figure}
-
 Figure~\ref{tab:variantseval} shows, per variant of \eval, the number
 of call sites in the corpus (\emph{static}), the number of call sites
 that were observed during tracing (\emph{exercised}), and the total
 number of dynamic calls (\emph{invocations}). The data clearly shows
 that the variants of \eval are rarely used, in particular \c{evalq}
 and \c{local}.
+
+\begin{figure}[h]\begin{tabular}{|r|r|r|r|r|}\hline
+   &\eval & \c{evalq} & \c{eval} & \c{local} \\[-2mm]
+           & & & \c{.parent} & \\\hline
+Static sites & \Staticeval & \Staticevalq & \Staticevalparent & \Staticlocal \\
+Exercised sites & \Triggeredeval & \Triggeredevalq & \Triggeredevalparent & \Triggeredlocal \\
+Invocations & \EvalsRnd & \EvalqsRnd & \EparentsRnd & \LocalsRnd \\\hline
+\end{tabular}\caption{Variants}\label{tab:variantseval}
+\end{figure}
+
 
 \end{document}
 
