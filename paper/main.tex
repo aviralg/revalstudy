@@ -652,18 +652,22 @@ frequency of \eval calls, with fewer than 100 of them. On the other
 hand, \Manycalls packages call eval more than 1,000 times, with one
 package (\Maxcallspack) calling it \Maxcalls times.
 
-\begin{table}[h]
-    \begin{tabular}{|c|c|c|c|c|}
+\begin{figure}[h]
+    \begin{tabular}{|r|r|r|r|r|}
         \hline
-                       &\eval & \texttt{evalq} & \texttt{eval.parent} & \texttt{local} \\
-        Dynamic & \Evals & \Evalqs & \Eparents & \Locals \\
-        Static      & \Staticeval & \Staticevalq & \Staticevalparent & \Staticlocal \\
-        Triggered & \Triggeredeval & \Triggeredevalq & \Triggeredevalparent & \Triggeredlocal \\
-        \% triggered & \Triggeredevalpercent & \Triggeredevalqpercent & \Triggeredevalparentpercent & \Triggeredlocalpercent \\
+                       &\eval & \c{evalq} & \c{eval} & \c{local} \\[-2mm]
+                       & & & \c{.parent} & \\
+                       \hline
+       Static    sites  & \Staticeval & \Staticevalq & \Staticevalparent & \Staticlocal \\
+       Exercised sites & \Triggeredeval & \Triggeredevalq & \Triggeredevalparent & \Triggeredlocal \\
+        Invocations & \EvalsRnd & \EvalqsRnd & \EparentsRnd & \LocalsRnd \\
+%        \% triggered & \Triggeredevalpercent & \Triggeredevalqpercent & \Triggeredevalparentpercent & \Triggeredlocalpercent \\
         \hline
     \end{tabular}
-    \caption{Variants of \eval}
-\end{table}
+    \caption{Variants of \eval} \label{tab:variantseval}
+\end{figure}
+
+Figure~\ref{tab:variantseval} shows, per variant of \eval, the number of static eval call sites in the corpus, the number of call sites among them that are exercised during tracing, and how many invocations to \eval it results to. Most call sites and invocations use the main version of \eval, not its variants.
 
 \end{document}
 
