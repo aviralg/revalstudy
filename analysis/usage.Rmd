@@ -149,66 +149,46 @@ We recorded `r nb_calls` to eval, out of these, there were `r evalq_calls`
 
 `r TBL`
 
-```{r exercised-call-site-per-variant}
-static_eval <- P %>%
-  filter(call_fun_name == "eval") %>%
-  nrow()
-static_evalq <- P %>%
-  filter(call_fun_name == "evalq") %>%
-  nrow()
-static_eval.parent <- P %>%
-  filter(call_fun_name == "eval.parent") %>%
-  nrow()
-static_local <- P %>%
-  filter(call_fun_name == "local") %>%
-  nrow()
+# Exercised vs. Static
+
+Here we compute the number of static call sistes to eval to compare it with
+the number of call sites with triggered dynamically. The former is larger
+than the latter because code coverage is not perfect.
+
+```{r exercised-vs-static, include=FALSE}
+stat_evl <- P %>% filter(call_fun_name == "eval") %>% nrow()
+stat_evq <- P %>% filter(call_fun_name == "evalq") %>% nrow()
+stat_evp <- P %>% filter(call_fun_name == "eval.parent") %>% nrow()
+stat_loc <- P %>% filter(call_fun_name == "local") %>% nrow()
 
 sites_per_variant <- E %>% # src_ref indicates where the call originates from.
   group_by(ev_variant) %>%
   summarize(n = n_distinct(src_ref)) # This the number of distinct sites
 
-trig_eval <- sites_per_variant %>% filter(ev_variant == "eval")
-trig_eval <- if (nrow(trig_eval) == 0) {
-  0
-} else {
-  trig_eval$n
-}
-
-trig_evalq <- sites_per_variant %>% filter(ev_variant == "evalq")
-trig_evalq <- if (nrow(trig_evalq) == 0) {
-  0
-} else {
-  trig_evalq$n
-}
-trig_eval.parent <- sites_per_variant %>% filter(ev_variant == "eval.parent")
-trig_eval.parent <- if (nrow(trig_eval.parent) == 0) {
-  0
-} else {
-  trig_eval.parent$n
-}
-trig_local <- sites_per_variant %>% filter(ev_variant == "local")
-trig_local <- if (nrow(trig_local) == 0) {
-  0
-} else {
-  trig_local$n
-}
+tmp <- sites_per_variant %>% filter(ev_variant == "eval")
+dyn_evl <- if (nrow(tmp)==0) { 0 } else { tmp$n }
+tmp <- sites_per_variant %>% filter(ev_variant == "evalq")
+dyn_evq <- if (nrow(tmp) == 0) { 0 } else { tmp$n }
+tmp <- sites_per_variant %>% filter(ev_variant == "eval.parent") 
+dyn_evp <- if(nrow(tmp) == 0) { 0 } else { tmp$n }
+tmp <- sites_per_variant %>% filter(ev_variant == "local")
+dyn_loc <- if(nrow(tmp) == 0) { 0 } else { tmp$n }
 
 overview_table(
-  r("StaticEval", static_eval),
-  r("StaticEvalq", static_evalq),
-  r("StaticEvalParent", static_eval.parent),
-  r("StaticLocal", static_local),
-  r("TriggeredEval", trig_eval),
-  r("TriggeredEvalq", trig_evalq),
-  r("Triggeredevalparent", trig_eval.parent),
-  r("Triggeredlocal", trig_local),
-  r("Triggeredevalpercent", ratio(trig_eval, static_eval)),
-  r("Triggeredevalqpercent", ratio(trig_evalq, static_evalq)),
-  r("Triggeredevalparentpercent", ratio(trig_eval.parent, static_eval.parent)),
-  r("Triggeredlocalpercent", ratio(trig_local, static_local))
+  r("Staticeval", stat_evl),
+  r("Staticevalq", stat_evq),
+  r("Staticevalparent", stat_evp),
+  r("Staticlocal", stat_loc),
+  r("Triggeredeval", dyn_evl),
+  r("Triggeredevalq", dyn_evq),
+  r("Triggeredevalparent", dyn_evp),
+  r("Triggeredlocal", dyn_loc),
+  r("Triggeredevalpct", ratio(dyn_evl, stat_evl)),
+  r("Triggeredevalqpct", ratio(dyn_evq, stat_evq)),
+  r("Triggeredevalparentpct", ratio(dyn_evp, stat_evp)),
+  r("Triggeredlocalpct", ratio(dyn_loc, stat_loc))
 ) -> TBL
 ```
-
 
 `r TBL`
 
