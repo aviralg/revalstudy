@@ -200,8 +200,8 @@ overview_table(
   r("Triggeredlocal", trig_local),
   r("Triggeredevalpercent", ratio(trig_eval, static_eval)),
   r("Triggeredevalqpercent", ratio(trig_evalq, static_evalq)),
-  r("Triggeredevalqpercent", ratio(trig_eval.parent, static_eval.parent)),
-  r("Localevalqpercent", ratio(trig_local, static_local))
+  r("Triggeredevalparentpercent", ratio(trig_eval.parent, static_eval.parent)),
+  r("Triggeredlocalpercent", ratio(trig_local, static_local))
 ) -> TBL
 ```
 
