@@ -89,7 +89,7 @@ E_raw %>% select(
   ev_package = eval_source, #   Package of the call site
   arg_size = expr_expression_length, # Size in bytes of eval argument string
   opcodes = direct_interpreter_eval #  Count of the AST nodes traversed by the
-) -> E #                               interpreter during eval (non-recursive). 
+) -> E #                               interpreter during eval (non-recursive).
 
 C_raw -> C
 corpus_size <- nrow(C)
@@ -98,8 +98,8 @@ nb_runs <- E %>%
   pull(file) %>%
   n_distinct()
 overview_table(
-  r("Corpus",corpus_size),
-  r("Nbruns", nb_runs)
+  r("Corpus", corpus_size),
+  r("NbRuns", nb_runs)
 ) 
 ```
 
@@ -151,6 +151,10 @@ We recorded `r nb_calls` to eval, out of these, there were `r evalq_calls`
 
 # Exercised vs. Static
 
+Here we compute the number of static call sistes to eval to compare it with
+the number of call sites with triggered dynamically. The former is larger
+than the latter because code coverage is not perfect.
+
 ```{r exercised-vs-static, include=FALSE}
 stat_evl <- P %>% filter(call_fun_name == "eval") %>% nrow()
 stat_evq <- P %>% filter(call_fun_name == "evalq") %>% nrow()
@@ -166,9 +170,9 @@ dyn_evl <- if (nrow(tmp)==0) { 0 } else { tmp$n }
 tmp <- sites_per_variant %>% filter(ev_variant == "evalq")
 dyn_evq <- if (nrow(tmp) == 0) { 0 } else { tmp$n }
 tmp <- sites_per_variant %>% filter(ev_variant == "eval.parent") 
-dyn_evalp <- if(nrow(tmp) == 0) { 0 } else { tmp$n }
+dyn_evp <- if(nrow(tmp) == 0) { 0 } else { tmp$n }
 tmp <- sites_per_variant %>% filter(ev_variant == "local")
-dyn_lol <- if(nrow(tmp) == 0) { 0 } else { tmp$n }
+dyn_loc <- if(nrow(tmp) == 0) { 0 } else { tmp$n }
 
 overview_table(
   r("Staticeval", stat_evl),
@@ -185,7 +189,6 @@ overview_table(
   r("Triggeredlocalpct", ratio(dyn_loc, stat_loc))
 ) -> TBL
 ```
-
 
 `r TBL`
 
@@ -238,8 +241,6 @@ The distribution of eval calls, each bin represents a power of 10, the number
 in the bin is the count of packages.
 
 `r TBL`
-
-
 
 # Triggered sites
 
@@ -341,7 +342,7 @@ runs_package %>% datatable()
 ### TODO REMOVE
 eval_calls_per_package <- E %>%
   count(ev_package, wt = duplicates) %>%
-  left_join(runs_package, by = "ev_package") 
+  left_join(runs_package, by = "ev_package")
 
 
 average_eval_calls <- eval_calls_per_package %>%
@@ -453,7 +454,7 @@ eval_calls_exercised %>% ggplot(aes(n)) +
 
 
 ```{r}
-eval_call_triggered <- E %>% 
+eval_call_triggered <- E %>%
   group_by(src_ref) %>%
   summarize(n_runs = n_distinct(file), n = sum(duplicates), average = n / n_runs) %>%
   arrange(desc(average))
