@@ -91,7 +91,6 @@ E_raw %>% select(
 
 C_raw -> C
 corpus_size <- nrow(P)
-
 overview_table(
   r("Corpus",corpus_size)
 ) 
