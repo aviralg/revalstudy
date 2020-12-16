@@ -89,12 +89,17 @@ E_raw %>% select(
 
 C_raw -> C
 corpus_size <- nrow(P)
+
+nb_runs <- E %>%
+  pull(file) %>%
+  n_distinct()
 overview_table(
-  r("Corpus",corpus_size)
+  r("Corpus",corpus_size),
+  r("NbRuns", nb_runs)
 ) 
 ```
 
-The size of our corpus is `corpus_size` packages.
+The size of our corpus is `r corpus_size` packages.
 
 #  Variants
 
@@ -172,6 +177,17 @@ The distribution of eval calls, each bin represents a power of 10, the number in
 
 `r TBL`
 
+```{r ev-call-precise}
+
+more_1000_calls <- eval_calls_table %>% filter(n > 1000) %>% nrow()
+
+overview_table(
+  r("eval calls less hundred", ev_summary[[1]] + ev_summary[[2]]),
+  r("eval calls more thousand", more_1000_calls)
+)
+```
+
+
 
 # Triggered sites
 
@@ -195,7 +211,7 @@ TBL <- overview_table(
   r("nb eval call sites", sites),
   # How many packages in the corpus have a single triggered call site:
   r("nb one call site", sites_per_package %>% filter(n == 1)),
-  r("at least one call site", sites_per_package),
+  r("at least one call site", sites_per_package$n),
   r("packages no calls to eval", corpus_size - nrow(sites_per_package)),
   r("nb median call sites", median(sites_per_package$n)),
   r("max call sites", max_packages),
@@ -331,8 +347,8 @@ runs_package %>% datatable()
 # run = package?
 eval_calls_per_package <- E %>%
   count(ev_package, wt = duplicates) %>%
-  left_join(runs_package, by = "ev_package") %>%
-  mutate(n = n / nb_runs)
+  left_join(runs_package, by = "ev_package") 
+
 
 average_eval_calls <- eval_calls_per_package %>%
   filter(n > 0) %>%
