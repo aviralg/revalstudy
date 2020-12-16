@@ -449,7 +449,7 @@ inst/paper/main.vtc
 
 # macOS stuff
 .DS_Store
-inst/paper/.DS_Store
+paper/.DS_Store
 
 *.vtc
 analysis/Data

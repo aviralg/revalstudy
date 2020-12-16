@@ -18,8 +18,6 @@ params:
   static_evals_path: package-evals-static.csv
 ---
 
-The setup chunk has a variable `jan` with setting to run the script on
-docker on Jan's machine. This should be removed.
 
 ```{r setup, include=FALSE}
 library(tidyverse)
@@ -100,9 +98,9 @@ The size of our corpus is `corpus_size` packages.
 
 #  Variants
 
-The data set has `r nrow(E)`distinct calls to the `eval` and its variants. 
+The data set has `r nrow(E)` distinct calls to the `eval` and its variants. 
 There are `r length(unique(E$ev_package))` corpus packages with `eval` calls
-(note that we may not trigger all `eval`s in a package due to spotty covereage).
+(note that we may not trigger all `eval`s in a package due to spotty coverage).
 
 ```{r variants,echo=F}
 nb_calls <- E %>%
@@ -282,7 +280,7 @@ trig_eval.parent <- if(nrow(trig_eval.parent) == 0)
 {
   trig_eval.parent$n
 }
-trig_local <- sites_per_variant %>% filter(ev_variant == "local") %>% .$n
+trig_local <- sites_per_variant %>% filter(ev_variant == "local")
 trig_local <- if(nrow(trig_local) == 0)
 {
   0
