@@ -196,7 +196,7 @@ overview_table(
   r("StaticLocal", static_local),
   r("TriggeredEval", trig_eval),
   r("TriggeredEvalq", trig_evalq),
-  r("Triggeredvalparent", trig_eval.parent),
+  r("Triggeredevalparent", trig_eval.parent),
   r("Triggeredlocal", trig_local),
   r("Triggeredevalpercent", ratio(trig_eval, static_eval)),
   r("Triggeredevalqpercent", ratio(trig_evalq, static_evalq)),
