@@ -66,7 +66,7 @@ the input data set with only the columns that we use.
 ```{r read, message=TRUE, include=F}
 # This test should allow to re-run the whole script without reading the
 # data again from disk. It assumes the data doesn't change.
-if (exists(eval_calls_path) == FALSE) {
+if (exists("E") == FALSE) {
   read_fst(eval_calls_path) %>% as_tibble() -> E_raw
   read_fst(corpus_path) %>% as_tibble() -> C_raw
   read_csv(eval_static_path) %>% semi_join(C_raw, by = "package") -> P
@@ -338,71 +338,90 @@ overview_table(
   r("size nine five exact percent", percent(nb_nodes_many$cumulative))
 ) -> TBL
 
-E %>% filter(is.na(arg_size) == FALSE) %>%
-  filter(arg_size > 100) %>%
-  ggplot(aes(x=arg_size)) + geom_histogram(binwidth=1) 
+sizes_prop %>%
+  ggplot(aes(x=arg_size)) + geom_histogram() 
+
+
 ```
 
 `r TBL`
 
-# Amount of computations via eval
+# Amount of computation
+
+How much work is involved in each eval as measured by the number of ??? 
+(possible: opcodes, AST nodes).
 
 ```{r amount_computations, include=F}
-nb_events_in_eval <- E %>% summarise(nb_events = sum(opcodes))
+tot_events <- E %>% summarise(n=sum(opcodes)) %>% .$n
+max_events <- E %>% summarize(max = max(opcodes)) %>% .$n
 
-max_events_in_eval <- E %>% summarize(maxi = max(opcodes))
+less_50_events <- E %>% filter(opcodes <= 50) %>%
+  count(wt = duplicates) %>%
+  .$n
 
-less_100_events <- E %>% filter(opcodes <= 100)
-nb_less_100_events <- count(less_100_events, wt = duplicates)$n
 
-r("nb events eval", nb_events_in_eval$nb_events)
-r("maxi events eval", max_events_in_eval$maxi)
-r("small events eval", ratio(nb_less_100_events, nb_calls))
-```
+overview_table(
+  r("Events", tot_events),
+  r("Maxevents", max_events),
+  r("Smalleventspct", ratio(less_50_events, nb_calls))
+) -> TBL
 
-```{r nb-events-violin-plot,include=F}
 E %>%
-  filter(opcodes > 0) %>%
+  filter(opcodes > 50) %>%
   ggplot(aes(x = "", y = opcodes, fill = ""), na.rm = TRUE) +
   geom_violin(trim = FALSE, width = 1.7) +
   scale_y_log10(labels = scales::comma) +
-  labs(y = "Number of events in eval per package") +
+  labs(y = "", x="") +
   theme(legend.position = "none")
 
-ggsave(path(PLOT_DIR, "nb_events_per_packages.pdf"))
+ggsave(path(PLOT_DIR, "events_per_pack_large.pdf"))
+
+E %>%
+  filter(opcodes > 0) %>%
+  filter(opcodes < 50) %>%
+  ggplot(aes(x = "", y = opcodes, fill = ""), na.rm = TRUE) +
+  geom_violin(trim = FALSE, width = 1.7) +
+  labs(y = "Events per package", x="") +
+  theme(legend.position = "none")
+
+ggsave(path(PLOT_DIR, "events_per_pack_small.pdf"))
 ```
+
+`r TBL`
 
 # Loops
 
-Here, we try to have an estimation of how often a call site is exercised per run. If it is often, maybe it is a loop!
+Here, we try to have an estimation of how often a call site is exercised per 
+run. If it is often, maybe it is a loop!
 
-```{r loops}
-eval_calls_exercised <- E %>%
-  group_by(file) %>%
-  count(src_ref, wt = duplicates)
+```{r loops, include=FALSE}
+# Which call sites where exercised and how many times, per run.
+exercised <- E %>%
+  group_by(file) %>%               # group by runs
+  count(src_ref, wt = duplicates)  # weigh by duplicates
 
-eval_calls_exercised %>% ggplot(aes(n)) +
+exercised %>% ggplot(aes(n)) +
   geom_histogram() +
   scale_x_log10(labels = scales::comma) +
-  labs(x = "Number of eval calls per srcref per run")
-```
+  labs(x = "Calls per site per run")
 
-
-```{r}
-eval_call_triggered <- E %>%
+# For each site, how many runs and within each runs how often do we trigger.
+triggered <- E %>%
   group_by(src_ref) %>%
-  summarize(n_runs = n_distinct(file), n = sum(duplicates), average = n / n_runs) %>%
+  summarize(n_runs = n_distinct(file), 
+            n = sum(duplicates), 
+            average = n / n_runs) %>%
   arrange(desc(average))
 
-eval_call_triggered %>% 
+# Plot the low trigger counts...
+triggered %>% 
   filter(average < 50) %>% 
   ggplot(aes(x = average)) +
   geom_histogram(binwidth =  1) 
 
 ggsave(path(PLOT_DIR, "calls_per_run_per_call_site.pdf"))
 
-
-bins <- cut(eval_call_triggered$average, breaks = c(0, 50, 100, 250,500, 1000, 1500,  2000, 3000), include.lowest = TRUE)
+bins <- cut(triggered$average, breaks = c(0, 50, 100, 250,500, 1000, 1500,  2000, 3000), include.lowest = TRUE)
 sum <- summary(bins)
 
 overview_table(
@@ -418,7 +437,10 @@ overview_table(
 ```
 
 
-```{r}
+`r TBL`
+
+
+```{r include=FALSE}
 duration <- difftime(Sys.time(), now)
 ```
 
