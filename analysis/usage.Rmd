@@ -326,7 +326,7 @@ sizes_prop <- E %>%
   arrange(arg_size) %>%
   mutate(cumulative = cumsum(proportion))
 
-nb_nodes_many <- sizes_prop %>%
+many <- sizes_prop %>%
   filter(cumulative >= 0.95) %>%
   .[1, ]
 
@@ -334,7 +334,7 @@ overview_table(
   r("Medianszeval", med_size),
   r("Maxszeval", max_size),
   r("Avgszeval", average_size),
-  r("Szninefive", nb_nodes_many$arg_size)
+  r("Szninefive", many$arg_size)
   ) -> TBL
 
 sizes_prop %>%
