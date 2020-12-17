@@ -679,11 +679,13 @@ is the number of call sites that were encountered during tracing
 (\emph{invocations}). The vast majority of call sites, and calls, are
 to \eval itself; \c{evalq} and \c{local} are barely used at all.
 
-\begin{wrapfigure}{r}{5.2cm}
-\begin{tabular}{|r@{\,}r@{\,}lr|r@{\,}r@{\,}lr|} \hline
-\tt 0 &--& \tt 50    & \Runbina & \tt 501 &--&\tt 1000   & \Runbine\\
-\tt 51 &--& \tt 100  & \Runbinb & \tt 1001 &--&\tt 1500  & \Runbinf\\
-\tt 101 &--& \tt 250 & \Runbinc & \tt 1501 &--&\tt 2000  & \Runbing\\
+\begin{wrapfigure}{r}{5.8cm}
+  \begin{tabular}{|r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r|} \hline
+\multicolumn{3}{|c}{\small\#calls} &\small\#sites &
+\multicolumn{3}{c}{\small\#calls} &\small\#sites \\\hline
+\tt 0 &--& \tt 50    & \Runbina & \tt 501 &--& \tt 1000   & \Runbine\\
+\tt 51 &--& \tt 100  & \Runbinb & \tt 1001 &--& \tt 1500  & \Runbinf\\
+\tt 101 &--& \tt 250 & \Runbinc & \tt 1501 &--& \tt 2000  & \Runbing\\
 \tt 251 &--& \tt 500 & \Runbind & \tt 2001 &--& \tt 3000 & \Runbinh\\\hline
 \end{tabular}
 \caption{Normalized invocations} \label{tab:callsitesnormalized}
@@ -696,13 +698,14 @@ right is number of call sites that fall in that range. For instance,
 there are \Runbinh call sites that are invoked on average over 2,001
 times in any run they are exercised.
 
+\medskip
 
-\begin{wrapfigure}{r}{5.2cm}
+\begin{wrapfigure}{r}{5.5cm}
   \vspace{-8mm}
     \includegraphics[width=.4\textwidth]{calls_per_run_per_call_site}
     \caption{Normalized invocations
       (small)} \label{fig:callsitesnormalized}
-    \vspace{-3mm}
+   \vspace{-8mm}
 \end{wrapfigure}
 
 The majority of call sites, \Runbina, are exercised up to 50 times.
@@ -713,6 +716,13 @@ average of fewer than 51 invocation. The x-axis shows the number of
 invocations and the y-axis is the number of call sites. Most call
 sites are invoked once, about half as many are invoked twice. After
 that the frequency quickly drops.
+
+Analysis of the arguments passed to \eval reveals that XXX are of kind
+\c{symbol} (single variables), XXX are \c{language} (an internal R
+type roughly corresponding to a single expression), and XXX are
+\c{expression} (one or more statements). The remaining arguments are R
+values which are returned unchanged.
+
 
 
 \mypara{Amount of code loaded by eval.} We use \c{deparse} to turn the
@@ -749,35 +759,6 @@ calls originate from statistical modeling packages such as \mlogit,
 \mboost, \metafor, \lavaan, \mclust and \gamlss.
 
 \NOTE{Talk about the percentage of code executed in eval}
-
-\mypara{Eval Arguments.} Figure~\ref{fig:eval-expression-kind} breaks
-down the expressions passed to \eval by R data type. It separates the
-core packages from CRAN as they have different characteristics. In
-core, XXX036\% of arguments in core are expressions. Whereas, in CRAN
-package XXX037\% are expressions. When the argument is not an
-expression, it is a value. Values are trivial for \eval as they are
-returned unchanged. \PackageEnvironmentInputEvalCallPerc of CRAN
-arguments are environments. This is an anomaly as only four \eval
-call sites dominate this result:
-\begin{compactitem}[$-$]
-\item \c{ggplot2::ggproto} contributes to 99.9\% of package \eval
-  calls that receive environments as input.
-\item \c{R6::generator_funs} function contributes to only 936 \eval
-  calls and implements the same functionality as \c{ggplot2::ggproto}
-  but for the \emph{R6} OOP system.
-\item \c{future::backtrace} function applies \eval to a future object
-  which is implemented as an environment. This is called only once.
-\item \c{RModel::str.RMmodel} function overloads the core \c{str}
-  method for its \c{RModel} objects and maps \eval exactly like
-  \c{str}. This is called only once.
-\end{compactitem}
-
-
-\begin{figure}[!h]
-  \centering
-  \includegraphics[width=\columnwidth]{eval-expression-kind}
-  \caption{Type of Expression passed to \eval} \label{fig:eval-expression-kind}
-\end{figure}
 
 
 
