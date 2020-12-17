@@ -86,7 +86,7 @@ E_raw %>% select(
   src_ref = eval_call_srcref, # Source ref for the eval call site
   file, #                       Script file name (name of this run)
   ev_package = eval_source, #   Package of the call site
-  arg_size = expr_expression_length, # Size in bytes of eval argument string
+  arg_size = expr_resolved_length, #   Size in bytes of eval argument string
   opcodes = direct_interpreter_eval #  Count of the AST nodes traversed by the
 ) -> E #                               interpreter during eval (non-recursive).
 
@@ -291,7 +291,7 @@ runs_package %>% datatable()
 
 
 ```{r eval-calls-violin-plot}
-eval_calls_per_package %>%
+sites_per_package %>%
   ggplot(aes(x = "", y = n, fill = ""), na.rm = TRUE) +
   geom_violin(trim = FALSE, width = 1.7) +
   labs(y = "Eval calls per package") +
@@ -301,7 +301,9 @@ ggsave(path(PLOT_DIR, "eval_calls_per_packages.pdf"))
 ```
 
 
-# Amount of code loaded by eval
+# Amount of code 
+
+How much code is loaded by eval, we look at argument sizes.
 
 ```{r amout-of-code, include=F}
 
@@ -324,17 +326,24 @@ sizes_prop <- E %>%
   arrange(arg_size) %>%
   mutate(cumulative = cumsum(proportion))
 
-
 nb_nodes_many <- sizes_prop %>%
   filter(cumulative >= 0.95) %>%
   .[1, ]
 
-r("median size eval", med_size)
-r("max size eval", max_size)
-r("average size eval", average_size)
-r("size nine five", nb_nodes_many$arg_size)
-r("size nine five exact percent", percent(nb_nodes_many$cumulative))
+overview_table(
+  r("median size eval", med_size),
+  r("max size eval", max_size),
+  r("average size eval", average_size),
+  r("size nine five", nb_nodes_many$arg_size),
+  r("size nine five exact percent", percent(nb_nodes_many$cumulative))
+) -> TBL
+
+E %>% filter(is.na(arg_size) == FALSE) %>%
+  filter(arg_size > 100) %>%
+  ggplot(aes(x=arg_size)) + geom_histogram(binwidth=1) 
 ```
+
+`r TBL`
 
 # Amount of computations via eval
 
