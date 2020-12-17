@@ -717,19 +717,26 @@ invocations and the y-axis is the number of call sites. Most call
 sites are invoked once, about half as many are invoked twice. After
 that the frequency quickly drops.
 
-Analysis of the arguments passed to \eval reveals that XXX are of kind
-\c{symbol} (single variables), XXX are \c{language} (an internal R
-type roughly corresponding to a single expression), and XXX are
-\c{expression} (one or more statements). The remaining arguments are R
-values which are returned unchanged.
+Analysis of the arguments passed to \eval reveals that \Symbolpercent are of kind
+\c{symbol} (single variables), \Languagepercent are \c{language} (an internal R
+type roughly corresponding to a single expression), and \Expressionpercent are
+\c{expression} (one or more statements), for a total of \Codepercent of the \eval calls. The remaining arguments are R
+values which are returned unchanged. \NOTE{closures are forced. (but there are nearly none in our dataset)}
 
 
 
 \mypara{Amount of code loaded by eval.} We use \c{deparse} to turn the
-input to \eval into strings and measure the size of that input. The
+resolved input to \eval into strings and measure the size of that input. The
 largest input is \Maxszeval and the median input size is
 \Medianszeval. Most inputs are small, less than \SzninefiveRnd
-bytes. The average size is \Avgszeval bytes.
+characters. The average size is \Avgszeval characters. 
+Figure~\ref{fig:sizedistribution} shows the distribution of sizes.
+
+\begin{figure}[h]
+	%\centering 
+	\includegraphics[width=\textwidth]{size_loaded_distribution}
+	\caption{Distribution of the sized of the expressions loaded by \eval.} \label{fig:sizedistribution}
+\end{figure}
 
 \mypara{Amount of computation via eval.} We compare the number of
 events intercepted during execution of \eval across the whole corpus.
