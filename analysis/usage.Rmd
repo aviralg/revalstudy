@@ -422,8 +422,8 @@ ggsave(path(PLOT_DIR, "events_per_pack_large.pdf"))
 
 ```{r include=F}
 E %>%
-  filter(opcodes > 0) %>%
-  filter(opcodes < 50) %>%
+  filter(opcodes > 0) %>% # == 0 if from eval.parent, because we do not count eval loops for it
+  filter(opcodes <= 50) %>%
   ggplot(aes(x = "", y = opcodes, fill = ""), na.rm = TRUE) +
   geom_violin(trim = FALSE, width = 1.7) +
   labs(y = "Events per package", x = "") +
