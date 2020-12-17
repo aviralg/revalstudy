@@ -331,12 +331,11 @@ nb_nodes_many <- sizes_prop %>%
   .[1, ]
 
 overview_table(
-  r("median size eval", med_size),
-  r("max size eval", max_size),
-  r("average size eval", average_size),
-  r("size nine five", nb_nodes_many$arg_size),
-  r("size nine five exact percent", percent(nb_nodes_many$cumulative))
-) -> TBL
+  r("Medianszeval", med_size),
+  r("Maxszeval", max_size),
+  r("Avgszeval", average_size),
+  r("Szninefive", nb_nodes_many$arg_size)
+  ) -> TBL
 
 sizes_prop %>%
   ggplot(aes(x=arg_size)) + geom_histogram() 
@@ -353,7 +352,7 @@ How much work is involved in each eval as measured by the number of ???
 
 ```{r amount_computations, include=F}
 tot_events <- E %>% summarise(n=sum(opcodes)) %>% .$n
-max_events <- E %>% summarize(max = max(opcodes)) %>% .$n
+max_events <- E %>% summarize(n = max(opcodes)) %>% .$n
 
 less_50_events <- E %>% filter(opcodes <= 50) %>%
   count(wt = duplicates) %>%

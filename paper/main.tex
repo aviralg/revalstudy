@@ -628,13 +628,17 @@ analysis in R. It introduces a new first-class promise object called
 \section{Usage Metrics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-To provide a picture of \eval usage in R, we recorded \Allcalls
-invocations of \eval and its variants in the CRAN corpus. These calls
-were obtained by \Nbruns runs, with runs that did not trigger \eval
-discarded. Out of the \Staticatleastonecallsite CRAN packages(among
-the \Corpus packages of our corpus) with \eval call sites, we observed
-calls in \Triggeredpkgs packages, the difference can be chalk down to
-incomplete code coverage and occasional failures due to our pipeline.
+To provide a picture of \eval usage in R, this section focuses on
+library code and the \Corpus packages in the CRAN corpus. Data was
+collected from \Nbruns runs of code extracted from the target packages
+and their reverse dependencies. In total, \Allcalls invocations of
+\eval and its variants were recorded. Runs that did not call \eval
+were discarded.\footnote{The fact that a package contains call sites
+to \eval does not mean every run will execute those call sites.} Out
+of the \Staticatleastonecallsite packages that use \eval,
+\Triggeredpkgs packages we recorded calling the function --- the
+difference can be chalk down to incomplete code coverage and
+occasional failures in our pipeline.
 
 \begin{wrapfigure}{r}{5.2cm}
 \begin{tabular}{|r@{\,}r@{\,}lr|r@{\,}r@{\,}lr|} \hline
@@ -700,9 +704,9 @@ have actually only one invocation per run.
 
 \mypara{Amount of code loaded by eval.} We use \c{deparse} to turn the
 input to \eval into strings and measure the size of that input. The
-largest input is \MaxSizeEval and the median input size is
-\MedianSizeEval. Most inputs are small, less than \SizeNineFiveRnd
-bytes. The average size is \AverageSizeEval bytes.
+largest input is \Maxszeval and the median input size is
+\Medianszeval. Most inputs are small, less than \SzninefiveRnd
+bytes. The average size is \Avgszeval bytes.
 
 \mypara{Amount of computation via eval.} We compare the number of
 events intercepted during execution of \eval across the whole corpus.
