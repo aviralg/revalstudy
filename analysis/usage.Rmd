@@ -365,11 +365,11 @@ overview_table(
   r("Avgszeval", average_size),
   r("Szninefive", many$arg_size)
 ) -> TBL
+```
 
-sizes_prop %>%
-  ggplot(aes(x = arg_size)) +
-  geom_histogram()
+`r TBL`
 
+```{r}
 E %>%
   ggplot(aes(x = arg_size)) +
   stat_density(aes(y = ..count..), color = "black", fill = "blue", alpha = 0.3) +
@@ -379,7 +379,6 @@ E %>%
 ggsave(path(PLOT_DIR, "size_loaded_distribution.pdf"))
 ```
 
-`r TBL`
 
 # Amount of computation
 
@@ -405,7 +404,10 @@ overview_table(
   r("Maxevents", max_events),
   r("Smalleventspct", ratio(less_50_events, nb_calls))
 ) -> TBL
+```
 
+
+```{r include=F}
 E %>%
   filter(opcodes > 50) %>%
   ggplot(aes(x = "", y = opcodes, fill = ""), na.rm = TRUE) +
@@ -415,7 +417,10 @@ E %>%
   theme(legend.position = "none")
 
 ggsave(path(PLOT_DIR, "events_per_pack_large.pdf"))
+```
 
+
+```{r include=F}
 E %>%
   filter(opcodes > 0) %>%
   filter(opcodes < 50) %>%
@@ -475,7 +480,7 @@ overview_table(
   r("Runbinf", sum[[6]]),
   r("Runbing", sum[[7]]),
   r("Runbinh", sum[[8]])
-)
+) -> TBL
 ```
 
 
@@ -485,12 +490,27 @@ How diverse are the expressions passed to `eval`? We consider the diversity in t
 
 ```{r type-diversity}
 E %>%
-  ggplot(aes(x = fct_rev(fct_infreq(type)))) +
+  ggplot(aes(x = fct_rev(fct_infreq(type)), weight=duplicates)) +
   geom_bar() +
   coord_flip() +
   labs(x = "type")
+
+types <- E %>% count(type, wt=duplicates)
+
+symbs <- types %>% filter(type == "symbol") %>% .$n
+languages <- types %>% filter(type == "language") %>% .$n
+expressions <- types %>% filter(type == "expression") %>% .$n
+
+overview_table(
+  r("Symbolpercent", ratio(symbs, nb_calls)),
+  r("Languagepercent", ratio(languages, nb_calls)),
+  r("Expressionpercent", ratio(expressions, nb_calls)),
+  r("Codepercent", ratio(symbs + languages + expressions, nb_calls))
+) -> TBL
 ```
 
+
+`r TBL`
 
 
 ```{r include=FALSE}
