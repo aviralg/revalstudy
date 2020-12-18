@@ -499,8 +499,9 @@ overview_table(
 ) -> TBL
 ```
 
-
 `r TBL`
+
+# Diversity of arguments
 
 How diverse are the expressions passed to `eval`? We consider the diversity in types in the resolved expression.
 
@@ -517,11 +518,14 @@ symbs <- types %>% filter(type == "symbol") %>% .$n
 languages <- types %>% filter(type == "language") %>% .$n
 expressions <- types %>% filter(type == "expression") %>% .$n
 
+ggplot2_symbs <- E %>% filter(ev_package == "ggplot2") %>% count(type, wt=duplicates) %>% filter(type == "symbol") %>% .$n
+
 overview_table(
   r("Symbolpercent", ratio(symbs, nb_calls)),
   r("Languagepercent", ratio(languages, nb_calls)),
   r("Expressionpercent", ratio(expressions, nb_calls)),
-  r("Codepercent", ratio(symbs + languages + expressions, nb_calls))
+  r("Codepercent", ratio(symbs + languages + expressions, nb_calls)),
+  r("Ggplotsymbolpercent", ratio(ggplot2_symbs, symbs))
 ) -> TBL
 ```
 
