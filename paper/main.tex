@@ -629,11 +629,11 @@ analysis in R. It introduces a new first-class promise object called
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 To provide a picture of \eval usage in R, this section focuses on
-library code and the \Corpus packages in our CRAN corpus. For these
-packages, all runnable code in CRAN was executed, runs that did not
-exercise an \eval in the corpus were discarded. The data presented
-here was collected from \Nbruns runs. In total, \Allcalls invocations
-of \eval and its variants were recorded. Out of the
+library code in the \Corpus packages of our CRAN corpus. For these,
+all runnable code in CRAN was executed, runs that did not exercise an
+\eval from the corpus were discarded; \Nbruns runs were retained and
+generated the data presented here. In total, \Allcalls invocations of
+\eval and its variants were recorded. Out of the
 \Staticatleastonecallsite packages that use \eval, \Triggeredpkgs
 packages were observed calling it --- the difference can be chalked
 down to incomplete code coverage and occasional infrastructure
@@ -655,10 +655,10 @@ Figure~\ref{freq} summarizes the frequency of calls to \eval over all
 runs. The left column is the number of observed calls, the right
 column is the number of packages falling in that range. There are
 \Fewcalls packages with low \eval frequency, i.e. fewer than 100
-calls; and a similar number of packages, \Manycalls to be precise, use
-\eval more than 1,000 times. One package, \Maxcallspack, calls it
-\Maxcalls times and thus accounts for over half of the observed
-invocations of \eval.
+calls; and a similar number of packages, \Manycalls to be precise,
+that use \eval more than 1,000 times. One package, \Maxcallspack,
+calls it \Maxcalls times and thus accounts for over half of the
+observed invocations of \eval.
 
 \begin{wrapfigure}{r}{7cm}
   \begin{tabular}{|@{\,}r@{\,}|@{\,}rrrr@{\,}|}\hline
@@ -677,7 +677,9 @@ of call sites occurring in the corpus (\emph{static)}), the second row
 is the number of call sites that were encountered during tracing
 (\emph{exercised}), the last row is the number of calls
 (\emph{invocations}). The vast majority of call sites, and calls, are
-to \eval itself; \c{evalq} and \c{local} are barely used at all.
+to \eval itself; \c{evalq} and \c{local} are barely used at all. The
+difference between static and exercised reflects spotty code coverage.
+
 
 \begin{wrapfigure}{r}{5.8cm}
   \begin{tabular}{|r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r|} \hline
@@ -689,6 +691,11 @@ to \eval itself; \c{evalq} and \c{local} are barely used at all.
 \tt 251 &--& \tt 500 & \Runbind & \tt 2001 &--& \tt 3000 & \Runbinh\\\hline
 \end{tabular}
 \caption{Normalized invocations} \label{tab:callsitesnormalized}
+
+\includegraphics[width=.4\textwidth]{calls_per_run_per_call_site}
+    \caption{Normalized invocations
+      (small)} \label{fig:callsitesnormalized}
+   \vspace{-8mm}
 \end{wrapfigure}
 
 Figure~\ref{tab:callsitesnormalized} shows normalized invocation
@@ -697,75 +704,58 @@ counts. The column on the left is the average number of invocations of
 right is number of call sites that fall in that range. For instance,
 there are \Runbinh call sites that are invoked on average over 2,001
 times in any run they are exercised.
-
-\medskip
-
-\begin{wrapfigure}{r}{5.5cm}
-  \vspace{-8mm}
-    \includegraphics[width=.4\textwidth]{calls_per_run_per_call_site}
-    \caption{Normalized invocations
-      (small)} \label{fig:callsitesnormalized}
-   \vspace{-8mm}
-\end{wrapfigure}
-
-The majority of call sites, \Runbina, are exercised up to 50 times.
 Larger numbers of calls suggest that \eval may be called within a loop
-or from a recursive context -- this seems to be the exception.
-Figure~\ref{fig:callsitesnormalized} zooms in on call sites with an
-average of fewer than 51 invocation. The x-axis shows the number of
-invocations and the y-axis is the number of call sites. Most call
-sites are invoked once, about half as many are invoked twice. After
-that the frequency quickly drops.
+or from a recursive context -- this seems to be the exception as the
+majority of call sites, \Runbina, are exercised less than 51 times.
+Figure~\ref{fig:callsitesnormalized} zooms in on low frequency call
+sites. The x-axis shows the normalized invocations and the y-axis is
+the number of call sites for that value. The figure shows that most
+call sites are invoked only once, about half as many are invoked
+twice. After that the frequency of invocation quickly drops.
 
-Analysis of the arguments passed to \eval reveals that \Symbolpercent are of kind
-\c{symbol} (single variables), \Languagepercent are \c{language} (an internal R
-type roughly corresponding to a single expression), and \Expressionpercent are
-\c{expression} (one or more statements), for a total of \Codepercent of the \eval calls. The remaining arguments are R
-values which are returned unchanged. \NOTE{closures are forced. (but there are nearly none in our dataset)}
+Analysis of the arguments passed to \eval reveals that \Symbolpercent
+are of kind \c{symbol} (these are single variables such as \c{x}),
+\Languagepercent are \c{language} (an internal R type roughly
+corresponding to a single expression, such as \c{x+1}), and
+\Expressionpercent are \c{expression} (one or more statements). These
+account for \Codepercent of the invocations, the arguments to the
+remaining invocations are R values which are returned unchanged by
+\eval.
 
+To estimate how much executable code is injected into the program
+through \eval, we measure the size of arguments in number of
+characters. This measurement is obtained by de-parsing every argument
+to \eval. Our de-narser does not emit code for values as some values
+can be very large and would overwhelm the code. On average, arguments
+to \eval are \Avgszeval characters long, the median size is
+\Medianszeval. The large input observed is \Maxszeval.
+Figure~\ref{fig:sizedistribution} shows the distribution of sizes. The
+x-axis is the size of arguments in characters, and the y-axis is the
+count of arguments with that size.
 
-
-\mypara{Amount of code loaded by eval.} We use \c{deparse} to turn the
-resolved input to \eval into strings and measure the size of that input. The
-largest input is \Maxszeval and the median input size is
-\Medianszeval. Most inputs are small, less than \SzninefiveRnd
-characters. The average size is \Avgszeval characters. 
-Figure~\ref{fig:sizedistribution} shows the distribution of sizes.
-
-\begin{figure}[h]
-	%\centering 
-	\includegraphics[width=\textwidth]{size_loaded_distribution}
-	\caption{Distribution of the sized of the expressions loaded by \eval.} \label{fig:sizedistribution}
+\begin{figure}[h!]
+ \includegraphics[width=\textwidth]{size_loaded_distribution}
+\caption{Loaded code} \label{fig:sizedistribution}
 \end{figure}
 
-\mypara{Amount of computation via eval.} We compare the number of
-events intercepted during execution of \eval across the whole corpus.
-For this, we use the number of interpreter steps as a proxy for
-events. We observe \AllEventCountRnd \NOTE{Check that number.}
-events all told, and \EventsRnd events occur inside eval
-(\EvalEventAllPerc of all events). Figure~\ref{fig:eventsPerPackage}
-show a violin plot of events.
+To measure the work performed in \evals, we instrument the R
+interpreter to count the number of operations performed during
+evaluation of the argument. For the purposes of this experiment, each
+interpreter step is an \emph{event}. For our corpus, \EvalEventAllPerc
+of events (\EventsRnd) are performed within \eval. \Smalleventspct of
+\evals perform 50 or fewer events. Figure~\ref{fig:eventsPerPackage}
+shows two violin plots. The plot on the left is for evals with fewer
+or equal than 50 events, the plot on the right is for more
+work-intensive \evals. The biggest \eval performs \MaxeventsRnd
+events.
 
-\begin{figure}[h]
+\begin{figure}[h!]
 	\centering
 	\includegraphics[width=.4\textwidth]{events_per_pack_small}
 	\includegraphics[width=.4\textwidth]{events_per_pack_large}
 	\caption{Events per packages} \label{fig:eventsPerPackage}
 \end{figure}
 
-We observe a very wide spread in the number of events generated by
-\eval calls. The largest number of events generated by an \eval call
-is \MaxeventsRnd. However, a majority (\Smalleventspct) of \eval calls
-performs up to 50 events suggesting that most expressions passed to
-\eval are small. It is interesting to note that a higher proportion of
-Core R \eval calls perform side effects in the
-\EventsMinRangeB--\EventsMaxRangeB range. Only \EventsCoreEvalCountC
-Core R \eval calls and \EventsPackageEvalCountC package \eval call
-generate \EventsMinRangeC to \EventsMaxRangeC events. These \eval
-calls originate from statistical modeling packages such as \mlogit,
-\mboost, \metafor, \lavaan, \mclust and \gamlss.
-
-\NOTE{Talk about the percentage of code executed in eval}
 
 
 
