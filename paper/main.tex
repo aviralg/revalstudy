@@ -623,7 +623,7 @@ analysis in R. It introduces a new first-class promise object called
 \c{quosure} for which it implements special evaluation support in
 \c{tidy_eval}.
 
-
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Usage Metrics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -639,17 +639,6 @@ packages were observed calling it --- the difference can be chalked
 down to incomplete code coverage and occasional infrastructure
 failures.
 
-\begin{wrapfigure}{r}{5.2cm}
-  \begin{tabular}{|r@{\,}r@{\,}l@{}r|r@{\,}r@{\,}l@{}r|} \hline
-    \multicolumn{3}{|c}{\small\#calls} &\small \#pck
-&     \multicolumn{3}{c}{\small\#calls} &\small\#pck \\\hline
-\tt 0 &--& \tt 10      & \Bina  & \tt 1K &--&\tt 100K  & \Bine\\
-\tt 11 &--& \tt 100    & \Binb  & \tt 100K &--&\tt 1M  & \Binf\\
-\tt 101 &--& \tt 1K    & \Binc  & \tt 1M &--&\tt 10M   & \Bing\\
-\tt 1K &--& \tt 10K    & \Bind  & \tt 10M &--& \tt 100M & \Binh\\\hline
-\end{tabular}
-\caption{Call frequency}\label{freq}
-\end{wrapfigure}
 
 Figure~\ref{freq} summarizes the frequency of calls to \eval over all
 runs. The left column is the number of observed calls, the right
@@ -660,14 +649,54 @@ that use \eval more than 1,000 times. One package, \Maxcallspack,
 calls it \Maxcalls times and thus accounts for over half of the
 observed invocations of \eval.
 
-\begin{wrapfigure}{r}{7cm}
-  \begin{tabular}{|@{\,}r@{\,}|@{\,}rrrr@{\,}|}\hline
+\begin{figure}[!h]
+
+\begin{tabular}{@{}l@{\hspace{1.5cm}}l@{}}
+\begin{minipage} {5cm}
+  \begin{tabular}{|r@{\,}r@{\,}l@{}r|r@{\,}r@{\,}l@{}r|} \hline
+    \multicolumn{3}{|c}{\small\#calls} &\small \#pck
+&     \multicolumn{3}{c}{\small\#calls} &\small\#pck \\\hline
+\tt 0 &--& \tt 10      & \Bina  & \tt 1K &--&\tt 100K  & \Bine\\
+\tt 11 &--& \tt 100    & \Binb  & \tt 100K &--&\tt 1M  & \Binf\\
+\tt 101 &--& \tt 1K    & \Binc  & \tt 1M &--&\tt 10M   & \Bing\\
+\tt 1K &--& \tt 10K    & \Bind  & \tt 10M &--& \tt 100M & \Binh\\\hline
+\end{tabular}
+\caption{Call frequency}\label{freq}
+\end{minipage}
+&
+\begin{minipage}{7cm}
+\begin{tabular}{|@{\,}r@{\,}|@{\,}rrrr@{\,}|}\hline
   &\eval & \c{evalq} & \c{eval} & \c{local}\\[-2mm]
            & & & \c{.parent} &\\\hline
 \small Static sites &\Staticeval&\Staticevalq&\Staticevalparent&\Staticlocal \\
 \small Exercised sites&\Triggeredeval&\Triggeredevalq&\Triggeredevalparent&\Triggeredlocal\\
 \small Invocations&\EvalsRnd&\EvalqsRnd&\EparentsRnd&\LocalsRnd\\\hline
-\end{tabular}\caption{Variants}\label{tab:variantseval}
+\end{tabular}~\\[2mm]\caption{Variants}\label{tab:variantseval}
+\end{minipage}
+\end{tabular}
+\end{figure}
+
+
+
+\begin{wrapfigure}{r}{5.8cm}
+\vspace{-4mm}
+
+  \begin{tabular}{|r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r|} \hline
+\multicolumn{3}{|c}{\small\#calls} &\small\#sites &
+\multicolumn{3}{c}{\small\#calls} &\small\#sites \\\hline
+\tt 0 &--& \tt 50    & \Runbina & \tt 501 &--& \tt 1000   & \Runbine\\
+\tt 51 &--& \tt 100  & \Runbinb & \tt 1001 &--& \tt 1500  & \Runbinf\\
+\tt 101 &--& \tt 250 & \Runbinc & \tt 1501 &--& \tt 2000  & \Runbing\\
+\tt 251 &--& \tt 500 & \Runbind & \tt 2001 &--& \tt 3000 & \Runbinh\\\hline
+\end{tabular}
+\caption{Normalized invocations} \label{tab:callsitesnormalized}
+
+\vspace{-2mm}
+\includegraphics[width=.35\textwidth]{calls_per_run_per_call_site}
+\vspace{-2mm}
+    \caption{Normalized invocations
+      (small)} \label{fig:callsitesnormalized}
+\vspace{-8mm}
 \end{wrapfigure}
 
 
@@ -679,24 +708,6 @@ is the number of call sites that were encountered during tracing
 (\emph{invocations}). The vast majority of call sites, and calls, are
 to \eval itself; \c{evalq} and \c{local} are barely used at all. The
 difference between static and exercised reflects spotty code coverage.
-
-
-\begin{wrapfigure}{r}{5.8cm}
-  \begin{tabular}{|r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r|} \hline
-\multicolumn{3}{|c}{\small\#calls} &\small\#sites &
-\multicolumn{3}{c}{\small\#calls} &\small\#sites \\\hline
-\tt 0 &--& \tt 50    & \Runbina & \tt 501 &--& \tt 1000   & \Runbine\\
-\tt 51 &--& \tt 100  & \Runbinb & \tt 1001 &--& \tt 1500  & \Runbinf\\
-\tt 101 &--& \tt 250 & \Runbinc & \tt 1501 &--& \tt 2000  & \Runbing\\
-\tt 251 &--& \tt 500 & \Runbind & \tt 2001 &--& \tt 3000 & \Runbinh\\\hline
-\end{tabular}
-\caption{Normalized invocations} \label{tab:callsitesnormalized}
-
-\includegraphics[width=.4\textwidth]{calls_per_run_per_call_site}
-    \caption{Normalized invocations
-      (small)} \label{fig:callsitesnormalized}
-   \vspace{-8mm}
-\end{wrapfigure}
 
 Figure~\ref{tab:callsitesnormalized} shows normalized invocation
 counts. The column on the left is the average number of invocations of
