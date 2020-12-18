@@ -370,11 +370,15 @@ overview_table(
 `r TBL`
 
 ```{r}
+lbl_colour <- rep("black", 11)
+lbl_colour[[4]] <- "transparent"
 E %>%
   ggplot(aes(x = arg_size)) +
   stat_density(aes(y = ..count..), color = "black", fill = "blue", alpha = 0.3) +
   scale_x_continuous(breaks = c(0, 1, 2, 3, 4, 5, 10, 30, 100, 300, 1000), trans = "log1p", expand = c(0, 0)) +
-  labs(x = "Size (characters)")
+  labs(x = "Size (characters)") +
+  theme(text = element_text(size=17),
+        axis.text.x = element_text(color = lbl_colour)) 
 
 ggsave(path(PLOT_DIR, "size_loaded_distribution.pdf"))
 ```
@@ -407,27 +411,27 @@ overview_table(
 ```
 
 
-```{r include=F}
+```{r}
 E %>%
   filter(opcodes > 50) %>%
-  ggplot(aes(x = "", y = opcodes, fill = ""), na.rm = TRUE) +
-  geom_violin(trim = FALSE, width = 1.7) +
+  ggplot(aes(x = "", y = opcodes), na.rm = TRUE) +
+  geom_violin(trim = FALSE, width = 1.7, fill = "blue", alpha = 0.3) +
   scale_y_log10(labels = scales::comma) +
   labs(y = "", x = "") +
-  theme(legend.position = "none")
+  theme(legend.position = "none", text = element_text(size=17))
 
 ggsave(path(PLOT_DIR, "events_per_pack_large.pdf"))
 ```
 
 
-```{r include=F}
+```{r}
 E %>%
   filter(opcodes > 0) %>% # == 0 if from eval.parent, because we do not count eval loops for it
   filter(opcodes <= 50) %>%
-  ggplot(aes(x = "", y = opcodes, fill = ""), na.rm = TRUE) +
-  geom_violin(trim = FALSE, width = 1.7) +
-  labs(y = "Events per package", x = "") +
-  theme(legend.position = "none")
+  ggplot(aes(x = "", y = opcodes), na.rm = TRUE) +
+  geom_violin(trim = FALSE, width = 1.7, fill = "blue", alpha = 0.3) +
+  labs(y = "Events", x = "") +
+  theme(legend.position = "none", text = element_text(size=17))
 
 ggsave(path(PLOT_DIR, "events_per_pack_small.pdf"))
 ```
@@ -459,15 +463,19 @@ triggered <- E %>%
     average = n / n_runs
   ) %>%
   arrange(desc(average))
+```
 
+```{r}
 # Plot the low trigger counts...
 triggered %>%
   filter(average < 50) %>%
   ggplot(aes(x = average)) +
-  geom_histogram(binwidth = 1)
+  geom_histogram(binwidth = 1, fill = "blue", alpha = 0.3, colour = "black")
 
 ggsave(path(PLOT_DIR, "calls_per_run_per_call_site.pdf"))
+```
 
+```{r, include = FALSE}
 bins <- cut(triggered$average, breaks = c(0, 50, 100, 250, 500, 1000, 1500, 2000, 3000), include.lowest = TRUE)
 sum <- summary(bins)
 
