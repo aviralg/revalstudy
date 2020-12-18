@@ -23,6 +23,7 @@ library(tidyverse)
 library(fst)
 library(fs)
 library(DT)
+library(scales)
 
 knitr::knit_hooks$set(time_it = local({
   now <- NULL
@@ -87,6 +88,7 @@ E_raw %>% select(
   file, #                       Script file name (name of this run)
   ev_package = eval_source, #   Package of the call site
   arg_size = expr_resolved_length, #   Size in characters (unicode) of eval argument string
+  ast_nodes = expr_resolved_nodes,
   type = expr_resolved_type_tag,
   opcodes = direct_interpreter_eval #  Count of the AST nodes traversed by the
 ) -> E #                               interpreter during eval (non-recursive).
@@ -345,14 +347,14 @@ weighted.median <- function(x, w, na.rm = FALSE) {
   return(x[ps])
 }
 
-med_size <- weighted.median(E$arg_size, w = E$duplicates, na.rm = TRUE)
-max_size <- max(E$arg_size, na.rm = TRUE)
-average_size <- weighted.mean(E$arg_size, na.rm = TRUE, w = E$duplicates)
+med_size <- weighted.median(E$ast_nodes, w = E$duplicates, na.rm = TRUE)
+max_size <- max(E$ast_nodes, na.rm = TRUE)
+average_size <- weighted.mean(E$ast_nodes, na.rm = TRUE, w = E$duplicates)
 
 sizes_prop <- E %>%
-  count(arg_size, wt = duplicates) %>%
+  count(ast_nodes, wt = duplicates) %>%
   mutate(proportion = n / sum(n)) %>%
-  arrange(arg_size) %>%
+  arrange(ast_nodes) %>%
   mutate(cumulative = cumsum(proportion))
 
 many <- sizes_prop %>%
@@ -363,7 +365,7 @@ overview_table(
   r("Medianszeval", med_size),
   r("Maxszeval", max_size),
   r("Avgszeval", average_size),
-  r("Szninefive", many$arg_size)
+  r("Szninefive", many$ast_nodes)
 ) -> TBL
 ```
 
@@ -373,12 +375,18 @@ overview_table(
 lbl_colour <- rep("black", 11)
 lbl_colour[[4]] <- "transparent"
 E %>%
-  ggplot(aes(x = arg_size)) +
+  ggplot(aes(x = ast_nodes, weight = duplicates)) +
   stat_density(aes(y = ..count..), color = "black", fill = "blue", alpha = 0.3) +
   scale_x_continuous(breaks = c(0, 1, 2, 3, 4, 5, 10, 30, 100, 300, 1000), trans = "log1p", expand = c(0, 0)) +
-  labs(x = "Size (characters)") +
+  labs(x = "Size (AST nodes)") +
   theme(text = element_text(size=17),
         axis.text.x = element_text(color = lbl_colour)) 
+
+E %>% 
+  filter(ast_nodes < 25) %>%
+  ggplot(aes(x = ast_nodes, weight = duplicates)) +
+  geom_histogram(binwidth = 1, color = "black", fill = "blue", alpha = 0.3) +
+  scale_y_continuous(labels = comma)
 
 ggsave(path(PLOT_DIR, "size_loaded_distribution.pdf"))
 ```
@@ -386,8 +394,7 @@ ggsave(path(PLOT_DIR, "size_loaded_distribution.pdf"))
 
 # Amount of computation
 
-How much work is involved in each eval as measured by the number of ??? 
-(possible: opcodes, AST nodes).
+How much work is involved in each eval as measured by the number of opcodes exectued by the interpreter.
 
 ```{r amount_computations, include=F}
 tot_events <- E %>%
@@ -418,7 +425,7 @@ E %>%
   geom_violin(trim = FALSE, width = 1, fill = "blue", alpha = 0.3) +
   scale_y_log10(labels = scales::comma) +
   labs(y = "", x = "") +
-  theme(legend.position = "none", text = element_text(size=17))
+  theme(legend.position = "none", text = element_text(size=25))
 
 ggsave(path(PLOT_DIR, "events_per_pack_large.pdf"))
 ```
@@ -431,7 +438,7 @@ E %>%
   ggplot(aes(x = "", y = opcodes), na.rm = TRUE) +
   geom_violin(trim = FALSE, width = 1.7, fill = "blue", alpha = 0.3) +
   labs(y = "Events", x = "") +
-  theme(legend.position = "none", text = element_text(size=17))
+  theme(legend.position = "none", text = element_text(size=25))
 
 ggsave(path(PLOT_DIR, "events_per_pack_small.pdf"))
 ```
@@ -471,7 +478,7 @@ triggered %>%
   filter(average < 50) %>%
   ggplot(aes(x = average)) +
   geom_histogram(binwidth = 1, fill = "blue", alpha = 0.3, colour = "black") +
-  theme(text = element_text(size=20), aspect.ratio = 4/3)
+  theme(text = element_text(size=16), axis.text = element_text(size=20), aspect.ratio = 4/3)
 
 ggsave(path(PLOT_DIR, "calls_per_run_per_call_site.pdf"))
 ```
