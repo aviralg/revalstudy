@@ -728,20 +728,19 @@ Analysis of the arguments passed to \eval reveals that \Symbolpercent
 are of kind \c{symbol} (these are single variables such as \c{x}),
 \Languagepercent are \c{language} (an internal R type roughly
 corresponding to a single expression, such as \c{x+1}), and
-\Expressionpercent are \c{expression} (one or more statements). These
+\Expressionpercent are \c{expression} (one or more statements).  These
 account for \Codepercent of the invocations, the arguments to the
 remaining invocations are R values which are returned unchanged by
-\eval.
+\eval. Most of the invocations involving a symbol come from ggplot2, \Ggplotsymbolpercent, and from one call site, in \c{ggproto}, evaluating symbol \c{`_inherit`}.
 
 To estimate how much executable code is injected into the program
 through \eval, we measure the size of arguments in number of
-characters. This measurement is obtained by de-parsing every argument
-to \eval. Our de-narser does not emit code for values as some values
+AST nodes. For instance, a variable name (a symbol) counts for 1 node. Our de-parser does not emit code for values as some values
 can be very large and would overwhelm the code. On average, arguments
-to \eval are \Avgszeval characters long, the median size is
-\Medianszeval. The large input observed is \Maxszeval.
+to \eval are \Avgszeval nodes large, the median size is
+\Medianszeval. The largest input observed is \Maxszeval.
 Figure~\ref{fig:sizedistribution} shows the distribution of sizes. The
-x-axis is the size of arguments in characters, and the y-axis is the
+x-axis is the size of arguments in number of nodes, and the y-axis is the
 count of arguments with that size.
 
 \begin{figure}[h!]
@@ -771,7 +770,6 @@ events.
 \subsection{Things todo}
 
 \begin{itemize}
-\item Increase font size on numbers for figures
 \item check that on figure 7, the number of elements at 1 is correct
 \item explain the peak at 4, for figure 7
 \item Figure 8 explain why so few 1's
