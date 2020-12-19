@@ -1,5 +1,5 @@
 BASE_URL := https://prl3.prl.fit.cvut.cz/mnt/ocfs_vol_00/project-evalr/evalr-experiment
-CURL := curl --progress-bar -O $(BASE_URL)
+CURL := curl --retry 10 --progress-bar -O $(BASE_URL)
 FILES := \
   corpus.fst \
   package-evals-static.csv \
