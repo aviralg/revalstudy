@@ -92,7 +92,11 @@ latex.out/
 .DS_Store
 
 *.vtc
-analysis/Data
 *~
 paper/main.pdf
 paper/tag/*
+
+# ignore all in Data but Makefile
+analysis/Data/*
+!analysis/Data/Makefile
+/analysis/html/

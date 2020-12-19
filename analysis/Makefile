@@ -1,4 +1,8 @@
+DATA_DIR   := Data
+OUTPUT_DIR := html
+
 ## The following is used by Jan to run "usage.Rmd" in docker.
+## http://localhost:8787    uid/pwd == rstudio
 
 # Run docker
 dock:
@@ -12,5 +16,15 @@ killrm:
 # Clean up the generated files..
 clean:
 	rm -rf *.pdf *.tex *~ *.html *_cache *_files
+	rm -rf $(OUTPUT_DIR)
 
-#  http://localhost:8787    uid/pwd == rstudio
+.PHONY: data
+data:
+	$(MAKE) -C $(DATA_DIR)
+
+$(OUTPUT_DIR)/%.html: %.Rmd
+	-mkdir -p $(OUTPUT_DIR)
+	R -e 'rmarkdown::render("$<", output_dir="$(OUTPUT_DIR)")'
+
+.PHONY: usage
+usage: $(OUTPUT_DIR)/usage.html
