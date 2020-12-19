@@ -628,16 +628,16 @@ analysis in R. It introduces a new first-class promise object called
 \section{Usage Metrics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-To provide a picture of \eval usage in R, this section focuses on
-library code in the \Corpus packages of our CRAN corpus. For these,
-all runnable code in CRAN was executed, runs that did not exercise an
-\eval from the corpus were discarded; \Nbruns runs were retained and
-generated the data presented here. In total, \Allcalls invocations of
-\eval and its variants were recorded. Out of the
-\Staticatleastonecallsite packages that use \eval, \Triggeredpkgs
-packages were observed calling it --- the difference can be chalked
-down to incomplete code coverage and occasional infrastructure
-failures.
+This section focuses on our corpus of \Corpus CRAN packages that use
+\eval; these represent {\bf XX\%} of the entire repository. To provide
+a picture of \eval usage, all runnable code in CRAN was executed. Runs
+that did not exercise an \eval in the corpus were discarded. We
+retained \Nbruns to generate the data presented here. In total,
+\Allcalls invocations of \eval and its variants were recorded. Out of
+the \Staticatleastonecallsite packages that use \eval, \Triggeredpkgs
+packages were observed calling it in our runs --- the difference can
+be chalked down to incomplete code coverage and occasional
+infrastructure failures.
 
 
 Figure~\ref{freq} summarizes the frequency of calls to \eval over all
@@ -647,7 +647,7 @@ column is the number of packages falling in that range. There are
 calls; and a similar number of packages, \Manycalls to be precise,
 that use \eval more than 1,000 times. One package, \Maxcallspack,
 calls it \Maxcalls times and thus accounts for over half of the
-observed invocations of \eval.
+observed data.
 
 \begin{figure}[!h]
 
@@ -680,7 +680,7 @@ observed invocations of \eval.
 
 \begin{wrapfigure}{r}{5.8cm}
 \vspace{-4mm}
-
+\centering
   \begin{tabular}{|r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r|} \hline
 \multicolumn{3}{|c}{\small\#calls} &\small\#sites &
 \multicolumn{3}{c}{\small\#calls} &\small\#sites \\\hline
@@ -689,96 +689,118 @@ observed invocations of \eval.
 \tt 101 &--& \tt 250 & \Runbinc & \tt 1501 &--& \tt 2000  & \Runbing\\
 \tt 251 &--& \tt 500 & \Runbind & \tt 2001 &--& \tt 3000 & \Runbinh\\\hline
 \end{tabular}
-\caption{Normalized invocations} \label{tab:callsitesnormalized}
+
+\medskip  (a) All
+
+  \includegraphics[width=5.8cm, trim=7.5cm 0 6cm 0, clip]{calls_per_run_per_call_site}
+
+  (b) Small
 
 \vspace{-2mm}
-\includegraphics[width=7.5cm, trim=7.5cm 0 6cm 0, clip]{calls_per_run_per_call_site}
-\vspace{-7mm}
-    \caption{Normalized invocations
-      (small)} \label{fig:callsitesnormalized}
-\vspace{-8mm}
+    \caption{Normalized invocations} \label{cn}
+\vspace{-2mm}
 \end{wrapfigure}
 
 
 Figure~\ref{tab:variantseval} illustrates the use of variants of
 \eval. For each of the four variants, the first rows shows the number
-of call sites occurring in the corpus (\emph{static)}), the second row
+of call sites occurring in the corpus (\emph{static}), the second row
 is the number of call sites that were encountered during tracing
 (\emph{exercised}), the last row is the number of calls
 (\emph{invocations}). The vast majority of call sites, and calls, are
-to \eval itself; \c{evalq} and \c{local} are barely used at all. The
-difference between static and exercised reflects spotty code coverage.
+to \eval itself, \c{eval.parent} is rare, as for \c{evalq} and
+\c{local} are barely used at all. The difference between static and
+exercised reflects spotty code coverage and is a limitation
+of dynamic analysis.
 
-Figure~\ref{tab:callsitesnormalized} shows normalized invocation
-counts. The column on the left is the average number of invocations of
-\eval from a particular call site for any given run. The number on the
-right is number of call sites that fall in that range. For instance,
-there are \Runbinh call sites that are invoked on average over 2,001
-times in any run they are exercised.
-Larger numbers of calls suggest that \eval may be called within a loop
-or from a recursive context -- this seems to be the exception as the
-majority of call sites, \Runbina, are exercised less than 51 times.
-Figure~\ref{fig:callsitesnormalized} zooms in on low frequency call
-sites. The x-axis shows the normalized invocations and the y-axis is
-the number of call sites for that value. The figure shows that most
-call sites are invoked only once, about half as many are invoked
-twice. After that the frequency of invocation quickly drops.
+Figure~\ref{cn}(a) shows normalized invocation counts. The column on
+the left is the average number of calls from a particular site for any
+given run (\emph{\#calls}). On the right is the count of sites that
+fall in that range (\emph{\#sites}). For instance, \Runbinh sites are
+invoked on average over 2,001 times per run. Larger numbers suggest
+uses from within a loop or a recursive context -- this seems to be the
+exception as most \evals, \Runbina, are exercised 50 times or less.
+Figure~\ref{cn}(b) zooms in on low frequency call sites. The x-axis
+shows normalized invocations and the y-axis is the number sites for
+that value. Most low-frequency \evals are invoked only once, about
+half as many are invoked twice; after that the frequency quickly
+drops.
 
-Analysis of the arguments passed to \eval reveals that \Symbolpercent
-are of kind \c{symbol} (these are single variables such as \c{x}),
-\Languagepercent are \c{language} (an internal R type roughly
+Arguments to \eval can be either code or values, in the latter case
+\eval has no effect. Code accounts for \Codepercent of arguments in
+our corpus. More specifically, \Symbolpercent of arguments are
+\c{symbol}s (i.e. these are single variables such as \c{x}),
+\Languagepercent are \c{language} object (an internal R type roughly
 corresponding to a single expression, such as \c{x+1}), and
-\Expressionpercent are \c{expression} (one or more statements).  These
-account for \Codepercent of the invocations, the arguments to the
-remaining invocations are R values which are returned unchanged by
-\eval. Most of the invocations involving a symbol come from ggplot2, \Ggplotsymbolpercent, and from one call site, in \c{ggproto}, evaluating symbol \c{`_inherit`}.
+\Expressionpercent are \c{expression} objects (multiple statements).
+Further inspection reveals that most symbols, \Ggplotsymbolpercent to
+be exact, come from a single call in the \c{ggplot2} package and have
+have the value \c{_inherit}. Even if we remove this outlier, the
+majority of \evals are simple expressions.
 
-To estimate how much executable code is injected into the program
-through \eval, we measure the size of arguments in number of
-AST nodes. For instance, a variable name (a symbol) counts for 1 node. Our de-parser does not emit code for values as some values
-can be very large and would overwhelm the code. On average, arguments
-to \eval are \Avgszeval nodes large, the median size is
-\Medianszeval. The largest input observed is \Maxszeval.
-Figure~\ref{fig:sizedistribution} shows the distribution of sizes. The
-x-axis is the size of arguments in number of nodes, and the y-axis is the
-count of arguments with that size.
+To estimate how much executable code is dynamically injected into the
+program through \eval, we measure the size of arguments in number of
+abstract syntax tree nodes as returned by R's parser; for example,
+\c{x+1} counts as 3 nodes.\footnote{We experimented with measuring
+code size by de-parsing the expressions to strings, but these
+measurements were dominated by de-parsed data objects, these could
+range in the MBs.} The median argument size is \Medianszeval (recall
+the large number of symbols) and the average is \Avgszeval nodes. The
+largest \eval input observed is \Maxszeval\,-- a significant chunk of
+code. Figure~\ref{fig:sizedistribution} shows the distribution of
+sizes for arguments of fewer or equal to 25 nodes. The x-axis is the
+size of arguments in number of nodes, and the y-axis is the count of
+arguments with that size. The size drops rapidly, with few
+observations larger than 15 nodes. The long tail is omitted from the
+graph for legibility.
 
 \begin{figure}[h!]
- \includegraphics[width=\textwidth]{size_loaded_distribution}
+ \includegraphics[width=1.061\textwidth]{size_loaded_distribution}
 \caption{Loaded code} \label{fig:sizedistribution}
 \end{figure}
 
-To measure the work performed in \evals, we instrument the R
-interpreter to count the number of operations performed during
-evaluation of the argument. For the purposes of this experiment, each
-interpreter step is an \emph{event}. For our corpus, \EvalEventAllPerc
-of events (\EventsRnd) are performed within \eval. \Smalleventspct of
-\evals perform 50 or fewer events. Figure~\ref{fig:eventsPerPackage}
-shows two violin plots. The plot on the left is for evals with fewer
-or equal than 50 events, the plot on the right is for more
-work-intensive \evals. The biggest \eval performs \MaxeventsRnd
-events.
+To measure the work performed in \evals, we count the instructions
+executed by interpreter during evaluation of the argument. In our
+corpus, \EvalEventAllPerc of all instructions (\EventsRnd) are
+performed within \eval. Most invocations perform relatively little
+work with \Smalleventspct of \evals executing 50 or fewer
+instructions. The violin plot of Figure~\ref{ev}(a) corresponds to
+\evals executing $\leq$ 50 instructions, it is dominated by trivial
+symbol look ups. Figure~\ref{ev}(b) has the work-intensive \evals
+which go all the way to \MaxeventsRnd instructions.
 
 \begin{figure}[h!]
-	\centering
-	\includegraphics[width=.55\textwidth]{events_per_pack_small}
-	\hspace{-10mm}
-	\includegraphics[width=.55\textwidth]{events_per_pack_large}
-	\caption{Events per packages} \label{fig:eventsPerPackage}
+\begin{tabular}{@{}c@{}c@{}}
+\begin{minipage}{7.5cm}
+ \includegraphics[width=\textwidth]{events_per_pack_small}
+\end{minipage}&\begin{minipage}{7.5cm}
+  \includegraphics[width=\textwidth]{events_per_pack_large}
+\end{minipage}\\[-3mm]
+\small (a) Small & \small (b) Large
+\end{tabular}
+ \caption{Events per packages} \label{ev}
 \end{figure}
 
-\subsection{Things todo}
+\subsection{Things to do}
 
 \begin{itemize}
-\item check that on figure 7, the number of elements at 1 is correct
-\item explain the peak at 4, for figure 7
-\item Figure 8 explain why so few 1's
+\item Figure 5(b) -- make `count` and `average` smaller.
+\item Figure 6: (1) Replace `ast-nodes` with `nodes`
+\item Figure 6: (2) Remove gray lines
+\item Figure 6: increase font size
+\item Figure 6: Try to make the figure less wide. Thinner bars/aspect
+  ratio change.
+\item Figure 7: check that element counts are correct
+\item Figure 7: replace events by instructions. Check what we are
+  counting? Are these bytecodes or AST nodes.
+\item Check that the percentage of operations performed within
+  an \eval (5\%) is correct. That feels surprising to me.
+\item I am having second thoughts about keeping the \c{ggplot2} data
+  -- it is a big outlier that skews all the graphs...
 \item Add a ``Discussion'' paragraph at the end that sums up the
   observations
 \item Add paragraphs for Kaggle and CORE -- only discuss the
-  differences from CRAN if any.
-\item Question: should we remove ggplot? Would change things
-  significantly?
+  differences from CRAN
 \end{itemize}
 
 
