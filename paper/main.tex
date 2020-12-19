@@ -755,7 +755,7 @@ observations larger than 15 nodes. The long tail is omitted from the
 graph for legibility.
 
 \begin{figure}[h!]
- \includegraphics[width=1.061\textwidth]{size_loaded_distribution}
+ \includegraphics[width=0.5\textwidth, trim=5.5cm 0 6cm 0, clip]{size_loaded_distribution}
 \caption{Loaded code} \label{fig:sizedistribution}
 \end{figure}
 
@@ -778,21 +778,13 @@ which go all the way to \MaxeventsRnd instructions.
 \end{minipage}\\[-3mm]
 \small (a) Small & \small (b) Large
 \end{tabular}
- \caption{Events per packages} \label{ev}
+ \caption{Instructions per packages} \label{ev}
 \end{figure}
 
 \subsection{Things to do}
 
 \begin{itemize}
-\item Figure 5(b) -- make `count` and `average` smaller.
-\item Figure 6: (1) Replace `ast-nodes` with `nodes`
-\item Figure 6: (2) Remove gray lines
-\item Figure 6: increase font size
-\item Figure 6: Try to make the figure less wide. Thinner bars/aspect
-  ratio change.
 \item Figure 7: check that element counts are correct
-\item Figure 7: replace events by instructions. Check what we are
-  counting? Are these bytecodes or AST nodes.
 \item Check that the percentage of operations performed within
   an \eval (5\%) is correct. That feels surprising to me.
 \item I am having second thoughts about keeping the \c{ggplot2} data
