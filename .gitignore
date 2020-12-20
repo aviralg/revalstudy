@@ -100,3 +100,4 @@ paper/tag/*
 analysis/Data/*
 !analysis/Data/Makefile
 /analysis/html/
+analysis/Data

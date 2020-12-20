@@ -65,33 +65,40 @@ which package belong to our corpus (`C_raw`). For conciseness, `E` is
 the input data set with only the columns that we use.
 
 ```{r read, message=TRUE, include=F}
-# This test should allow to re-run the whole script without reading the
-# data again from disk. It assumes the data doesn't change.
-if (exists("E") == FALSE) {
-  read_fst(eval_calls_path) %>% as_tibble() -> E_raw
-  read_fst(corpus_path) %>% as_tibble() -> C_raw
-  read_csv(eval_static_path) %>% semi_join(C_raw, by = "package") -> P
+read_fst(corpus_path) %>% as_tibble() -> C_raw
+read_csv(eval_static_path) %>% semi_join(C_raw, by = "package") -> P
+
+rebuild <- FALSE
+# We only read the orignal evals_calls file if we don't have a summarized
+# version stored on disk.  NOTE: the heuristic to detect changes is file
+# size. If that fails, manually delete `.lock.fst`
+if (file.exists("Data/.lock.fst")) {
+  saved <- read.fst("Data/.lock.fst")[[1,1]]
+  if (saved == file.size(eval_calls_path)) {
+     read.fst("Data/E.fst") %>% as_tibble() -> E
+  } else {
+    rebuild <- TRUE
+  }
 }
-```
-
-The two data sets are `E` and `C` for conciseness.  `C` is only used here to 
-compute the corpus size. `E` is used throughout. Recall that `E_raw` has the 
-source data with all columns. `P` corresponds to static information about the
-call sites.
-
-```{r select-columns, message=TRUE, warning=FALSE, include=FALSE}
-E_raw %>% select(
-  run_package = package, #      The package which was run to trigger the eval
-  ev_variant = eval_function, # Which eval variant was called
-  duplicates = nb_ev_calls, #   Number of identical eval calls (weight)
-  src_ref = eval_call_srcref, # Source ref for the eval call site
-  file, #                       Script file name (name of this run)
-  ev_package = eval_source, #   Package of the call site
-  arg_size = expr_resolved_length, #   Size in characters (unicode) of eval argument string
-  ast_nodes = expr_resolved_nodes,
-  type = expr_resolved_type_tag,
-  opcodes = direct_interpreter_eval #  Count of the AST nodes traversed by the
-) -> E #                               interpreter during eval (non-recursive).
+if (rebuild) {
+  read_fst(eval_calls_path) %>% as_tibble() -> E_raw
+  E_raw %>% select(
+    run_package = package, #      The package which was run to trigger the eval
+    ev_variant = eval_function, # Which eval variant was called
+    duplicates = nb_ev_calls, #   Number of identical eval calls (weight)
+    src_ref = eval_call_srcref, # Source ref for the eval call site
+    file, #                       Script file name (name of this run)
+    ev_package = eval_source, #   Package of the call site
+    arg_size = expr_resolved_length, #   Size in characters of argument 
+    ast_nodes = expr_resolved_nodes, #   Size in AST Nodes
+    type = expr_resolved_type_tag,   #   Argument type
+    opcodes = direct_interpreter_eval #  Count of the AST nodes traversed by the
+  ) %>% #                                interpreter during eval (non-recursive).
+   mutate(across(where(is_character),as_factor)) -> E 
+  write.fst(E, "Data/E.fst")
+  sz <- file.size(eval_calls_path) %>% as_tibble()
+  write.fst(sz,"Data/.lock.fst")
+}
 
 C_raw -> C
 corpus_size <- nrow(C)
@@ -104,6 +111,12 @@ overview_table(
   r("NbRuns", nb_runs)
 )
 ```
+
+
+The two data sets are `E` and `C` for conciseness.  `C` is only used here to 
+compute the corpus size. `E` is used throughout. Recall that `E_raw` has the 
+source data with all columns. `P` corresponds to static information about the
+call sites.
 
 The size of our corpus is `r corpus_size` packages.
 
