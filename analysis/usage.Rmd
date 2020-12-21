@@ -13,10 +13,10 @@ editor_options:
   chunk_output_type: console
 params:
   base_dir: Data/
-  calls_path: base/summarized.fst
+  calls_path: package/summarized.fst
   corpus_path: corpus.fst
   static_path: package-evals-static.csv
-  force_rebuild: TRUE
+  force_rebuild: FALSE
 ---
 
 ```{r setup, include=FALSE}
@@ -53,10 +53,9 @@ source("inc/setup.R")
 theme_set(theme_minimal())
 create_tags(path(TAGS_DIR, "usage_metrics.tex"), prefix = "", default = TRUE)
 
-base_dir <- params$base_dir
-calls_path <- paste0(base_dir, params$calls_path)
-corpus_path <- paste0(base_dir, params$corpus_path)
-static_path <- paste0(base_dir, params$static_path)
+calls_path <- paste0(params$base_dir, params$calls_path)
+corpus_path <- paste0(params$base_dir, params$corpus_path)
+static_path <- paste0(params$base_dir, params$static_path)
 ```
 
 # Read
@@ -70,9 +69,8 @@ read_fst(corpus_path) %>% as_tibble() -> C_raw
 read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
 
 rebuild <- TRUE
-# We only read the orignal evals_calls file if we don't have a summarized
-# version stored on disk.  NOTE: the heuristic to detect changes is file
-# size. If that fails, manually delete `.lock.fst`
+# We only read the file if we don't have our summarized file on disk.
+# To force reading, set the force_rebuild parameter to true.
 if (file.exists("Data/.lock.fst")) {
   saved <- read.fst("Data/.lock.fst")[[1,1]]
   if (saved == file.size(calls_path)) {
@@ -165,8 +163,8 @@ overview_table(
 
 We recorded `r nb_calls` to eval, out of these, there were `r evalq_calls`
 (`r fmt(ratio(evalq_calls,nb_calls))`) calls to `evalq`, `r eval.parent_calls` 
-(`r fmt(ratio(evalq_calls,nb_calls))`) calls to `eval.parent`,  and
-`r local_calls` (`r fmt(ratio(evalq_calls,nb_calls))`) calls to `local`. 
+(`r fmt(ratio(eval.parent_calls,nb_calls))`) calls to `eval.parent`,  and
+`r local_calls` (`r fmt(ratio(local_calls,nb_calls))`) calls to `local`. 
 
 `r TBL`
 
@@ -294,6 +292,7 @@ overview_table(
 )
 ```
 
+`r TBL`
 
 # Numbers of calls to eval
 
@@ -315,12 +314,12 @@ runs_package %>% datatable()
 ```
 
 
-```{r eval-calls-violin-plot, include=F}
+```{r eval-calls-violin-plot}
 sites_per_package %>%
   ggplot(aes(x = "", y = n, fill = ""), na.rm = TRUE) +
   geom_violin(trim = FALSE, width = 1.7) +
   labs(y = "Eval calls per package") +
-  theme(legend.position = "none") -> G
+  theme(legend.position = "none") 
 
 ggsave(path(PLOT_DIR, "eval_calls_per_packages.pdf"))
 ```
@@ -368,7 +367,7 @@ overview_table(
 
 `r TBL`
 
-```{r include=F}
+```{r echo=FALSE}
 lbl_colour <- rep("black", 11)
 lbl_colour[[4]] <- "transparent"
 E %>%
@@ -377,7 +376,7 @@ E %>%
   scale_x_continuous(breaks = c(0, 1, 2, 3, 4, 5, 10, 30, 100, 300, 1000), trans = "log1p", expand = c(0, 0)) +
   labs(x = "Size (nodes)") +
   theme(text = element_text(size=17),
-        axis.text.x = element_text(color = lbl_colour)) -> G
+        axis.text.x = element_text(color = lbl_colour)) 
 
 E %>% 
   filter(ast_nodes < 25) %>%
@@ -386,7 +385,7 @@ E %>%
   scale_y_continuous(labels = comma) +
   labs(x = "nodes") +
   theme(text = element_text(size=17),  panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(), aspect.ratio = 4/3) -> GG
+        panel.grid.minor.x = element_blank(), aspect.ratio = 4/3) 
 
 
 ggsave(path(PLOT_DIR, "size_loaded_distribution.pdf"))
@@ -419,33 +418,33 @@ overview_table(
 ) -> TBL
 ```
 
+`r TBL`
 
-```{r include=F}
+```{r echo=FALSE}
 E %>%
   filter(opcodes > 50) %>%
   ggplot(aes(x = "", y = opcodes), na.rm = TRUE) +
   geom_violin(trim = FALSE, width = 1, fill = "blue", alpha = 0.3) +
   scale_y_log10(labels = scales::comma) +
   labs(y = "", x = "") +
-  theme(legend.position = "none", text = element_text(size=25)) -> G
+  theme(legend.position = "none", text = element_text(size=25)) 
 
 ggsave(path(PLOT_DIR, "events_per_pack_large.pdf"))
 ```
 
 
-```{r include=F}
+```{r echo=FALSE}
 E %>%
   filter(opcodes > 0) %>% # == 0 if from eval.parent, because we do not count eval loops for it
   filter(opcodes <= 50) %>%
   ggplot(aes(x = "", y = opcodes), na.rm = TRUE) +
   geom_violin(trim = FALSE, width = 1.7, fill = "blue", alpha = 0.3) +
   labs(y = "Instructions", x = "") +
-  theme(legend.position = "none", text = element_text(size=25)) -> G
+  theme(legend.position = "none", text = element_text(size=25)) 
 
 ggsave(path(PLOT_DIR, "events_per_pack_small.pdf"))
 ```
 
-`r TBL`
 
 
 
@@ -454,7 +453,7 @@ ggsave(path(PLOT_DIR, "events_per_pack_small.pdf"))
 Here, we try to have an estimation of how often a call site is exercised per 
 run. If it is often, maybe it is a loop!
 
-```{r loops, include=FALSE}
+```{r loops, echo=FALSE}
 # Which call sites where exercised and how many times, per run.
 exercised <- E %>%
   group_by(file) %>% # group by runs
@@ -480,7 +479,9 @@ triggered %>%
   filter(average < 50) %>%
   ggplot(aes(x = average)) +
   geom_histogram(binwidth = 1, fill = "blue", alpha = 0.3, colour = "black") +
-  theme(text = element_text(size=16), axis.text = element_text(size=20), aspect.ratio = 4/3) -> G
+  theme(text = element_text(size=16), 
+        axis.text = element_text(size=20), 
+        aspect.ratio = 4/3)
 
 ggsave(path(PLOT_DIR, "calls_per_run_per_call_site.pdf"))
 ```
@@ -509,12 +510,12 @@ overview_table(
 
 How diverse are the expressions passed to `eval`? We consider the diversity in types in the resolved expression.
 
-```{r type-diversity, include=F}
+```{r type-diversity, echo=FALSE}
 E %>%
   ggplot(aes(x = fct_rev(fct_infreq(type)), weight=duplicates)) +
   geom_bar() +
   coord_flip() +
-  labs(x = "type") -> G
+  labs(x = "type") 
 
 types <- E %>% count(type, wt=duplicates)
 
