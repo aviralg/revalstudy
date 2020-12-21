@@ -13,10 +13,10 @@ editor_options:
   chunk_output_type: console
 params:
   base_dir: Data/
-  calls_path: package/summarized.fst
+  calls_path: base/summarized.fst
   corpus_path: corpus.fst
   static_path: package-evals-static.csv
-  force_rebuild: FALSE
+  force_rebuild: TRUE
 ---
 
 ```{r setup, include=FALSE}
