@@ -13,7 +13,7 @@ editor_options:
   chunk_output_type: console
 params:
   base_dir: Data/
-  calls_packages_path: summarized-packages.fst
+  calls_packages_path: package/summarized.fst
   corpus_path: corpus.fst
   static_evals_path: package-evals-static.csv
 ---
