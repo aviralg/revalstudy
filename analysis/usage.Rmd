@@ -68,16 +68,15 @@ the input data set with only the columns that we use.
 read_fst(corpus_path) %>% as_tibble() -> C_raw
 read_csv(eval_static_path) %>% semi_join(C_raw, by = "package") -> P
 
-rebuild <- FALSE
+rebuild <- TRUE
 # We only read the orignal evals_calls file if we don't have a summarized
 # version stored on disk.  NOTE: the heuristic to detect changes is file
 # size. If that fails, manually delete `.lock.fst`
 if (file.exists("Data/.lock.fst")) {
   saved <- read.fst("Data/.lock.fst")[[1,1]]
   if (saved == file.size(eval_calls_path)) {
-     read.fst("Data/E.fst") %>% as_tibble() -> E
-  } else {
-    rebuild <- TRUE
+    read.fst("Data/E.fst") %>% as_tibble() -> E
+    rebuild <- FALSE
   }
 }
 if (rebuild) {
@@ -106,6 +105,7 @@ corpus_size <- nrow(C)
 nb_runs <- E %>%
   pull(file) %>%
   n_distinct()
+
 overview_table(
   r("Corpus", corpus_size),
   r("NbRuns", nb_runs)
@@ -171,47 +171,23 @@ the number of call sites with triggered dynamically. The former is larger
 than the latter because code coverage is not perfect.
 
 ```{r exercised-vs-static, include=FALSE}
-stat_evl <- P %>%
-  filter(call_fun_name == "eval") %>%
-  nrow()
-stat_evq <- P %>%
-  filter(call_fun_name == "evalq") %>%
-  nrow()
-stat_evp <- P %>%
-  filter(call_fun_name == "eval.parent") %>%
-  nrow()
-stat_loc <- P %>%
-  filter(call_fun_name == "local") %>%
-  nrow()
+stat_evl <- P %>% filter(call_fun_name == "eval")        %>% nrow()
+stat_evq <- P %>% filter(call_fun_name == "evalq")       %>% nrow()
+stat_evp <- P %>% filter(call_fun_name == "eval.parent") %>% nrow()
+stat_loc <- P %>% filter(call_fun_name == "local")       %>% nrow()
 
 sites_per_variant <- E %>% # src_ref indicates where the call originates from.
   group_by(ev_variant) %>%
   summarize(n = n_distinct(src_ref)) # This the number of distinct sites
 
 tmp <- sites_per_variant %>% filter(ev_variant == "eval")
-dyn_evl <- if (nrow(tmp) == 0) {
-  0
-} else {
-  tmp$n
-}
+dyn_evl <- if (nrow(tmp) == 0) { 0 } else { tmp$n }
 tmp <- sites_per_variant %>% filter(ev_variant == "evalq")
-dyn_evq <- if (nrow(tmp) == 0) {
-  0
-} else {
-  tmp$n
-}
+dyn_evq <- if (nrow(tmp) == 0) { 0 } else { tmp$n }
 tmp <- sites_per_variant %>% filter(ev_variant == "eval.parent")
-dyn_evp <- if (nrow(tmp) == 0) {
-  0
-} else {
-  tmp$n
-}
+dyn_evp <- if (nrow(tmp) == 0) { 0 } else { tmp$n }
 tmp <- sites_per_variant %>% filter(ev_variant == "local")
-dyn_loc <- if (nrow(tmp) == 0) {
-  0
-} else {
-  tmp$n
-}
+dyn_loc <- if (nrow(tmp) == 0) { 0 } else { tmp$n }
 
 overview_table(
   r("Staticeval", stat_evl),
@@ -240,6 +216,7 @@ have higher frequencies. We will later control for this by looking at individual
 call sites.
 
 ```{r ev-dist, include=FALSE}
+
 # The calls per package
 pack_calls <- E %>% count(ev_package, wt = duplicates, sort = TRUE)
 # Create bins at every power of ten
@@ -332,15 +309,16 @@ runs_package %>% datatable()
 ```
 
 
-```{r eval-calls-violin-plot}
+```{r eval-calls-violin-plot, include=F}
 sites_per_package %>%
   ggplot(aes(x = "", y = n, fill = ""), na.rm = TRUE) +
   geom_violin(trim = FALSE, width = 1.7) +
   labs(y = "Eval calls per package") +
-  theme(legend.position = "none")
+  theme(legend.position = "none") -> G
 
 ggsave(path(PLOT_DIR, "eval_calls_per_packages.pdf"))
 ```
+
 
 
 # Amount of code 
@@ -384,7 +362,7 @@ overview_table(
 
 `r TBL`
 
-```{r}
+```{r include=F}
 lbl_colour <- rep("black", 11)
 lbl_colour[[4]] <- "transparent"
 E %>%
@@ -393,7 +371,7 @@ E %>%
   scale_x_continuous(breaks = c(0, 1, 2, 3, 4, 5, 10, 30, 100, 300, 1000), trans = "log1p", expand = c(0, 0)) +
   labs(x = "Size (nodes)") +
   theme(text = element_text(size=17),
-        axis.text.x = element_text(color = lbl_colour)) 
+        axis.text.x = element_text(color = lbl_colour)) -> G
 
 E %>% 
   filter(ast_nodes < 25) %>%
@@ -402,11 +380,12 @@ E %>%
   scale_y_continuous(labels = comma) +
   labs(x = "nodes") +
   theme(text = element_text(size=17),  panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(), aspect.ratio = 4/3)
+        panel.grid.minor.x = element_blank(), aspect.ratio = 4/3) -> GG
 
 
 ggsave(path(PLOT_DIR, "size_loaded_distribution.pdf"))
 ```
+
 
 
 # Amount of computation
@@ -435,32 +414,34 @@ overview_table(
 ```
 
 
-```{r}
+```{r include=F}
 E %>%
   filter(opcodes > 50) %>%
   ggplot(aes(x = "", y = opcodes), na.rm = TRUE) +
   geom_violin(trim = FALSE, width = 1, fill = "blue", alpha = 0.3) +
   scale_y_log10(labels = scales::comma) +
   labs(y = "", x = "") +
-  theme(legend.position = "none", text = element_text(size=25))
+  theme(legend.position = "none", text = element_text(size=25)) -> G
 
 ggsave(path(PLOT_DIR, "events_per_pack_large.pdf"))
 ```
 
 
-```{r}
+```{r include=F}
 E %>%
   filter(opcodes > 0) %>% # == 0 if from eval.parent, because we do not count eval loops for it
   filter(opcodes <= 50) %>%
   ggplot(aes(x = "", y = opcodes), na.rm = TRUE) +
   geom_violin(trim = FALSE, width = 1.7, fill = "blue", alpha = 0.3) +
   labs(y = "Instructions", x = "") +
-  theme(legend.position = "none", text = element_text(size=25))
+  theme(legend.position = "none", text = element_text(size=25)) -> G
 
 ggsave(path(PLOT_DIR, "events_per_pack_small.pdf"))
 ```
 
 `r TBL`
+
+
 
 # Loops
 
@@ -487,18 +468,18 @@ triggered <- E %>%
     average = n / n_runs
   ) %>%
   arrange(desc(average))
-```
 
-```{r}
 # Plot the low trigger counts...
 triggered %>%
   filter(average < 50) %>%
   ggplot(aes(x = average)) +
   geom_histogram(binwidth = 1, fill = "blue", alpha = 0.3, colour = "black") +
-  theme(text = element_text(size=16), axis.text = element_text(size=20), aspect.ratio = 4/3)
+  theme(text = element_text(size=16), axis.text = element_text(size=20), aspect.ratio = 4/3) -> G
 
 ggsave(path(PLOT_DIR, "calls_per_run_per_call_site.pdf"))
 ```
+
+
 
 ```{r, include = FALSE}
 bins <- cut(triggered$average, breaks = c(0, 50, 100, 250, 500, 1000, 1500, 2000, 3000), include.lowest = TRUE)
@@ -522,12 +503,12 @@ overview_table(
 
 How diverse are the expressions passed to `eval`? We consider the diversity in types in the resolved expression.
 
-```{r type-diversity}
+```{r type-diversity, include=F}
 E %>%
   ggplot(aes(x = fct_rev(fct_infreq(type)), weight=duplicates)) +
   geom_bar() +
   coord_flip() +
-  labs(x = "type")
+  labs(x = "type") -> G
 
 types <- E %>% count(type, wt=duplicates)
 
@@ -535,7 +516,8 @@ symbs <- types %>% filter(type == "symbol") %>% .$n
 languages <- types %>% filter(type == "language") %>% .$n
 expressions <- types %>% filter(type == "expression") %>% .$n
 
-ggplot2_symbs <- E %>% filter(ev_package == "ggplot2") %>% count(type, wt=duplicates) %>% filter(type == "symbol") %>% .$n
+ggplot2_symbs <- E %>% filter(ev_package == "ggplot2") %>% 
+  count(type, wt=duplicates) %>% filter(type == "symbol") %>% .$n
 
 overview_table(
   r("Symbolpercent", ratio(symbs, nb_calls)),
@@ -548,6 +530,7 @@ overview_table(
 
 
 `r TBL`
+
 
 
 ```{r include=FALSE}
