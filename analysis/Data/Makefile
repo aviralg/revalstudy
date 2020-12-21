@@ -11,6 +11,7 @@ FILES := \
   package/summarized.fst \
   package/summarized-externals.fst \
   package/undefined.fst \
+  package-snapshot/evals-static.csv \
   package-snapshot/summarized.fst \
   package-snapshot/summarized-externals.fst \
   package-snapshot/undefined.fst \
@@ -34,6 +35,8 @@ corpus.fst:
 	$(call CURL,$@,$@)
 
 package/evals-static.csv:
+	$(call CURL,run/package-evals-static/package-evals-static.csv,$@)
+package-snapshot/evals-static.csv:
 	$(call CURL,run/package-evals-static/package-evals-static.csv,$@)
 base/evals-static.csv:
 	$(call CURL,run/base-evals-static/base-evals-static.csv,$@)
