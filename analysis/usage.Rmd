@@ -13,9 +13,10 @@ editor_options:
   chunk_output_type: console
 params:
   base_dir: Data/
-  calls_packages_path: package/summarized.fst
+  calls_path: base/summarized.fst
   corpus_path: corpus.fst
-  static_evals_path: package-evals-static.csv
+  static_path: package-evals-static.csv
+  force_rebuild: TRUE
 ---
 
 ```{r setup, include=FALSE}
@@ -53,9 +54,9 @@ theme_set(theme_minimal())
 create_tags(path(TAGS_DIR, "usage_metrics.tex"), prefix = "", default = TRUE)
 
 base_dir <- params$base_dir
-eval_calls_path <- paste0(base_dir, params$calls_packages_path)
+calls_path <- paste0(base_dir, params$calls_path)
 corpus_path <- paste0(base_dir, params$corpus_path)
-eval_static_path <- paste0(base_dir, params$static_evals_path)
+static_path <- paste0(base_dir, params$static_path)
 ```
 
 # Read
@@ -66,7 +67,7 @@ the input data set with only the columns that we use.
 
 ```{r read, message=TRUE, include=F}
 read_fst(corpus_path) %>% as_tibble() -> C_raw
-read_csv(eval_static_path) %>% semi_join(C_raw, by = "package") -> P
+read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
 
 rebuild <- TRUE
 # We only read the orignal evals_calls file if we don't have a summarized
@@ -74,13 +75,18 @@ rebuild <- TRUE
 # size. If that fails, manually delete `.lock.fst`
 if (file.exists("Data/.lock.fst")) {
   saved <- read.fst("Data/.lock.fst")[[1,1]]
-  if (saved == file.size(eval_calls_path)) {
+  if (saved == file.size(calls_path)) {
     read.fst("Data/E.fst") %>% as_tibble() -> E
     rebuild <- FALSE
   }
 }
-if (rebuild) {
-  read_fst(eval_calls_path) %>% as_tibble() -> E_raw
+if (params$force_rebuild | rebuild) {
+  read_fst(calls_path) %>% as_tibble() -> E_raw
+  
+  if (!"direct_interpreter_eval" %in% names(E_raw)) { # We are dealing with
+    E_raw %>% mutate(direct_interpreter_eval=0) -> E_raw # partial data.
+  } #                                                  We create a fake column.
+  
   E_raw %>% select(
     run_package = package, #      The package which was run to trigger the eval
     ev_variant = eval_function, # Which eval variant was called
@@ -95,7 +101,7 @@ if (rebuild) {
   ) %>% #                                interpreter during eval (non-recursive).
    mutate(across(where(is_character),as_factor)) -> E 
   write.fst(E, "Data/E.fst")
-  sz <- file.size(eval_calls_path) %>% as_tibble()
+  sz <- file.size(calls_path) %>% as_tibble()
   write.fst(sz,"Data/.lock.fst")
 }
 

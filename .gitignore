@@ -101,3 +101,4 @@ analysis/Data/*
 !analysis/Data/Makefile
 /analysis/html/
 analysis/Data
+analysis/usage.html
