@@ -12,8 +12,8 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: /var/lib/R/project-evalR
-  calls_packages_path: /run/package-evals-traced.10/summarized-packages.fst
+  base_dir: Data
+  calls_packages_path: /package/summarized.fst
 ---
 
 ```{r setup, include=FALSE}
@@ -51,7 +51,7 @@ source("inc/paths.R")
 theme_set(theme_minimal())
 create_tags(path(TAGS_DIR, "environments.tex"), prefix = "", default = TRUE)
 
-source("insights.R", local = knitr::knit_global())
+source("inc/insights.R", local = knitr::knit_global())
 ```
 
 # Loading datafiles
@@ -59,8 +59,12 @@ source("insights.R", local = knitr::knit_global())
 ```{r loading_fst}
 eval_calls_path <- paste0(params$base_dir, params$calls_packages_path)
 
+
 eval_calls <- read_fst(eval_calls_path) %>%
   as_tibble()
+
+
+stopifnot(!is.na(eval_calls$eval_call_srcref))
 ```
 
 # Description of the data files
@@ -176,6 +180,24 @@ eval_calls_absolute %>%
   filter(envir_distinct == 2) %>%
   select(eval_call_expression, environment_class, envir_distinct)
 ```
+
+Now, we can further decompose the environment class to get more insights. It has three components:
+
+- how many times it has been wrapped in `new`
+- how far (in terms of hierarchy of environments) it is from the callee
+- does it correspond to any distinguished environment? ( `global`, `empty`, `base`, `callee`, or some package environment
+
+```{r}
+# new+new+new+new+caller-2-global
+# str_match("caller-2-", "((?:new\\+)*)caller-([[:digit:]]+)-(.*)")
+
+
+env_calls <- eval_calls_absolute %>%
+  extract(environment_class, regex = "((?:new\\+)*)caller-([[:digit:]]+)-(.*)", into = c("new_env", "hierarchy", "specific_env"), remove = FALSE, convert = TRUE) %>%
+  mutate(new_env = na_if(new_env, ""), specific_env = na_if(specific_env, ""), new_env = str_count(new_env, fixed("new+"))) %>%
+  mutate(specific_env = if_else(specific_env == "emptyR_EmptyEnv", "empty", specific_env))
+```
+
 
 # `envir` is an integer
 
