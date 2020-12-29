@@ -25,7 +25,7 @@ FILES := \
   kaggle/summarized-externals.fst \
   kaggle/undefined.fst \
   kaggle/evals-static.csv \
-  kaggle/kernels.csv
+  kaggle/kernel.csv
 
 .PHONY: all
 all: $(FILES)
@@ -45,8 +45,8 @@ base/evals-static.csv:
 	$(call CURL,run/base-evals-static/base-evals-static.csv,$@)
 kaggle/evals-static.csv:
 	$(call CURL,run/kaggle-kernels/kaggle-evals-static.csv,$@)
-kaggle/kernels.csv:
-	$(call CURL,run/kaggle-kernels/kernels.csv,$@)
+kaggle/kernel.csv:
+	$(call CURL,run/kaggle-kernels/kernel.csv,$@)
 
 package-snapshot/%:
 	$(call CURL,run/preprocess/$@,$@)
