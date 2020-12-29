@@ -8,6 +8,7 @@ endef
 
 FILES := \
   corpus.fst \
+  corpus-all.fst \
   package/evals-static.csv \
   package/summarized.fst \
   package/summarized-externals.fst \
@@ -23,7 +24,8 @@ FILES := \
   kaggle/summarized.fst \
   kaggle/summarized-externals.fst \
   kaggle/undefined.fst \
-  kaggle/evals-static.csv
+  kaggle/evals-static.csv \
+  kaggle/kernels.csv
 
 .PHONY: all
 all: $(FILES)
@@ -32,7 +34,7 @@ all: $(FILES)
 clean:
 	-rm -f $(FILES)
 
-corpus.fst:
+corpus%.fst:
 	$(call CURL,$@,$@)
 
 package/evals-static.csv:
@@ -43,6 +45,8 @@ base/evals-static.csv:
 	$(call CURL,run/base-evals-static/base-evals-static.csv,$@)
 kaggle/evals-static.csv:
 	$(call CURL,run/kaggle-kernels/kaggle-evals-static.csv,$@)
+kaggle/kernels.csv:
+	$(call CURL,run/kaggle-kernels/kernels.csv,$@)
 
 package-snapshot/%:
 	$(call CURL,run/preprocess/$@,$@)
