@@ -192,10 +192,18 @@ Now, we can further decompose the environment class to get more insights. It has
 # str_match("caller-2-", "((?:new\\+)*)caller-([[:digit:]]+)-(.*)")
 
 
-env_calls <- eval_calls_absolute %>%
+env_calls <- eval_calls_absolute %>% ungroup() %>%
   extract(environment_class, regex = "((?:new\\+)*)caller-([[:digit:]]+)-(.*)", into = c("new_env", "hierarchy", "specific_env"), remove = FALSE, convert = TRUE) %>%
   mutate(new_env = na_if(new_env, ""), specific_env = na_if(specific_env, ""), new_env = str_count(new_env, fixed("new+"))) %>%
   mutate(specific_env = if_else(specific_env == "emptyR_EmptyEnv", "empty", specific_env))
+```
+
+_ggplot2_ again is responsible for this `new.env` 4 times!
+
+```{r}
+env_calls %>% filter(!is.na(new_env), specific_env == "global") %>% count(new_env, wt = nb_ev_calls, sort = TRUE)
+
+env_calls %>% filter(new_env == 4, specific_env == "global") %>% count(eval_source, wt = nb_ev_calls, sort = TRUE)
 ```
 
 
