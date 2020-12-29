@@ -1,4 +1,5 @@
-BASE_URL := https://prl3.prl.fit.cvut.cz/mnt/ocfs_vol_00/project-evalr/evalr-experiment
+HOST := prl2
+BASE_URL := https://$(HOST).prl.fit.cvut.cz/mnt/ocfs_vol_00/project-evalr/evalr-experiment
 define CURL
   [ -d $(dir $(2)) ] || mkdir -p $(dir $(2)) && \
   curl --progress-bar --retry 99 --retry-max-time 0 -C - -o $(2).part $(BASE_URL)/$(1) && \
@@ -7,6 +8,7 @@ endef
 
 FILES := \
   corpus.fst \
+  corpus-all.fst \
   package/evals-static.csv \
   package/summarized.fst \
   package/summarized-externals.fst \
@@ -22,7 +24,8 @@ FILES := \
   kaggle/summarized.fst \
   kaggle/summarized-externals.fst \
   kaggle/undefined.fst \
-  kaggle/evals-static.csv
+  kaggle/evals-static.csv \
+  kaggle/kernel.csv
 
 .PHONY: all
 all: $(FILES)
@@ -31,7 +34,7 @@ all: $(FILES)
 clean:
 	-rm -f $(FILES)
 
-corpus.fst:
+corpus%.fst:
 	$(call CURL,$@,$@)
 
 package/evals-static.csv:
@@ -42,6 +45,8 @@ base/evals-static.csv:
 	$(call CURL,run/base-evals-static/base-evals-static.csv,$@)
 kaggle/evals-static.csv:
 	$(call CURL,run/kaggle-kernels/kaggle-evals-static.csv,$@)
+kaggle/kernel.csv:
+	$(call CURL,run/kaggle-kernels/kernel.csv,$@)
 
 package-snapshot/%:
 	$(call CURL,run/preprocess/$@,$@)

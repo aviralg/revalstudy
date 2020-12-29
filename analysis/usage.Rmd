@@ -49,7 +49,7 @@ knitr::opts_chunk$set(
 
 source("inc/paths.R")
 source("inc/latextags.R")
-source("inc/setup.R")
+source("inc/functions.R")
 theme_set(theme_minimal())
 create_tags(path(TAGS_DIR, "usage_metrics.tex"), prefix = "", default = TRUE)
 

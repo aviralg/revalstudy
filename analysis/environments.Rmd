@@ -46,7 +46,7 @@ library(fs)
 library(DT)
 
 source("inc/latextags.R")
-source("inc/setup.R")
+source("inc/functions.R")
 source("inc/paths.R")
 theme_set(theme_minimal())
 create_tags(path(TAGS_DIR, "environments.tex"), prefix = "", default = TRUE)

@@ -34,7 +34,7 @@ knitr::opts_chunk$set(
 
 # TODO: move into the package
 source("inc/paths.R")
-source("inc/setup.R")
+source("inc/funtions.R")
 source("inc/latextags.R")
 
 options(repos="https://cran.r-project.org")
