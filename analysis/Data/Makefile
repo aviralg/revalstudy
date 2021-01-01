@@ -34,7 +34,9 @@ all: $(FILES)
 clean:
 	-rm -f $(FILES)
 
-corpus%.fst:
+corpus.fst:
+	$(call CURL,$@,$@)
+corpus-all.fst:
 	$(call CURL,$@,$@)
 
 package/evals-static.csv:
