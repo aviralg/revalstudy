@@ -2,14 +2,25 @@
 # PATHS
 ################################################################################
 
-DATA_DIR  <- path("Data")
+DATA_DIR  <- params$base_dir
+PACKAGE_DATA_DIR  <- path(DATA_DIR, "package")
+KAGGLE_DATA_DIR  <- path(DATA_DIR, "kaggle")
+
 PAPER_DIR <- path("..", "paper")
-# RUN_DIR   <- path(params$base_dir, "run")
 PLOT_DIR  <- path(PAPER_DIR, "img")
 TAGS_DIR  <- path(PAPER_DIR, "tag")
 
 if (!dir_exists(PLOT_DIR)) dir_create(PLOT_DIR)
 if (!dir_exists(TAGS_DIR)) dir_create(TAGS_DIR)
+
+CORPUS_ALL_FILE <- path(DATA_DIR, "corpus-all.fst")
+CORPUS_FILE <- path(DATA_DIR, "corpus.fst")
+
+PACKAGE_SUM_CALLS_FILE <- path(PACKAGE_DATA_DIR, "summarized.fst")
+PACKAGE_EVALS_STATIC_FILE <-path(PACKAGE_DATA_DIR, "evals-static.csv")
+
+KAGGLE_KERNEL_FILE <- path(KAGGLE_DATA_DIR, "kernel.csv")
+KAGGLE_EVALS_STATIC_FILE <- path(KAGGLE_DATA_DIR, "evals-static.csv")
 
 #R_DIR      <- path(params$base_dir, "R-4.0.2")
 #R_LIBS_DIR <- path(params$base_dir, "library", "4.0")

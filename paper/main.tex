@@ -459,82 +459,62 @@ will be analyzed and how we implemented our dynamic analysis.
 
 \subsection{Corpus}
 
-Our corpus is assembled out of two set of programs, one consisting of
-popular libraries obtained from the Comprehensive R Archive
-Network\footnote{CRAN is the largest repository of R code with over
-\CorpusAllCranRnd packages. It receives about 6 new package
-submissions a day~\cite{Ligges2017}. Unlike other open code
-repositories such as GitHub, CRAN is a curated repository. Each
-submitted package must abide to a number of well-formedness rules that
-are automatically checked asserting certain quality. Most relevant for
-this work is that all of the runnable code is tested and only a
-successfully running package is admitted in the archive.} (we refer to
-it as {\bf CRAN}) and the other from the Kaggle data science
-competition (written {\bf Kaggle}). The intent here is to contrast
-code written by experienced developpers (CRAN) with code authored by
-typical end users of the language (Kaggle).
+Our corpus is assembled out of two set of programs, one consisting of libraries
+obtained from \emph{CRAN} (Comprehensive R Archive Network\footnote{CRAN is the
+  largest repository of R code with over \CorpusAllCranRnd packages. It receives
+  about 6 new package submissions a day~\cite{Ligges2017}}) and the other from
+the \emph{Kaggle} data science competition website\footnote{\cf
+  \url{https://kaggle.com}}. The intent here is to contrast code written by
+experienced developers (CRAN) with code authored by typical end users of the
+language (Kaggle). Another difference is that CRAN is a curated repository. Each
+submitted package must abide to a number of well-formedness rules that are
+automatically checked asserting certain quality. Most relevant for this work is
+that all of the runnable code is tested and only a successfully running package
+is admitted in the archive. Kaggle on the other hand is more like GitHub, anyone
+can submit any code. All the code in our corpus is runnable, \ie we have scripts
+that invoke the CRAN packages and the Kaggle programs have input data.
 
-All the code in our is runnable, i.e. we have scripts that invoke the
-CRAN packages and the Kaggle programs have input data. Clearly code
-coverage will vary; as is the case for any dynamic analysis, the
-quality of results is predicated on how representative the executions
-we can observe are with respect to all possible runs of the corpus. To
-mitigate the threat to validity attached to limited coverage, we
-obtain clients that will generate multiple \emph{runs} of CRAN
-packages. In this context, a run is the execution of a CRAN package or
-Kaggle program with a particular set of input values.
+% Clearly code coverage will vary; as is the case for any dynamic analysis, the
+% quality of results is predicated on how representative the executions we can
+% observe are with respect to all possible runs of the corpus. To mitigate the
+% threat to validity attached to limited coverage, we obtain clients that will
+% generate multiple \emph{runs} of CRAN packages. In this context, a run is the
+% execution of a CRAN package or Kaggle program with a particular set of input
+% values.
 
-\mypara{CRAN Packages.} The packages that are included
-in this study are the top \CorpusPackages packages based on their
-reverse dependencies. The set of reverse dependencies for some package
-\emph{P} is transitive closure of packages that import \emph{P}. The
-hypothesis underlying that choice is that packages with a large set of
-reverse depencies are likely to be higher in quality and their tests
-will provide better coverage. The packages are implemented in R with
-some C and Fortran code. Using \c{cloc}, we measure a total
-\CorpusRCodeRnd lines of R code and \CorpusNativeCodeRnd lines of
-native code. For each package, we use its runnable code (tests, etc.)
-to compute code coverage. On average, the cde coverage is
-\CorpusMeanExprCoverage which is acceptable without being exhaustive.
-Figure~\ref{fig:corpus} shows these packages, the size of the dots
-reflects the project's size in lines of code. The x-axis indicates
-code coverage in percents and the y-axis gives the number of call
-sites to \eval that were traced, in log scale. Dotted lines indicate
-means. Packages with over \CorpusEvalsPackageTreshold eval call sites
-are named.
+% \begin{figure}[!h]\centering\includegraphics[width=.7\linewidth]
+%   {corpus.pdf}\caption{CRAN packages}\label{fig:corpus}
+% \end{figure}
 
-\begin{figure}[!h]\centering\includegraphics[width=.7\linewidth]
-  {corpus.pdf}\caption{CRAN packages}\label{fig:corpus}
-\end{figure}
+\mypara{CRAN Packages.} We used \CranAllPackages packages. These are almost all
+of the available packages except for a few that we could not install due to
+missing native dependencies. The packages are implemented in R with native C and
+Fortran code. Using \c{cloc}, we measure a total \CranAllRCodeRnd lines of R
+code and \CranAllNativeCodeRnd lines of native code. Out of these packages,
+\CranPackages (\CranPackagesRatio) call eval. These packages represent
+\CranCodeRatio of the code size.
 
-To analyze a package, we need client code that invokes its methods.
-There are three sources of built-in runnable code that come with each
-CRAN package: \emph{tests, examples} and \emph{vignettes}. They are,
-respectively, traditional unit tests, code snippets from the
-documentation, and long-form use-cases written in Rmarkdown. Examples
-and vignettes are automatically extracted and turned into scripts,
-their input is bundled with the package. Most tests had to be discared
-due to a limitation of our pipeline: the \c{testthat} harness uses
-\eval and thus causes the entire test to register as an \eval call.
-The selected packages are bundled with \CorpusPackagePrograms
-programs; \CorpusExamplesProgramsRnd examples and
-\CorpusVignettesProgramsRnd vignettes.
+To analyze a package, we need client code that invokes its methods. There are
+three sources of built-in runnable code that come with each CRAN package:
+\emph{tests, examples} and \emph{vignettes}. They are, respectively, traditional
+unit tests, code snippets from the documentation, and long-form use-cases
+written in \LaTeX\xspace or Markdown with executable snippets of R code.
+Examples and vignettes are automatically extracted and turned into scripts,
+their input is bundled with the package. Tests are directly runnable. Together
+we there are \CranRunnableScripts scripts that contain \CranRunnableCode lines
+of code (\CranRunnableCodeExamplesRnd in examples, \CranRunnableCodeVignettesRnd
+in vignettes and \CranRunnableCodeTestsRnd in tests).
 
-\mypara{Kaggle Scripts.} Kaggle is an online platform
-for data-science and machine-learning. The website allows people to
-submit data-analysis problems, users compete to find the best
-solution. The solutions are uploaded to the platform as either plain
-scripts or notebooks. We chose one of the most popular competition,
-predicting the survival of passengers the
-Titanic\footnote{\url{https://www.kaggle.com/c/titanic}}. Unlike CRAN,
-Kaggle is not curated. After downloading the \CorpusKaggle solutions
-and extracting the R code, we found that \CorpusDuplicatedKaggle were
-duplicates. From the remaining \CorpusRunnableKaggle solutions,
-\CorpusFailedKaggle failed to execute. Next to various runtime
-exceptions, common problems were parse errors and misspelled package
-names. The final set contains \CorpusFinishedKaggle programs
-implemented in \CorpusFinishedKaggleCodeRnd lines of R code.
-
+\mypara{Kaggle Scripts.} Kaggle is an online platform for data-science and
+machine-learning. The website allows people to submit data-analysis problems,
+users compete to find the best solution. The solutions, called \emph{kernels},
+are uploaded to the platform as either plain scripts or notebooks. We obtained
+\KaggleKernels kernels. Since Kaggle is not a curated repository, we first had
+to remove duplicates. We used SHA-1 hash to identify \KaggleDuplicates
+whole-file copies. The remaining \KaggleUnique kernels represent unique
+solutions to \KaggleCompetitions Kaggle competition. Together, they contain
+\KaggleCode lines of R code. Out of the \KaggleUniqueRnd kernels, only
+\KaggleWithEvals contain calls to eval.
 
 
 \subsection{Analysis Pipeline}
