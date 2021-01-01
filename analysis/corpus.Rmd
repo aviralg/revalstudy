@@ -105,6 +105,8 @@ KAGGLE <- filter(ALL_KAGGLE, evals > 0)
 
 ## Overview
 
+### Cran
+
 ```{r}
 cran_all_funs <- sum(ALL_CRAN$funs_public) + sum(ALL_CRAN$funs_private)
 cran_funs <- sum(CRAN$funs_public) + sum(CRAN$funs_private)
@@ -113,8 +115,10 @@ cran_code <- sum(CRAN$package_code)
 cran_all_code <- sum(ALL_CRAN$package_code)
 cran_evals <- CRAN$evals
 cran_evals_hit <- CRAN$evals_hit
+cran_runnable_code <- sum(ALL_CRAN$runnable_code)
 
 overview_table(
+  r("CRAN available packages", 16000),#length(available.packages()[,1])),
   r("CRAN all packages", ALL_CRAN),
   r("CRAN packages", CRAN),
   r("CRAN packages ratio", ratio(CRAN, ALL_CRAN)),
@@ -132,7 +136,7 @@ overview_table(
   r("CRAN hit eval call sites", sum(cran_evals_hit)),
   r("CRAN hit eval call sites avg ratio", percent(mean(cran_evals_hit/cran_evals))),
   r("CRAN runnable scripts", sum(ALL_CRAN$runnable_files)),
-  r("CRAN runnable code", sum(ALL_CRAN$runnable_code)),
+  r("CRAN runnable code", cran_runnable_code),
   r("CRAN runnable code examples", sum(ALL_CRAN$runnable_code_examples)),
   r("CRAN runnable code tests", sum(ALL_CRAN$runnable_code_tests)),
   r("CRAN runnable code vignettes", sum(ALL_CRAN$runnable_code_vignettes)),
@@ -140,9 +144,6 @@ overview_table(
 ```
 
 ### Kaggle
-
-```{r}
-```
 
 ```{r}
 kaggle <- distinct(ALL_KAGGLE, hash, .keep_all=TRUE)
@@ -158,6 +159,14 @@ overview_table(
   r("Kaggle competitions", count(kaggle, competition)),
   r("Kaggle with evals", kaggle_evals),
   r("Kaggle with evals code", ratio(kaggle_evals_code, kaggle_code))
+)
+```
+
+### All
+
+```{r}
+overview_table(
+  r("Corpus code", kaggle_code + cran_runnable`_code)
 )
 ```
 
