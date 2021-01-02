@@ -12,10 +12,10 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: Data/
-  calls_path: base/summarized.fst
-  corpus_path: corpus.fst
-  static_path: package-evals-static.csv
+  base_dir: Data/package/
+  calls_path: summarized.fst
+  corpus_path: ../corpus.fst
+  static_path: evals-static.csv
   force_rebuild: TRUE
 ---
 
@@ -81,10 +81,6 @@ if (file.exists("Data/.lock.fst")) {
 if (params$force_rebuild | rebuild) {
   read_fst(calls_path) %>% as_tibble() -> E_raw
   
-  if (!"direct_interpreter_eval" %in% names(E_raw)) { # We are dealing with
-    E_raw %>% mutate(direct_interpreter_eval=0) -> E_raw # partial data.
-  } #                                                  We create a fake column.
-  
   E_raw %>% select(
     run_package = package, #      The package which was run to trigger the eval
     ev_variant = eval_function, # Which eval variant was called
@@ -95,7 +91,7 @@ if (params$force_rebuild | rebuild) {
     arg_size = expr_resolved_length, #   Size in characters of argument 
     ast_nodes = expr_resolved_nodes, #   Size in AST Nodes
     type = expr_resolved_type_tag,   #   Argument type
-    opcodes = direct_interpreter_eval #  Count of the AST nodes traversed by the
+    opcodes = interp_eval #  Count of the AST nodes traversed by the
   ) %>% #                                interpreter during eval (non-recursive).
    mutate(across(where(is_character),as_factor)) -> E 
   write.fst(E, "Data/E.fst")
@@ -427,7 +423,7 @@ E %>%
   geom_violin(trim = FALSE, width = 1, fill = "blue", alpha = 0.3) +
   scale_y_log10(labels = scales::comma) +
   labs(y = "", x = "") +
-  theme(legend.position = "none", text = element_text(size=25)) 
+  theme(legend.position = "none", text = element_text(size=25))
 
 ggsave(path(PLOT_DIR, "events_per_pack_large.pdf"))
 ```
