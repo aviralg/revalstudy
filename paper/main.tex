@@ -462,8 +462,9 @@ will be analyzed and how we implemented our dynamic analysis.
 Our corpus is assembled out of two set of programs, one consisting of libraries
 obtained from \emph{CRAN} (Comprehensive R Archive Network\footnote{CRAN is the
   largest repository of R code with almost \CranAvailablePackagesRnd packages.
-  It receives about 6 new package submissions a day~\cite{Ligges2017}}) and the
-other from the \emph{Kaggle} data science competition website\footnote{\cf
+  It receives about 6 new package submissions a day~\cite{Ligges2017}. \cf
+  \url{https://cran.r-project.org/web/packages/index.html}}) and the other from
+the \emph{Kaggle} data science competition website\footnote{\cf
   \url{https://kaggle.com}}. The intent here is to contrast code written by
 experienced developers (CRAN) with code authored by typical end users of the
 language (Kaggle). Another difference is that CRAN is a curated repository. Each
@@ -519,91 +520,106 @@ solutions to \KaggleCompetitions Kaggle competition. Together, they contain
 
 \subsection{Analysis Pipeline}
 
-The results presented in this paper are the result of an automated
-analysis pipeline that acquires the code of packages, extract
-metadata, executes programs, traces their behavior and summarizes the
-observations. Figure~\ref{fig:pipeline} shows the main steps of the
-pipeline along with approximate time to execute each step, the data
-size, and the number of elements manipulated by the stage. Timings are
-for runs on an Intel Xeon 6140, 2.30GHz with 72 cores and 256GB of
-RAM.
+The results presented in this paper are the result of an automated analysis
+pipeline that acquires the code of packages, extract metadata, executes
+programs, traces their behavior and summarizes the observations.
+Figure~\ref{fig:pipeline} shows the main steps of the pipeline along with
+approximate time to execute each step, the data size, and the number of elements
+manipulated by the stage. Timings are for runs on a cluster of three servers
+with Intel Xeon 6140, 2.30GHz with 72 cores and 256GB of RAM using a shared OCFS
+network storage.
 
 \begin{figure}[!h]\hspace{-5mm}
   \includegraphics[width=1.05\linewidth]{pipeline.pdf}
-  \caption{Analysis Pipeline}\label{fig:pipeline}
+  \caption{Analysis Pipeline UPDATE!!}\label{fig:pipeline}
 \end{figure}
 
-The first step in the pipeline consist of downloading CRAN packages
-along with their dependencies and acquiring Kaggle programs with the
-help of a web crawler. The second step, is to compute code size and
-coverage metrics for the CRAN packages (we use the \covr package for
-coverage). The third step consist in extracting runnable programs from
-packages: i.e. the tests, examples and vignettes. Each extracted
-program is wrapped into a call to our dynamic analyzer --- the tool is
-called \emph{evil} for \underline{ev}al \underline{i}nspection
-\underline{l}ibrary. This step is needed to ensure that we record
-\eval usage only for the target package. Without this, the data would
-include eval calls from the unit testing frameworks as well as from
-bootstrapping R virtual machine itself. To avoid any interference,
-each program is run in its own R instance.
-The fourth step in the pipeline is to perform dynamic analysis for
-each run of a CRAN package or Kaggle program.
+\noindent The pipeline has the following steps:
+\begin{compactenum}
+  \item \emph{Download.} The first step consists of downloading and installing
+  CRAN packages and acquiring Kaggle corpus. We try to install all available
+  CRAN packages. This is somewhat complicated by the fact that many of packages
+  depend on native libraries, but these dependencies are not explicitly stated
+  in the package description and thus it is hard to automate. For Kaggle we use
+  a web crawler to get the programs and the a Kaggle official command line tool
+  to download the datasets.
+  \item \emph{Runnable code extraction.} Next step is to extract runnabale code.
+  For CRAN package we use \genthat~\cite{issta18}, a tool which converts
+  runnable code snippets from package documentation and vignettes as well as R
+  tests into standalone executable scripts. For Kaggle programs that are not
+  already R scripts, we use \c{rmarkdown} and \c{knitr} R packages to extract
+  the runnable code from the Rmarkdown or the Jupyter notebook formats
+  respectively. Duplicated Kaggle programs are removed. Each of the extracted
+  script is wrapped into a call to our dynamic analyzer so we only record eval
+  usage triggered by running th script. Without this, the data would include
+  eval calls from the unit testing frameworks as well as from bootstrapping R
+  virtual machine itself.
+  \item \emph{Tracing.} With the scripts ready, we run our dynamic analysis that
+  traces the calls to eval and captures other runtime information. For the CRAN
+  packages we run two configurations:
+  \begin{inparaenum}[(1)]
+    \item all of the \CranRunnableScriptsRnd scripts while tracing calls to eval
+    originating in any of the \CranAllPackages installed CRAN package, and
+    \item a random selection of 1/4 of the scripts while tracing only eval calls
+    originating in the core R packages that come bundled with the language.
+  \end{inparaenum}
+  The reason for this split is that the core R packages are intertwined with the
+  language implementation and the usage is different form the user written
+  packages hosted on CRAN. For Kaggle, we only trace the eval calls that
+  originate in the programs themselves. To avoid any interference, each program
+  is run in isolation, in its own R instance.
+  \item \emph{Analysis.} In the final step, the output from the dynamic analysis
+  is merged, cleaned and summarized in the post-processing phase by custom R
+  scripts. The summarized data is then analyzed in RMarkdown notebooks to gather
+  insights. Apart from the figures, the data points included in the paper are
+  also generated by RMarkdown notebooks as \LaTeX macros.
+\end{compactenum}
 
-The dynamic analyzer builds upon the dynamic analysis framework,
-\instrumentr that we have implemented to enable us to write dynamic
-analysis logic in R. \instrumentr serves as an intermediary between
-\rdyntrace and \evil, it intercepts the hooks exposed by \rdyntrace
-and attaches R functions exported by \evil as callbacks. The \evil
-callbacks execute on corresponding interpreter events.
+The code extraction and tracing steps of the pipeline are run in parallel on
+three servers using GNU parallel~\cite{GNUparallel}. To make sure, all three
+servers have identical environment, we use docker images that have all the
+dependencies installed. The pipeline is implemented in 500 lines of Makefile and
+3K lines of auxiliary R and shell scripts. Their main function is to gracefully
+handle and report failures across large-scale program runs which greatly aids
+debugging of the pipeline.
 
+\subsection{Dynamic Analysis}
 
-The data extracted by \evil from each program is
-concatenated, cleaned and summarized in the post-processing phase by
-custom R scripts. Finally, the summarized data is analyzed in
-RMarkdown notebooks to gather insights. Apart from the figures, the
-data points included in the paper are also generated by RMarkdown
-notebooks as latex macros.
+For this study we need two things: information about calls to eval and related
+functions and low-level data such as object allocation and deallocation and
+side-effects that happen during eval. The former we can get by injecting code to
+the corresponding functions at runtime. For the latter we use
+\rdyntrace~\cite{oopsla19a}. It is a modified R virtual machine based on
+GNU R 4.0.2 that exposes a number of hooks allowing us to get low-level
+information about the R interpreter. \rdyntrace only works with the R
+interpreter and not the byte-code compiler. However, this does not affect the
+result since the compiler does not optimize eval calls.
 
+We use source location to uniquely identify eval call sites. R only retains
+source references at the top-level block expressions. A nested call such as
+\c{try(eval(x))} does not have a source reference for the \c{eval(x)}. To work
+around this, we impute source locations for eval call sites at runtime, by
+traversing functions' AST and attaching source reference attribute manually.
 
-The \emph{evil} framework is implemented as a R package in 2K lines of
-R and 400 lines of C++ code. \instrumentr is an R package implemented
-in 2.5K lines of R and 6K lines of C++ code. It internally uses a
-modified R interpreter, \rdyntrace~\cite{oopsla19a}, that exposes
-hooks from within the interpreter implementation for events of
-interest.
+The dynamic analysis is implemented as a R package in 1.5K lines of R code and
+2K lines of C++.
 
-All steps of this pipeline are parallelized using GNU
-parallel~\cite{GNUparallel} and orchestrated by GNU make. To schedule
-and parallelize extraction and analysis of programs, we use the \runr
-package. Furthermore, \runr gracefully handles and reports failures
-across large-scale program runs which greatly aids debugging of the
-analysis pipeline.
+\mypara{Limitations.}
+%
+% We turn off the bytecode compiler for this study. The bytecode
+% compiler can also call \eval.
+%
+We do not get source locations for \UndefinedEvalsRnd UPDATE!! \eval calls. In
+these cases \eval is either passed as an argument to a higher-order functions or
+is defined in a function returned by a higher-order function, or it can be a
+generated called from package native code. However, this is a meager
+\PercentUndefinedEval UPDATE!! of all \eval calls and is unlikely to affect our
+analysis. We ignore calls to the native \eval function exposed by R. We also
+ignore the \c{rlang::tidy_eval} function which uses native \eval internally
+because \c{rlang} is used to implement a DSL for data analysis in R. It
+introduces a new first-class promise object called \c{quosure} for which it
+implements special evaluation support in \c{tidy_eval}.
 
-
-
-\mypara{Limitations.} Dynamic analysis can only observe
-calls that are triggered by the program's input. We believe that
-focusing on R packages with high code coverage does mitigate this to
-some extent. The results we report here were obtained with R's
-bytecode compiler turned off, this should not affect the results as
-the compiler does not optimize \eval.
-
-
-We turn off the bytecode compiler for this study. The bytecode
-compiler can also call \eval. We do not get source locations for
-\UndefinedEvalsRnd \eval calls. In these cases \eval is either passed
-as an argument to a higher-order functions or is defined in a function
-returned by a higher-order function and the R parser does not retain
-location information for \eval. However, this is a meager
-\PercentUndefinedEval of all \eval calls and is unlikely to affect our
-analysis. We ignore calls to the native \eval function exposed by R.
-We also ignore the \c{rlang::tidy_eval} function which uses native
-\eval internally because \c{rlang} is used to implement a DSL for data
-analysis in R. It introduces a new first-class promise object called
-\c{quosure} for which it implements special evaluation support in
-\c{tidy_eval}.
-
-\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Usage Metrics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
