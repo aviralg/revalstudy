@@ -395,10 +395,10 @@ How much work is involved in each eval as measured by the number of opcodes exec
 
 ```{r amount_computations, include=F}
 tot_events <- E %>%
-  summarise(n = sum(opcodes * duplicates)) %>%
+  summarise(n = sum(opcodes * duplicates, na.rm = TRUE)) %>%
   .$n
 max_events <- E %>%
-  summarize(n = max(opcodes)) %>%
+  summarize(n = max(opcodes, na.rm = TRUE)) %>%
   .$n
 
 less_50_events <- E %>%
