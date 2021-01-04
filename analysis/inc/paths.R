@@ -17,6 +17,7 @@ CORPUS_ALL_FILE <- path(DATA_DIR, "corpus-all.fst")
 CORPUS_FILE <- path(DATA_DIR, "corpus.fst")
 
 PACKAGE_SUM_CALLS_FILE <- path(PACKAGE_DATA_DIR, "summarized.fst")
+PACKAGE_UNDEFINED_FILE <- path(PACKAGE_DATA_DIR, "undefined.fst")
 PACKAGE_EVALS_STATIC_FILE <-path(PACKAGE_DATA_DIR, "evals-static.csv")
 
 KAGGLE_KERNEL_FILE <- path(KAGGLE_DATA_DIR, "kernel.csv")

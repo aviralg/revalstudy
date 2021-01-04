@@ -609,11 +609,11 @@ The dynamic analysis is implemented as a R package in 1.5K lines of R code and
 % We turn off the bytecode compiler for this study. The bytecode
 % compiler can also call \eval.
 %
-We do not get source locations for \UndefinedEvalsRnd UPDATE!! \eval calls. In
+We do not get source locations for \CranUndefinedRnd \eval calls. In
 these cases \eval is either passed as an argument to a higher-order functions or
 is defined in a function returned by a higher-order function, or it can be a
 generated called from package native code. However, this is a meager
-\PercentUndefinedEval UPDATE!! of all \eval calls and is unlikely to affect our
+\CranUndefinedRatio of all \eval calls and is unlikely to affect our
 analysis. We ignore calls to the native \eval function exposed by R. We also
 ignore the \c{rlang::tidy_eval} function which uses native \eval internally
 because \c{rlang} is used to implement a DSL for data analysis in R. It

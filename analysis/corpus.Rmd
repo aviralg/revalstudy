@@ -101,6 +101,10 @@ ALL_KAGGLE <- local({
   as_tibble()
 
 KAGGLE <- filter(ALL_KAGGLE, evals > 0)
+
+UNDEFINED <- 
+  read_fst(PACKAGE_UNDEFINED_FILE) %>% 
+  as_tibble()
 ```
 
 ## Overview
@@ -116,9 +120,10 @@ cran_all_code <- sum(ALL_CRAN$package_code)
 cran_evals <- CRAN$evals
 cran_evals_hit <- CRAN$evals_hit
 cran_runnable_code <- sum(ALL_CRAN$runnable_code)
+cran_eval_calls <- sum(CRAN_eval_traces$nb_ev_calls)
 
 overview_table(
-  r("CRAN available packages", 16000),#length(available.packages()[,1])),
+  r("CRAN available packages", 15962), #length(available.packages()[,1])), # from the CRAN mirror
   r("CRAN all packages", ALL_CRAN),
   r("CRAN packages", CRAN),
   r("CRAN packages ratio", ratio(CRAN, ALL_CRAN)),
@@ -140,6 +145,8 @@ overview_table(
   r("CRAN runnable code examples", sum(ALL_CRAN$runnable_code_examples)),
   r("CRAN runnable code tests", sum(ALL_CRAN$runnable_code_tests)),
   r("CRAN runnable code vignettes", sum(ALL_CRAN$runnable_code_vignettes)),
+  r("CRAN undefined", UNDEFINED),
+  r("CRAN undefined ratio", ratio(nrow(UNDEFINED), cran_eval_calls))
 )
 ```
 
@@ -166,7 +173,7 @@ overview_table(
 
 ```{r}
 overview_table(
-  r("Corpus code", kaggle_code + cran_runnable`_code)
+  r("Corpus code", kaggle_code + cran_runnable_code)
 )
 ```
 
