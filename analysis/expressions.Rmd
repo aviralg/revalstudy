@@ -69,10 +69,91 @@ the input data set with only the columns that we use.
 read_fst(corpus_path) %>% as_tibble() -> C_raw
 read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
 
+read_fst(calls_path) %>% as_tibble() -> E_raw
 
-E_raw -> E
+ E_raw %>% select(
+    run_package = package, #      The package which was run to trigger the eval
+    ev_variant = eval_function, # Which eval variant was called
+    duplicates = nb_ev_calls, #   Number of identical eval calls (weight)
+    src_ref = eval_call_srcref, # Source ref for the eval call site
+    file, #                       Script file name (name of this run)
+    ev_package = eval_source, #   Package of the call site
+    type = expr_resolved_type_tag,   #   Argument type
+    ev_expr = expr_expression,
+    expr_resolved,
+    parsed = expr_parsed_expression
+  ) -> E           
 
 C_raw -> C
 corpus_size <- nrow(C)
-
 ```
+
+
+Some useful numbers:
+```{r}
+nb_call_sites <- E %>% pull(src_ref) %>% n_distinct()
+```
+
+
+# Most frequent expressions
+
+
+Before resolving, so as the programmer wrote them:
+
+```{r}
+E %>% count(ev_expr, wt = duplicates, sort = TRUE) 
+```
+
+
+After resolving:
+
+```{r}
+E %>% count(expr_resolved, wt = duplicates, sort = TRUE) 
+```
+
+
+# Expressions common to several call sites and packages
+
+It emphasizes which expressions are a common pattern across various code bases.
+
+```{r}
+widespread_expr <- E %>% group_by(ev_expr) %>% summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package))
+```
+
+
+```{r}
+widespread_expr %>% arrange(desc(n_call_sites)) %>% datatable()
+```
+
+```{r}
+widespread_expr %>% arrange(desc(n_packages)) %>% datatable()
+```
+
+
+
+For instance, for the most widespread expression, both in terms of call sites and packages, `mf`, we show here the packages sorted by decreasing number of call sites with this expression name.
+
+```{r}
+E %>% filter(ev_expr == "mf") %>% group_by(ev_package) %>% summarise(n = n_distinct(src_ref)) %>% arrange(desc(n))
+```
+
+
+Manual inspection seems to show that `mf` is often used as a result of a `match.call`:
+
+- https://github.com/cran/PMCMRplus/blob/4f5234542aa0a60642b230bea7efb668fb16a140/R/mandelkTest.R#L121 
+- https://github.com/fbertran/plsRglm/blob/dfa4e54ea02bca8bf04d29bb65dc7dba611927c9/R/plsRglmmodel.default.R#L4
+
+This is the common pattern when a call is retrieved and then modified, then evaluated.
+
+# Expressions using `parse`, `str2lang`, and `str2expression`
+
+```{r}
+parsed_expr <- E %>% filter(!is.na(parsed))
+
+nb_parsed_call_sites <- parsed_expr %>% pull(src_ref) %>% n_distinct()
+```
+
+
+There are `r nb_parsed_call_sites` call sites using those functions in their argument, out of the `r nb_call_sites` in total, i.e. `r ratio(nb_parsed_call_sites, nb_call_sites)`%.
+
+
