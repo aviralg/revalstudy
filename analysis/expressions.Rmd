@@ -1,0 +1,78 @@
+---
+title: "Eval expressions"
+output:
+    html_document:
+        gallery: false
+        toc: true
+        toc_depth: 3
+        toc_float: true
+        df_print: paged
+date: "`r Sys.Date()`"
+editor_options: 
+  chunk_output_type: console
+params:
+  base_dir: Data/package/
+  calls_path: summarized.fst
+  corpus_path: ../corpus.fst
+  static_path: evals-static.csv
+  force_rebuild: TRUE
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(fst)
+library(fs)
+library(DT)
+library(scales)
+
+knitr::knit_hooks$set(time_it = local({
+  now <- NULL
+  function(before, options) {
+    if (before) { # record the current time before each chunk
+      now <<- Sys.time()
+    } else { # calculate the time difference after a chunk
+      res <- difftime(Sys.time(), now)
+      # return a character string to show the time
+      paste("Time for this code chunk to run:", round(res, 2), units(res))
+    }
+  }
+}))
+now <- Sys.time()
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.retina = 2,
+  fig.width = 10,
+  cache.lazy = FALSE,
+  time_it = TRUE
+)
+
+source("inc/paths.R")
+source("inc/latextags.R")
+source("inc/functions.R")
+theme_set(theme_minimal())
+create_tags(path(TAGS_DIR, "usage_metrics.tex"), prefix = "", default = TRUE)
+
+calls_path <- paste0(params$base_dir, params$calls_path)
+corpus_path <- paste0(params$base_dir, params$corpus_path)
+static_path <- paste0(params$base_dir, params$static_path)
+```
+
+
+
+# Read
+
+Read in the summarized calls data (`E_raw`) and the file that describes
+which package belong to our corpus (`C_raw`). For conciseness, `E` is
+the input data set with only the columns that we use.
+
+```{r read, message=TRUE, include=F}
+read_fst(corpus_path) %>% as_tibble() -> C_raw
+read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
+
+
+E_raw -> E
+
+C_raw -> C
+corpus_size <- nrow(C)
+
+```
