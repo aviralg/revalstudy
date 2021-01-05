@@ -142,6 +142,7 @@ Manual inspection seems to show that `mf` is often used as a result of a `match.
 
 - https://github.com/cran/PMCMRplus/blob/4f5234542aa0a60642b230bea7efb668fb16a140/R/mandelkTest.R#L121 
 - https://github.com/fbertran/plsRglm/blob/dfa4e54ea02bca8bf04d29bb65dc7dba611927c9/R/plsRglmmodel.default.R#L4
+- https://github.com/cran/RWeka/blob/55030d5513bf37760d1f6e2f1a49495977113276/R/classifiers.R#L42 with a comment _## The "usual" way of creating a model frame from the call._ (sic!)
 
 This is the common pattern when a call is retrieved and then modified, then evaluated.
 
