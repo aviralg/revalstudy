@@ -112,12 +112,49 @@ E %>% count(expr_resolved, wt = duplicates, sort = TRUE)
 ```
 
 
+# Resolved expressions
+
+
+Are expressions resolved to very diverse values or expressions?
+If they are uniquely resolved and it is a value, then we can get rid of the `eval`.
+
+```{r}
+
+resolved_variety <- E %>% group_by(ev_expr, src_ref) %>% summarise(n = n_distinct(expr_resolved)) %>% arrange(desc(n)) 
+resolved_variety %>% datatable()
+
+nb_one_resolved <- resolved_variety %>% filter(n == 1) %>% nrow()
+
+
+```
+
+There are `r nb_one_resolved` call sites that are resolved to only one expression, out of `r nrow(resolved_variety)`.
+
+We can now count how many of these call sites with only one resolved expression resolve to a value type.
+
+```{r}
+one_resolved_type <- E %>% group_by(src_ref) %>% mutate(n_resolved = n_distinct(expr_resolved)) %>% filter(n_resolved == 1) %>% ungroup() %>% select(src_ref, n_resolved, type) %>% distinct()
+
+nb_one_resolved_type <- one_resolved_type %>% nrow()
+```
+
+
+`r nb_one_resolved_type` call sites resolved to one expression, of only one type.
+
+```{r}
+nb_value_type <- one_resolved_type %>% filter(type %in% c("character", "double", "integer", "logical", "NULL"))
+```
+
+
+There are `r nb_value_type` such call sites.
+
+
 # Expressions common to several call sites and packages
 
 It emphasizes which expressions are a common pattern across various code bases.
 
 ```{r}
-widespread_expr <- E %>% group_by(ev_expr) %>% summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package))
+widespread_expr <- E %>% group_by(expr_resolved) %>% summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package))
 ```
 
 
