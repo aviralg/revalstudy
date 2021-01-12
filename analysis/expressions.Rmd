@@ -71,18 +71,19 @@ read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
 
 read_fst(calls_path) %>% as_tibble() -> E_raw
 
- E_raw %>% select(
-    run_package = package, #      The package which was run to trigger the eval
-    ev_variant = eval_function, # Which eval variant was called
-    duplicates = nb_ev_calls, #   Number of identical eval calls (weight)
-    src_ref = eval_call_srcref, # Source ref for the eval call site
-    file, #                       Script file name (name of this run)
-    ev_package = eval_source, #   Package of the call site
-    type = expr_resolved_type_tag,   #   Argument type
-    ev_expr = expr_expression,
-    expr_resolved,
-    parsed = expr_parsed_expression
-  ) -> E           
+E_raw %>% select(
+  run_package = package, #      The package which was run to trigger the eval
+  ev_variant = eval_function, # Which eval variant was called
+  duplicates = nb_ev_calls, #   Number of identical eval calls (weight)
+  src_ref = eval_call_srcref, # Source ref for the eval call site
+  file, #                       Script file name (name of this run)
+  ev_package = eval_source, #   Package of the call site
+  type = expr_resolved_type_tag, #   Argument type
+  ev_expr = expr_expression,
+  expr_resolved,
+  func = expr_resolved_function, # the function (if any) at the root of the AST of expr_resolved
+  parsed = expr_parsed_expression
+) -> E
 
 C_raw -> C
 corpus_size <- nrow(C)
@@ -91,7 +92,9 @@ corpus_size <- nrow(C)
 
 Some useful numbers:
 ```{r}
-nb_call_sites <- E %>% pull(src_ref) %>% n_distinct()
+nb_call_sites <- E %>%
+  pull(src_ref) %>%
+  n_distinct()
 ```
 
 
@@ -101,14 +104,14 @@ nb_call_sites <- E %>% pull(src_ref) %>% n_distinct()
 Before resolving, so as the programmer wrote them:
 
 ```{r}
-E %>% count(ev_expr, wt = duplicates, sort = TRUE) 
+E %>% count(ev_expr, wt = duplicates, sort = TRUE)
 ```
 
 
 After resolving:
 
 ```{r}
-E %>% count(expr_resolved, wt = duplicates, sort = TRUE) 
+E %>% count(expr_resolved, wt = duplicates, sort = TRUE)
 ```
 
 
@@ -120,12 +123,15 @@ If they are uniquely resolved and it is a value, then we can get rid of the `eva
 
 ```{r}
 
-resolved_variety <- E %>% group_by(ev_expr, src_ref) %>% summarise(n = n_distinct(expr_resolved)) %>% arrange(desc(n)) 
+resolved_variety <- E %>%
+  group_by(ev_expr, src_ref) %>%
+  summarise(n = n_distinct(expr_resolved)) %>%
+  arrange(desc(n))
 resolved_variety %>% datatable()
 
-nb_one_resolved <- resolved_variety %>% filter(n == 1) %>% nrow()
-
-
+nb_one_resolved <- resolved_variety %>%
+  filter(n == 1) %>%
+  nrow()
 ```
 
 There are `r nb_one_resolved` call sites that are resolved to only one expression, out of `r nrow(resolved_variety)`.
@@ -133,7 +139,13 @@ There are `r nb_one_resolved` call sites that are resolved to only one expressio
 We can now count how many of these call sites with only one resolved expression resolve to a value type.
 
 ```{r}
-one_resolved_type <- E %>% group_by(src_ref) %>% mutate(n_resolved = n_distinct(expr_resolved)) %>% filter(n_resolved == 1) %>% ungroup() %>% select(src_ref, n_resolved, type) %>% distinct()
+one_resolved_type <- E %>%
+  group_by(src_ref) %>%
+  mutate(n_resolved = n_distinct(expr_resolved)) %>%
+  filter(n_resolved == 1) %>%
+  ungroup() %>%
+  select(src_ref, n_resolved, type) %>%
+  distinct()
 
 nb_one_resolved_type <- one_resolved_type %>% nrow()
 ```
@@ -154,16 +166,22 @@ There are `r nb_value_type` such call sites.
 It emphasizes which expressions are a common pattern across various code bases.
 
 ```{r}
-widespread_expr <- E %>% group_by(expr_resolved) %>% summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package))
+widespread_expr <- E %>%
+  group_by(expr_resolved) %>%
+  summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package))
 ```
 
 
 ```{r}
-widespread_expr %>% arrange(desc(n_call_sites)) %>% datatable()
+widespread_expr %>%
+  arrange(desc(n_call_sites)) %>%
+  datatable()
 ```
 
 ```{r}
-widespread_expr %>% arrange(desc(n_packages)) %>% datatable()
+widespread_expr %>%
+  arrange(desc(n_packages)) %>%
+  datatable()
 ```
 
 
@@ -171,7 +189,11 @@ widespread_expr %>% arrange(desc(n_packages)) %>% datatable()
 For instance, for the most widespread expression, both in terms of call sites and packages, `mf`, we show here the packages sorted by decreasing number of call sites with this expression name.
 
 ```{r}
-E %>% filter(ev_expr == "mf") %>% group_by(ev_package) %>% summarise(n = n_distinct(src_ref)) %>% arrange(desc(n))
+E %>%
+  filter(ev_expr == "mf") %>%
+  group_by(ev_package) %>%
+  summarise(n = n_distinct(src_ref)) %>%
+  arrange(desc(n))
 ```
 
 
@@ -183,15 +205,83 @@ Manual inspection seems to show that `mf` is often used as a result of a `match.
 
 This is the common pattern when a call is retrieved and then modified, then evaluated.
 
+We can also look at the functions called in the expression:
+
+```{r}
+widespread_function <- E %>%
+  filter(!is.na(func)) %>%
+  group_by(func) %>%
+  summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package))
+```
+
+
 # Expressions using `parse`, `str2lang`, and `str2expression`
 
 ```{r}
 parsed_expr <- E %>% filter(!is.na(parsed))
 
-nb_parsed_call_sites <- parsed_expr %>% pull(src_ref) %>% n_distinct()
+nb_parsed_call_sites <- parsed_expr %>%
+  pull(src_ref) %>%
+  n_distinct()
 ```
 
 
 There are `r nb_parsed_call_sites` call sites using those functions in their argument, out of the `r nb_call_sites` in total, i.e. `r ratio(nb_parsed_call_sites, nb_call_sites)`%.
 
+# Arithmetic expressions
 
+First, we only keep rows where the root is an arithmetic function, and the rows with a constant number
+
+```{r}
+arith_func <- c("/", "-", "*", "+", "^", "log", "sqrt", "exp", "max", "min", "cos", "sin", "abs", "atan", ":")
+
+arithm <- E %>% filter(func %in% arith_func)
+```
+
+We want to keep only the ones that only use these functions and constants.
+
+```{r}
+is_arithm_expr <- function(exp) {
+  if (is.call(exp)) {
+    function_name <- exp[[1]]
+    function_args <- exp[-1]
+    return(as.character(function_name) %in% arith_func && every(function_args, is_arithm_expr))
+  }
+  else if (is.expression(exp)) {
+    return(every(exp, is_arithm_expr))
+  }
+  else if (typeof(exp) %in% c("integer", "double", "complex")) {
+    return(TRUE)
+  }
+  else {
+    return(FALSE)
+  }
+}
+
+arithm_folded <- arithm %>% filter(map_lgl(expr_resolved, function(exp) {
+  ast <- NA
+  try(ast <- parse(text = exp)[[1]], silent = TRUE)
+  # some expr_resolved have been truncated so we mark them as FALSE (even though they could be true)
+  if(!is.na(ast)) {
+     return(is_arithm_expr(ast))
+  }
+  else {
+    return(FALSE)
+  }
+ 
+}))
+```
+
+It corresponds to these call sites and packages:
+
+```{r}
+arithm_folded %>% group_by(expr_resolved) %>% summarise(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package)) %>% datatable()
+```
+
+
+# Formulas
+
+A formula is defined with the tilde `~` operator. 
+
+
+# Variables
