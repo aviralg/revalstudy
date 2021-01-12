@@ -262,22 +262,26 @@ arithm_folded <- arithm %>% filter(map_lgl(expr_resolved, function(exp) {
   ast <- NA
   try(ast <- parse(text = exp)[[1]], silent = TRUE)
   # some expr_resolved have been truncated so we mark them as FALSE (even though they could be true)
-  if(!is.na(ast)) {
-     return(is_arithm_expr(ast))
+  if (!is.na(ast)) {
+    return(is_arithm_expr(ast))
   }
   else {
     return(FALSE)
   }
- 
 }))
 ```
 
 It corresponds to these call sites and packages:
 
 ```{r}
-n_arithm_call_sites <- arithm_folded %>% pull(src_ref) %>% n_distinct()
+n_arithm_call_sites <- arithm_folded %>%
+  pull(src_ref) %>%
+  n_distinct()
 
-arithm_folded %>% group_by(expr_resolved) %>% summarise(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package)) %>% datatable()
+arithm_folded %>%
+  group_by(expr_resolved) %>%
+  summarise(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package)) %>%
+  datatable()
 ```
 
 
@@ -293,15 +297,22 @@ A formula is defined with the tilde `~` operator.
 Here, we analyze expressions with only a variable name.
 
 ```{r}
-with_var <- E %>% filter(str_detect(expr_resolved, "^(?:\\.[:alpha]|[:alpha:])[[:alpha:][:digit:]_\\.]*$"))
+with_var <- E %>%
+  filter(str_detect(expr_resolved, "^(?:\\.[:alpha]|[:alpha:])[[:alpha:][:digit:]_\\.]*$")) %>%
+  filter(expr_resolved == "NA") # "NA" matches the regex of a variable name but is a value so we get rid of it
 ```
 
 
 We can categorize them by number of call sites and number of packages:
 ```{r}
-n_with_var <- with_var %>% pull(src_ref) %>% n_distinct()
+n_with_var <- with_var %>%
+  pull(src_ref) %>%
+  n_distinct()
 
-with_var %>% group_by(expr_resolved) %>% summarise(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package)) %>% datatable()
+with_var %>%
+  group_by(expr_resolved) %>%
+  summarise(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package)) %>%
+  datatable()
 ```
 
 There are `r n_with_var` such call sites.
