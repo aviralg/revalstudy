@@ -275,9 +275,13 @@ arithm_folded <- arithm %>% filter(map_lgl(expr_resolved, function(exp) {
 It corresponds to these call sites and packages:
 
 ```{r}
+n_arithm_call_sites <- arithm_folded %>% pull(src_ref) %>% n_distinct()
+
 arithm_folded %>% group_by(expr_resolved) %>% summarise(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package)) %>% datatable()
 ```
 
+
+The total number of call sites with those arithmetic on constants is `r n_arithm_call_sites`.
 
 # Formulas
 
@@ -285,3 +289,19 @@ A formula is defined with the tilde `~` operator.
 
 
 # Variables
+
+Here, we analyze expressions with only a variable name.
+
+```{r}
+with_var <- E %>% filter(str_detect(expr_resolved, "^(?:\\.[:alpha]|[:alpha:])[[:alpha:][:digit:]_\\.]*$"))
+```
+
+
+We can categorize them by number of call sites and number of packages:
+```{r}
+n_with_var <- with_var %>% pull(src_ref) %>% n_distinct()
+
+with_var %>% group_by(expr_resolved) %>% summarise(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package)) %>% datatable()
+```
+
+There are `r n_with_var` such call sites.
