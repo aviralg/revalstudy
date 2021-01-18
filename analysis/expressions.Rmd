@@ -158,7 +158,7 @@ nb_value_type <- one_resolved_type %>% filter(type %in% c("character", "double",
 ```
 
 
-There are `r nb_value_type` such call sites.
+There are `r nb_value_type %>% nrow()` such call sites.
 
 
 # Expressions common to several call sites and packages
@@ -299,7 +299,7 @@ Here, we analyze expressions with only a variable name.
 ```{r}
 with_var <- E %>%
   filter(str_detect(expr_resolved, "^(?:\\.[:alpha]|[:alpha:])[[:alpha:][:digit:]_\\.]*$")) %>%
-  filter(expr_resolved == "NA") # "NA" matches the regex of a variable name but is a value so we get rid of it
+  filter(expr_resolved != "NA") # "NA" matches the regex of a variable name but is a value so we get rid of it
 ```
 
 
