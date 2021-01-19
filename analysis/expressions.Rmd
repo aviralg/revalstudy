@@ -406,4 +406,12 @@ res_exprs <- E %>%
   unique()
 
 res_exprs <- res_exprs %>% mutate(expr_canonic = map_chr(expr_resolved, canonic_expr_str))
+
+E_cano <- E %>% left_join(res_exprs)
 ```
+
+
+```{r}
+E_cano %>% arrange(desc(n_call_sites)) %>% datatable()
+```
+
