@@ -262,7 +262,7 @@ arithm_folded <- arithm %>% filter(map_lgl(expr_resolved, function(exp) {
   ast <- NA
   try(ast <- parse(text = exp)[[1]], silent = TRUE)
   # some expr_resolved have been truncated so we mark them as FALSE (even though they could be true)
-  if (!is.na(ast)) {
+  if (length(ast) > 1 || !is.na(ast)) {
     return(is_arithm_expr(ast))
   }
   else {
@@ -291,6 +291,29 @@ The total number of call sites with those arithmetic on constants is `r n_arithm
 
 A formula is defined with the tilde `~` operator. 
 
+```{r}
+with_formula <- E %>%
+  filter(str_detect(expr_resolved, fixed("~")))
+```
+
+```{r}
+n_with_formula <- with_formula %>%
+  pull(src_ref) %>%
+  n_distinct()
+```
+
+
+The total number of call sites with formulas is `r n_with_formula`.
+
+```{r}
+with_formula %>%
+  group_by(expr_resolved) %>%
+  summarise(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package)) %>%
+  datatable()
+```
+
+`~` is mostly used within a call to `model.frame`.
+
 
 # Variables
 
@@ -316,3 +339,71 @@ with_var %>%
 ```
 
 There are `r n_with_var` such call sites.
+
+
+# Better normalization of resolved expressions
+
+We fold all constant arithmetic expressions and replace all variable names by a placeholder.
+
+```{r}
+canonic_expr <- function(exp) {
+  if (is.call(exp)) {
+    function_name <- exp[[1]]
+    function_args <- exp[-1]
+    res <- map(function_args, canonic_expr)
+    # Function_name can be larger than one is a function with a namespace stats::model or another higher-order function
+    # For instance, (function(x, y) x + y)(3, 4)
+    if (length(function_name) == 1 && as.character(function_name) %in% arith_func && every(res, function(v) {
+      v == "NUM"
+    })) {
+      return("NUM")
+    }
+    else if (length(function_name) == 1 && function_name == "::") {
+      str_c(as.character(function_args[[1]]), "::", as.character(function_args[[2]]))
+    }
+    else {
+      function_name <- if (length(function_name) == 1) {
+        as.character(function_name)
+      }
+      else {
+        canonic_expr(function_name)
+      }
+      return(str_c(str_c(function_name, collapse = ", "), "(", str_c(res, collapse = ", "), ")"))
+    }
+  }
+  else if (is.symbol(exp)) {
+    return("VAR")
+  }
+  else if (is.expression(exp)) {
+    return(str_c(map(exp, canonic_expr), collapse = ", "))
+  }
+  else if (typeof(exp) %in% c("integer", "double", "complex")) {
+    return("NUM")
+  }
+  else {
+    return(deparse1(exp))
+  }
+}
+
+canonic_expr_str <- function(exp) {
+  ast <- NA
+  try(ast <- parse(text = exp)[[1]], silent = TRUE)
+  # some expr_resolved have been truncated so we mark them as FALSE (even though they could be true)
+  if (is.symbol(ast) || is.language(ast) || length(ast) > 1 || !is.na(ast)) {
+    return(canonic_expr(ast))
+  }
+  else {
+    return("CANONIZATION ERROR")
+  }
+}
+```
+
+For performance reason, we only apply this function to the unique resolved expressions.
+
+```{r}
+res_exprs <- E %>%
+  select(expr_resolved) %>%
+  unique()
+
+res_exprs <- res_exprs %>% mutate(expr_canonic = map_chr(expr_resolved, canonic_expr_str))
+```
