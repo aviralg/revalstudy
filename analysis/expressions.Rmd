@@ -380,6 +380,12 @@ canonic_expr <- function(exp) {
   else if (typeof(exp) %in% c("integer", "double", "complex")) {
     return("NUM")
   }
+  else if(typeof(exp) == "logical") {
+    return("BOOL")
+  }
+  else if(typeof(exp) == "character") {
+    return("STR")
+  }
   else {
     return(deparse1(exp))
   }
@@ -412,6 +418,9 @@ E_cano <- E %>% left_join(res_exprs)
 
 
 ```{r}
-E_cano %>% arrange(desc(n_call_sites)) %>% datatable()
+widespread_canonic <- E_cano %>% group_by(expr_canonic) %>% 
+  summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package))
+
+widespread_canonic %>% arrange(desc(n_call_sites)) %>% datatable()
 ```
 
