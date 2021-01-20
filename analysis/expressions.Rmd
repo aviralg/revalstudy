@@ -346,6 +346,9 @@ There are `r n_with_var` such call sites.
 We fold all constant arithmetic expressions and replace all variable names by a placeholder.
 
 ```{r}
+
+str_op <- c("paste", "paste0", "str_c")
+
 canonic_expr <- function(exp) {
   if (is.call(exp)) {
     function_name <- exp[[1]]
@@ -357,6 +360,11 @@ canonic_expr <- function(exp) {
       v == "NUM"
     })) {
       return("NUM")
+    }
+    else if (length(function_name) == 1 && as.character(function_name) %in% str_op && every(res, function(v) {
+      v == "STR"
+    })) {
+      return("STR")
     }
     else if (length(function_name) == 1 && function_name == "::") {
       str_c(as.character(function_args[[1]]), "::", as.character(function_args[[2]]))
