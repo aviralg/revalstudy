@@ -378,11 +378,11 @@ canonic_expr <- function(exp) {
     else if(length(function_name) == 1 && as.character(function_name) %in% comp_op && every(res, function(v) {v == "NUM"})) {
       return("BOOL")
     }
-    else if(length(function_name) == 1 && as.character(function_name) == "c" && length(res) > 1 && n_distinct(res) == 1 && res[[1]] %in% c("BOOL", "NUM", "STR")) {
-      str_c("c(", res[[1]], ")")
+    else if(length(function_name) == 1 && as.character(function_name) %in% c("c", "list") && length(res) > 1 && n_distinct(res) == 1 ) { # && res[[1]] %in% c("BOOL", "NUM", "STR")
+      str_c(as.character(function_name), "(", res[[1]], ")")
     }
-    else if (length(function_name) == 1 && function_name == "::") {
-      str_c(as.character(function_args[[1]]), "::", as.character(function_args[[2]]))
+    else if (length(function_name) == 1 && function_name == "::") { # we drop the namespace
+      as.character(function_args[[2]])
     }
     else {
       function_name <- if (length(function_name) == 1) {
@@ -422,7 +422,7 @@ canonic_expr_str <- function(exp) {
     return(canonic_expr(ast))
   }
   else {
-    return("CANONIZATION ERROR")
+    return("NORMALIZATION ERROR")
   }
 }
 ```
