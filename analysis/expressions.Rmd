@@ -480,6 +480,12 @@ canonic_expr_str <- function(exp, with.names = FALSE) {
         return("NORMALIZATION ERROR")
     }
 }
+
+canonic_expr_str2 <- function(exp, with.names = FALSE) {
+    ast <- NA
+    try(ast <- parse(text = exp)[[1]], silent = TRUE)
+  return("")
+}
 ```
 
 For performance reason, we only apply this function to the unique resolved expressions.
@@ -489,9 +495,9 @@ res_exprs_uniq <- E %>%
   select(expr_resolved) %>%
   unique()
 
-res_exprs <- res_exprs %>% mutate(expr_canonic = map_chr(expr_resolved, canonic_expr_str))
+res_exprs <- res_exprs_uniq %>% mutate(expr_canonic = map_chr(expr_resolved, canonic_expr_str))
 
-res_exprs <- res_exprs %>% mutate(expr_canonic_names = map_chr(expr_resolved, canonic_expr_str), with.names = TRUE)
+# res_exprs <- res_exprs %>% mutate(expr_canonic_names = map_chr(expr_resolved, canonic_expr_str), with.names = TRUE)
 
 E_cano <- E %>% left_join(res_exprs)
 ```
