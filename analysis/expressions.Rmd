@@ -365,7 +365,7 @@ nb_packages_match.call <- E_match.call %>% pull(ev_package) %>% n_distinct()
 
 What function is evaled in this pattern
 ```{r}
-E_match.call %>% group_by(match.call) %>% summarize(n = n_distinct(src_ref)) %>% arrange(desc())
+E_match.call %>% group_by(func) %>% summarize(n_call_sites = n_distinct(src_ref)) %>% arrange(desc(n_call_sites))
 ```
 
 As expected, `model.frame` is the most used one.
