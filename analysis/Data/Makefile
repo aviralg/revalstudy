@@ -14,10 +14,13 @@ FILES := \
   package/summarized-externals.fst \
   package/undefined.fst \
   package/code.fst \
+  package/normalized-expressions.fst \
   package-snapshot/evals-static.csv \
   package-snapshot/summarized.fst \
   package-snapshot/summarized-externals.fst \
   package-snapshot/undefined.fst \
+  package-snapshot/code.fst \
+  package-snapshot/normalized-expressions.fst \
   base/summarized.fst \
   base/summarized-externals.fst \
   base/undefined.fst \
