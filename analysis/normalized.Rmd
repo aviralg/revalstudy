@@ -1,0 +1,256 @@
+---
+title: "Normalized expressions"
+output:
+    html_document:
+        gallery: false
+        toc: true
+        toc_depth: 3
+        toc_float: true
+        df_print: paged
+date: "`r Sys.Date()`"
+editor_options: 
+  chunk_output_type: console
+params:
+  base_dir: Data/package/
+  calls_path: summarized.fst
+  normalized_path: normalized-expressions.csv
+  corpus_path: ../corpus.fst
+  static_path: evals-static.csv
+  force_rebuild: TRUE
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(fst)
+library(fs)
+library(DT)
+library(scales)
+
+knitr::knit_hooks$set(time_it = local({
+  now <- NULL
+  function(before, options) {
+    if (before) { # record the current time before each chunk
+      now <<- Sys.time()
+    } else { # calculate the time difference after a chunk
+      res <- difftime(Sys.time(), now)
+      # return a character string to show the time
+      paste("Time for this code chunk to run:", round(res, 2), units(res))
+    }
+  }
+}))
+now <- Sys.time()
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.retina = 2,
+  fig.width = 10,
+  cache.lazy = FALSE,
+  time_it = TRUE
+)
+
+source("inc/paths.R")
+source("inc/latextags.R")
+source("inc/functions.R")
+theme_set(theme_minimal())
+create_tags(path(TAGS_DIR, "usage_metrics.tex"), prefix = "", default = TRUE)
+
+calls_path <- paste0(params$base_dir, params$calls_path)
+corpus_path <- paste0(params$base_dir, params$corpus_path)
+static_path <- paste0(params$base_dir, params$static_path)
+normalized_path <- paste0(params$base_dir, params$normalized_path)
+```
+
+# Read
+
+Read in the summarized calls data (`E_raw`) and the file that describes
+which package belong to our corpus (`C_raw`). For conciseness, `E` is
+the input data set with only the columns that we use. We also read the file with normalized expressions, `N`.
+
+```{r read, message=TRUE, include=F}
+read_fst(corpus_path) %>% as_tibble() -> C_raw
+read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
+
+read_fst(calls_path) %>% as_tibble() -> E_raw
+
+read_csv(normalized_path, col_types = cols(
+  minimized = col_character(),
+  topcall = col_character(),
+  is_model = col_logical(),
+  has_fundef = col_logical(),
+  has_calls = col_integer(),
+  has_assigns = col_integer(),
+  has_var = col_logical(),
+  has_bracket = col_logical(),
+  is_assign = col_logical(),
+  is_value = col_logical(),
+  is_ignore = col_logical(),
+  has_dollar = col_logical(),
+  has_user_call = col_logical(),
+  has_block = col_logical(),
+  normalized = col_character(),
+  trimmed = col_character(),
+  hash = col_character()
+)) -> N
+
+E_raw %>% select(
+  run_package = package, #      The package which was run to trigger the eval
+  ev_variant = eval_function, # Which eval variant was called
+  duplicates = nb_ev_calls, #   Number of identical eval calls (weight)
+  src_ref = eval_call_srcref, # Source ref for the eval call site
+  file, #                       Script file name (name of this run)
+  ev_package = eval_source, #   Package of the call site
+  type = expr_resolved_type_tag, #   Argument type
+  ev_expr = expr_expression,
+  expr_resolved,
+  func = expr_resolved_function, # the function (if any) at the root of the AST of expr_resolved
+  parsed = expr_parsed_expression,
+  hash = expr_resolved_hash,
+  match.call = expr_match_call
+) -> E
+
+C_raw -> C
+corpus_size <- nrow(C)
+```
+
+
+Some useful numbers:
+```{r}
+nb_call_sites <- E %>%
+  pull(src_ref) %>%
+  n_distinct()
+```
+
+
+There are `r nb_call_sites` in the dataset.
+
+# Full dataset 
+
+We join the normalized expressions and their statistics with the calls.
+
+```{r}
+E_cano <- E %>% left_join(N, by = "hash") # Common column is the hash of the full resolved expression
+```
+
+
+# Ranking of normalized and minimized expressions
+
+
+Normalized: 
+```{r}
+widespread_canonic <- E_cano %>%
+  group_by(normalized) %>%
+  summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package))
+
+widespread_canonic %>%
+  arrange(desc(n_call_sites)) %>%
+  datatable()
+```
+
+
+Minimized:
+```{r}
+widespread_minimized <- E_cano %>%
+  group_by(minimized) %>%
+  summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package))
+
+widespread_minimized %>%
+  arrange(desc(n_call_sites)) %>%
+  datatable()
+```
+
+# How does it evolve per call site
+
+To check whether the normalization makes sense, we have a look at how many normalized expressions we have per call sites.
+
+```{r}
+# count hash because resolved expressions are trimmed but hash are on the full expression
+by_src_ref <- E_cano %>% group_by(src_ref) %>%
+  summarise(n_resolved = n_distinct(hash), n_normalized = n_distinct(normalized), n_minimized = n_distinct(minimized))
+```
+
+There should always be less normalized expressions than resolved ones. 
+We can see for how many there are strictly less (or one when it was already one).
+
+
+```{r}
+decrease_exprs <- by_src_ref %>% filter(n_resolved == 1 | n_resolved > n_minimized)  %>% arrange(desc(n_minimized))
+```
+
+It corresponds to `r nrow(decrease_exprs)` call sites so only `r nb_call_sites - nrow(decrease_exprs)` have non-trivially not decreased the number of call sites.
+
+# Top calls
+
+For the functions at the root of the AST, per call site:
+
+```{r}
+widespread_topcall <- E_cano %>%
+  group_by(topcall) %>%
+  summarize(n_call_sites = n_distinct(src_ref)) %>% 
+  arrange(desc(n_call_sites))
+```
+
+
+
+```{r}
+big_topcall <- widespread_topcall %>% filter(n_call_sites > 3) 
+```
+
+
+There are `r nrow(big_topcall)` top calls out of `r nrow(widespread_topcall)` that are present in strictly more than 3 call sites.
+
+```{r}
+big_topcall %>% datatable()
+```
+
+
+# Function definitions
+
+```{r}
+fundefs <- E_cano %>% filter(has_fundef)
+
+nb_fundef_callsites <- fundefs %>% pull(src_ref) %>% n_distinct()
+```
+
+There are `r nb_fundef_callsites` call sites with function definitions.
+
+# Model.frame
+
+```{r}
+modelframes <- E_cano %>% filter(is_model)
+
+nb_modelf_call_sites <- modelframes %>% pull(src_ref) %>% n_distinct()
+```
+
+
+There are `r nb_modelf_call_sites` call sites with `mode.frame`.
+
+Is it usually in top call position?
+
+```{r}
+modelframes %>% filter(topcall != "model.frame")
+```
+
+Yes, always!
+
+Is it correlated with `match.call`?
+
+```{r}
+nb_mf_match.call <- modelframes %>% filter(!is.na(match.call)) %>% pull(src_ref) %>% n_distinct()
+```
+
+`r nb_mf_match.call` call sites out of `model.frame` `r nb_modelf_call_sites` call sites use the `match.call` pattern.
+
+We can also reciprocally look at how many call sites with `match.call` have `model.frame`:
+
+```{r}
+match.call_df <- E_cano %>% filter(!is.na(match.call))
+
+nb_m.c_call_sites <- match.call_df %>% pull(src_ref) %>% n_distinct()
+
+nb_m.c_mf_call_sites <- match.call_df %>% filter(is_model) %>% pull(src_ref) %>% n_distinct()
+```
+
+So `r ratio(nb_m.c_mf_call_sites, nb_m.c_call_sites)` of the call sites with the `match.call` pattern use `model.frame`.
+
+# Polymorphism
+
+We have only 15 different kind of minimized expression. Do some minimized expressions often go together?

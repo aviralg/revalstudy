@@ -13,7 +13,7 @@ editor_options:
 params:
   base_dir: Data/package/
   calls_path: summarized.fst
-  normalized_path: normalized-expressions.fst
+  normalized_path: normalized-expressions.csv
   corpus_path: ../corpus.fst
   static_path: evals-static.csv
   force_rebuild: TRUE
@@ -72,8 +72,6 @@ read_fst(corpus_path) %>% as_tibble() -> C_raw
 read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
 
 read_fst(calls_path) %>% as_tibble() -> E_raw
-
-read_fst(normalized_path) %>% as_tibble() -> N
 
 E_raw %>% select(
   run_package = package, #      The package which was run to trigger the eval
@@ -371,46 +369,5 @@ E_match.call %>% group_by(func) %>% summarize(n_call_sites = n_distinct(src_ref)
 As expected, `model.frame` is the most used one.
 
 
-# Normalization of resolved expressions
-
-
-We join the normalized expressions and their statistics with the calls.
-
-```{r}
-E_cano <- E %>% left_join(N, by = c("hash" = "expr_resolved_hash")) # Common column is the hash of the full resolved expression
-```
-
-
-```{r}
-widespread_canonic <- E_cano %>%
-  group_by(expr_canonic) %>%
-  summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package))
-
-widespread_canonic %>%
-  arrange(desc(n_call_sites)) %>%
-  datatable()
-```
-
-
-To check whether the normalization makes sense, we have a look at how many normalized expressions we have per call sites.
-```{r}
-by_src_ref <- E_cano %>% group_by(src_ref) %>%
-  summarise(n_resolved = n_distinct(hash), n_canonic = n_distinct(expr_canonic))
-```
-
-There should always be less normalized epxressions than resolved ones. For how many do we have strictly less normalized expressions?
-
-```{r}
-by_src_ref %>% filter(n_resolved > n_canonic) %>% arrange(desc(n_canonic))
-```
-
-
-```{r}
-by_src_ref %>% filter(n_resolved == 1 | n_resolved > n_canonic)  %>% arrange(desc(n_canonic)) %>% print(n = 100)
-```
-
-```{r}
-exprs_by_srcref <- E_cano %>% group_by(src_ref) %>% summarize(n_canonic = n_distinct(expr_canonic), exprs = paste0(unique(expr_canonic), collapse="    ;     "))
-```
 
 
