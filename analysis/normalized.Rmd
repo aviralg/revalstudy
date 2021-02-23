@@ -249,8 +249,50 @@ nb_m.c_call_sites <- match.call_df %>% pull(src_ref) %>% n_distinct()
 nb_m.c_mf_call_sites <- match.call_df %>% filter(is_model) %>% pull(src_ref) %>% n_distinct()
 ```
 
-So `r ratio(nb_m.c_mf_call_sites, nb_m.c_call_sites)` of the call sites with the `match.call` pattern use `model.frame`.
+So `r ratio(nb_m.c_mf_call_sites, nb_m.c_call_sites)`% of the call sites with the `match.call` pattern use `model.frame`.
+
+# Assignments
+
+When do we perform assignments (causing potentially side effects)?
+
+```{r}
+assigns <- E_cano %>% filter(has_assigns > 0)
+
+nb_assigns_call_sites <- assigns %>% pull(src_ref) %>% n_distinct()
+```
+
+There are `r nb_assign_call_sites` call sites with assignments.
+
 
 # Polymorphism
 
 We have only 15 different kind of minimized expression. Do some minimized expressions often go together?
+
+
+# `match.call` pattern
+
+There are `r nb_m.c_call_sites` call sites using the `match.call`pattern.
+
+The top calls for this pattern are:
+
+```{r}
+match.call_df %>% 
+  group_by(topcall) %>%
+  summarize(n_call_sites = n_distinct(src_ref)) %>% 
+  arrange(desc(n_call_sites))
+```
+
+Most are `model.frame`. If we add other model functions, such as `glm` and `plm`: 
+
+```{r}
+stat_functions <- c("model.frame", "glm", "plm", "elo.model.frame", "lmer", "randomForest", "betareg", "nlreg", "model.frame.default", "model.matrix", "arima", "glm.nb", "glmer") # There are many more
+
+nb_stat_call_sites <- match.call_df %>% 
+  filter(topcall %in% stat_functions) %>% 
+  pull(src_ref) %>% 
+  n_distinct()
+  
+```
+
+it amounts for `r nb_stat_call_sites`.
+
