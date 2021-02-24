@@ -86,6 +86,7 @@ read_csv(normalized_path, col_types = cols(
   has_dollar = col_logical(),
   has_user_call = col_logical(),
   has_block = col_logical(),
+  has_meta_op = col_logical(),
   normalized = col_character(),
   trimmed = col_character(),
   hash = col_character()
@@ -261,12 +262,10 @@ assigns <- E_cano %>% filter(has_assigns > 0)
 nb_assigns_call_sites <- assigns %>% pull(src_ref) %>% n_distinct()
 ```
 
-There are `r nb_assign_call_sites` call sites with assignments.
+There are `r nb_assigns_call_sites` call sites with assignments.
 
 
-# Polymorphism
 
-We have only 15 different kind of minimized expression. Do some minimized expressions often go together?
 
 
 # `match.call` pattern
@@ -294,5 +293,47 @@ nb_stat_call_sites <- match.call_df %>%
   
 ```
 
-it amounts for `r nb_stat_call_sites`.
+it amounts for `r nb_stat_call_sites` call sites.
+
+# Substitue&co
+
+`substitute`, `quote` and so on are used to do meta-programming.
+
+```{r}
+meta_df <- E_cano %>% filter(has_meta_op)
+
+nb_meta_call_sites <- meta_df %>% pull(src_ref) %>% n_distinct()
+```
+
+There are `r nb_meta_call_sites` call sites with `substitute` and `substitute`-like operators.
+
+Are the `substitute` sometimes not placed as a top call?
+
+```{r}
+meta_not_top <- meta_df %>% filter(!topcall %in% c("substitute", "quote", "enquote", "bquote"))
+
+nb_m_n_top_call_sites <- meta_not_top %>% pull(src_ref) %>% n_distinct()
+```
+
+It happens for `r nb_m_n_top_call_sites` call sites.
+
+
+# `eval(x[[condition]])` pattern
+
+See https://cran.r-project.org/doc/manuals/r-release/R-lang.html#switch
+
+```{r}
+eval_switch <- E_cano %>% filter(has_var, has_bracket, topcall == "[[")
+
+nb_ev_switch_call_sites <- eval_switch %>% pull(src_ref) %>% n_distinct()
+```
+
+
+There are `r nb_ev_switch_call_sites` call sites using that pattern.
+
+But this is actually not correct, because we should look at the non-resolved expression to find this pattern.
+
+# Polymorphism in more details
+
+We have only 15 different kind of minimized expression. Do some minimized expressions often go together?
 
