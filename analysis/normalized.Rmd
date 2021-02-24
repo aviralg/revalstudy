@@ -121,7 +121,7 @@ nb_call_sites <- E %>%
 ```
 
 
-There are `r nb_call_sites` in the dataset.
+There are `r nb_call_sites` call sites in the dataset.
 
 # Full dataset 
 
@@ -166,6 +166,10 @@ To check whether the normalization makes sense, we have a look at how many norma
 # count hash because resolved expressions are trimmed but hash are on the full expression
 by_src_ref <- E_cano %>% group_by(src_ref) %>%
   summarise(n_resolved = n_distinct(hash), n_normalized = n_distinct(normalized), n_minimized = n_distinct(minimized))
+```
+
+```{r}
+by_src_ref %>% datatable()
 ```
 
 There should always be less normalized expressions than resolved ones. 
@@ -317,6 +321,28 @@ nb_m_n_top_call_sites <- meta_not_top %>% pull(src_ref) %>% n_distinct()
 
 It happens for `r nb_m_n_top_call_sites` call sites.
 
+# Complex blocks
+
+`eval` can evaluate sometimes complex blocks.
+
+```{r}
+blocks <- E_cano %>% filter(has_block)
+
+nb_blocks_call_sites <- blocks %>% pull(src_ref) %>% n_distinct()
+```
+
+
+There are `r nb_blocks_call_sites` such call sites.
+
+`eval` is used to insert blocks of code inside the function, for instance as a preprocessing and postprocessing step. There are some examples in the VGAM package. In that case, `{` will be at the root of the AST.
+
+```{r}
+pre_post <- blocks %>% filter(topcall == "{")
+
+nb_pre_post_call_sites <- pre_post %>% pull(src_ref) %>% n_distinct()
+```
+
+It happens in `r nb_pre_post_call_sites` call sites so most of the call sites with blocks.
 
 # `eval(x[[condition]])` pattern
 
