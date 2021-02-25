@@ -105,7 +105,8 @@ E_raw %>% select(
   func = expr_resolved_function, # the function (if any) at the root of the AST of expr_resolved
   parsed = expr_parsed_expression,
   hash = expr_resolved_hash,
-  match.call = expr_match_call
+  match.call = expr_match_call,
+  n_op = interp_eval
 ) -> E
 
 C_raw -> C
@@ -151,12 +152,15 @@ Minimized:
 ```{r}
 widespread_minimized <- E_cano %>%
   group_by(minimized) %>%
-  summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package))
+  summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package), n_operations = mean(n_op, na.rm=TRUE))
 
 widespread_minimized %>%
   arrange(desc(n_call_sites)) %>%
   datatable()
 ```
+
+
+`_operations` is the average of R interpreter eval loop per minimized expression.
 
 # How does it evolve per call site
 
