@@ -6,7 +6,7 @@ OUTPUT_DIR := html
 
 # Run docker
 dock:
-	docker run --rm --name rstudio -p 8787:8787 -v "$$HOME:$$HOME" -e ROOT=TRUE -e DISABLE_AUTH=true fikovnik/rstudio:4.0.2 
+	docker run --rm --name rstudio -p 8787:8787 -v "$$HOME:$$HOME" -e ROOT=TRUE -e DISABLE_AUTH=true fikovnik/rstudio:4.0.2
 
 # If already in use...
 killrm:
@@ -22,9 +22,20 @@ clean:
 data:
 	$(MAKE) -C $(DATA_DIR)
 
-$(OUTPUT_DIR)/%.html: %.Rmd
+$(OUTPUT_DIR)/base-%.html: %.Rmd
 	-mkdir -p $(OUTPUT_DIR)
-	R -e 'rmarkdown::render("$<", output_dir="$(OUTPUT_DIR)")'
+	R -e 'rmarkdown::render("$<", output_file = "$@", output_dir="$(OUTPUT_DIR)", params = list(base_dir = "Data/base/"))'
+
+$(OUTPUT_DIR)/package-%.html: %.Rmd
+	-mkdir -p $(OUTPUT_DIR)
+	R -e 'rmarkdown::render("$<", output_file = "$@", output_dir="$(OUTPUT_DIR)", params = list(base_dir = "Data/package/"))'
+
+$(OUTPUT_DIR)/kaggle-%.html: %.Rmd
+	-mkdir -p $(OUTPUT_DIR)
+	R -e 'rmarkdown::render("$<", output_file = "$@", output_dir="$(OUTPUT_DIR)", params = list(base_dir = "Data/kaggle/"))'
+
+$(OUTPUT_DIR)/%.html: $(OUTPUT_DIR)/kaggle-%.html $(OUTPUT_DIR)/base-%.html $(OUTPUT_DIR)/package-%.html
+	echo "Generating for all datasets"
 
 .PHONY: usage
 usage: $(OUTPUT_DIR)/usage.html

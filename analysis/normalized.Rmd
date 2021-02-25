@@ -174,7 +174,7 @@ by_src_ref <- E_cano %>% group_by(src_ref) %>%
 ```
 
 ```{r}
-by_src_ref %>% datatable()
+by_src_ref %>% arrange(desc(n_resolved)) %>% datatable()
 ```
 
 There should always be less normalized expressions than resolved ones. 
