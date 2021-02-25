@@ -106,7 +106,8 @@ E_raw %>% select(
   parsed = expr_parsed_expression,
   hash = expr_resolved_hash,
   match.call = expr_match_call,
-  n_op = interp_eval
+  n_op = interp_eval,
+  envir = envir_expression
 ) -> E
 
 C_raw -> C
@@ -152,7 +153,7 @@ Minimized:
 ```{r}
 widespread_minimized <- E_cano %>%
   group_by(minimized) %>%
-  summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package), n_operations = mean(n_op, na.rm=TRUE))
+  summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package), n_operations = mean(n_op, na.rm=TRUE), prop_envir = sum(!is.na(envir)) / n())
 
 widespread_minimized %>%
   arrange(desc(n_call_sites)) %>%
@@ -160,7 +161,7 @@ widespread_minimized %>%
 ```
 
 
-`_operations` is the average of R interpreter eval loop per minimized expression.
+`n_operations` is the average of R interpreter eval loop per minimized expression. `prop_envir` shows how much often an *explicit* environment is passed to `eval`. Looking up to a variable and applying a function to a variable, are the two non-trivial categories that most of the time explicitly use the `envir` argument of `eval`.
 
 # How does it evolve per call site
 
