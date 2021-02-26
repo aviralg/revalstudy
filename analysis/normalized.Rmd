@@ -274,7 +274,16 @@ nb_assigns_call_sites <- assigns %>% pull(src_ref) %>% n_distinct()
 There are `r nb_assigns_call_sites` call sites with assignments.
 
 
+Is the `envir` argument non trivial?
 
+```{r}
+assign_env <- assigns %>% filter(!is.na(envir))
+
+nb_a_env_call_sites <- assign_env %>% pull(src_ref) %>% n_distinct()
+```
+
+
+There are `r nb_a_env_call_sites` call sites where `envir` is non-trivial, with an assignment.
 
 
 # `match.call` pattern
@@ -293,7 +302,7 @@ match.call_df %>%
 Most are `model.frame`. If we add other model functions, such as `glm` and `plm`: 
 
 ```{r}
-stat_functions <- c("model.frame", "glm", "plm", "elo.model.frame", "lmer", "randomForest", "betareg", "nlreg", "model.frame.default", "model.matrix", "arima", "glm.nb", "glmer") # There are many more
+stat_functions <- c("model.frame", "glm", "lm", "plm", "elo.model.frame", "lmer", "randomForest", "betareg", "nlreg", "model.frame.default", "model.matrix", "arima", "glm.nb", "glmer") # There are many more
 
 nb_stat_call_sites <- match.call_df %>% 
   filter(topcall %in% stat_functions) %>% 
