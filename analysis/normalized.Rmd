@@ -198,6 +198,9 @@ widespread_topcall <- E_cano %>%
   arrange(desc(n_call_sites))
 ```
 
+```{r}
+widespread_topcall %>% datatable()
+```
 
 
 ```{r}
@@ -207,9 +210,6 @@ big_topcall <- widespread_topcall %>% filter(n_call_sites > 3)
 
 There are `r nrow(big_topcall)` top calls out of `r nrow(widespread_topcall)` that are present in strictly more than 3 call sites.
 
-```{r}
-big_topcall %>% datatable()
-```
 
 
 # Function definitions
@@ -354,7 +354,7 @@ It happens in `r nb_pre_post_call_sites` call sites so most of the call sites wi
 We approximate the plotting function by just looking for `plot` in their name:
 
 ```{r}
-plotting <- E_cano %>% filter(str_detect(topcall, fixed("plot")))
+plotting <- E_cano %>% filter(str_detect(normalized, fixed("plot"))) # not in topcall because f it results from parse...
 
 nb_plotting_call_sites <- plotting %>% pull(src_ref) %>% n_distinct()
 ```
