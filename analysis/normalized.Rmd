@@ -304,7 +304,7 @@ nb_stat_call_sites <- match.call_df %>%
 
 it amounts for `r nb_stat_call_sites` call sites.
 
-# Substitue&co
+# Substitute&co
 
 `substitute`, `quote` and so on are used to do meta-programming.
 
@@ -349,20 +349,29 @@ nb_pre_post_call_sites <- pre_post %>% pull(src_ref) %>% n_distinct()
 
 It happens in `r nb_pre_post_call_sites` call sites so most of the call sites with blocks.
 
-# `eval(x[[condition]])` pattern
+# `Parse` and plotting functions
 
-See https://cran.r-project.org/doc/manuals/r-release/R-lang.html#switch
+We approximate the plotting function by just looking for `plot` in their name:
 
 ```{r}
-eval_switch <- E_cano %>% filter(has_var, has_bracket, topcall == "[[")
+plotting <- E_cano %>% filter(str_detect(topcall, fixed("plot")))
 
-nb_ev_switch_call_sites <- eval_switch %>% pull(src_ref) %>% n_distinct()
+nb_plotting_call_sites <- plotting %>% pull(src_ref) %>% n_distinct()
 ```
 
+There are `r nb_plotting_call_sites` plotting call sites.
 
-There are `r nb_ev_switch_call_sites` call sites using that pattern.
+Are they built using parse? For that, we look at the non-resolved expression (`parse` will disappear after).
 
-But this is actually not correct, because we should look at the non-resolved expression to find this pattern.
+Currently, we use a regex. When `parsed` column is fixed, we will get more accurate results.
+
+```{r}
+parse_plot <- plotting %>% filter(str_detect(ev_expr, fixed("parse")))
+
+nb_parse_plot_call_sites <- parse_plot %>% pull(src_ref) %>% n_distinct()
+```
+
+This already amounts to `r nb_parse_plot_call_sites` call sites.
 
 # Polymorphism in more details
 
