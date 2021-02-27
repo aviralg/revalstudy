@@ -382,7 +382,60 @@ nb_parse_plot_call_sites <- parse_plot %>% pull(src_ref) %>% n_distinct()
 
 This already amounts to `r nb_parse_plot_call_sites` call sites.
 
+### Infix operators
+
+```{r}
+infix <- E_cano %>% filter(str_detect(topcall, "%[^%]*%"))
+
+nb_infix_call_sites <- infix %>% pull(src_ref) %>% n_distinct()
+```
+
+It happens in `r nb_infix_call_sites` call sites.
+
+The packages that use or define those infix operators:
+
+```{r}
+infix %>% group_by(ev_package) %>% summarize(n_call_sites = n_distinct(src_ref)) %>% arrange(desc(n_call_sites)) %>% datatable()
+```
+
+
 # Polymorphism in more details
 
 We have only 15 different kind of minimized expression. Do some minimized expressions often go together?
+
+```{r}
+minimized_exprs <- E_cano %>% pull(minimized) %>% unique()
+
+create_set <- function(l) {
+  s <- rep.int("F", length(minimized_exprs))
+  names(s) <- minimized_exprs
+  
+  for(exp in l) {
+    s[[exp]] = "T"
+  }
+  
+  return(paste0(s, collapse = ""))
+}
+
+show_set <- function(s) {
+  l <- strsplit(s, split="")[[1]]
+  names(l) <- minimized_exprs
+  
+  l <- l[which(l == "T")]
+  return(paste0(names(l), collapse = "; "))
+}
+
+poly <- E_cano %>% group_by(src_ref) %>%
+    summarize(common_minimized = create_set(minimized), n_exprs = n_distinct(minimized)) 
+```
+
+Now, we can show the mot common minimized expressions when there are more than 2 for one call site:
+
+```{r}
+poly %>% filter(n_exprs > 1) %>%
+  count(common_minimized,  sort = TRUE) %>%
+  mutate(common_minimized = map_chr(common_minimized, show_set)) %>% 
+  datatable()
+```
+
 
