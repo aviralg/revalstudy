@@ -210,7 +210,7 @@ overview_table(
 # Ev-dist 
 
 We compute the frequency of evals by package. This shows that some packages
-hardly use eval while other use it intensly. The numbers are "for all runs",
+hardly use eval while other use it intensely. The numbers are "for all runs",
 this means that a popular package may be triggered by more runs and thus
 have higher frequencies. We will later control for this by looking at individual 
 call sites.
@@ -289,6 +289,26 @@ overview_table(
 ```
 
 `r TBL`
+
+```{r coverage-per-package}
+cov_packages <- static_call_sites_per_package %>%
+  left_join(sites_per_package, by = c("package" = "ev_package"), suffix = c("_static", "_tracer")) %>% 
+  mutate(n_tracer = replace_na(n_tracer, 0L)) 
+
+# if n_static < n_tracer, adjust n_tracer to n_static
+# Probably due to higher-order functions taking some eval
+cov_packages <- cov_packages %>%
+  mutate(n_static = if_else(n_static < n_tracer, n_tracer, n_static))
+
+cov_packages <- cov_packages %>% mutate(coverage = 100 * n_tracer / n_static)
+
+cov_packages %>% ggplot() +
+  geom_histogram(aes(x = coverage)) + 
+  labs(x = "coverage (%)")
+
+ggsave(path(PLOT_DIR, "coverage_per_package.pdf"))
+```
+
 
 # Numbers of calls to eval
 
