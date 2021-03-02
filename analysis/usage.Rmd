@@ -303,12 +303,27 @@ cov_packages <- cov_packages %>%
 cov_packages <- cov_packages %>% mutate(coverage = 100 * n_tracer / n_static)
 
 cov_packages %>% ggplot() +
-  geom_histogram(aes(x = coverage)) + 
+  geom_histogram(aes(x = coverage), binwidth=1) + 
   labs(x = "coverage (%)")
 
 ggsave(path(PLOT_DIR, "coverage_per_package.pdf"))
 ```
 
+What is the actual coverage vs the expected coverage?
+```{r}
+expected_cov <- C_raw %>% select(package, coverage_expr) %>% 
+  mutate(coverage_expr = replace_na(coverage_expr, 0)) %>% 
+  mutate(coverage_expr = 100 * coverage_expr)
+
+cov_diff <- expected_cov %>% left_join(cov_packages, by = "package") %>% 
+  mutate(cdiff = pmax(0, coverage_expr - coverage))
+
+cov_diff %>% ggplot() +
+  geom_histogram(aes(x = cdiff), binwidth = 1) + 
+  labs(x = "coverage difference (%)")
+```
+
+Most of the packages are in the first bin, where the difference is less than 1%, so the expression coverage is a good predictor of the actual `eval` coverage.
 
 # Numbers of calls to eval
 
