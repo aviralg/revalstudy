@@ -153,7 +153,7 @@ Minimized:
 ```{r}
 widespread_minimized <- E_cano %>%
   group_by(minimized) %>%
-  summarize(n_call_sites = n_distinct(src_ref), n_packages = n_distinct(ev_package), n_operations = mean(n_op, na.rm=TRUE), prop_envir = sum(!is.na(envir)) / n())
+  summarize(n_call_sites = n_distinct(src_ref), proportion = ratio(n_call_sites, nb_call_sites), n_packages = n_distinct(ev_package), n_operations = round(mean(n_op, na.rm=TRUE), 2), percent_envir = round(100 * sum(!is.na(envir)) / n(), 2))
 
 widespread_minimized %>%
   arrange(desc(n_call_sites)) %>%
@@ -194,7 +194,7 @@ For the functions at the root of the AST, per call site:
 ```{r}
 widespread_topcall <- E_cano %>%
   group_by(topcall) %>%
-  summarize(n_call_sites = n_distinct(src_ref)) %>% 
+  summarize(n_call_sites = n_distinct(src_ref), percent = round(ratio(n_call_sites, nb_call_sites), 2)) %>% 
   arrange(desc(n_call_sites))
 ```
 
@@ -220,7 +220,7 @@ fundefs <- E_cano %>% filter(has_fundef)
 nb_fundef_callsites <- fundefs %>% pull(src_ref) %>% n_distinct()
 ```
 
-There are `r nb_fundef_callsites` call sites with function definitions.
+There are `r nb_fundef_callsites` call sites with function definitions, i.e. `r ratio(nb_fundef_callsites, nb_call_sites)` %.
 
 # Model.frame
 
@@ -231,7 +231,7 @@ nb_modelf_call_sites <- modelframes %>% pull(src_ref) %>% n_distinct()
 ```
 
 
-There are `r nb_modelf_call_sites` call sites with `mode.frame`.
+There are `r nb_modelf_call_sites` call sites with `mode.frame`, i.e. `r ratio(nb_modelf_call_sites, nb_call_sites)`%.
 
 Is it usually in top call position?
 
@@ -247,7 +247,7 @@ Is it correlated with `match.call`?
 nb_mf_match.call <- modelframes %>% filter(!is.na(match.call)) %>% pull(src_ref) %>% n_distinct()
 ```
 
-`r nb_mf_match.call` call sites out of `model.frame` `r nb_modelf_call_sites` call sites use the `match.call` pattern.
+`r nb_mf_match.call` call sites out of `model.frame` `r nb_modelf_call_sites` call sites use the `match.call` pattern, i.e. `r ratio(nb_mf_match.call, nb_modelf_call_sites)`%.
 
 We can also reciprocally look at how many call sites with `match.call` have `model.frame`:
 
@@ -271,7 +271,7 @@ assigns <- E_cano %>% filter(has_assigns > 0)
 nb_assigns_call_sites <- assigns %>% pull(src_ref) %>% n_distinct()
 ```
 
-There are `r nb_assigns_call_sites` call sites with assignments.
+There are `r nb_assigns_call_sites` call sites with assignments, i.e. `r ratio(nb_assigns_call_sites, nb_call_sites)`%.
 
 
 Is the `envir` argument non trivial?
@@ -283,12 +283,12 @@ nb_a_env_call_sites <- assign_env %>% pull(src_ref) %>% n_distinct()
 ```
 
 
-There are `r nb_a_env_call_sites` call sites where `envir` is non-trivial, with an assignment.
+There are `r nb_a_env_call_sites` call sites where `envir` is non-trivial, with an assignment, i.e. `r ratio(nb_a_env_call_sites, nb_assigns_call_sites)`% of the call sites with assignments.
 
 
 # `match.call` pattern
 
-There are `r nb_m.c_call_sites` call sites using the `match.call`pattern.
+There are `r nb_m.c_call_sites` call sites using the `match.call`pattern, i.e. `r ratio(nb_m.c_call_sites, nb_call_sites)`%.
 
 The top calls for this pattern are:
 
@@ -311,7 +311,7 @@ nb_stat_call_sites <- match.call_df %>%
   
 ```
 
-it amounts for `r nb_stat_call_sites` call sites.
+it amounts for `r nb_stat_call_sites` call sites, i.e `r ratio(nb_stat_call_sites, nb_call_sites)`%.
 
 # Substitute&co
 
@@ -333,7 +333,7 @@ meta_not_top <- meta_df %>% filter(!topcall %in% c("substitute", "quote", "enquo
 nb_m_n_top_call_sites <- meta_not_top %>% pull(src_ref) %>% n_distinct()
 ```
 
-It happens for `r nb_m_n_top_call_sites` call sites.
+It happens for `r nb_m_n_top_call_sites` call sites, i.e. `r ratio(nb_m_n_top_call_sites, nb_call_sites)`%.
 
 # Complex blocks
 
@@ -346,7 +346,7 @@ nb_blocks_call_sites <- blocks %>% pull(src_ref) %>% n_distinct()
 ```
 
 
-There are `r nb_blocks_call_sites` such call sites.
+There are `r nb_blocks_call_sites` such call sites, i.e. `r ratio(nb_blocks_call_sites, nb_call_sites)`%.
 
 `eval` is used to insert blocks of code inside the function, for instance as a preprocessing and postprocessing step. There are some examples in the VGAM package. In that case, `{` will be at the root of the AST.
 
@@ -356,7 +356,7 @@ pre_post <- blocks %>% filter(topcall == "{")
 nb_pre_post_call_sites <- pre_post %>% pull(src_ref) %>% n_distinct()
 ```
 
-It happens in `r nb_pre_post_call_sites` call sites so most of the call sites with blocks.
+It happens in `r nb_pre_post_call_sites` call sites so most of the call sites with blocks (`r ratio(nb_pre_post_call_sites, nb_blocks_call_sites)`%).
 
 # `Parse` and plotting functions
 
@@ -368,7 +368,7 @@ plotting <- E_cano %>% filter(str_detect(normalized, fixed("plot"))) # not in to
 nb_plotting_call_sites <- plotting %>% pull(src_ref) %>% n_distinct()
 ```
 
-There are `r nb_plotting_call_sites` plotting call sites.
+There are `r nb_plotting_call_sites` plotting call sites, i.e. `r ratio(nb_plotting_call_sites, nb_call_sites)`%.
 
 Are they built using parse? For that, we look at the non-resolved expression (`parse` will disappear after).
 
@@ -380,7 +380,7 @@ parse_plot <- plotting %>% filter(str_detect(ev_expr, fixed("parse")))
 nb_parse_plot_call_sites <- parse_plot %>% pull(src_ref) %>% n_distinct()
 ```
 
-This already amounts to `r nb_parse_plot_call_sites` call sites.
+This already amounts to `r nb_parse_plot_call_sites` call sites, i.e. `r ratio(nb_parse_plot_call_sites, nb_plotting_call_sites)`% of the plotting call sites.
 
 ### Infix operators
 
@@ -390,7 +390,7 @@ infix <- E_cano %>% filter(str_detect(topcall, "%[^%]*%"))
 nb_infix_call_sites <- infix %>% pull(src_ref) %>% n_distinct()
 ```
 
-It happens in `r nb_infix_call_sites` call sites.
+It happens in `r nb_infix_call_sites` call sites, i.e. `r ratio(nb_infix_call_sites, nb_call_sites)`%.
 
 The packages that use or define those infix operators:
 
@@ -435,6 +435,7 @@ Now, we can show the mot common minimized expressions when there are more than 2
 poly %>% filter(n_exprs > 1) %>%
   count(common_minimized,  sort = TRUE) %>%
   mutate(common_minimized = map_chr(common_minimized, show_set)) %>% 
+  mutate(percent = round(100 * n / nb_call_sites, 2)) %>% 
   datatable()
 ```
 
