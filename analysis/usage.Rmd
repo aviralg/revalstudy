@@ -298,9 +298,9 @@ cov_packages <- static_call_sites_per_package %>%
 # if n_static < n_tracer, adjust n_tracer to n_static
 # Probably due to higher-order functions taking some eval
 cov_packages <- cov_packages %>%
-  mutate(n_static = if_else(n_static < n_tracer, n_tracer, n_static))
+  mutate(n_static_c = if_else(n_static < n_tracer, n_tracer, n_static))
 
-cov_packages <- cov_packages %>% mutate(coverage = 100 * n_tracer / n_static)
+cov_packages <- cov_packages %>% mutate(coverage = 100 * n_tracer / n_static_c)
 
 cov_packages %>% ggplot() +
   geom_histogram(aes(x = coverage), binwidth=1) + 
@@ -311,19 +311,30 @@ ggsave(path(PLOT_DIR, "coverage_per_package.pdf"))
 
 What is the actual coverage vs the expected coverage?
 ```{r}
-expected_cov <- C_raw %>% select(package, coverage_expr) %>% 
-  mutate(coverage_expr = replace_na(coverage_expr, 0)) %>% 
-  mutate(coverage_expr = 100 * coverage_expr)
+corpus_cov<- C_raw %>% select(package, size, revdeps)
 
-cov_diff <- expected_cov %>% left_join(cov_packages, by = "package") %>% 
-  mutate(cdiff = pmax(0, coverage_expr - coverage))
+corpus_cov<- corpus_cov %>% left_join(cov_packages, by = "package") %>%
+  mutate(revdeps = replace_na(revdeps, 0))
 
-cov_diff %>% ggplot() +
-  geom_histogram(aes(x = cdiff), binwidth = 1) + 
-  labs(x = "coverage difference (%)")
+corpus_cov %>% ggplot() +
+  geom_point(aes(x = coverage, y = revdeps, size = size)) + 
+  scale_y_log10() +
+  scale_size_area() +
+  labs(x = "coverage (%)", y = "Reverse dependencies")
+
+ggsave(path(PLOT_DIR, "coverage_per_package_size.pdf"))
 ```
 
-Most of the packages are in the first bin, where the difference is less than 1%, so the expression coverage is a good predictor of the actual `eval` coverage.
+```{r}
+corpus_cov %>% ggplot() +
+  geom_point(aes(x = coverage, y = revdeps, size = n_static)) + 
+  scale_y_log10() +
+  scale_size_area() +
+  labs(x = "coverage (%)", y = "Reverse dependencies", size = "Static call sites")
+
+ggsave(path(PLOT_DIR, "coverage_per_package_static_call_sites.pdf"))
+```
+
 
 # Numbers of calls to eval
 
