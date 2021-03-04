@@ -1,14 +1,33 @@
-\documentclass[USenglish,cleveref, autoref, thm-restate]{lipics-v2019}
+%\documentclass[USenglish,cleveref, autoref, thm-restate]{lipics-v2019}
+\documentclass[acmsmall]{acmart}
 \usepackage{listings,hyperref,multirow,paralist,xspace,url,wrapfig}
 \input{macro}
 \newcommand{\mypara}[1]{\medskip\noindent\emph{#1}\xspace}
 \newcommand{\NOTE}[1]{{\it Note: #1}\xspace}
 
-\title{Why do we Eval?\\[2mm]\Large A large-scale study of Eval usage in R}
-\titlerunning{Why Eval (in R)?}
+
 
 \begin{document}
-\maketitle
+	
+\title{Why do we Eval?\\[2mm]\Large A large-scale study of Eval usage in R}
+%\titlerunning{Why Eval (in R)?}
+
+\author{Author }
+\authornote{Both authors contributed equally to this research.}
+\email{a@b.com}
+\orcid{}
+\author{Author}
+\authornotemark[1]
+\email{r@s.com}
+\affiliation{%
+	\institution{Institute for Clarity in Documentation}
+	\streetaddress{P.O. Box 1212}
+	\city{Dublin}
+	\state{Ohio}
+	\country{USA}
+	\postcode{43017-6221}
+}
+
 
 \begin{abstract}
   \noindent Most dynamic languages allow users to turn text into code
@@ -30,6 +49,7 @@
   %% eval -- Jan
 \end{abstract}
 
+\maketitle
 
 \section{Introduction}
 

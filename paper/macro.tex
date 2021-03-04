@@ -432,7 +432,7 @@
 \newcommand{\eval}{\texttt{eval}\xspace}
 \newcommand{\Eval}{\texttt{Eval}\xspace}
 \newcommand{\evals}{{\sf eval}s\xspace}
-\renewcommand{\parse}{\c{parse}}
+\newcommand{\parse}{\c{parse}}
 \newcommand{\source}{\c{source}}
 \newcommand{\local}{\c{local}}
 \newcommand{\unlockBinding}{\c{unlockBinding}}
@@ -458,20 +458,22 @@
 
 
 \bibliographystyle{plainurl}% the mandatory bibstyle
+
+% From ECOOP
 %Editor-only macros:: begin (do not touch as author)%%%%%%%%%%%%%%%%%%%%%%%%%%%\
 %%%%%%%
-\EventEditors{Eds.}
-\EventNoEds{2}
-\EventLongTitle{European Conference on Object Oriented Programming (ECOOP 2021)}
-\EventShortTitle{ECOOP 2021}
-\EventAcronym{ECOOP}
-\EventYear{2021}
-\EventDate{December 24--27, 2016}
-\EventLocation{Little Whinging, United Kingdom}
-\EventLogo{}
-\SeriesVolume{42}
-\ArticleNo{23}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\EventEditors{Eds.}
+%\EventNoEds{2}
+%\EventLongTitle{European Conference on Object Oriented Programming (ECOOP 2021)}
+%\EventShortTitle{ECOOP 2021}
+%\EventAcronym{ECOOP}
+%\EventYear{2021}
+%\EventDate{December 24--27, 2016}
+%\EventLocation{Little Whinging, United Kingdom}
+%\EventLogo{}
+%\SeriesVolume{42}
+%\ArticleNo{23}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{CCSXML}
   <ccs2012>
@@ -497,10 +499,15 @@
 \ccsdesc[500]{General and reference~Empirical studies}
 \ccsdesc[500]{Software and its engineering~General programming languages}
 
-\author{Anon}{Under review}{}{}{}
+\AtBeginDocument{%
+	\providecommand\BibTeX{{%
+			\normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern-0.8em\TeX}}}
 
-\authorrunning{Anon}
+\setcopyright{acmcopyright}
+\copyrightyear{2018}
+\acmYear{2018}
+\acmDOI{10.1145/1122445.1122456}
 
-\Copyright{Anon}
+
 
 \keywords{R, reflection, eval}
