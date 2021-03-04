@@ -71,6 +71,8 @@ the input data set with only the columns that we use.
 
 ```{r read, message=TRUE, include=F}
 read_fst(corpus_path) %>% as_tibble() -> C_raw
+
+# We do the semi join to only keep the file that are loadable
 read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
 
 rebuild <- TRUE
@@ -176,7 +178,7 @@ the number of call sites with triggered dynamically. The former is larger
 than the latter because code coverage is not perfect.
 
 ```{r exercised-vs-static, include=FALSE}
-# stat_evl <- P %>% filter(call_fun_name == "eval")        %>% nrow()
+ stat_evl <- P %>% filter(call_fun_name == "eval")        %>% nrow()
 stat_evq <- P %>% filter(call_fun_name == "evalq")       %>% nrow()
 stat_evp <- P %>% filter(call_fun_name == "eval.parent") %>% nrow()
 stat_loc <- P %>% filter(call_fun_name == "local")       %>% nrow()
