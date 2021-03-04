@@ -12,7 +12,7 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: Data/package/
+  base_dir: Data/kaggle/
   calls_path: summarized.fst
   corpus_path: ../corpus.fst
   static_path: evals-static.csv
@@ -51,11 +51,16 @@ source("inc/paths.R")
 source("inc/latextags.R")
 source("inc/functions.R")
 theme_set(theme_minimal())
-create_tags(path(TAGS_DIR, "usage_metrics.tex"), prefix = "", default = TRUE)
+
+dataset_name <- basename(params$base_dir)
+create_tags(path(TAGS_DIR, paste0(dataset_name, "_usage_metrics.tex")), prefix = dataset_name, default = TRUE)
 
 calls_path <- paste0(params$base_dir, params$calls_path)
 corpus_path <- paste0(params$base_dir, params$corpus_path)
 static_path <- paste0(params$base_dir, params$static_path)
+
+lock_path <- paste0(params$base_dir, ".lock.fst")
+min_path <- paste0(params$base_dir, "E.fst")
 ```
 
 # Read
@@ -71,10 +76,10 @@ read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
 rebuild <- TRUE
 # We only read the file if we don't have our summarized file on disk.
 # To force reading, set the force_rebuild parameter to true.
-if (file.exists("Data/.lock.fst")) {
-  saved <- read.fst("Data/.lock.fst")[[1,1]]
+if (file.exists(lock_path)) {
+  saved <- read.fst(lock_path)[[1,1]]
   if (saved == file.size(calls_path)) {
-    read.fst("Data/E.fst") %>% as_tibble() -> E
+    read.fst(min_path) %>% as_tibble() -> E
     rebuild <- FALSE
   }
 }
@@ -94,9 +99,9 @@ if (params$force_rebuild | rebuild) {
     opcodes = interp_eval #  Count of the AST nodes traversed by the
   ) %>% #                                interpreter during eval (non-recursive).
    mutate(across(where(is_character),as_factor)) -> E 
-  write.fst(E, "Data/E.fst")
+  write.fst(E, min_path)
   sz <- file.size(calls_path) %>% as_tibble()
-  write.fst(sz,"Data/.lock.fst")
+  write.fst(sz, lock_path)
 }
 
 C_raw -> C
@@ -171,7 +176,7 @@ the number of call sites with triggered dynamically. The former is larger
 than the latter because code coverage is not perfect.
 
 ```{r exercised-vs-static, include=FALSE}
-stat_evl <- P %>% filter(call_fun_name == "eval")        %>% nrow()
+# stat_evl <- P %>% filter(call_fun_name == "eval")        %>% nrow()
 stat_evq <- P %>% filter(call_fun_name == "evalq")       %>% nrow()
 stat_evp <- P %>% filter(call_fun_name == "eval.parent") %>% nrow()
 stat_loc <- P %>% filter(call_fun_name == "local")       %>% nrow()
@@ -565,8 +570,15 @@ symbs <- types %>% filter(type == "symbol") %>% .$n
 languages <- types %>% filter(type == "language") %>% .$n
 expressions <- types %>% filter(type == "expression") %>% .$n
 
-ggplot2_symbs <- E %>% filter(ev_package == "ggplot2") %>% 
-  count(type, wt=duplicates) %>% filter(type == "symbol") %>% .$n
+ggplot2_symbs <- E %>% filter(ev_package == "ggplot2") 
+
+
+# For Kaggle, there are not eval calls originating from ggplot2
+ggplot2_symbs <- if(nrow(ggplot2_symbs) == 0 ) {
+  0 
+} else {
+  ggplot2_symbs %>% count(type, wt=duplicates) %>% filter(type == "symbol") %>% .$n
+}
 
 overview_table(
   r("Symbolpercent", ratio(symbs, nb_calls)),

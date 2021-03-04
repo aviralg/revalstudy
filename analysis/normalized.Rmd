@@ -51,7 +51,11 @@ source("inc/paths.R")
 source("inc/latextags.R")
 source("inc/functions.R")
 theme_set(theme_minimal())
-create_tags(path(TAGS_DIR, "usage_metrics.tex"), prefix = "", default = TRUE)
+
+dataset_name <- basename(params$base_dir)
+
+# Tags will be prefixed by the dataset name
+create_tags(path(TAGS_DIR, paste0(dataset_name, "_normalized_expr.tex")), prefix = dataset_name, default = TRUE)
 
 calls_path <- paste0(params$base_dir, params$calls_path)
 corpus_path <- paste0(params$base_dir, params$corpus_path)
