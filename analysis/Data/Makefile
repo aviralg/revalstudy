@@ -7,7 +7,6 @@ define CURL
 endef
 
 FILES := \
-  corpus.fst \
   corpus-all.fst \
   package/code.fst \
   package/corpus.txt \
@@ -39,8 +38,6 @@ clean:
 
 .PHONY: FORCE
 
-corpus.fst: FORCE
-	$(call CURL,$@,$@)
 corpus-all.fst: FORCE
 	$(call CURL,$@,$@)
 kaggle/kernel.csv: FORCE
