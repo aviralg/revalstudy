@@ -9,29 +9,32 @@ endef
 FILES := \
   corpus.fst \
   corpus-all.fst \
+  package/code.fst \
+  package/corpus.txt \
   package/evals-static.csv \
+  package/normalized-expressions.csv \
   package/summarized.fst \
   package/summarized-externals.fst \
   package/undefined.fst \
-  package/code.fst \
-  package/normalized-expressions.csv \
   package-snapshot/evals-static.csv \
   package-snapshot/summarized.fst \
   package-snapshot/summarized-externals.fst \
   package-snapshot/undefined.fst \
   package-snapshot/code.fst \
   package-snapshot/normalized-expressions.csv \
+  base/corpus.txt \
+  base/evals-static.csv \
+  base/normalized-expressions.csv \
   base/summarized.fst \
   base/summarized-externals.fst \
   base/undefined.fst \
-  base/evals-static.csv \
-  base/normalized-expressions.csv \
-  kaggle/summarized.fst \
-  kaggle/summarized-externals.fst \
-  kaggle/undefined.fst \
+  kaggle/corpus.txt \
   kaggle/evals-static.csv \
   kaggle/kernel.csv \
   kaggle/normalized-expressions.csv \
+  kaggle/summarized.fst \
+  kaggle/summarized-externals.fst \
+  kaggle/undefined.fst
 
 .PHONY: all
 all: $(FILES)
@@ -40,29 +43,20 @@ all: $(FILES)
 clean:
 	-rm -f $(FILES)
 
-corpus.fst:
-	$(call CURL,$@,$@)
-corpus-all.fst:
-	$(call CURL,$@,$@)
+.PHONY: FORCE
 
-package/code.fst:
-	$(call CURL,run/package-trace-eval/code.fst,$@)
-package/evals-static.csv:
-	$(call CURL,run/package-evals-static/package-evals-static.csv,$@)
-package-snapshot/evals-static.csv:
-	$(call CURL,run/package-evals-static/package-evals-static.csv,$@)
-base/evals-static.csv:
-	$(call CURL,run/base-evals-static/base-evals-static.csv,$@)
-kaggle/evals-static.csv:
-	$(call CURL,run/kaggle-kernels/kaggle-evals-static.csv,$@)
-kaggle/kernel.csv:
+corpus.fst: FORCE
+	$(call CURL,$@,$@)
+corpus-all.fst: FORCE
+	$(call CURL,$@,$@)
+kaggle/kernel.csv: FORCE
 	$(call CURL,run/kaggle-kernels/kernel.csv,$@)
 
-package-snapshot/%:
+package-snapshot/%: FORCE
 	$(call CURL,run/preprocess/$@,$@)
-package/%:
+package/%: FORCE
 	$(call CURL,run/preprocess/$@,$@)
-base/%:
+base/%: FORCE
 	$(call CURL,run/preprocess/$@,$@)
-kaggle/%:
+kaggle/%: FORCE
 	$(call CURL,run/preprocess/$@,$@)
