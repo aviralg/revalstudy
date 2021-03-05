@@ -16,12 +16,6 @@ FILES := \
   package/summarized.fst \
   package/summarized-externals.fst \
   package/undefined.fst \
-  package-snapshot/evals-static.csv \
-  package-snapshot/summarized.fst \
-  package-snapshot/summarized-externals.fst \
-  package-snapshot/undefined.fst \
-  package-snapshot/code.fst \
-  package-snapshot/normalized-expressions.csv \
   base/corpus.txt \
   base/evals-static.csv \
   base/normalized-expressions.csv \
@@ -52,8 +46,6 @@ corpus-all.fst: FORCE
 kaggle/kernel.csv: FORCE
 	$(call CURL,run/kaggle-kernels/kernel.csv,$@)
 
-package-snapshot/%: FORCE
-	$(call CURL,run/preprocess/$@,$@)
 package/%: FORCE
 	$(call CURL,run/preprocess/$@,$@)
 base/%: FORCE
