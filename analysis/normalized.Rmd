@@ -71,7 +71,7 @@ the input data set with only the columns that we use. We also read the file with
 
 ```{r read, message=TRUE, include=F}
 read_fst(corpus_path) %>% as_tibble() -> C_raw
-#read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
+read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
 
 read_fst(calls_path) %>% as_tibble() -> E_raw
 

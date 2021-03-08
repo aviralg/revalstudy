@@ -12,7 +12,7 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: Data/kaggle/
+  base_dir: Data/package/
   calls_path: summarized.fst
   corpus_path: corpus.txt
   static_path: evals-static.csv
@@ -54,6 +54,8 @@ theme_set(theme_minimal())
 
 dataset_name <- basename(params$base_dir)
 create_tags(path(TAGS_DIR, paste0(dataset_name, "_usage_metrics.tex")), prefix = dataset_name, default = TRUE)
+#create_tags(path(TAGS_DIR, "usage_metrics.tex"), default = TRUE)
+
 
 calls_path <- paste0(params$base_dir, params$calls_path)
 corpus_path <- paste0(params$base_dir, params$corpus_path)
