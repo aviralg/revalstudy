@@ -797,9 +797,13 @@ which go all the way to \MaxeventsRnd instructions.
  \caption{Instructions per packages} \label{ev}
 \end{figure}
 
-\paragraph{Kaggle}
-
 \paragraph{Base}
+
+\paragraph{Kaggle} In the Kaggle dataset, \kaggleNbruns packages trigger at least one \eval. In total, \kaggleAllcalls \eval were recorded. Most of them are call to the normal \eval, whereas a few, \kaggleLocals, are calls to \c{local}. They are due to the code loading libraries.
+Out of \kaggleStaticeval static \eval sites, we exercise \kaggleTriggeredeval of them. Mot \eval are invoked only once. Only one \eval amounts for several thousand, \kaggleMaxcalls,  invocations. Code amounts for \kaggleCodepercent of arguments in the kaggle corpus. However, contrary to the CRAN corpus, they are all expressions, and there are very few symbols (\kaggleSymbolpercent) and no language objects. Most expression objects result from a call to the \c{parse} function, suggesting that most \eval in Kaggle parse and evaluate strings. The median argument size is \kaggleMedianszeval, which makes sense, as there are very few arguments that are only symbols. The largest argument size is \kaggleMaxszeval. The distribution of events is similar to the one for CRAN: \kaggleSmalleventspct of \eval calls amount for less than 50 events.
+
+
+\paragraph{Discussion}
 
 \subsection{Things to do}
 
@@ -811,8 +815,6 @@ which go all the way to \MaxeventsRnd instructions.
   -- it is a big outlier that skews all the graphs...
 \item Add a ``Discussion'' paragraph at the end that sums up the
   observations
-\item Add paragraphs for Kaggle and CORE -- only discuss the
-  differences from CRAN
 \end{itemize}
 
 
