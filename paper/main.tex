@@ -1,6 +1,7 @@
 %\documentclass[USenglish,cleveref, autoref, thm-restate]{lipics-v2019}
 \documentclass[acmsmall]{acmart}
 \usepackage{listings,hyperref,multirow,paralist,xspace,url,wrapfig}
+\usepackage{tabularx}
 \input{macro}
 \newcommand{\mypara}[1]{\medskip\noindent\emph{#1}\xspace}
 \newcommand{\NOTE}[1]{{\it Note: #1}\xspace}
@@ -1132,6 +1133,22 @@ z <- q.f(dp, ...)
 
 \subsection{Comparison with Javascript}
 
+
+\section{Power scale of \eval }
+
+
+\begin{table}[h]
+	\begin{tabularx}{\textwidth}{|X|X|X|X|X|}
+		\hline
+		& Julia & Javascript & Python & R \tabularnewline
+		\hline % lstlinline does not like tabular environments...
+		{\eval} & \texttt{eval(expr)} & \texttt{eval(expr)} & \texttt{eval(expr[, globals[, locals]])} &  \texttt{eval(expr[, envir[, enclos]])}  \tabularnewline
+		\hline 
+		Environments &Global  & Local & Global or local  & Any \tabularnewline
+		\hline
+	\end{tabularx}
+	\caption{Relative power of \eval throughout languages: in which environment it can evaluate its expression.}
+\end{table}
 
 
 \section{Conclusion}
