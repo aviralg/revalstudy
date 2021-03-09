@@ -15,7 +15,7 @@ my_datatable <- function(df, page_size=20, round=TRUE, ...) {
   } else {
     list(paging=TRUE, searching=TRUE, info=TRUE, pageLength=page_size)
   }
-  
+
   table <- datatable(df, options=options, ...)
   #if (round) {
   #  table <- formatRound(table, sapply(df, is.numeric), 2)
@@ -37,7 +37,7 @@ rs <- function(name, value) {
 r <- function(name, value, ...) {
   stopifnot(is.character(name))
   stopifnot(length(name) == 1)
-  UseMethod("r", value)  
+  UseMethod("r", value)
 }
 
 r.numeric <- function(name, value, ...) {
@@ -51,12 +51,12 @@ r.numeric <- function(name, value, ...) {
 
 r.Duration <- function(name, value, ...) {
   units <- c("years", "days", "hours", "minutes", "seconds")
-  
+
   for (u in units) {
     v <- as.numeric(value, units=u)
     class(v) <- "num_with_suffix"
     attr(v, "suffix") <- paste0(" ", u)
-    
+
     if (all(v > 1)) break
   }
 
@@ -74,10 +74,10 @@ r.difftime <- function(name, value, ...) {
 
 r.default <- function(name, value, ...) {
   stopifnot(length(value) == 1)
-  
+
   value <- fmt(value, ...)
   tag_name <- tag(name, value)
-  
+
   tibble(name=str_c(name, " (\\", tag_name, ")"), value=value)
 }
 
@@ -123,7 +123,7 @@ create_tags <- function(filename, prefix="", default=TRUE) {
 }
 
 clear_tags <- function(tags=get_default_tags()) {
-  tags$values <- tibble::tibble(name=character(), 
+  tags$values <- tibble::tibble(name=character(),
                                 value=character(), latex=character())
 }
 
@@ -157,16 +157,16 @@ tag <- function(name, value, tags=get_default_tags()) {
   if (is.null(tags)) {
     return(value)
   }
-  
+
   stopifnot(is.character(name))
   stopifnot(length(name)==1)
-  
+
   value <- as.character(value)
   latex_tag_name <- generate_latex_command_name(name, prefix=tags_prefix(tags))
   latex <- generate_latex_command(latex_tag_name, value)
-  
+
   existing <- which(tags$values$name == name)
-  
+
   if (length(existing) > 0) {
     tags$values[existing, "value"] <- value
     tags$values[existing, "latex"] <- latex
@@ -178,9 +178,9 @@ tag <- function(name, value, tags=get_default_tags()) {
       latex
     )
   }
-  
+
   save_tag_file(tags)
-  
+
   invisible(latex_tag_name)
 }
 
@@ -223,13 +223,13 @@ generate_latex_command_name <- function(name, prefix="") {
   name <- latex_command_name(name)
   name <- latex_escape(name)
   prefix <- latex_escape(prefix)
-  
+
   stringr::str_c(prefix, name)
 }
 
 generate_latex_command <- function(command_name, value) {
   stopifnot(length(command_name) == length(value))
-  
+
   stringr::str_c(
     "\\newcommand{\\", command_name, "}{", latex_escape_value(value),"\\xspace}"
   )
@@ -289,7 +289,7 @@ fmt <- function(x, prefix="", suffix="", ...) {
     NULL
   } else {
     v <- as.character(.fmt(x, ...))
-    
+
     stringr::str_c(prefix, v, suffix)
   }
 }
@@ -311,10 +311,10 @@ fmt <- function(x, prefix="", suffix="", ...) {
 .fmt.double <- function(x, digits=1, floor=FALSE, ceiling=FALSE) {
   if (floor) x <- floor(x)
   if (ceiling) x <- ceiling(x)
-  
+
   x <- sapply(x, function(y) {
     y <- abs(y)
-    
+
     if (is.na(y)) y
     else if (y < 1) signif(y, digits)
     else if (y > 1) round(y, digits)
@@ -348,7 +348,7 @@ scale_with_suffix <- function(x, base, suffixes) {
   stopifnot(all(base > 0))
   stopifnot(length(suffixes) > 0)
   stopifnot(is.character(suffixes))
- 
+
   scale <- if (length(base) == 1) {
     base^(1:length(suffixes))
   } else {
@@ -356,14 +356,14 @@ scale_with_suffix <- function(x, base, suffixes) {
     base
   }
   scale <- scale[1:length(suffixes)-1]
-  
+
   magnitute <- floor(log(abs(x), base))
   magnitute[magnitute < 0] <- 0
   magnitute[magnitute > length(scale)] <- length(scale)
-  
+
   magnitute <- as.integer(magnitute)
   suffix <- sapply(magnitute, function(x) suffixes[x + 1])
-  
+
   d <- base^magnitute
   v <- x / d
   class(v) <- "num_with_suffix"
@@ -401,4 +401,11 @@ oom.data.frame <- function(x, ...) oom(nrow(x), ...)
 #' @export
 size <- function(x, units=c("B", "kB", "MB", "GB", "TB")) {
   scale_with_suffix(x, base=1024, suffixes=units)
+}
+
+
+ggsave_prefix <- function(name, tags=get_default_tags()) {
+  prefix <- tags_prefix(tags)
+  #TODO: add PLOT_DIR as a parameter to the tags when doing create_tags
+  ggsave(path(PLOT_DIR, paste0(prefix, "_", name)))
 }
