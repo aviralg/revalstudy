@@ -12,7 +12,7 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: Data/package/
+  base_dir: Data/base/
   calls_path: summarized.fst
   corpus_path: corpus.txt
   static_path: evals-static.csv
@@ -331,7 +331,7 @@ sites_per_package %>%
   labs(y = "Eval calls per package") +
   theme(legend.position = "none") 
 
-ggsave(path(PLOT_DIR, "eval_calls_per_packages.pdf"))
+ggsave_prefix("eval_calls_per_packages.pdf")
 ```
 
 
@@ -398,7 +398,7 @@ E %>%
         panel.grid.minor.x = element_blank(), aspect.ratio = 4/3) 
 
 
-ggsave(path(PLOT_DIR, "size_loaded_distribution.pdf"))
+ggsave_prefix("size_loaded_distribution.pdf")
 ```
 
 
@@ -439,7 +439,7 @@ E %>%
   labs(y = "", x = "") +
   theme(legend.position = "none", text = element_text(size=25))
 
-ggsave(path(PLOT_DIR, "events_per_pack_large.pdf"))
+ggsave_prefix("events_per_pack_large.pdf")
 ```
 
 
@@ -452,7 +452,7 @@ E %>%
   labs(y = "Instructions", x = "") +
   theme(legend.position = "none", text = element_text(size=25)) 
 
-ggsave(path(PLOT_DIR, "events_per_pack_small.pdf"))
+ggsave_prefix("events_per_pack_small.pdf")
 ```
 
 
@@ -493,7 +493,7 @@ triggered %>%
         axis.text = element_text(size=20), 
         aspect.ratio = 4/3)
 
-ggsave(path(PLOT_DIR, "calls_per_run_per_call_site.pdf"))
+ggsave_prefix("calls_per_run_per_call_site.pdf")
 ```
 
 
