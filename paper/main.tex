@@ -798,8 +798,8 @@ which go all the way to \MaxeventsRnd instructions.
  \caption{Instructions per packages} \label{ev}
 \end{figure}
 
-\paragraph{Base} The base dataset contains 13 packages. All of them trigger at least one \eval call. In total, \baseAllcalls \eval  were recorded. Most of them are calls to he normal \eval. There are a few calls to the other variants, less than 4\%. Contrary to the CRAN dataset, there are calls to \c{evalq} (\baseEvalqs). Out of \baseStaticeval static sites, \baseTriggeredeval are exercised, i.e. \baseTriggeredevalpct. Most of the arguments, \baseCodepercent,  are code objects. However, contrary to CRAN, few, only \baseSymbolpercent, are symbols, but rather language objects, \baseLanguagepercent. There are also few expression objects: \baseExpressionpercent.
-The median argument size is \baseMedianszeval, which is more than for CRAN, which we dominated by symbol evaluation, whereas the maximum size is \baseMaxszeval. Small event evals (less than 50 events) amount for \baseSmalleventspct of the events in \eval calls.
+\paragraph{Base} The base dataset contains 13 packages. All of them trigger at least one \eval call. In total, \baseAllcalls \eval  were recorded. Most of them are calls to he normal \eval. There are a few calls to the other variants, less than 4\%. Contrary to the CRAN dataset, there are calls to \c{evalq} (\baseEvalqs). Out of \baseStaticeval \eval static sites, \baseTriggeredeval are exercised, i.e. \baseTriggeredevalpct, out of \baseStaticevalq, \baseTriggeredevalq are exercised, and out of \baseStaticevalparent, \baseTriggeredevalparent are exercised.  Most of the arguments, \baseCodepercent,  are code objects. However, contrary to CRAN, few, only \baseSymbolpercent, are symbols, but rather language objects, \baseLanguagepercent. There are also few expression objects: \baseExpressionpercent.
+The median argument size is \baseMedianszeval, which is more than for CRAN, which was dominated by symbol evaluation.The maximum size is \baseMaxszeval. Small event evals (less than 50 events) amount for \baseSmalleventspct of the events in \eval calls.
 
 % Figures for evalq are weird: more triggered than static call sites
 
@@ -807,7 +807,7 @@ The median argument size is \baseMedianszeval, which is more than for CRAN, whic
 Out of \kaggleStaticeval static \eval sites, we exercise \kaggleTriggeredeval of them. Mot \eval are invoked only once. Only one \eval amounts for several thousand, \kaggleMaxcalls,  invocations. Code amounts for \kaggleCodepercent of arguments in the kaggle corpus. However, contrary to the CRAN corpus, they are all expressions, and there are very few symbols (\kaggleSymbolpercent) and no language objects. Most expression objects result from a call to the \c{parse} function, suggesting that most \eval in Kaggle parse and evaluate strings. The median argument size is \kaggleMedianszeval, which makes sense, as there are very few arguments that are only symbols. The largest argument size is \kaggleMaxszeval. The distribution of events is similar to the one for CRAN: \kaggleSmalleventspct of \eval calls amount for less than 50 events.
 
 
-\paragraph{Discussion} \emph{Base} is more akin to use \eval for metaprogramming, \emph{kaggle} to evaluate parsed strings, and CRAN is dominated by symbol evaluation. In terms of number of calls, a few calls dominate, with a call from \emph{ggplot} being prominent in the CRAN corpus. When looking at the \eval sites, \eval is more spread out. These two measures emphasize two different points of view:
+\paragraph{Discussion} \emph{Base} is more akin to use \eval for metaprogramming, \emph{kaggle} to evaluate parsed strings, and CRAN is dominated by symbol evaluation. In terms of number of calls, a few calls dominate, with a call from \emph{ggplot} being prominent in the CRAN corpus. When looking at the \eval sites, \eval is more spread out. Those two measures emphasize two different points of view:
 
 \begin{itemize}
 	\item The number of calls is relevant to an optimizing compiler: the most frequent calls are the ones to be optimized first.
@@ -1137,7 +1137,6 @@ z <- q.f(dp, ...)
 \subsection{Comparison with Javascript}
 
 
-\section{Power scale of \eval }
 
 
 \begin{table}[h]
