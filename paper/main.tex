@@ -807,7 +807,14 @@ The median argument size is \baseMedianszeval, which is more than for CRAN, whic
 Out of \kaggleStaticeval static \eval sites, we exercise \kaggleTriggeredeval of them. Mot \eval are invoked only once. Only one \eval amounts for several thousand, \kaggleMaxcalls,  invocations. Code amounts for \kaggleCodepercent of arguments in the kaggle corpus. However, contrary to the CRAN corpus, they are all expressions, and there are very few symbols (\kaggleSymbolpercent) and no language objects. Most expression objects result from a call to the \c{parse} function, suggesting that most \eval in Kaggle parse and evaluate strings. The median argument size is \kaggleMedianszeval, which makes sense, as there are very few arguments that are only symbols. The largest argument size is \kaggleMaxszeval. The distribution of events is similar to the one for CRAN: \kaggleSmalleventspct of \eval calls amount for less than 50 events.
 
 
-\paragraph{Discussion}
+\paragraph{Discussion} \emph{Base} is more akin to use \eval for metaprogramming, \emph{kaggle} to evaluate parsed strings, and CRAN is dominated by symbol evaluation. In terms of number of calls, a few calls dominate, with a call from \emph{ggplot} being prominent in the CRAN corpus. When looking at the \eval sites, \eval is more spread out. These two measures emphasize two different points of view:
+
+\begin{itemize}
+	\item The number of calls is relevant to an optimizing compiler: the most frequent calls are the ones to be optimized first.
+	\item The number of sites is relevant to the programmer/user: it describes better how programmers use \eval.
+\end{itemize}
+
+% What about a threat model?
 
 \subsection{Things to do}
 
@@ -815,10 +822,6 @@ Out of \kaggleStaticeval static \eval sites, we exercise \kaggleTriggeredeval of
 \item Figure 7: check that element counts are correct
 \item Check that the percentage of operations performed within
   an \eval (5\%) is correct. That feels surprising to me.
-\item I am having second thoughts about keeping the \c{ggplot2} data
-  -- it is a big outlier that skews all the graphs...
-\item Add a ``Discussion'' paragraph at the end that sums up the
-  observations
 \end{itemize}
 
 
