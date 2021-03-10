@@ -14,9 +14,9 @@ params:
   base_dir: Data/package/
   calls_path: summarized.fst
   normalized_path: normalized-expressions.csv
-  corpus_path: ../corpus.fst
+  corpus_path: corpus.txt
   static_path: evals-static.csv
-  force_rebuild: TRUE
+  force_rebuild: FALSE
 ---
 
 ```{r setup, include=FALSE}
@@ -56,11 +56,15 @@ dataset_name <- basename(params$base_dir)
 
 # Tags will be prefixed by the dataset name
 create_tags(path(TAGS_DIR, paste0(dataset_name, "_normalized_expr.tex")), prefix = dataset_name, default = TRUE)
+# Also use ggsave_prefix instead of ggsave if you need to save a graph
 
 calls_path <- paste0(params$base_dir, params$calls_path)
 corpus_path <- paste0(params$base_dir, params$corpus_path)
 static_path <- paste0(params$base_dir, params$static_path)
 normalized_path <- paste0(params$base_dir, params$normalized_path)
+
+lock_path <- paste0(params$base_dir, ".normalized-lock.fst")
+min_path <- paste0(params$base_dir, "Ecano.fst")
 ```
 
 # Read
@@ -70,49 +74,69 @@ which package belong to our corpus (`C_raw`). For conciseness, `E` is
 the input data set with only the columns that we use. We also read the file with normalized expressions, `N`.
 
 ```{r read, message=TRUE, include=F}
-read_fst(corpus_path) %>% as_tibble() -> C_raw
+tibble(package = read_lines(corpus_path)) -> C_raw
 read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
 
-read_fst(calls_path) %>% as_tibble() -> E_raw
+rebuild <- TRUE
 
-read_csv(normalized_path, col_types = cols(
-  minimized = col_character(),
-  topcall = col_character(),
-  is_model = col_logical(),
-  has_fundef = col_logical(),
-  has_calls = col_integer(),
-  has_assigns = col_integer(),
-  has_var = col_logical(),
-  has_bracket = col_logical(),
-  is_assign = col_logical(),
-  is_value = col_logical(),
-  is_ignore = col_logical(),
-  has_dollar = col_logical(),
-  has_user_call = col_logical(),
-  has_block = col_logical(),
-  has_meta_op = col_logical(),
-  normalized = col_character(),
-  trimmed = col_character(),
-  hash = col_character()
-)) -> N
+E_cano <- NULL
 
-E_raw %>% select(
-  run_package = package, #      The package which was run to trigger the eval
-  ev_variant = eval_function, # Which eval variant was called
-  duplicates = nb_ev_calls, #   Number of identical eval calls (weight)
-  src_ref = eval_call_srcref, # Source ref for the eval call site
-  file, #                       Script file name (name of this run)
-  ev_package = eval_source, #   Package of the call site
-  type = expr_resolved_type_tag, #   Argument type
-  ev_expr = expr_expression,
-  expr_resolved,
-  func = expr_resolved_function, # the function (if any) at the root of the AST of expr_resolved
-  parsed = expr_parsed_expression,
-  hash = expr_resolved_hash,
-  match.call = expr_match_call,
-  n_op = interp_eval,
-  envir = envir_expression
-) -> E
+if (file.exists(lock_path)) {
+  saved <- read.fst(lock_path)[[1,1]]
+  if (saved == file.size(calls_path)) {
+    read_fst(min_path) %>% as_tibble() -> E_cano
+    rebuild <- FALSE
+  }
+}
+
+if(params$force_rebuild || rebuild) {
+  read_fst(calls_path) %>% as_tibble() -> E_raw
+  
+  read_csv(normalized_path, col_types = cols(
+    minimized = col_character(),
+    topcall = col_character(),
+    is_model = col_logical(),
+    has_fundef = col_logical(),
+    has_calls = col_integer(),
+    has_assigns = col_integer(),
+    has_var = col_logical(),
+    has_bracket = col_logical(),
+    is_assign = col_logical(),
+    is_value = col_logical(),
+    is_ignore = col_logical(),
+    has_dollar = col_logical(),
+    has_user_call = col_logical(),
+    has_block = col_logical(),
+    has_meta_op = col_logical(),
+    normalized = col_character(),
+    trimmed = col_character(),
+    hash = col_character()
+  )) -> N
+  
+  E_raw %>% select(
+    run_package = package, #      The package which was run to trigger the eval
+    ev_variant = eval_function, # Which eval variant was called
+    duplicates = nb_ev_calls, #   Number of identical eval calls (weight)
+    src_ref = eval_call_srcref, # Source ref for the eval call site
+    file, #                       Script file name (name of this run)
+    ev_package = eval_source, #   Package of the call site
+    type = expr_resolved_type_tag, #   Argument type
+    ev_expr = expr_expression,
+    expr_resolved,
+    func = expr_resolved_function, # the function (if any) at the root of the AST of expr_resolved
+    parsed = expr_parsed_expression,
+    hash = expr_resolved_hash,
+    match.call = expr_match_call,
+    n_op = interp_eval,
+    envir = envir_expression
+  ) -> E
+  
+  E_cano <- E %>% left_join(N, by = "hash") # Common column is the hash of the full resolved expression
+  
+  E_cano %>% write_fst(min_path)
+  sz <- file.size(calls_path) %>% as_tibble()
+  write.fst(sz, lock_path)
+}
 
 C_raw -> C
 corpus_size <- nrow(C)
@@ -121,7 +145,7 @@ corpus_size <- nrow(C)
 
 Some useful numbers:
 ```{r}
-nb_call_sites <- E %>%
+nb_call_sites <- E_cano %>%
   pull(src_ref) %>%
   n_distinct()
 ```
@@ -129,13 +153,6 @@ nb_call_sites <- E %>%
 
 There are `r nb_call_sites` call sites in the dataset.
 
-# Full dataset 
-
-We join the normalized expressions and their statistics with the calls.
-
-```{r}
-E_cano <- E %>% left_join(N, by = "hash") # Common column is the hash of the full resolved expression
-```
 
 
 # Ranking of normalized and minimized expressions
