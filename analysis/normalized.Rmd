@@ -174,13 +174,21 @@ Minimized:
 ```{r}
 widespread_minimized <- E_cano %>%
   group_by(minimized) %>%
-  summarize(n_call_sites = n_distinct(src_ref), proportion = ratio(n_call_sites, nb_call_sites), n_packages = n_distinct(ev_package), n_operations = round(mean(n_op, na.rm=TRUE), 2), percent_envir = round(100 * sum(!is.na(envir)) / n(), 2))
+  summarize(n_call_sites = n_distinct(src_ref), proportion = ratio(n_call_sites, nb_call_sites), n_packages = n_distinct(ev_package), n_operations = round(mean(n_op, na.rm=TRUE), 2), percent_envir = ratio(sum(!is.na(envir)), n())) %>% 
+  arrange(desc(n_call_sites))
 
 widespread_minimized %>%
-  arrange(desc(n_call_sites)) %>%
   datatable()
 ```
 
+```{r}
+nrows <- 12
+r_vec("MinimizedCallSites", nrows, pull(widespread_minimized, n_call_sites))
+r_vec("MinimizedPropSites", nrows, pull(widespread_minimized, proportion))
+r_vec("MinimizedPackage", nrows, pull(widespread_minimized, n_packages))
+r_vec("MinimizedOperations", nrows, pull(widespread_minimized, n_operations))
+r_vec("MinimizedPercentEnvir", nrows, pull(widespread_minimized, percent_envir))
+```
 
 `n_operations` is the average of R interpreter eval loop per minimized expression. `prop_envir` shows how much often an *explicit* environment is passed to `eval`. Looking up to a variable and applying a function to a variable, are the two non-trivial categories that most of the time explicitly use the `envir` argument of `eval`.
 
