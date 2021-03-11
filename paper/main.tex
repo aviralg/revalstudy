@@ -777,9 +777,7 @@ graph for legibility.
 \end{figure}
 
 To measure the work performed in \evals, we count the instructions
-executed by interpreter during evaluation of the argument. In our
-corpus, \EvalEventAllPerc of all instructions (\EventsRnd) are
-performed within \eval. Most invocations perform relatively little
+executed by interpreter during evaluation of the argument.  Most invocations perform relatively little
 work with \Smalleventspct of \evals executing 50 or fewer
 instructions. The violin plot of Figure~\ref{ev}(a) corresponds to
 \evals executing $\leq$ 50 instructions, it is dominated by trivial
@@ -815,14 +813,6 @@ Out of \kaggleStaticeval static \eval sites, we exercise \kaggleTriggeredeval of
 \end{itemize}
 
 % What about a threat model?
-
-\subsection{Things to do}
-
-\begin{itemize}
-\item Figure 7: check that element counts are correct
-\item Check that the percentage of operations performed within
-  an \eval (5\%) is correct. That feels surprising to me. We should actually remove this number!
-\end{itemize}
 
 
 \section{A Taxonomy of Eval}
