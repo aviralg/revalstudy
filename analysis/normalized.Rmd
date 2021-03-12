@@ -148,6 +148,8 @@ Some useful numbers:
 nb_call_sites <- E_cano %>%
   pull(src_ref) %>%
   n_distinct()
+
+r("Nb call sites", nb_call_sites)
 ```
 
 

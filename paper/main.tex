@@ -831,7 +831,7 @@ options(datatable.print.keys = FALSE)
 \end{lstlisting}
 
 We classify the resolved expressions to take into account the structure of the expression passed to \eval.
-However, we do not want to discriminate expressions based on specific values. Hence, the expression goes through several simplification steps: constant folding of arithmetic and string expressions that use commonly used functions (addition, string concatenation), discarding of specific value to a symbolic value holder, variable absorption. We keep track of variables, as they are evaluated in the environment specified to \eval, contrary to values that are left unchanged.  After the simplification steps, we obtain 15 different \emph{minimized} expressions.
+However, we do not want to discriminate expressions based on specific values. Hence, the expression goes through several simplification steps: constant folding of arithmetic and string expressions that use commonly used functions (addition, string concatenation), discarding of specific value to a symbolic value holder, variable absorption. We keep track of variables, as they are evaluated in the environment specified to \eval, contrary to values that are left unchanged. We also track whether assignment operators are used in the expression or not. After the simplification steps, we obtain 15 different \emph{minimized} expressions, of which we show the ten first most frequent in numbers of sites in Table~\ref{tab:minimizedexpressions}.
 
 \begin{table}[h]
 	\begin{tabular}{|c|c|c|c|c|c|}
@@ -854,22 +854,18 @@ However, we do not want to discriminate expressions based on specific values. He
 		\hline
 		\texttt{<-} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirh \\
 		\hline
-		\texttt{\{BLOCK\}}& \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenviri \\
+		\texttt{FUN} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenviri \\
 		\hline
-		\texttt{FUN} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirj \\
-		\hline
-		&  &  &  &  &  \\
-		\hline
-		&  &  &  &  &  \\
-		\hline
-		&  &  &  &  &  \\
-		\hline
-		&  &  &  &  &  \\
-		\hline
-		&  &  &  &  &  \\
+		\texttt{\{BLOCK\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirj \\
 		\hline
 	\end{tabular}
+	\caption{Minimized expressions: ten most frequent in terms of sites. \#sites is the number of sites; \%sites the percentage of sites across the total number of sites (\packageNbCallSites sites); \#packages is the number of packages with at least one of the minimized expression and measures how widespread a minimized expression is. \#operations is the average number of steps performed by the R interpreter when given that minimized expression, and \%envir is the percentage of call sites for which the \c{envir} argument is explicitly passed.} \label{tab:minimizedexpressions}
 \end{table}
+
+The most common minimized expression is a variable. It happens in \packageMinimizedpropsitesa of the sites and is widespread across packages as it is found in \packageMinimizedpackagea packages across our CRAN corpus. The \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\% of the call sites, which suggests that \eval is used here to get the value of the variable in a non-local environment.
+
+
+Note that a site can exhibit several minimized expressions. The most common combinations are:
 
 
 \mypara{Side-effects.} XXX026 total number of reads performed by
@@ -1048,11 +1044,16 @@ h2 <- function(x, y)
 \end{lstlisting}
 
 
-\section{Case Studies}
+\section{\eval patterns}
 
-\NOTE{5(?) examples from real code?}
 
-\subsection{LEGACY TEXT}
+\subsection{Evaluating variables in a specific environment}
+
+\subsection{\c{match.call}}
+
+\subsection{Meta-programming}
+
+\section{LEGACY TEXT}
 
 We looked at the top ten expressions passed to core and package \eval
 calls. The most frequent ten expressions to eval calls from core R
