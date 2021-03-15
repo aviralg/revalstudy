@@ -868,9 +868,9 @@ Compositions of functions, without variables, is the second most frequent minimi
 
 When a function is evaluated on some variable, the percentage of non default environment is high.
 
-\c{FUN} represents a function definition
+\c{FUN} represents a function definition. It entails very few steps of the interpreter, as the body of the new function is just stored for later execution.
 
-\c{{BLOCK}} is a sequence of statements. It is usually large, with in average \packageMinimizedoperationsjRnd operations in it.
+\c{\{BLOCK\}} is a sequence of statements. It is usually large, with in average \packageMinimizedoperationsjRnd operations in it.
 
 The minimized expression classification suggests that the presence of variables in the expression is highly correlated to the specification of a specific environment, and that \eval is used here for its power in precising the evaluation environment.
 
@@ -879,6 +879,9 @@ Note that a site can exhibit several minimized expressions. However, \packageNbO
 
 
 \NOTE{Maybe we should ditch the table of the minimized expressions and rather use the ones of combinations. It has the advantage of showing what is the most frequent, per call site. But it's a long tail, and sites that have several minimized expressions are not that numerous, only 13\%}
+
+
+\NOTE{Two small paragraphs about normalized expressions in Base and Kaggle.}
 
 
 \mypara{Side-effects.} XXX026 total number of reads performed by
