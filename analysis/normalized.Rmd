@@ -463,11 +463,22 @@ poly <- E_cano %>% group_by(src_ref) %>%
 Now, we can show the mot common minimized expressions when there are more than 2 for one call site:
 
 ```{r}
-poly %>% filter(n_exprs > 1) %>%
+poly %>%
   count(common_minimized,  sort = TRUE) %>%
   mutate(common_minimized = map_chr(common_minimized, show_set)) %>% 
   mutate(percent = round(100 * n / nb_call_sites, 2)) %>% 
   datatable()
+```
+
+
+How many sites have only one minimized expression?
+
+```{r}
+n_one_mini <- poly %>% filter(n_expers == 1) %>% nrow()
+
+
+r("Nb One Minimized", n_one_mini)
+r("Nb One Minimized Percent", ratio(n_one_mini, nb_call_sites))
 ```
 
 
