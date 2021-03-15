@@ -442,7 +442,7 @@ create_set <- function(l) {
   names(s) <- minimized_exprs
   
   for(exp in l) {
-    s[[exp]] = "T"
+    s[[exp]] <- "T"
   }
   
   return(paste0(s, collapse = ""))
