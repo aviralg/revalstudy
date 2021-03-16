@@ -820,7 +820,7 @@ Out of \kaggleStaticeval static \eval sites, we exercise \kaggleTriggeredeval of
 The previous section gave a quantitative view of the usage of \eval;
 in this section we try to elucidate \emph{what} it does.
 
-\paragraph{Normalized expressions} During tracing, we gather all source expressions and all resolved expression arguments passed to \eval. For instance, a non-resolved expression and some of its resolved expressions can be:
+\subsection{Normalized expressions} During tracing, we gather all source expressions and all resolved expression arguments passed to \eval. For instance, a non-resolved expression and some of its resolved expressions can be:
 
 \begin{lstlisting}
 parse(text = paste0(\"options(\", i, \"=\", opts[i], \")\"))
@@ -859,14 +859,33 @@ However, we do not want to discriminate expressions based on specific values. He
 		\texttt{\{BLOCK\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirj \\
 		\hline
 	\end{tabular}
-	\caption{Minimized expressions: ten most frequent in terms of sites. \#sites is the number of sites; \%sites the percentage of sites across the total number of sites (\packageNbCallSites sites); \#packages is the number of packages with at least one of the minimized expression and measures how widespread a minimized expression is. \#operations is the average number of steps performed by the R interpreter when given that minimized expression, and \%envir is the percentage of call sites for which the \c{envir} argument is explicitly passed.} \label{tab:minimizedexpressions}
+	\caption{Minimized expressions: ten most frequent in terms of sites. \#sites is the number of sites; \%sites the percentage of sites across the total number of sites (\packageNbCallSites sites) with at least this minimized expression; \#packages is the number of packages with at least one of the minimized expression and measures how widespread a minimized expression is. \#operations is the average number of steps performed by the R interpreter when given that minimized expression, and \%envir is the percentage of call sites for which the \c{envir} argument is explicitly passed.} \label{tab:minimizedexpressions}
 \end{table}
 
+
+Note that a site can exhibit several minimized expressions. However, \packageNbOneMinimizedPercent of the sites have only one minimized expression. 
+
+\paragraph{Variables.}
 The most common minimized expression is a variable.\footnote{An arithmetic with some variables and constant will also be normalized to \c{X}, i.e. a variable.} It happens in \packageMinimizedpropsitesa of the sites and is widespread across packages as it is found in \packageMinimizedpackagea packages across our CRAN corpus. The \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\% of the call sites, which suggests that \eval is used here to get the value of the variable in a non-local environment. 
 
-Compositions of functions, without variables, is the second most frequent minimized expression. 
+\paragraph{Composition of functions. } Compositions of functions, without variables, is the second most frequent minimized expression. 
 
-When a function is evaluated on some variable, the percentage of non default environment is high.
+\paragraph{Value.}
+Many sites evaluates to \c{V}.  \packageValOneNodePercent of those sites are only passed an expression with one node, \ie one value, not a more complex expression that is later constant folded. \c{V} corresponds to two main categories of expressions passed to \eval:
+
+\begin{itemize}
+	\item \eval is passed an actual value, a double, an integer, an environment, a closure and so on
+	\item \eval is passed a language expression that trivially evaluates to a value, for instance, \c{quote(1)}, \quote{c("a", "b", "c")}, and does not include variables, so does not depend on a specific environment.
+\end{itemize}
+
+For the first category, \eval is not necessary. In \packageNbCallSitesUniqueActualValue sites, \ie \packageCallSitesUniqueActualValuePercent\% sites, it is only passed such actual values. The median number of runs for those sites is \packageMedianRunSitesUniqueActualValue, suggesting it happens because there are rarely triggered in our dataset and all paths are not taken.
+
+The percentage of non default environment passed to \eval is \packageMinimizedpercentenvirc. Some sites are passed both a value or a symbol, which explains that a specific environment is precised. 
+
+%TODO: find out the percentage of non-default envir for sites which have both a value and a variable
+%TODO: find the same percentage for sites which have at least one variable passed to them?
+
+When a function is evaluated on some variable (\c{F(X)}), the percentage of non default environment is high, \packageMinimizedpercentenvird\%.
 
 \c{FUN} represents a function definition. It entails very few steps of the interpreter, as the body of the new function is just stored for later execution.
 
@@ -875,10 +894,10 @@ When a function is evaluated on some variable, the percentage of non default env
 The minimized expression classification suggests that the presence of variables in the expression is highly correlated to the specification of a specific environment, and that \eval is used here for its power in precising the evaluation environment.
 
 
-Note that a site can exhibit several minimized expressions. However, \packageNbOneMinimizedPercent of the sites have only one minimized expression. The most common combinations are:
+The most common combinations for sites with several minimized expressions are:
 
 
-\NOTE{Maybe we should ditch the table of the minimized expressions and rather use the ones of combinations. It has the advantage of showing what is the most frequent, per call site. But it's a long tail, and sites that have several minimized expressions are not that numerous, only 13\%}
+\NOTE{Maybe we should ditch the table of the minimized expressions and rather use the ones of combinations. It has the advantage of showing what is the most frequent, per call site. But it's a long tail, and sites that have several minimized expressions are not that numerous, only 13\%. But if include combinations, percentages change. For instance, 3314 call sites have only X, i.e. 22.51, instead of 4353 and 29.6\%. }
 
 
 \NOTE{Two small paragraphs about normalized expressions in Base and Kaggle.}

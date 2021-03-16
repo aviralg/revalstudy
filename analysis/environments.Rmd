@@ -12,8 +12,8 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: Data
-  calls_packages_path: /package/summarized.fst
+  base_dir: Data/
+  calls_packages_path: package/summarized.fst
 ---
 
 ```{r setup, include=FALSE}
