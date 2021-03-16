@@ -25,6 +25,7 @@ library(fst)
 library(fs)
 library(DT)
 library(scales)
+library(corrr)
 
 knitr::knit_hooks$set(time_it = local({
   now <- NULL
@@ -127,8 +128,12 @@ if(params$force_rebuild || rebuild) {
     parsed = expr_parsed_expression,
     hash = expr_resolved_hash,
     match.call = expr_match_call,
+    arg_size = expr_resolved_length, #   Size in characters of argument 
+    ast_nodes = expr_resolved_nodes,
     n_op = interp_eval,
-    envir = envir_expression
+    envir = envir_expression,
+    caller_srcref,
+    caller_expression
   ) -> E
   
   E_cano <- E %>% left_join(N, by = "hash") # Common column is the hash of the full resolved expression
@@ -430,6 +435,9 @@ infix %>% group_by(ev_package) %>% summarize(n_call_sites = n_distinct(src_ref))
 ```
 
 
+
+
+
 # Polymorphism in more details
 
 We have only 15 different kind of minimized expression. Do some minimized expressions often go together?
@@ -446,6 +454,16 @@ create_set <- function(l) {
   }
   
   return(paste0(s, collapse = ""))
+}
+
+index_v <- match("V", minimized_exprs)
+
+has_value <- function(l) {
+  substr(l, index_v, index_v) == "T"
+}
+
+count_elements <- function(l) {
+  sum(map_int(strsplit(l, split="")[[1]], function(ch) {if(ch == "T") {1L} else {0L}}))
 }
 
 show_set <- function(s) {
@@ -474,11 +492,81 @@ poly %>%
 How many sites have only one minimized expression?
 
 ```{r}
-n_one_mini <- poly %>% filter(n_expers == 1) %>% nrow()
+n_one_mini <- poly %>% filter(n_exprs == 1) %>% nrow()
 
 
 r("Nb One Minimized", n_one_mini)
 r("Nb One Minimized Percent", ratio(n_one_mini, nb_call_sites))
 ```
 
+
+# Values
+
+Many call sites only evaluate a value. 
+
+Is it a simple or a complex value?
+
+```{r}
+val_exprs <- E_cano %>% filter(minimized == "V") %>%
+  mutate(caller_srcref = if_else(is.na(caller_srcref), file, caller_srcref)) %>%
+  group_by(src_ref) %>%
+  summarise(avg_ast_nodes = mean(ast_nodes, na.rm = TRUE), avg_arg_size = mean(arg_size, na.rm = TRUE), nb_runs = n_distinct(file), nb_caller_srcref = n_distinct(caller_srcref), nb_calls = sum(duplicates), nb_caller_exprs = n_distinct(caller_expression)) %>%
+  arrange(desc(avg_ast_nodes))
+
+n_val_exprs <- val_exprs %>% nrow()
+n_one_node <- val_exprs %>% filter(avg_ast_nodes == 1) %>% nrow()
+
+r("val one node", n_one_node)
+r("val one node percent", ratio(n_one_node, n_val_exprs))
+```
+
+Are the sites resolving to just a value well covered?
+
+```{r}
+med_runs <- median(val_exprs$nb_runs, na.rm = TRUE)
+```
+
+
+Is there a correlation between the number of caller srcref and the presence of other minimized expressions for one call site?
+
+There are many `NA` caller srcref, so we count them as 1 currently...
+
+```{r}
+with_value <- poly %>% filter(has_value(common_minimized))
+
+val_exprs_comb <- val_exprs %>% left_join(with_value, by="src_ref")  %>%
+  mutate(calls_per_run = nb_calls / nb_runs) %>%
+  mutate(calls_per_site = nb_calls / nb_caller_srcref) %>%
+  mutate(calls_per_site_per_run = nb_calls / nb_runs / nb_caller_srcref)
+# normalization to be able to see both on the same graph
+
+val_exprs_comb %>% ggplot(aes(x = nb_caller_srcref, y = n_exprs)) + 
+  geom_jitter(alpha = 0.3) +
+  scale_x_log10()
+
+val_exprs_comb %>% ggplot(aes(x = nb_runs, y = n_exprs)) + 
+  geom_jitter(alpha = 0.3) +
+  scale_x_log10()
+
+val_exprs_comb %>% ggplot(aes(x = calls_per_run, y = n_exprs)) + 
+  geom_jitter(alpha = 0.3) +
+  scale_x_log10()
+
+val_exprs_comb %>% ggplot(aes(x = calls_per_site, y = n_exprs)) + 
+  geom_jitter(alpha = 0.3) +
+  scale_x_log10()
+
+val_exprs_comb %>% ggplot(aes(x = calls_per_site_per_run, y = n_exprs)) + 
+  geom_jitter(alpha=0.3) +
+  scale_x_log10()
+
+val_exprs_comb %>% ggplot(aes(x = nb_caller_exprs, y = n_exprs)) + 
+  geom_jitter(alpha=0.3) +
+  scale_x_log10()
+
+df <- val_exprs_comb %>% select(where(is.numeric))
+
+df %>% correlate(method = "spearman") %>% network_plot()
+df %>% correlate(method = "spearman") %>% rplot() + theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+```
 
