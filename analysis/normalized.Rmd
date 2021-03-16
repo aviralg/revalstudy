@@ -502,7 +502,25 @@ r("Nb One Minimized Percent", ratio(n_one_mini, nb_call_sites))
 
 # Values
 
-Many call sites only evaluate a value. 
+Many call sites only evaluate a value. It is either a language expression or symbol, or an actual value.
+
+```{r}
+value_minimized <- widespread_minimized %>% filter(minimized == "V")
+```
+
+
+These are the number of call sites that are actual values.
+```{r}
+main_types <- E_cano %>% group_by(src_ref) %>% summarise(nb_types = n_distinct(type), type = first(type), nb_runs = n_distinct(file))
+
+only_actual_values <- main_types %>% filter(!type %in% c("symbol", "language", "expression", "promise"), nb_types == 1)
+nb_actual_values_sites <- only_actual_values %>% pull(src_ref) %>% n_distinct()
+
+r("nb call sites unique actual value", nb_actual_values_sites)
+r("call sites unique actual value percent", ratio(nb_actual_values_sites, value_minimized$n_call_sites))
+r("median run sites unique actual value", median(only_actual_values$nb_runs, na.rm = TRUE))
+```
+
 
 Is it a simple or a complex value?
 
@@ -531,36 +549,34 @@ Is there a correlation between the number of caller srcref and the presence of o
 
 There are many `NA` caller srcref, so we count them as 1 currently...
 
-```{r}
-with_value <- poly %>% filter(has_value(common_minimized))
-
-val_exprs_comb <- val_exprs %>% left_join(with_value, by="src_ref")  %>%
+```{r eval = FALSE}
+val_exprs_comb <- val_exprs %>% left_join(main_types, by="src_ref")  %>%
   mutate(calls_per_run = nb_calls / nb_runs) %>%
   mutate(calls_per_site = nb_calls / nb_caller_srcref) %>%
   mutate(calls_per_site_per_run = nb_calls / nb_runs / nb_caller_srcref)
 # normalization to be able to see both on the same graph
 
-val_exprs_comb %>% ggplot(aes(x = nb_caller_srcref, y = n_exprs)) + 
+val_exprs_comb %>% ggplot(aes(x = nb_caller_srcref, y = nb_types)) + 
   geom_jitter(alpha = 0.3) +
   scale_x_log10()
 
-val_exprs_comb %>% ggplot(aes(x = nb_runs, y = n_exprs)) + 
+val_exprs_comb %>% ggplot(aes(x = nb_runs, y = nb_types)) + 
   geom_jitter(alpha = 0.3) +
   scale_x_log10()
 
-val_exprs_comb %>% ggplot(aes(x = calls_per_run, y = n_exprs)) + 
+val_exprs_comb %>% ggplot(aes(x = calls_per_run, y = nb_types)) + 
   geom_jitter(alpha = 0.3) +
   scale_x_log10()
 
-val_exprs_comb %>% ggplot(aes(x = calls_per_site, y = n_exprs)) + 
+val_exprs_comb %>% ggplot(aes(x = calls_per_site, y = nb_types)) + 
   geom_jitter(alpha = 0.3) +
   scale_x_log10()
 
-val_exprs_comb %>% ggplot(aes(x = calls_per_site_per_run, y = n_exprs)) + 
+val_exprs_comb %>% ggplot(aes(x = calls_per_site_per_run, y = nb_types)) + 
   geom_jitter(alpha=0.3) +
   scale_x_log10()
 
-val_exprs_comb %>% ggplot(aes(x = nb_caller_exprs, y = n_exprs)) + 
+val_exprs_comb %>% ggplot(aes(x = nb_caller_exprs, y = nb_types)) + 
   geom_jitter(alpha=0.3) +
   scale_x_log10()
 
@@ -568,5 +584,6 @@ df <- val_exprs_comb %>% select(where(is.numeric))
 
 df %>% correlate(method = "spearman") %>% network_plot()
 df %>% correlate(method = "spearman") %>% rplot() + theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+
 ```
 
