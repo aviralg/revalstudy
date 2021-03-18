@@ -870,8 +870,10 @@ Note that a site can exhibit several minimized expressions. However, \packageNbO
 \paragraph{Variables.}
 The most common minimized expression is a variable.\footnote{An arithmetic expression with some variables and constant will also be normalized to \c{X}, i.e. a variable.} It happens in \packageMinimizedpropsitesa of the sites and is widespread across packages as it is found in \packageMinimizedpackagea packages across our CRAN corpus. The \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\% of the call sites, which suggests that \eval is used here to get the value of the variable in a non-local environment. 
 
+% the percentage of non-default environment is more convincing when looking at the number of calls rather the number of sites
 
-Similarly, when a function is evaluated on some variable (\c{F(X)} minimized expression), the percentage of non default environment is high, \packageMinimizedpercentenvird\%.
+
+Similarly, when a function is evaluated on some variable (\c{F(X)} minimized expression), the percentage of non default environment is rather high, \packageMinimizedpercentenvird\%.
 
 
 

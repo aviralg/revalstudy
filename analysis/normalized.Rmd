@@ -181,7 +181,7 @@ Minimized:
 ```{r}
 widespread_minimized <- E_cano %>%
   group_by(minimized) %>%
-  summarize(n_call_sites = n_distinct(src_ref), proportion = ratio(n_call_sites, nb_call_sites), n_packages = n_distinct(ev_package), n_operations = round(mean(n_op, na.rm=TRUE), 2), percent_envir = ratio(n_distinct(cur_data()$src_ref[!is.na(cur_data()$envir)]),  n_call_sites)) %>% 
+  summarize(n_call_sites = n_distinct(src_ref), proportion = ratio(n_call_sites, nb_call_sites), n_packages = n_distinct(ev_package), n_operations = round(mean(n_op, na.rm=TRUE), 2), percent_envir = ratio(n_distinct(cur_data()$src_ref[!is.na(cur_data()$envir)]),  n_call_sites), percent_envir_calls = ratio(sum(!is.na(envir)), n())) %>% 
   arrange(desc(n_call_sites))
 
 widespread_minimized %>%
