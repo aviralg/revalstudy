@@ -181,7 +181,7 @@ Minimized:
 ```{r}
 widespread_minimized <- E_cano %>%
   group_by(minimized) %>%
-  summarize(n_call_sites = n_distinct(src_ref), proportion = ratio(n_call_sites, nb_call_sites), n_packages = n_distinct(ev_package), n_operations = round(mean(n_op, na.rm=TRUE), 2), percent_envir = ratio(sum(!is.na(envir)), n())) %>% 
+  summarize(n_call_sites = n_distinct(src_ref), proportion = ratio(n_call_sites, nb_call_sites), n_packages = n_distinct(ev_package), n_operations = round(mean(n_op, na.rm=TRUE), 2), percent_envir = ratio(n_distinct(cur_data()$src_ref[!is.na(cur_data()$envir)]),  n_call_sites)) %>% 
   arrange(desc(n_call_sites))
 
 widespread_minimized %>%
@@ -638,4 +638,24 @@ non_default_with_var <- minimized_sites %>% filter(has_envir, has_var)
 r("non default envir value percent", ratio(nrow(non_default_envir), nrow(minimized_sites)))
 r("non default envir with var percent", ratio(nrow(non_default_with_var), nrow(non_default_envir)))
 ```
+
+# Accessing a slot
+
+Accessing a slot is done with `$`, `[]` or `[[]]`.
+
+```{r}
+slot_access <- E_cano %>% filter(minimized == "$")
+
+generalized_slot_access <- E_cano %>% filter(has_dollar | has_bracket)
+
+nb_slot_sites <- slot_access %>% pull(src_ref) %>% n_distinct()
+
+nb_generalized_slot_sites <- generalized_slot_access %>% pull(src_ref) %>% n_distinct()
+
+r("nb slot access", nb_slot_sites)
+r("slot access percent", ratio(nb_slot_sites, nb_call_sites))
+r("generalized slot access", nb_generalized_slot_sites)
+r("generalized slot access percent", ratio(nb_generalized_slot_sites, nb_call_sites))
+```
+
 
