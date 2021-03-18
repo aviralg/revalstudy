@@ -457,9 +457,14 @@ create_set <- function(l) {
 }
 
 index_v <- match("V", minimized_exprs)
+index_x <- match("X", minimized_exprs)
 
 has_value <- function(l) {
   substr(l, index_v, index_v) == "T"
+}
+
+is_variable <- function(l) {
+  substr(l, index_x, index_x) == "T"
 }
 
 count_elements <- function(l) {
@@ -519,7 +524,11 @@ nb_actual_values_sites <- only_actual_values %>% pull(src_ref) %>% n_distinct()
 r("nb call sites unique actual value", nb_actual_values_sites)
 r("call sites unique actual value percent", ratio(nb_actual_values_sites, value_minimized$n_call_sites))
 r("median run sites unique actual value", median(only_actual_values$nb_runs, na.rm = TRUE))
+r("average run sites unique actual value", mean(only_actual_values$nb_runs, na.rm = TRUE))
+r("sd run sites unique actual value", sd(only_actual_values$nb_runs, na.rm = TRUE))
 ```
+
+
 
 
 Is it a simple or a complex value?
@@ -542,6 +551,12 @@ Are the sites resolving to just a value well covered?
 
 ```{r}
 med_runs <- median(val_exprs$nb_runs, na.rm = TRUE)
+avg_runs <- mean(val_exprs$nb_runs, na.rm = TRUE)
+sd_runs <- sd(val_exprs$nb_runs, na.rm = TRUE)
+
+r("one val median runs", med_runs)
+r("one val average runs", avg_runs)
+r("one val sd runs", sd_runs)
 ```
 
 
@@ -584,6 +599,34 @@ df <- val_exprs_comb %>% select(where(is.numeric))
 
 df %>% correlate(method = "spearman") %>% network_plot()
 df %>% correlate(method = "spearman") %>% rplot() + theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+
+```
+
+
+Manual inspection of the source code shows that there are actually some call sites that take actual values.
+If a site is exercised by many caller sites, or by many different runs, and has only values, then we reckon it is probably a _useless_ `eval`...
+
+```{r}
+val_only <- val_exprs %>% right_join(only_actual_values, by = c("src_ref", "nb_runs"))
+
+max_val_runs <- val_only %>% filter(nb_caller_exprs == max(nb_caller_exprs)) #it happens to also be the one with the most caller expressions
+
+
+val_only %>% filter(nb_caller_exprs > 5) # those ones are likely to be useless eval
+```
+
+
+We now want to characterize better the sites that are passed a non-default environment. Are they also the sites that can get a value or something with a variable inside?
+
+We compute the sites which are at least one given a `V` minimized expression. Then we look at whether they are passed teh default envir or not, and if there are variables in
+
+```{r}
+minimized_sites <- E_cano %>% semi_join(val_exprs, by="src_ref") %>% group_by(src_ref) %>% 
+  summarize(has_envir = any(!is.na(envir)), has_var = any(has_var, na.rm = TRUE))
+
+non_default_envir <- minimized_sites %>% filter(has_envir)
+
+non_default_with_var <- minimized_sites %>% filter(has_envir, has_var)
 
 ```
 
