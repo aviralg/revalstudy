@@ -866,30 +866,39 @@ However, we do not want to discriminate expressions based on specific values. He
 Note that a site can exhibit several minimized expressions. However, \packageNbOneMinimizedPercent of the sites have only one minimized expression. 
 
 \paragraph{Variables.}
-The most common minimized expression is a variable.\footnote{An arithmetic with some variables and constant will also be normalized to \c{X}, i.e. a variable.} It happens in \packageMinimizedpropsitesa of the sites and is widespread across packages as it is found in \packageMinimizedpackagea packages across our CRAN corpus. The \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\% of the call sites, which suggests that \eval is used here to get the value of the variable in a non-local environment. 
+The most common minimized expression is a variable.\footnote{An arithmetic expression with some variables and constant will also be normalized to \c{X}, i.e. a variable.} It happens in \packageMinimizedpropsitesa of the sites and is widespread across packages as it is found in \packageMinimizedpackagea packages across our CRAN corpus. The \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\% of the call sites, which suggests that \eval is used here to get the value of the variable in a non-local environment. 
+
+
+Similarly, when a function is evaluated on some variable (\c{F(X)}), the percentage of non default environment is high, \packageMinimizedpercentenvird\%.
 
 \paragraph{Composition of functions. } Compositions of functions, without variables, is the second most frequent minimized expression. 
 
-\paragraph{Value.}
+\paragraph{Values.}
 Many sites evaluates to \c{V}.  \packageValOneNodePercent of those sites are only passed an expression with one node, \ie one value, not a more complex expression that is later constant folded. \c{V} corresponds to two main categories of expressions passed to \eval:
 
 \begin{itemize}
-	\item \eval is passed an actual value, a double, an integer, an environment, a closure and so on
-	\item \eval is passed a language expression that trivially evaluates to a value, for instance, \c{quote(1)}, \quote{c("a", "b", "c")}, and does not include variables, so does not depend on a specific environment.
+	\item \eval is passed an actual value, a double, an integer, an environment, a closure and other simple types,
+	\item \eval is passed a language expression that trivially evaluates to a value, for instance, \c{quote(1)}, \c{quote(1 + 1)}, \quote{c("a", "b", "c")}, and does not include variables, so does not depend on a specific environment.
 \end{itemize}
 
-For the first category, \eval is not necessary. In \packageNbCallSitesUniqueActualValue sites, \ie \packageCallSitesUniqueActualValuePercent\% sites, it is only passed such actual values. The median number of runs for those sites is \packageMedianRunSitesUniqueActualValue, suggesting it happens because there are rarely triggered in our dataset and all paths are not taken.
+For the first category, \eval is not necessary. In \packageNbCallSitesUniqueActualValue sites exhibiting \c{V}, \ie \packageCallSitesUniqueActualValuePercent\% sites, it is only passed such actual values. The median number of runs for those sites is \packageMedianRunSitesUniqueActualValue (average \packageAverageRunSitesUniqueActualValue, standard deviation \packageSdRunSitesUniqueActualValue), suggesting it happens because there are rarely triggered in our dataset and all paths are not taken. However, manual inspection of the source code of some examples shows that some sites actually pass values. For instance, in package \emph{ctmle}, in function \c{evaluate\_candidate\_glmnet}:
 
-The percentage of non default environment passed to \eval is \packageMinimizedpercentenvirc. Some sites are passed both a value or a symbol, which explains that a specific environment is precised. 
+\begin{lstlisting}
+f1 <- eval(paste("A ~ ", paste(paste(names(X[,-1]), sep=''), collapse=" + ")))
+f2 <- as.formula(f1)
+\end{lstlisting}
 
-%TODO: find out the percentage of non-default envir for sites which have both a value and a variable
-%TODO: find the same percentage for sites which have at least one variable passed to them?
+\c{paste} concatenates strings and \eval will just return that string. \c{as.formula} can take a string and convert it to a formula; \eval is not needed here.
 
-When a function is evaluated on some variable (\c{F(X)}), the percentage of non default environment is high, \packageMinimizedpercentenvird\%.
+The percentage of non default environment passed to \eval is \packageMinimizedpercentenvirc when the minimized expression is a value. Some sites which are passed a value, are also passed different minimized expressions. For those ones, \packageNonDefaultEnvirValuePercent use a non-default environment, and among the one that use a non-default environment, \packageNonDefaultEnvirWithVarPercent have at least one minimized expression with a variable inside.
 
-\c{FUN} represents a function definition. It entails very few steps of the interpreter, as the body of the new function is just stored for later execution.
 
-\c{\{BLOCK\}} is a sequence of statements. It is usually large, with in average \packageMinimizedoperationsjRnd operations in it.
+
+\paragraph{Function definition.} \c{FUN} represents a function definition. It entails very few steps of the interpreter, as the body of the new function is just stored for later execution.
+
+\paragraph{Sequence of statements.} \c{\{BLOCK\}} is a sequence of statements. It is usually large, with in average \packageMinimizedoperationsjRnd operations in it.
+
+
 
 The minimized expression classification suggests that the presence of variables in the expression is highly correlated to the specification of a specific environment, and that \eval is used here for its power in precising the evaluation environment.
 

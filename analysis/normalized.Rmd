@@ -618,15 +618,18 @@ val_only %>% filter(nb_caller_exprs > 5) # those ones are likely to be useless e
 
 We now want to characterize better the sites that are passed a non-default environment. Are they also the sites that can get a value or something with a variable inside?
 
-We compute the sites which are at least one given a `V` minimized expression. Then we look at whether they are passed teh default envir or not, and if there are variables in
+We compute the sites which are at least one given a `V` minimized expression. Then we look at whether they are passed the default envir or not, and if there are variables in
 
 ```{r}
 minimized_sites <- E_cano %>% semi_join(val_exprs, by="src_ref") %>% group_by(src_ref) %>% 
-  summarize(has_envir = any(!is.na(envir)), has_var = any(has_var, na.rm = TRUE))
+  summarize(has_envir = all(!is.na(envir)), has_var = any(has_var, na.rm = TRUE))
 
 non_default_envir <- minimized_sites %>% filter(has_envir)
 
 non_default_with_var <- minimized_sites %>% filter(has_envir, has_var)
 
+
+r("non default envir value percent", ratio(nrow(non_default_envir), nrow(minimized_sites)))
+r("non default envir with var percent", ratio(nrow(non_default_with_var), nrow(non_default_envir)))
 ```
 
