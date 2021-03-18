@@ -858,6 +858,8 @@ However, we do not want to discriminate expressions based on specific values. He
 		\hline
 		\texttt{\{BLOCK\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirj \\
 		\hline
+		\texttt{F(F(<-))} & \packageMinimizedcallsitesk & \packageMinimizedpropsitesk & \packageMinimizedpackagek & \packageMinimizedoperationskRnd & \packageMinimizedpercentenvirk \\
+		\hline
 	\end{tabular}
 	\caption{Minimized expressions: ten most frequent in terms of sites. \#sites is the number of sites; \%sites the percentage of sites across the total number of sites (\packageNbCallSites sites) with at least this minimized expression; \#packages is the number of packages with at least one of the minimized expression and measures how widespread a minimized expression is. \#operations is the average number of steps performed by the R interpreter when given that minimized expression, and \%envir is the percentage of call sites for which the \c{envir} argument is explicitly passed.} \label{tab:minimizedexpressions}
 \end{table}
@@ -871,7 +873,7 @@ The most common minimized expression is a variable.\footnote{An arithmetic expre
 
 Similarly, when a function is evaluated on some variable (\c{F(X)}), the percentage of non default environment is high, \packageMinimizedpercentenvird\%.
 
-\paragraph{Composition of functions. } Compositions of functions, without variables, is the second most frequent minimized expression. 
+
 
 \paragraph{Values.}
 Many sites evaluates to \c{V}.  \packageValOneNodePercent of those sites are only passed an expression with one node, \ie one value, not a more complex expression that is later constant folded. \c{V} corresponds to two main categories of expressions passed to \eval:
@@ -893,10 +895,15 @@ f2 <- as.formula(f1)
 The percentage of non default environment passed to \eval is \packageMinimizedpercentenvirc when the minimized expression is a value. Some sites which are passed a value, are also passed different minimized expressions. For those ones, \packageNonDefaultEnvirValuePercent use a non-default environment, and among the one that use a non-default environment, \packageNonDefaultEnvirWithVarPercent have at least one minimized expression with a variable inside.
 
 
+\paragraph{\c{model.frame}} This is a function used to create statistical models. We explain it in more details in the section about pattern (see Section~REF).
 
 \paragraph{Function definition.} \c{FUN} represents a function definition. It entails very few steps of the interpreter, as the body of the new function is just stored for later execution.
 
-\paragraph{Sequence of statements.} \c{\{BLOCK\}} is a sequence of statements. It is usually large, with in average \packageMinimizedoperationsjRnd operations in it.
+\paragraph{Assignments.} This amounts to \packageAssignSitesPercent of the sites and corresponds to minimized expressions \c{<-}, where the assignment is the top call, and \c{F(F(<-))}, where the assignment happens inside, and others that we were not enough present to be shown in table~\ref{tab:minimizedexpressions}.  Assignments are performed with \c{<-}, \c{<<-} or \c{assign}. Most often, assignment happens in top call position. A non-default environment is specified only in \packageNonDefaultEnvirAssignSitesPercent of the sites with assignments. Indeed, most of those assignments occur in the default environment, \ie in the caller of \eval. This hints that side effects are not widespread in \eval.\footnote{Side effects can also happen in a function call in the \eval expression, and that function call will hide assignment operators from us. We more precisely instrument side-effects to environment in Section~REF.}
+
+\paragraph{Accessing a slot.}
+
+\paragraph{Large expressions }  Compositions of functions, without variables (\c{F(F(X))} minimized expression) is the second most frequent minimized expression. \c{\{BLOCK\}} is a sequence of statements. It is usually large, with in average \packageMinimizedoperationsjRnd operations in it.
 
 
 

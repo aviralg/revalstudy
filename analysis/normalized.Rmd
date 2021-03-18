@@ -305,6 +305,9 @@ When do we perform assignments (causing potentially side effects)?
 assigns <- E_cano %>% filter(has_assigns > 0)
 
 nb_assigns_call_sites <- assigns %>% pull(src_ref) %>% n_distinct()
+
+r("nb assign sites", nb_assigns_call_sites)
+r("assign sites percent", ratio(nb_assigns_call_sites, nb_call_sites))
 ```
 
 There are `r nb_assigns_call_sites` call sites with assignments, i.e. `r ratio(nb_assigns_call_sites, nb_call_sites)`%.
@@ -316,6 +319,9 @@ Is the `envir` argument non trivial?
 assign_env <- assigns %>% filter(!is.na(envir))
 
 nb_a_env_call_sites <- assign_env %>% pull(src_ref) %>% n_distinct()
+
+r("non default envir assign sites", nb_a_env_call_sites)
+r("non default envir assign sites percent", ratio(nb_a_env_call_sites, nb_assigns_call_sites))
 ```
 
 
