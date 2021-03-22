@@ -26,6 +26,7 @@ library(fs)
 library(DT)
 library(scales)
 library(corrr)
+library(boot)
 
 knitr::knit_hooks$set(time_it = local({
   now <- NULL
@@ -245,6 +246,24 @@ big_topcall <- widespread_topcall %>% filter(n_call_sites > 3)
 
 
 There are `r nrow(big_topcall)` top calls out of `r nrow(widespread_topcall)` that are present in strictly more than 3 call sites.
+
+# Variables
+
+
+The percentage of non-default envir for variables seem to be quite low for the use-case. What if we remove more complex expressions and just keep the symbols?
+
+```{r}
+var_minimized <- E_cano %>% filter(minimized == "X")
+nb_var_min_sites <- var_minimized %>% pull(src_ref) %>% n_distinct()
+
+var_symb <-  E_cano %>% filter(minimized == "X", type == "symbol")
+nb_var_symb_sites <- var_symb %>% pull(src_ref) %>% n_distinct()
+
+var_symb_non_default_envir <- var_symb %>% filter(!is.na(envir))
+nb_var_symb_ndefault_sites <- var_symb_non_default_envir %>% pull(src_ref) %>% n_distinct()
+
+r("nb non default envir variables percent", ratio(nb_var_symb_ndefault_sites, nb_var_symb_sites))
+```
 
 
 
@@ -536,7 +555,6 @@ r("sd run sites unique actual value", sd(only_actual_values$nb_runs, na.rm = TRU
 
 
 
-
 Is it a simple or a complex value?
 
 ```{r}
@@ -622,9 +640,33 @@ val_only %>% filter(nb_caller_exprs > 5) # those ones are likely to be useless e
 ```
 
 
+And the results of the manual inspection:
+
+```{r, include=FALSE}
+useful_percent <- 0
+```
+
+
+```{r, eval=dataset_name == "package"}
+manual_value_necessary <- read_csv(path(params$base_dir, "non-necessary-value-evals.csv"), col_types = cols(src_ref = col_character(), necessary = col_logical()))
+
+statistic <- function(data, i) {
+  df <- data[i,] %>% select(necessary) %>% filter(necessary)
+  nrow(df) / nrow(data[i,])
+}
+
+bootstrap <- boot(manual_value_necessary, statistic, R = 1000)
+
+useful_percent <- mean(bootstrap$t, na.rm = TRUE)
+
+r("useful value eval percent", percent(useful_percent))
+```
+
+`r percent(useful_percent)`% of those `eval` are useful.
+
 We now want to characterize better the sites that are passed a non-default environment. Are they also the sites that can get a value or something with a variable inside?
 
-We compute the sites which are at least one given a `V` minimized expression. Then we look at whether they are passed the default envir or not, and if there are variables in
+We compute the sites which are at least one given a `V` minimized expression. Then we look at whether they are passed the default envir or not, and if there are variables in:
 
 ```{r}
 minimized_sites <- E_cano %>% semi_join(val_exprs, by="src_ref") %>% group_by(src_ref) %>% 

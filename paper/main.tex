@@ -892,7 +892,7 @@ f1 <- eval(paste("A ~ ", paste(paste(names(X[,-1]), sep=''), collapse=" + ")))
 f2 <- as.formula(f1)
 \end{lstlisting}
 
-\c{paste} concatenates strings and \eval will just return that string. \c{as.formula} can take a string and convert it to a formula; \eval is not needed here.
+\c{paste} concatenates strings and \eval will just return that string. \c{as.formula} can take a string and convert it to a formula; \eval is not needed here. In 10 random sites among the ones with values, a conservative manual inspection showed that 60\% of the sites  had a non-necessary usage of \eval.
 
 The percentage of non default environment passed to \eval is \packageMinimizedpercentenvirc when the minimized expression is a value. Some sites which are passed a value, are also passed different minimized expressions. For those ones, \packageNonDefaultEnvirValuePercent use a non-default environment, and among the one that use a non-default environment, \packageNonDefaultEnvirWithVarPercent have at least one minimized expression with a variable inside.
 
