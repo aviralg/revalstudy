@@ -265,7 +265,13 @@ nb_var_symb_ndefault_sites <- var_symb_non_default_envir %>% pull(src_ref) %>% n
 r("nb non default envir variables percent", ratio(nb_var_symb_ndefault_sites, nb_var_symb_sites))
 ```
 
+What happens for the symbol with the default envir?
 
+```{r}
+var_sym_default_envir <- var_symb %>% filter(is.na(envir)) %>% count(src_ref, sort = TRUE)
+```
+
+Seems it was a bug: when the explicit argument was `parent.frame()`, it was counted as being the default argument (but it does not have the same semantics as a default argument or as an explicit one though!).
 
 # Function definitions
 
@@ -657,7 +663,9 @@ statistic <- function(data, i) {
 
 bootstrap <- boot(manual_value_necessary, statistic, R = 1000)
 
-useful_percent <- mean(bootstrap$t, na.rm = TRUE)
+#useful_percent <- mean(bootstrap$t, na.rm = TRUE)
+useful_percent <- bootstrap$t0
+
 
 r("useful value eval percent", percent(useful_percent))
 ```

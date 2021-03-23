@@ -868,13 +868,12 @@ However, we do not want to discriminate expressions based on specific values. He
 Note that a site can exhibit several minimized expressions. However, \packageNbOneMinimizedPercent of the sites have only one minimized expression. Note also that if a function is called in that expression, we see only the function call but not the body of the function. We will trace what happens during the evaluation of the expression by \eval in Section~\ref{sec:dangerseval}, especially about side effects performed in \eval.
 
 \paragraph{Variables.}
-The most common minimized expression is a variable.\footnote{An arithmetic expression with some variables and constant will also be normalized to \c{X}, i.e. a variable.} It happens in \packageMinimizedpropsitesa of the sites and is widespread across packages as it is found in \packageMinimizedpackagea packages across our CRAN corpus. The \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\% of the call sites, which suggests that \eval is used here to get the value of the variable in a non-local environment. 
+The most common minimized expression is a variable.\footnote{An arithmetic expression with some variables and constant will also be normalized to \c{X}, i.e. a variable.} It happens in \packageMinimizedpropsitesa of the sites and is widespread across packages as it is found in \packageMinimizedpackagea packages across our CRAN corpus. The \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\% of the call sites, which suggests that \eval is often used here to get the value of the variable in a non-local environment. If we look only at the \emph{symbols} passed to \eval, the percentage of non-default environments goes up to \packageNbNonDefaultEnvirVariablesPercent.
 
 % the percentage of non-default environment is more convincing when looking at the number of calls rather the number of sites
 
 
 Similarly, when a function is evaluated on some variable (\c{F(X)} minimized expression), the percentage of non default environment is rather high, \packageMinimizedpercentenvird\%.
-
 
 
 \paragraph{Values.}
@@ -892,7 +891,7 @@ f1 <- eval(paste("A ~ ", paste(paste(names(X[,-1]), sep=''), collapse=" + ")))
 f2 <- as.formula(f1)
 \end{lstlisting}
 
-\c{paste} concatenates strings and \eval will just return that string. \c{as.formula} can take a string and convert it to a formula; \eval is not needed here. In 20 random sites among the ones with values, a conservative manual inspection showed that \packageUsefulValueEvalPercent of the sites  had a  good reason to use \eval.
+\c{paste} concatenates strings and \eval will just return that string. \c{as.formula} can take a string and convert it to a formula; \eval is not needed here. In 20 random sites among the ones with values, a conservative manual inspection showed that \packageUsefulValueEvalPercent of the sites  had a  legitimate reason to use \eval.
 
 The percentage of non default environment passed to \eval is \packageMinimizedpercentenvirc when the minimized expression is a value. Some sites which are passed a value, are also passed different minimized expressions. For those ones, \packageNonDefaultEnvirValuePercent use a non-default environment, and among the one that use a non-default environment, \packageNonDefaultEnvirWithVarPercent have at least one minimized expression with a variable inside.
 
