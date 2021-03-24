@@ -905,14 +905,20 @@ The percentage of non default environment passed to \eval is \packageMinimizedpe
 
 \paragraph{Assignments.} This amounts to \packageAssignSitesPercent of the sites and corresponds to minimized expressions \c{<-}, where the assignment is the top call, and \c{F(F(<-))}, where the assignment happens inside, and others that we were not enough present to be shown in table~\ref{tab:minimizedexpressions}.  Assignments are performed with \c{<-}, \c{<<-} or \c{assign}. Most often, assignment happens in top call position. A non-default environment is specified only in \packageNonDefaultEnvirAssignSitesPercent of the sites with assignments. Indeed, most of those assignments occur in the default environment, \ie in the caller of \eval. This hints that side effects are not widespread in \eval.\footnote{Side effects can also happen in a function call in the \eval expression, and that function call will hide assignment operators from us. We more precisely instrument side-effects to environment in Section~REF.}
 
-\paragraph{Large expressions }  Compositions of functions, without variables (\c{F(F(X))} minimized expression) is the second most frequent minimized expression. \c{\{BLOCK\}} is a sequence of statements. It is usually large, with in average \packageMinimizedoperationsjRnd operations in it.
+\paragraph{Large expressions.}  Compositions of functions, without variables (\c{F(F(X))} minimized expression) is the second most frequent minimized expression. \c{\{BLOCK\}} is a sequence of statements. It is usually large, with in average \packageMinimizedoperationsjRnd operations in it.
 
 
 
 The minimized expression classification suggests that the presence of variables in the expression is highly correlated to the specification of a specific environment, and that \eval is used here for its power in precising the evaluation environment.
 
 
-The most common combinations for sites with several minimized expressions are:
+The most common combinations for sites with several minimized expressions are shown in Figure~\ref{fig:frequentcombinationminimized}.
+
+\begin{figure}
+	\centering 
+	\includegraphics[width=\textwidth]{package_combination_minimized.pdf}
+	\caption{Most frequent combinations of minimized expressions per site, with a cumulative share of 95\% of the sites.} \label{fig:frequentcombinationminimized}
+\end{figure}
 
 
 \NOTE{Maybe we should ditch the table of the minimized expressions and rather use the ones of combinations. It has the advantage of showing what is the most frequent, per call site. But it's a long tail, and sites that have several minimized expressions are not that numerous, only 13\%. But if include combinations, percentages change. For instance, 3314 call sites have only X, i.e. 22.51, instead of 4353 and 29.6\%. }

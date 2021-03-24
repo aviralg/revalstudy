@@ -532,11 +532,28 @@ poly <- E_cano %>% group_by(src_ref) %>%
 Now, we can show the mot common minimized expressions when there are more than 2 for one call site:
 
 ```{r}
-poly %>%
+combination_ranking <- poly %>%
   count(common_minimized,  sort = TRUE) %>%
   mutate(common_minimized = map_chr(common_minimized, show_set)) %>% 
-  mutate(percent = round(100 * n / nb_call_sites, 2)) %>% 
+  mutate(percent = round(100 * n / nb_call_sites, 2)) %>%
+  mutate(cumpercent =cumsum(percent))
+
+combination_ranking %>% 
   datatable()
+```
+
+And represented as a bar plot:
+
+```{r}
+combination_ranking %>%
+  filter(cumpercent < 95) %>%
+  ggplot(aes(x = fct_reorder(common_minimized, n), y = percent)) + 
+  geom_col() + 
+  labs(x = "Combinations", y = "%") +
+  coord_flip()
+  #theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+ggsave_prefix("combination_minimized.pdf")
 ```
 
 
