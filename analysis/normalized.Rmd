@@ -276,12 +276,27 @@ Seems it was a bug: when the explicit argument was `parent.frame()`, it was coun
 # Function definitions
 
 ```{r}
-fundefs <- E_cano %>% filter(has_fundef)
 
-nb_fundef_callsites <- fundefs %>% pull(src_ref) %>% n_distinct()
+fundefs <- E_cano %>% filter(minimized == "FUN")
+nb_fundef_sites <- fundefs %>% pull(src_ref) %>% n_distinct()
+ndefault_envir_fundefs <- fundefs %>% filter(!is.na(envir))
+nb_ndefault_envir_fundef_sites <- ndefault_envir_fundefs %>% pull(src_ref) %>% n_distinct()
+
+generalized_fundefs <- E_cano %>% filter(has_fundef)
+nb_generalized_fundef_sites <- generalized_fundefs %>% pull(src_ref) %>% n_distinct()
+ndefault_envir_gen_fundefs <- generalized_fundefs %>% filter(!is.na(envir))
+nb_ndefault_envir_gen_fundef_sites <- ndefault_envir_fundefs %>% pull(src_ref) %>% n_distinct()
+
+
+r("function definition sites", nb_fundef_sites)
+r("function definition sites percent", ratio(nb_fundef_sites, nb_call_sites))
+r("fundef non default envir sites percent", ratio(nb_ndefault_envir_fundef_sites, nb_fundef_sites))
+r("generalized function definition sites", nb_generalized_fundef_sites)
+r("generalized function definition sites percent", ratio(nb_generalized_fundef_sites, nb_call_sites))
+r("generalized funded non default envir sites percent", ratio(nb_ndefault_envir_gen_fundef_sites, nb_generalized_fundef_sites))
 ```
 
-There are `r nb_fundef_callsites` call sites with function definitions, i.e. `r ratio(nb_fundef_callsites, nb_call_sites)` %.
+There are `r nb_generalized_fundef_sites` call sites with function definitions, i.e. `r ratio(nb_generalized_fundef_sites, nb_call_sites)` %.
 
 # Model.frame
 
@@ -702,10 +717,15 @@ nb_slot_sites <- slot_access %>% pull(src_ref) %>% n_distinct()
 
 nb_generalized_slot_sites <- generalized_slot_access %>% pull(src_ref) %>% n_distinct()
 
+ndefault_envir_slot <- generalized_slot_access %>% filter(!is.na(envir))
+nb_ndefault_envir_slot_sites <- ndefault_envir_slot %>% pull(src_ref) %>% n_distinct()
+
 r("nb slot access", nb_slot_sites)
 r("slot access percent", ratio(nb_slot_sites, nb_call_sites))
 r("generalized slot access", nb_generalized_slot_sites)
 r("generalized slot access percent", ratio(nb_generalized_slot_sites, nb_call_sites))
+r("ndefault envir slot site", nb_ndefault_envir_slot_sites)
+r("ndefault envir slot site percent", ratio(nb_ndefault_envir_slot_sites, nb_generalized_slot_sites))
 ```
 
 

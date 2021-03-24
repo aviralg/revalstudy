@@ -848,13 +848,13 @@ However, we do not want to discriminate expressions based on specific values. He
 		\hline
 		\texttt{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvire \\
 		\hline
-		\texttt{\$}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirf \\
+		\texttt{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirf \\
 		\hline
-		\texttt{F()}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirg \\
+		\texttt{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirg \\
 		\hline
-		\texttt{<-} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirh \\
+		\texttt{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirh \\
 		\hline
-		\texttt{FUN} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenviri \\
+		\texttt{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenviri \\
 		\hline
 		\texttt{\{BLOCK\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirj \\
 		\hline
@@ -874,6 +874,9 @@ The most common minimized expression is a variable.\footnote{An arithmetic expre
 
 
 Similarly, when a function is evaluated on some variable (\c{F(X)} minimized expression), the percentage of non default environment is rather high, \packageMinimizedpercentenvird\%.
+
+% for this one, currently uses any expression with $, [] or [[]] but we should rather use a more restrictive way (take only the ones without interesting calls)
+Minimized expression \texttt{\$} refers to a slot access as the top call in a simple expression, for instance \texttt{a\$slot + 1}. It amounts for \packageGeneralizedSlotAccess sites, \ie \packageGeneralizedSlotAccessPercent of the sites.
 
 
 \paragraph{Values.}
@@ -898,11 +901,9 @@ The percentage of non default environment passed to \eval is \packageMinimizedpe
 
 \paragraph{\c{model.frame}} This is a function used to create statistical models. We explain it in more details in the section about pattern (see Section~REF).
 
-\paragraph{Function definition.} \c{FUN} represents a function definition. It entails very few steps of the interpreter, as the body of the new function is just stored for later execution.
+\paragraph{Function definition.} \c{FUN} represents a function definition at the top level of the expression, and happens in \packageFunctionDefinitionSites sites, \ie \packageFunctionDefinitionSitesPercent of the sites. It entails very few steps of the interpreter, as the function is returned by \eval, and the body of the new function is just stored for later execution. If we count also function definition inside more complex expressions, it amounts to \packageGeneralizedFunctionDefinitionSites sites, \ie \packageGeneralizedFunctionDefinitionSitesPercent and suggests the widespread use of higher-order functions in R, such as \c{lapply}, the R version of \c{map}.
 
 \paragraph{Assignments.} This amounts to \packageAssignSitesPercent of the sites and corresponds to minimized expressions \c{<-}, where the assignment is the top call, and \c{F(F(<-))}, where the assignment happens inside, and others that we were not enough present to be shown in table~\ref{tab:minimizedexpressions}.  Assignments are performed with \c{<-}, \c{<<-} or \c{assign}. Most often, assignment happens in top call position. A non-default environment is specified only in \packageNonDefaultEnvirAssignSitesPercent of the sites with assignments. Indeed, most of those assignments occur in the default environment, \ie in the caller of \eval. This hints that side effects are not widespread in \eval.\footnote{Side effects can also happen in a function call in the \eval expression, and that function call will hide assignment operators from us. We more precisely instrument side-effects to environment in Section~REF.}
-
-\paragraph{Accessing a slot.}
 
 \paragraph{Large expressions }  Compositions of functions, without variables (\c{F(F(X))} minimized expression) is the second most frequent minimized expression. \c{\{BLOCK\}} is a sequence of statements. It is usually large, with in average \packageMinimizedoperationsjRnd operations in it.
 
