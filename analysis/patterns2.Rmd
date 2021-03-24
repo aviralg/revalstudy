@@ -1,0 +1,368 @@
+---
+title: "Patterns and anti-patterns"
+output:
+    html_document:
+        gallery: false
+        toc: true
+        toc_depth: 3
+        toc_float: true
+        df_print: paged
+date: "`r Sys.Date()`"
+editor_options: 
+  chunk_output_type: console
+params:
+  base_dir: Data/package/
+  calls_path: summarized.fst
+  normalized_path: normalized-expressions.csv
+  corpus_path: corpus.txt
+  static_path: evals-static.csv
+  force_rebuild: FALSE
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(fst)
+library(fs)
+library(DT)
+library(scales)
+library(corrr)
+
+knitr::knit_hooks$set(time_it = local({
+  now <- NULL
+  function(before, options) {
+    if (before) { # record the current time before each chunk
+      now <<- Sys.time()
+    } else { # calculate the time difference after a chunk
+      res <- difftime(Sys.time(), now)
+      # return a character string to show the time
+      paste("Time for this code chunk to run:", round(res, 2), units(res))
+    }
+  }
+}))
+now <- Sys.time()
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.retina = 2,
+  fig.width = 10,
+  cache.lazy = FALSE,
+  time_it = TRUE
+)
+
+source("inc/paths.R")
+source("inc/latextags.R")
+source("inc/functions.R")
+theme_set(theme_minimal())
+
+dataset_name <- basename(params$base_dir)
+
+# Tags will be prefixed by the dataset name
+create_tags(path(TAGS_DIR, paste0(dataset_name, "_patterns.tex")), prefix = dataset_name, default = TRUE)
+# Also use ggsave_prefix instead of ggsave if you need to save a graph
+
+calls_path <- paste0(params$base_dir, params$calls_path)
+corpus_path <- paste0(params$base_dir, params$corpus_path)
+static_path <- paste0(params$base_dir, params$static_path)
+normalized_path <- paste0(params$base_dir, params$normalized_path)
+
+lock_path <- paste0(params$base_dir, ".patterns-lock.fst")
+min_path <- paste0(params$base_dir, "Epatterns.fst")
+```
+
+# Read
+
+Read in the summarized calls data (`E_raw`) and the file that describes
+which package belong to our corpus (`C_raw`). For conciseness, `E` is
+the input data set with only the columns that we use. We also read the file with normalized expressions, `N`.
+
+```{r read, message=TRUE, include=F}
+tibble(package = read_lines(corpus_path)) -> C_raw
+read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
+
+rebuild <- TRUE
+
+E_cano <- NULL
+
+if (file.exists(lock_path)) {
+  saved <- read.fst(lock_path)[[1,1]]
+  if (saved == file.size(calls_path)) {
+    read_fst(min_path) %>% as_tibble() -> E_cano
+    rebuild <- FALSE
+  }
+}
+
+if(params$force_rebuild || rebuild) {
+  read_fst(calls_path) %>% as_tibble() -> E_raw
+  
+  read_csv(normalized_path, col_types = cols(
+    minimized = col_character(),
+    topcall = col_character(),
+    is_model = col_logical(),
+    has_fundef = col_logical(),
+    has_calls = col_integer(),
+    has_assigns = col_integer(),
+    has_var = col_logical(),
+    has_bracket = col_logical(),
+    is_assign = col_logical(),
+    is_value = col_logical(),
+    is_ignore = col_logical(),
+    has_dollar = col_logical(),
+    has_user_call = col_logical(),
+    has_block = col_logical(),
+    has_meta_op = col_logical(),
+    normalized = col_character(),
+    trimmed = col_character(),
+    hash = col_character()
+  )) -> N
+  
+  E_raw %>% select(
+    run_package = package, #      The package which was run to trigger the eval
+    ev_variant = eval_function, # Which eval variant was called
+    duplicates = nb_ev_calls, #   Number of identical eval calls (weight)
+    src_ref = eval_call_srcref, # Source ref for the eval call site
+    file, #                       Script file name (name of this run)
+    ev_package = eval_source, #   Package of the call site
+    type = expr_resolved_type_tag, #   Argument type
+    ev_expr = expr_expression,
+    expr_resolved,
+    func = expr_resolved_function, # the function (if any) at the root of the AST of expr_resolved
+    parsed = expr_parsed_expression,
+    hash = expr_resolved_hash,
+    match.call = expr_match_call,
+    arg_size = expr_resolved_length, #   Size in characters of argument 
+    ast_nodes = expr_resolved_nodes,
+    n_op = interp_eval,
+    envir = envir_expression,
+    caller_srcref,
+    caller_expression
+  ) -> E
+  
+  E_cano <- E %>% left_join(N, by = "hash") # Common column is the hash of the full resolved expression
+  
+  E_cano %>% write_fst(min_path)
+  sz <- file.size(calls_path) %>% as_tibble()
+  write.fst(sz, lock_path)
+}
+
+C_raw -> C
+corpus_size <- nrow(C)
+```
+
+Some useful numbers:
+```{r}
+nb_call_sites <- E_cano %>%
+  pull(src_ref) %>%
+  n_distinct()
+
+r("Nb call sites", nb_call_sites)
+```
+
+
+There are `r nb_call_sites` call sites in the dataset.
+
+
+
+# Variable lookup in another environment
+
+Variables lookup are characterized by:
+
+- symbol as the type of the expression
+- a non-default environment
+
+```{r}
+variable_lookup <- E_cano %>% filter(type == "symbol", !is.na(envir))
+
+nb_variable_lookup <- variable_lookup %>% pull(src_ref) %>% n_distinct()
+```
+
+
+There are `r nb_variable_lookup` sites with variable lookup, i.e `r ratio(nb_variable_lookup, nb_call_sites)`%.
+
+# `match.call` 
+
+The goal is to get a call and modify it or use it.
+
+```{r}
+match.call_df <- E_cano %>% filter(!is.na(match.call))
+nb_m.c_call_sites <- match.call_df %>% pull(src_ref) %>% n_distinct()
+
+```
+
+There are `r nb_m.c_call_sites` sites using `match.call`, i.e. `r ratio(nb_m.c_call_sites, nb_call_sites)`%.
+
+```{r}
+match.call_df %>% 
+  group_by(topcall) %>%
+  summarize(n_call_sites = n_distinct(src_ref)) %>% 
+  arrange(desc(n_call_sites))
+```
+
+## Evaluating some of the call arguments 
+
+In that case, `topcall` is `NA`, `$` or `[`. 
+
+```{r}
+mc_arg_functions <- c(NA_character_, "$", "[")
+
+nb_arg_mc_sites <- match.call_df %>% 
+  filter(topcall %in% mc_arg_functions) %>% 
+  pull(src_ref) %>% 
+  n_distinct()
+```
+
+it amounts for `r nb_arg_mc_sites` call sites, i.e `r ratio(nb_arg_mc_sites, nb_m.c_call_sites)`%.
+
+
+## `match.call` and statistical models
+
+Veyr often, `match.call` is used to build statistical models, by replacing the call function by `model.frame` (but also other statistical models, such as `glm`).
+
+ 
+```{r}
+stat_functions <- c("model.frame", "glm", "lm", "plm", "elo.model.frame", "lmer", "randomForest", "betareg", "nlreg", "model.frame.default", "model.matrix", "arima", "glm.nb", "glmer") # There are many more
+
+nb_stat_call_sites <- match.call_df %>% 
+  filter(topcall %in% stat_functions) %>% 
+  pull(src_ref) %>% 
+  n_distinct()
+  
+```
+
+it amounts for `r nb_stat_call_sites` call sites, i.e `r ratio(nb_stat_call_sites, nb_m.c_call_sites)`%.
+
+# Parsing strings
+
+As a first approximation, it corresponds to type `expression` (although `expr` can also build such expressions). However, it is an under-approximation, because the expression could be later used...
+
+```{r}
+parse_eval <- E_cano %>% filter(type == "expressions" | str_detect(ev_expr, fixed("parse")))
+
+nb_parse_eval <- parse_eval %>% pull(src_ref) %>% n_distinct()
+```
+
+There are `r nb_parse_eval` sites using `parse`, i.e. `r ratio(nb_parse_eval, nb_call_sites)`%.
+
+## Logging 
+
+https://github.com/cran/Rcmdr/blob/4b196764a44a047f8c7be3f4c629f52bee2c0c80/R/commander.R#L1301
+
+The goal is to print the command and then to execute it.
+
+## Formulas
+
+```{r}
+formulas <- E_cano %>% filter(str_detect(ev_expr, fixed("parse")), topcall == "~" | str_detect(ev_expr, fixed("formula")))
+
+nb_formula_sites <- formulas %>% pull(src_ref) %>% n_distinct()
+```
+
+
+There are `r nb_formula_sites` sites building formulas with `parse`, i.e. `r ratio(nb_formula_sites, nb_call_sites)`%.
+
+# `Parse` and plotting functions
+
+We approximate the plotting function by just looking for `plot` in their name:
+
+```{r}
+plotting <- E_cano %>% filter(str_detect(normalized, fixed("plot"))) # not in topcall because f it results from parse...
+
+nb_plotting_call_sites <- plotting %>% pull(src_ref) %>% n_distinct()
+```
+
+There are `r nb_plotting_call_sites` plotting call sites, i.e. `r ratio(nb_plotting_call_sites, nb_call_sites)`% and `r ratio(nb_plotting_call_sites, nb_parse_eval)`% of the parsing sites.
+
+Are they built using parse? For that, we look at the non-resolved expression (`parse` will disappear after).
+
+Currently, we use a regex. When `parsed` column is fixed, we will get more accurate results.
+
+```{r}
+parse_plot <- plotting %>% filter(str_detect(ev_expr, fixed("parse")))
+
+nb_parse_plot_call_sites <- parse_plot %>% pull(src_ref) %>% n_distinct()
+```
+
+This already amounts to `r nb_parse_plot_call_sites` call sites, i.e. `r ratio(nb_parse_plot_call_sites, nb_plotting_call_sites)`% of the plotting call sites.
+
+
+
+# Complex blocks
+
+`eval` can evaluate sometimes complex blocks.
+
+```{r}
+blocks <- E_cano %>% filter(has_block)
+
+nb_blocks_call_sites <- blocks %>% pull(src_ref) %>% n_distinct()
+```
+
+
+There are `r nb_blocks_call_sites` such call sites, i.e. `r ratio(nb_blocks_call_sites, nb_call_sites)`%.
+
+`eval` is used to insert blocks of code inside the function, for instance as a preprocessing and postprocessing step. There are some examples in the VGAM package. In that case, `{` will be at the root of the AST.
+
+```{r}
+pre_post <- blocks %>% filter(topcall == "{")
+
+nb_pre_post_call_sites <- pre_post %>% pull(src_ref) %>% n_distinct()
+```
+
+It happens in `r nb_pre_post_call_sites` call sites so most of the call sites with blocks (`r ratio(nb_pre_post_call_sites, nb_blocks_call_sites)`%).
+
+# Symbolic computations
+
+`D` operator to derive an expression symbolically, `Simplify`
+
+For instance: https://github.com/cran/Deriv/blob/9ca174a959d8eb39b0a1f1a70de26d147a837176/R/Simplify.R#L572
+
+Usually on an expression object, not a language object. Environment type seems to be `list` in that case, most often.
+
+# Infix operators
+
+```{r}
+infix <- E_cano %>% filter(str_detect(topcall, "%[^%]*%"))
+
+nb_infix_call_sites <- infix %>% pull(src_ref) %>% n_distinct()
+```
+
+It happens in `r nb_infix_call_sites` call sites, i.e. `r ratio(nb_infix_call_sites, nb_call_sites)`%.
+
+The packages that use or define those infix operators:
+
+```{r}
+infix %>% group_by(ev_package) %>% summarize(n_call_sites = n_distinct(src_ref)) %>% arrange(desc(n_call_sites)) %>% datatable()
+```
+
+# Meta-programming
+
+As a first approximation, it corresponds to type `language`. 
+
+```{r}
+parse_eval <- E_cano %>% filter(type == "language")
+
+nb_parse_eval <- parse_eval %>% pull(src_ref) %>% n_distinct()
+```
+
+
+## selecting columns in a dataframe
+
+https://github.com/cran/epiDisplay/blob/d3d129a690a84b95c9aec437690227f1d50e3394/R/epiDisplay.R#L5915
+
+```r 
+ selected <- eval(substitute(vars), nl, parent.frame())
+```
+
+`vars` correspond to the columns in the dataframe we want to use.
+
+Some examples on how it is called. Columns can be selected by name or by column number.
+
+```r 
+tableStack(bakedham:fruitsalad, .data) 
+
+tableStack(vars=4:25, .data, by=Origin)
+
+tableStack(c(qa1,qa13:qa18,mean.score,total.score), .data, by=sex, test=FALSE)
+```
+
+# Non-necessary `eval`
+
+## Values into `eval`
+
