@@ -2,11 +2,15 @@ HOST := prl2
 BASE_URL := https://$(HOST).prl.fit.cvut.cz/mnt/ocfs_vol_00/project-evalr/evalr-experiment
 define CURL
   [ -d $(dir $(2)) ] || mkdir -p $(dir $(2)) && \
-  curl --progress-bar --retry 99 --retry-max-time 0 -C - -z $(2) -o $(2) $(BASE_URL)/$(1)
+  if [ -f $(2) ]; then \
+    curl --progress-bar -z $(2) -o $(2) $(BASE_URL)/$(1); \
+  else \
+    curl --progress-bar -o $(2) $(BASE_URL)/$(1); \
+  fi
 endef
 
 FILES := \
-  corpus-all.fst \
+  package/corpus.fst \
   package/code.fst \
   package/corpus.txt \
   package/evals-static.csv \
@@ -37,8 +41,6 @@ clean:
 
 .PHONY: FORCE
 
-corpus-all.fst: FORCE
-	$(call CURL,$@,$@)
 kaggle/kernel.csv: FORCE
 	$(call CURL,run/kaggle-kernels/kernel.csv,$@)
 
