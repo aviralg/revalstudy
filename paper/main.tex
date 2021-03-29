@@ -934,30 +934,30 @@ However, we do not want to discriminate expressions based on specific values. He
 		\hline
 		Minimized & \#sites & \%sites & \#packages & \#operations & \%envir \\
 		\hline
-		\texttt{X} & \packageMinimizedcallsitesa  & \packageMinimizedpropsitesa & \packageMinimizedpackagea & \packageMinimizedoperationsaRnd & \packageMinimizedpercentenvira \\
+		\texttt{X} & \packageMinimizedcallsitesa  & \packageMinimizedpropsitesa & \packageMinimizedpackagea & \packageMinimizedoperationsaRnd & \packageMinimizedpercentenvirnonparenta \\
 		\hline
-		\texttt{F(F())} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedoperationsbRnd & \packageMinimizedpercentenvirb \\
+		\texttt{F(F())} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedoperationsbRnd & \packageMinimizedpercentenvirnonparentb \\
 		\hline
-		\texttt{V} & \packageMinimizedcallsitesc & \packageMinimizedpropsitesc & \packageMinimizedpackagec & \packageMinimizedoperationscRnd & \packageMinimizedpercentenvirc \\
+		\texttt{V} & \packageMinimizedcallsitesc & \packageMinimizedpropsitesc & \packageMinimizedpackagec & \packageMinimizedoperationscRnd & \packageMinimizedpercentenvirnonparentc \\
 		\hline
-		\texttt{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & \packageMinimizedpercentenvird \\
+		\texttt{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & \packageMinimizedpercentenvirnonparentd \\
 		\hline
-		\texttt{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvire \\
+		\texttt{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvirnonparente \\
 		\hline
-		\texttt{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirf \\
+		\texttt{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirnonparentf \\
 		\hline
-		\texttt{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirg \\
+		\texttt{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirnonparentg \\
 		\hline
-		\texttt{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirh \\
+		\texttt{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirnonparenth \\
 		\hline
-		\texttt{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenviri \\
+		\texttt{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenvirnonparenti \\
 		\hline
-		\texttt{\{BLOCK\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirj \\
+		\texttt{\{BLOCK\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirnonparentj \\
 		\hline
-		\texttt{F(F(<-))} & \packageMinimizedcallsitesk & \packageMinimizedpropsitesk & \packageMinimizedpackagek & \packageMinimizedoperationskRnd & \packageMinimizedpercentenvirk \\
+		\texttt{F(F(<-))} & \packageMinimizedcallsitesk & \packageMinimizedpropsitesk & \packageMinimizedpackagek & \packageMinimizedoperationskRnd & \packageMinimizedpercentenvirnonparentk \\
 		\hline
 	\end{tabular}
-	\caption{Minimized expressions: eleven most frequent in number of sites. \#sites is the number of sites; \%sites the percentage of sites across the total number of sites (\packageNbCallSites sites) with at least this minimized expression; \#packages is the number of packages with at least one of the minimized expression and measures how widespread a minimized expression is. \#operations is the average number of steps performed by the R interpreter when given that minimized expression, and \%envir is the percentage of call sites for which the \c{envir} argument is explicitly passed.} \label{tab:minimizedexpressions}
+	\caption{Minimized expressions: eleven most frequent in number of sites. \#sites is the number of sites; \%sites the percentage of sites across the total number of sites (\packageNbCallSites sites) with at least this minimized expression; \#packages is the number of packages with at least one of the minimized expression and measures how widespread a minimized expression is. \#operations is the average number of steps performed by the R interpreter when given that minimized expression, and \%envir is the percentage of call sites for which the \c{envir} argument is explicitly passed, and is not \c{parent.frame()}, which is the most common explicit environment passed to \eval.} \label{tab:minimizedexpressions}
 \end{table}
 
 
@@ -971,14 +971,13 @@ Note that a site can exhibit several minimized expressions (see Figure~\ref{fig:
 \end{figure}
 
 \paragraph{Variables.}
-The most common minimized expression is a variable.\footnote{An arithmetic expression with some variables and constant, \eg \c{1 + x}, will also be normalized to \c{X}, i.e. a variable.} It happens in \packageMinimizedpropsitesa\% of the sites and is widespread across packages as it is found in \packageMinimizedpackagea packages across our CRAN corpus. \packageNbSymbolVarSitePercent are only symbols, \ie not complex expressions. The \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\% of the call sites. The call sites without an explicit \c{envir} argument all use a specific \eval variant, \c{eval.parent}.
+The most common minimized expression is a variable.\footnote{An arithmetic expression with some variables and constant, \eg \c{1 + x}, will also be normalized to \c{X}, i.e. a variable.} It happens in \packageMinimizedpropsitesa\% of the sites and is widespread across packages as it is found in \packageMinimizedpackagea packages across our CRAN corpus. \packageNbSymbolVarSitePercent are only symbols, \ie not complex expressions. The \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\% of the call sites. The call sites without an explicit \c{envir} argument all use a specific \eval variant, \c{eval.parent}. Moreover, the \c{envir} argument is both explicit and different from \c{parent.frame()} in \packageMinimizedpercentenvirnonparenta\% of the sites, which suggests that when given a variable, \eval is often used to get  value in a non-local, non-parent environment.
 
 
+Similarly, when a function is evaluated on some variable (\c{F(X)} minimized expression), the percentage of non default, non parent environments is rather high, \packageMinimizedpercentenvirnonparentd\%.
 
-Similarly, when a function is evaluated on some variable (\c{F(X)} minimized expression), the percentage of non default environment is rather high, \packageMinimizedpercentenvird\%.
 
-
-Minimized expression \texttt{\$} refers to a slot access, with \texttt{\$}, \texttt{[]} or \texttt{[[]]}, as the top call in a simple expression, for instance \texttt{a\$slot + 1} and  It amounts for \packageNbSlotAccess sites, \ie \packageSlotAccessPercent of the sites.
+Minimized expression \texttt{\$} refers to a slot access, with \texttt{\$}, \texttt{[]} or \texttt{[[]]}, as the top call in a simple expression, for instance \texttt{a\$slot + 1}.  It amounts for \packageNbSlotAccess sites, \ie \packageSlotAccessPercent of the sites. The non-default, non-parent environment percentage is here \packageMinimizedpercentenvirnonparentg.
 
 
 As a whole, variable access, either as the top call, or inside a function call, possibly with accessing a slot, represents \packageGeneralizedVarAccessSitePercent of the sites.
