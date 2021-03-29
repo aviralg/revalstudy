@@ -12,8 +12,11 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: Data/
-  calls_packages_path: package/summarized.fst
+  base_dir: Data/package/
+  calls_path: summarized.fst
+  corpus_path: corpus.txt
+  static_path: evals-static.csv
+  force_rebuild: FALSE
 ---
 
 ```{r setup, include=FALSE}
@@ -49,34 +52,85 @@ source("inc/latextags.R")
 source("inc/functions.R")
 source("inc/paths.R")
 theme_set(theme_minimal())
-create_tags(path(TAGS_DIR, "environments.tex"), prefix = "", default = TRUE)
 
-source("inc/insights.R", local = knitr::knit_global())
+dataset_name <- basename(params$base_dir)
+
+# Tags will be prefixed by the dataset name
+create_tags(path(TAGS_DIR, paste0(dataset_name, "_environments.tex")), prefix = dataset_name, default = TRUE)
+# Also use ggsave_prefix instead of ggsave if you need to save a graph
+
+calls_path <- paste0(params$base_dir, params$calls_path)
+corpus_path <- paste0(params$base_dir, params$corpus_path)
+static_path <- paste0(params$base_dir, params$static_path)
+
+lock_path <- paste0(params$base_dir, ".environments-lock.fst")
+min_path <- paste0(params$base_dir, "Eenvir.fst")
+
+nb_eval_call_sites <- function(dataset) {
+  dataset %>% pull(src_ref) %>% n_distinct()
+}
+
 ```
 
 # Loading datafiles
 
 ```{r loading_fst}
-eval_calls_path <- paste0(params$base_dir, params$calls_packages_path)
+tibble(package = read_lines(corpus_path)) -> C_raw
+read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
 
+rebuild <- TRUE
 
-eval_calls <- read_fst(eval_calls_path) %>%
-  as_tibble()
+E_envir <- NULL
 
+if (file.exists(lock_path)) {
+  saved <- read.fst(lock_path)[[1,1]]
+  if (saved == file.size(calls_path)) {
+    read_fst(min_path) %>% as_tibble() -> E_envir
+    rebuild <- FALSE
+  }
+}
 
-stopifnot(!is.na(eval_calls$eval_call_srcref))
+if(params$force_rebuild || rebuild) {
+  read_fst(calls_path) %>% as_tibble() -> E_raw
+  
+  E_raw <- E_raw %>% mutate(envir_expression = if_else(envir_type == "NULL" & is.na(envir_expression), "NULL", envir_expression))
+  
+  E_raw %>% select(
+    run_package = package, #      The package which was run to trigger the eval
+    ev_variant = eval_function, # Which eval variant was called
+    duplicates = nb_ev_calls, #   Number of identical eval calls (weight)
+    src_ref = eval_call_srcref, # Source ref for the eval call site
+    file, #                       Script file name (name of this run)
+    ev_package = eval_source, #   Package of the call site
+    type = expr_resolved_type_tag, #   Argument type
+    ev_expr = expr_expression,
+    n_op = interp_eval,
+    envir = envir_expression,
+    envir_type,
+    caller_expression,
+    environment_class
+  ) -> E_envir
+  
+  
+  E_envir %>% write_fst(min_path)
+  sz <- file.size(calls_path) %>% as_tibble()
+  write.fst(sz, lock_path)
+}
+
+C_raw -> C
+corpus_size <- nrow(C)
 ```
 
 # Description of the data files
 
 ```{r packages}
-nb_eval_calls <- count(eval_calls, wt = nb_ev_calls)
+nb_eval_calls <- count(E_envir, wt = duplicates)
 
-nb_call_sites <- nb_eval_call_sites(eval_calls)
+nb_call_sites <- E_envir %>% pull(src_ref) %>% n_distinct()
 ```
 
 
-There are `r count(eval_calls, wt=nb_ev_calls)$n` eval calls and `r eval_calls %>% select(eval_call_srcref) %>% n_distinct()` eval call sites in the dataset.
+There are `r nb_eval_calls` eval calls and `r nb_call_sites` eval call sites in the dataset.
 
 # Classification of environments
 
@@ -93,25 +147,44 @@ We distinguish between 5 main categories of `eval` calls with respect to their `
 ## `envir` as default argument
 
 ```{r envir_default}
-eval_calls_default <- eval_calls %>% filter(is.na(envir_expression))
+eval_calls_default <- E_envir %>% filter(is.na(envir))
 
-nb_default <- count(eval_calls_default, wt = nb_ev_calls)
+nb_default <- count(eval_calls_default, wt = duplicates)
 nb_default_sites <- nb_eval_call_sites(eval_calls_default)
 
-eval_calls_explicit <- eval_calls %>% filter(!is.na(envir_expression))
-nb_explicit <- count(eval_calls_explicit, wt = nb_ev_calls)
+eval_calls_explicit <- E_envir %>% filter(!is.na(envir))
+nb_explicit <- count(eval_calls_explicit, wt = duplicates)
 nb_explicit_sites <- nb_eval_call_sites(eval_calls_explicit)
+
+overview_table(
+  r("default envir sites", nb_default_sites),
+  r("defaut envir sites percent", ratio(nb_default_sites, nb_call_sites)),
+  r("non default envir sites", nb_explicit),
+  r("non defaut envir sites percent", ratio(nb_explicit, nb_call_sites))
+)
 ```
 
 
 There are `r nb_default$n` default calls, which corresponds to `r nb_default_sites` call sites. On the contrary, `r nb_explicit$n` eval calls explicit provide an `envir` argument, which is `r nb_explicit_sites`. The default eval calls are `r ratio(nb_default$n, nb_eval_calls$n)`% of the total and `r ratio(nb_default_sites, nb_call_sites)`% in terms of call sites.
+
+# Most common envir arguments
+
+We show the most frequent environment expression per site. There is only one environment expression per site, as the envir expression is captured before being resolved.
+
+```{r envir_most_common}
+frequent_envir <- E_envir %>% group_by(src_ref) %>% 
+  summarize(n_envir = n_distinct(envir), envir = paste0(unique(envir), collapse = " ; "))
+
+stopifnot(frequent_envir$n_envir <= 1)
+```
+
 
 # `envir` with Rcpp
 
 ```{r envir_rcpp}
 eval_calls_rcpp <- eval_calls_explicit %>% filter(str_detect(expr_expression, "C\\+\\+Constructor|C\\+\\+Field|C\\+\\+OverloadedMethods"))
 
-nb_rcpp <- count(eval_calls_rcpp, wt = nb_ev_calls)
+nb_rcpp <- count(eval_calls_rcpp, wt = duplicates)
 nb_rcpp_sites <- nb_eval_call_sites(eval_calls_rcpp)
 
 eval_calls_explicit <- eval_calls_explicit %>% anti_join(eval_calls_rcpp)
@@ -124,7 +197,7 @@ eval_calls_explicit <- eval_calls_explicit %>% anti_join(eval_calls_rcpp)
 ```{r envir_list}
 eval_calls_env_list <- eval_calls_explicit %>% filter(envir_type == "list")
 
-nb_env_list <- count(eval_calls_env_list, wt = nb_ev_calls)
+nb_env_list <- count(eval_calls_env_list, wt = duplicates)
 nb_env_list_sites <- nb_eval_call_sites(eval_calls_env_list)
 ```
 
@@ -133,7 +206,7 @@ nb_env_list_sites <- nb_eval_call_sites(eval_calls_env_list)
 ```{r envir_arg_caller}
 eval_calls_arg_caller <- eval_calls_explicit %>% filter(!is.na(envir_from_arg))
 
-nb_arg_caller <- count(eval_calls_arg_caller, wt = nb_ev_calls)
+nb_arg_caller <- count(eval_calls_arg_caller, wt = duplicates)
 nb_arg_caller_sites <- nb_eval_call_sites(eval_calls_arg_caller)
 ```
 
@@ -142,7 +215,7 @@ Most of the eval calls directly use the argument, but some seem to modify it a l
 
 ```{r}
 eval_calls_arg_caller %>%
-  count(envir_from_arg, wt = nb_ev_calls, sort = TRUE) %>%
+  count(envir_from_arg, wt = duplicates, sort = TRUE) %>%
   knitr::kable()
 ```
 
@@ -157,7 +230,7 @@ eval_calls_absolute <- eval_calls_explicit %>%
   anti_join(eval_calls_env_list) %>%
   anti_join(eval_calls_arg_caller)
 
-nb_absolute <- count(eval_calls_absolute, wt = nb_ev_calls)
+nb_absolute <- count(eval_calls_absolute, wt = duplicates)
 nb_absolute_sites <- nb_eval_call_sites(eval_calls_absolute)
 ```
 
@@ -178,7 +251,7 @@ We can also see a few examples:
 ```{r}
 eval_calls_absolute %>%
   filter(envir_distinct == 2) %>%
-  select(eval_call_expression, environment_class, envir_distinct)
+  select(ev_expr, environment_class, envir_distinct)
 ```
 
 Now, we can further decompose the environment class to get more insights. It has three components:
@@ -201,9 +274,9 @@ env_calls <- eval_calls_absolute %>% ungroup() %>%
 _ggplot2_ again is responsible for this `new.env` 4 times!
 
 ```{r}
-env_calls %>% filter(!is.na(new_env), specific_env == "global") %>% count(new_env, wt = nb_ev_calls, sort = TRUE)
+env_calls %>% filter(!is.na(new_env), specific_env == "global") %>% count(new_env, wt = duplicates, sort = TRUE)
 
-env_calls %>% filter(new_env == 4, specific_env == "global") %>% count(eval_source, wt = nb_ev_calls, sort = TRUE)
+env_calls %>% filter(new_env == 4, specific_env == "global") %>% count(eval_source, wt = duplicates, sort = TRUE)
 ```
 
 
@@ -212,7 +285,7 @@ env_calls %>% filter(new_env == 4, specific_env == "global") %>% count(eval_sour
 ```{r envir_integer}
 eval_calls_integer <- eval_calls_explicit %>% filter(envir_type == "integer")
 
-nb_integer <- count(eval_calls_integer, wt = nb_ev_calls)
+nb_integer <- count(eval_calls_integer, wt = duplicates)
 nb_integer_sites <- nb_eval_call_sites(eval_calls_integer)
 ```
 
@@ -221,7 +294,7 @@ nb_integer_sites <- nb_eval_call_sites(eval_calls_integer)
 ```{r envir_null}
 eval_calls_null <- eval_calls_explicit %>% filter(envir_type == "NULL")
 
-nb_null <- count(eval_calls_null, wt = nb_ev_calls)
+nb_null <- count(eval_calls_null, wt = duplicates)
 nb_null_sites <- nb_eval_call_sites(eval_calls_null)
 ```
 

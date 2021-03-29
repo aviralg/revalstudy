@@ -177,6 +177,8 @@ nb_variable_lookup <- variable_lookup %>% pull(src_ref) %>% n_distinct()
 
 There are `r nb_variable_lookup` sites with variable lookup, i.e `r ratio(nb_variable_lookup, nb_call_sites)`%.
 
+The diversity of non-default environments is higher than for other patterns.
+
 # `match.call` 
 
 The goal is to get a call and modify it or use it.
@@ -234,7 +236,8 @@ it amounts for `r nb_stat_call_sites` call sites, i.e `r ratio(nb_stat_call_site
 As a first approximation, it corresponds to type `expression` (although `expr` can also build such expressions). However, it is an under-approximation, because the expression could be later used...
 
 ```{r}
-parse_eval <- E_cano %>% filter(type == "expressions" | str_detect(ev_expr, fixed("parse")))
+#parse_eval <- E_cano %>% filter(type == "expressions" | str_detect(ev_expr, fixed("parse")))
+parse_eval <- E_cano %>% filter(!is.na(parsed))
 
 nb_parse_eval <- parse_eval %>% pull(src_ref) %>% n_distinct()
 ```
@@ -333,16 +336,31 @@ infix %>% group_by(ev_package) %>% summarize(n_call_sites = n_distinct(src_ref))
 
 # Meta-programming
 
-As a first approximation, it corresponds to type `language`. 
+As a first approximation, it corresponds to type `language` and the usage of `substitute`. Indeed, using `quote` or `bquote` to get a language expression is the responsability of the caller of function, not of the function itself. On the contrary, with `substitute` and laziness, it is possible to capture the AST of an argument.
 
 ```{r}
-parse_eval <- E_cano %>% filter(type == "language")
+language_eval <- E_cano %>% filter(type == "language")
 
-nb_parse_eval <- parse_eval %>% pull(src_ref) %>% n_distinct()
+nb_language_eval <- language_eval %>% pull(src_ref) %>% n_distinct()
+
 ```
 
 
-## selecting columns in a dataframe
+There are `r nb_language_eval` sites with language expressions.
+
+We can already detect if substitute is present directly in the `eval` site:
+
+```{r}
+substitute_eval <- language_eval %>% filter(str_detect(ev_expr, fixed("substitute")))
+nb_substitute_eval_sites <- substitute_eval %>% pull(src_ref) %>% n_distinct()
+```
+
+There are `r nb_substitute_eval_sites` sites that have `eval` inside their non-resolved expression.
+
+To also detect the case when `substitute` is used before the call to `eval`, we can approximate it by looking whether a function with `eval` also contains a call to substitute before it.
+
+
+## Selecting columns in a dataframe
 
 https://github.com/cran/epiDisplay/blob/d3d129a690a84b95c9aec437690227f1d50e3394/R/epiDisplay.R#L5915
 
@@ -362,7 +380,9 @@ tableStack(vars=4:25, .data, by=Origin)
 tableStack(c(qa1,qa13:qa18,mean.score,total.score), .data, by=sex, test=FALSE)
 ```
 
-# Non-necessary `eval`
+#  `eval` anti-patterns
 
 ## Values into `eval`
+
+See normalized expression notebook.
 
