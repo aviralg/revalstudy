@@ -16,7 +16,7 @@ params:
   normalized_path: normalized-expressions.csv
   corpus_path: corpus.txt
   static_path: evals-static.csv
-  force_rebuild: FALSE
+  force_rebuild: TRUE
 ---
 
 ```{r setup, include=FALSE}
@@ -93,6 +93,8 @@ if (file.exists(lock_path)) {
 
 if(params$force_rebuild || rebuild) {
   read_fst(calls_path) %>% as_tibble() -> E_raw
+  
+  E_raw <- E_raw %>% mutate(envir_expression = if_else(envir_type == "NULL", "NULL", envir_expression))
   
   read_csv(normalized_path, col_types = cols(
     minimized = col_character(),
@@ -182,7 +184,14 @@ Minimized:
 ```{r}
 widespread_minimized <- E_cano %>%
   group_by(minimized) %>%
-  summarize(n_call_sites = n_distinct(src_ref), proportion = ratio(n_call_sites, nb_call_sites), n_packages = n_distinct(ev_package), n_operations = round(mean(n_op, na.rm=TRUE), 2), percent_envir = ratio(n_distinct(cur_data()$src_ref[!is.na(cur_data()$envir)]),  n_call_sites), percent_envir_calls = ratio(sum(!is.na(envir)), n())) %>% 
+  summarize(n_call_sites = n_distinct(src_ref), 
+            proportion = ratio(n_call_sites, nb_call_sites), 
+            n_packages = n_distinct(ev_package),
+            n_operations = round(mean(n_op, na.rm=TRUE), 2), 
+            percent_envir = ratio(n_distinct(cur_data()$src_ref[!is.na(cur_data()$envir)]),  n_call_sites), 
+            percent_envir_calls = ratio(sum(!is.na(envir)), n()), 
+            env_diversity = n_distinct(envir), 
+            percent_envir_non_parentframe = ratio(n_distinct(cur_data()$src_ref[!is.na(cur_data()$envir) & cur_data()$envir != "parent.frame()"]),  n_call_sites)) %>% 
   arrange(desc(n_call_sites))
 
 widespread_minimized %>%
@@ -190,12 +199,13 @@ widespread_minimized %>%
 ```
 
 ```{r}
-nrows <- 12
+nrows <- min(12, nrow(widespread_minimized)) # kaggle has less than 12 rows
 r_vec("MinimizedCallSites", nrows, pull(widespread_minimized, n_call_sites))
 r_vec("MinimizedPropSites", nrows, pull(widespread_minimized, proportion))
 r_vec("MinimizedPackage", nrows, pull(widespread_minimized, n_packages))
 r_vec("MinimizedOperations", nrows, pull(widespread_minimized, n_operations))
 r_vec("MinimizedPercentEnvir", nrows, pull(widespread_minimized, percent_envir))
+r_vec("MinimizedPercentEnvirNonParent", nrows, pull(widespread_minimized, percent_envir_non_parentframe))
 ```
 
 `n_operations` is the average of R interpreter eval loop per minimized expression. `prop_envir` shows how much often an *explicit* environment is passed to `eval`. Looking up to a variable and applying a function to a variable, are the two non-trivial categories that most of the time explicitly use the `envir` argument of `eval`.
@@ -262,7 +272,11 @@ nb_var_symb_sites <- var_symb %>% pull(src_ref) %>% n_distinct()
 var_symb_non_default_envir <- var_symb %>% filter(!is.na(envir))
 nb_var_symb_ndefault_sites <- var_symb_non_default_envir %>% pull(src_ref) %>% n_distinct()
 
-r("nb non default envir variables percent", ratio(nb_var_symb_ndefault_sites, nb_var_symb_sites))
+overview_table(
+  r("nb symbol var sites", nb_var_symb_sites),
+  r("nb symbol var site percent", ratio(nb_var_symb_sites, nb_var_min_sites)),
+  r("nb non default envir variables percent", ratio(nb_var_symb_ndefault_sites, nb_var_symb_sites))
+)
 ```
 
 What happens for the symbol with the default envir?
@@ -271,7 +285,6 @@ What happens for the symbol with the default envir?
 var_sym_default_envir <- var_symb %>% filter(is.na(envir)) %>% count(src_ref, sort = TRUE)
 ```
 
-Seems it was a bug: when the explicit argument was `parent.frame()`, it was counted as being the default argument (but it does not have the same semantics as a default argument or as an explicit one though!).
 
 # Function definitions
 
@@ -287,13 +300,14 @@ nb_generalized_fundef_sites <- generalized_fundefs %>% pull(src_ref) %>% n_disti
 ndefault_envir_gen_fundefs <- generalized_fundefs %>% filter(!is.na(envir))
 nb_ndefault_envir_gen_fundef_sites <- ndefault_envir_fundefs %>% pull(src_ref) %>% n_distinct()
 
-
-r("function definition sites", nb_fundef_sites)
-r("function definition sites percent", ratio(nb_fundef_sites, nb_call_sites))
-r("fundef non default envir sites percent", ratio(nb_ndefault_envir_fundef_sites, nb_fundef_sites))
-r("generalized function definition sites", nb_generalized_fundef_sites)
-r("generalized function definition sites percent", ratio(nb_generalized_fundef_sites, nb_call_sites))
-r("generalized funded non default envir sites percent", ratio(nb_ndefault_envir_gen_fundef_sites, nb_generalized_fundef_sites))
+overview_table(
+  r("function definition sites", nb_fundef_sites),
+  r("function definition sites percent", ratio(nb_fundef_sites, nb_call_sites)),
+  r("fundef non default envir sites percent", ratio(nb_ndefault_envir_fundef_sites, nb_fundef_sites)),
+  r("generalized function definition sites", nb_generalized_fundef_sites),
+  r("generalized function definition sites percent", ratio(nb_generalized_fundef_sites, nb_call_sites)),
+  r("generalized funded non default envir sites percent", ratio(nb_ndefault_envir_gen_fundef_sites, nb_generalized_fundef_sites))
+)
 ```
 
 There are `r nb_generalized_fundef_sites` call sites with function definitions, i.e. `r ratio(nb_generalized_fundef_sites, nb_call_sites)` %.
@@ -346,8 +360,10 @@ assigns <- E_cano %>% filter(has_assigns > 0)
 
 nb_assigns_call_sites <- assigns %>% pull(src_ref) %>% n_distinct()
 
-r("nb assign sites", nb_assigns_call_sites)
-r("assign sites percent", ratio(nb_assigns_call_sites, nb_call_sites))
+overview_table(
+  r("nb assign sites", nb_assigns_call_sites),
+  r("assign sites percent", ratio(nb_assigns_call_sites, nb_call_sites))
+)
 ```
 
 There are `r nb_assigns_call_sites` call sites with assignments, i.e. `r ratio(nb_assigns_call_sites, nb_call_sites)`%.
@@ -360,8 +376,10 @@ assign_env <- assigns %>% filter(!is.na(envir))
 
 nb_a_env_call_sites <- assign_env %>% pull(src_ref) %>% n_distinct()
 
-r("non default envir assign sites", nb_a_env_call_sites)
-r("non default envir assign sites percent", ratio(nb_a_env_call_sites, nb_assigns_call_sites))
+overview_table(
+  r("non default envir assign sites", nb_a_env_call_sites),
+  r("non default envir assign sites percent", ratio(nb_a_env_call_sites, nb_assigns_call_sites))
+)
 ```
 
 
@@ -529,7 +547,13 @@ poly <- E_cano %>% group_by(src_ref) %>%
     summarize(common_minimized = create_set(minimized), n_exprs = n_distinct(minimized)) 
 ```
 
-Now, we can show the mot common minimized expressions when there are more than 2 for one call site:
+With these minimized expressions:
+
+```{r}
+minimized_exprs
+```
+
+Now, we can show the mot common minimized expressions per site:
 
 ```{r}
 combination_ranking <- poly %>%
@@ -546,7 +570,7 @@ And represented as a bar plot:
 
 ```{r}
 combination_ranking %>%
-  filter(cumpercent < 95) %>%
+  filter(cumpercent < if(nrow(combination_ranking) <= 10) 101 else 95) %>%
   ggplot(aes(x = fct_reorder(common_minimized, n), y = percent)) + 
   geom_col() + 
   labs(x = "Combinations", y = "%") +
@@ -562,9 +586,10 @@ How many sites have only one minimized expression?
 ```{r}
 n_one_mini <- poly %>% filter(n_exprs == 1) %>% nrow()
 
-
-r("Nb One Minimized", n_one_mini)
-r("Nb One Minimized Percent", ratio(n_one_mini, nb_call_sites))
+overview_table(
+  r("Nb One Minimized", n_one_mini),
+  r("Nb One Minimized Percent", ratio(n_one_mini, nb_call_sites))
+)
 ```
 
 
@@ -584,11 +609,13 @@ main_types <- E_cano %>% group_by(src_ref) %>% summarise(nb_types = n_distinct(t
 only_actual_values <- main_types %>% filter(!type %in% c("symbol", "language", "expression", "promise"), nb_types == 1)
 nb_actual_values_sites <- only_actual_values %>% pull(src_ref) %>% n_distinct()
 
-r("nb call sites unique actual value", nb_actual_values_sites)
-r("call sites unique actual value percent", ratio(nb_actual_values_sites, value_minimized$n_call_sites))
-r("median run sites unique actual value", median(only_actual_values$nb_runs, na.rm = TRUE))
-r("average run sites unique actual value", mean(only_actual_values$nb_runs, na.rm = TRUE))
+overview_table(
+r("nb call sites unique actual value", nb_actual_values_sites),
+r("call sites unique actual value percent", ratio(nb_actual_values_sites, value_minimized$n_call_sites)),
+r("median run sites unique actual value", median(only_actual_values$nb_runs, na.rm = TRUE)),
+r("average run sites unique actual value", mean(only_actual_values$nb_runs, na.rm = TRUE)),
 r("sd run sites unique actual value", sd(only_actual_values$nb_runs, na.rm = TRUE))
+)
 ```
 
 
@@ -605,8 +632,11 @@ val_exprs <- E_cano %>% filter(minimized == "V") %>%
 n_val_exprs <- val_exprs %>% nrow()
 n_one_node <- val_exprs %>% filter(avg_ast_nodes == 1) %>% nrow()
 
-r("val one node", n_one_node)
-r("val one node percent", ratio(n_one_node, n_val_exprs))
+
+overview_table(
+  r("val one node", n_one_node),
+  r("val one node percent", ratio(n_one_node, n_val_exprs))
+)
 ```
 
 Are the sites resolving to just a value well covered?
@@ -616,9 +646,11 @@ med_runs <- median(val_exprs$nb_runs, na.rm = TRUE)
 avg_runs <- mean(val_exprs$nb_runs, na.rm = TRUE)
 sd_runs <- sd(val_exprs$nb_runs, na.rm = TRUE)
 
-r("one val median runs", med_runs)
-r("one val average runs", avg_runs)
-r("one val sd runs", sd_runs)
+overview_table(
+  r("one val median runs", med_runs),
+  r("one val average runs", avg_runs),
+  r("one val sd runs", sd_runs)
+)
 ```
 
 
@@ -716,9 +748,10 @@ non_default_envir <- minimized_sites %>% filter(has_envir)
 
 non_default_with_var <- minimized_sites %>% filter(has_envir, has_var)
 
-
-r("non default envir value percent", ratio(nrow(non_default_envir), nrow(minimized_sites)))
-r("non default envir with var percent", ratio(nrow(non_default_with_var), nrow(non_default_envir)))
+overview_table(
+  r("non default envir value percent", ratio(nrow(non_default_envir), nrow(minimized_sites))),
+  r("non default envir with var percent", ratio(nrow(non_default_with_var), nrow(non_default_envir)))
+)
 ```
 
 # Accessing a slot
@@ -737,12 +770,26 @@ nb_generalized_slot_sites <- generalized_slot_access %>% pull(src_ref) %>% n_dis
 ndefault_envir_slot <- generalized_slot_access %>% filter(!is.na(envir))
 nb_ndefault_envir_slot_sites <- ndefault_envir_slot %>% pull(src_ref) %>% n_distinct()
 
-r("nb slot access", nb_slot_sites)
-r("slot access percent", ratio(nb_slot_sites, nb_call_sites))
-r("generalized slot access", nb_generalized_slot_sites)
-r("generalized slot access percent", ratio(nb_generalized_slot_sites, nb_call_sites))
-r("ndefault envir slot site", nb_ndefault_envir_slot_sites)
-r("ndefault envir slot site percent", ratio(nb_ndefault_envir_slot_sites, nb_generalized_slot_sites))
+
+overview_table(
+  r("nb slot access", nb_slot_sites),
+  r("slot access percent", ratio(nb_slot_sites, nb_call_sites)),
+  r("generalized slot access", nb_generalized_slot_sites),
+  r("generalized slot access percent", ratio(nb_generalized_slot_sites, nb_call_sites)),
+  r("ndefault envir slot site", nb_ndefault_envir_slot_sites),
+  r("ndefault envir slot site percent", ratio(nb_ndefault_envir_slot_sites, nb_generalized_slot_sites))
+)
 ```
 
+# Generalized variable access
+
+```{r}
+gen_var <- E_cano %>% filter(minimized %in% c("X", "F(X)", "$"))
+nb_gen_var_sites <- gen_var %>% pull(src_ref) %>% n_distinct()
+
+overview_table(
+  r("generalized var access sites", nb_gen_var_sites),
+  r("generalized var access site percent", ratio(nb_gen_var_sites, nb_call_sites))
+)
+```
 
