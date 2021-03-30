@@ -22,6 +22,10 @@ clean:
 data:
 	$(MAKE) -C $(DATA_DIR)
 
+.PHONY: clean-data
+clean-data:
+	$(MAKE) -C $(DATA_DIR) clean
+
 $(OUTPUT_DIR)/base-%.html: %.Rmd
 	-mkdir -p $(OUTPUT_DIR)
 	R -e 'rmarkdown::render("$<", output_file = "$@", output_dir="$(OUTPUT_DIR)", params = list(base_dir = "Data/base/"))'
