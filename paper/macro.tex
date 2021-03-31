@@ -405,28 +405,17 @@
   framexrightmargin=-1mm,
   tabsize=2,
   belowskip=0pt,
-  basicstyle=\ttfamily,
+  basicstyle=\small\ttfamily,
   backgroundcolor=\color{LightGray},
-  emphstyle=\sffamily,
-  keywordstyle=\ttfamily,
+  keywordstyle=\small\ttfamily\bfseries,
   commentstyle=\color{Gray}\em,
-  stringstyle=\color{Gray}
+  stringstyle=\color{DarkGray}, %
+  literate={<-}{{$\leftarrow$\,}}1{<<-}{{$\twoheadleftarrow$}}1,
+  keywords={new, env, match, call, eval, evalq, function, local, parent, quote
+            return, ifelse, for, in},
 }
-\lstdefinestyle{R}{ %
-  language=R,
-  deletekeywords={new, env, equal, c, runif, trace, args, exp, t, all,
-    get, names, is, environment, class, substitute, expression, list,
-    null, Internal, sample, diag, length, rep, nrow, stop, offset,
-    pmax, Machine, double, parent, frame, par, methods, end, dir,
-    apply, deparse, missing, plot, as, integer, character, inherits,
-    numeric, paste, eval, quote, call, formula, df, log, sum, c,
-    local, legend, file, scale, round, title, order, drop, which,
-    grid, print, ncol, dim, max, format, sort, rug, matrix, start,
-    unique, mean, df, attr, do, power, eval, evalq, eval.parent,
-    local, parent.frame, expression, subsitute},
-  otherkeywords={},
-  breaklines=true
-}
+
+\lstdefinestyle{R}{ language=R, breaklines=true }
 
 \newcommand{\eg}{\emph{e.g.},\xspace}
 \newcommand{\ie}{\emph{i.e.},\xspace}
@@ -452,7 +441,7 @@
 \newcommand{\ggproto}{\c{ggproto}}
 \newcommand{\ggplot}{\c{ggplot2}}
 \newcommand{\base}{\c{base}}
-\renewcommand{\c}[1]{\lstinline{#1}\xspace}
+\renewcommand{\c}[1]{{\small\sf #1}\xspace}
 \newcommand{\miss}[1]{{\textcolor{red}{#1}}\xspace}
 \newcommand{\evil}{\emph{evil}\xspace}
 \newcommand{\instrumentr}{\emph{instrumentr}\xspace}

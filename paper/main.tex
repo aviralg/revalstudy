@@ -1,5 +1,8 @@
-%\documentclass[USenglish,cleveref, autoref, thm-restate]{lipics-v2019}
-\documentclass[acmsmall]{acmart}
+\documentclass[screen,acmsmall]{acmart}
+\settopmatter{printfolios=true,printccs=true,printacmref=true}
+
+\bibliographystyle{ACM-Reference-Format}
+\citestyle{acmauthoryear}   %% For author/year citations
 \usepackage{listings,hyperref,multirow,paralist,xspace,url,wrapfig}
 \usepackage{tabularx}
 \input{macro}
@@ -9,9 +12,16 @@
 
 
 \begin{document}
-	
-\title{Why do we Eval?\\\Large A large-scale study of Eval usage in R}
-%\titlerunning{Why Eval (in R)?}
+
+\title{What we {\sf eval} in the shadows}
+\subtitle{A large-scale study of {\sf eval} usage in R programs}
+
+%% Aviral Goel
+%% Pierre Donat-Bouillud
+%% Filip Krikava
+%% Jan Vitek
+
+%% What is the right order?
 
 \author{Author }
 \authornote{Both authors contributed equally to this research.}
@@ -253,11 +263,8 @@ reader we recommend the excellent book by Hadley
 Wickham~\cite{hadley}. The definition of \eval starts as follows:
 
 \begin{lstlisting}
- eval
-   <- function(expr,
-                envir = parent.frame(),
-                enclos = if(is.list(envir)) parent.frame() else baseenv())
-          { ...body... }
+ eval <- function(expr, envir = parent.frame(),
+           enclos = if(is.list(envir)) parent.frame() else baseenv()) {...body...}
 \end{lstlisting}
 The parameters are \c{expr}, the value to be evaluated, \c{envir}, the
 environment in which evaluation happens, and \c{enclos}, the
@@ -313,9 +320,9 @@ further up in the calling stack, up to the global environment
 \c{.GlobalEnv}, and packages. One can also directly read, modify or
 create new bindings, given any environment:
 \begin{itemize}
-\item \c{env$v} and \c{get("v",envir=env)} read variable \c{v} in
+\item \c{env\$v} and \c{get("v",envir=env)} read variable \c{v} in
   environment \c{env};
-\item \c{env$v<-2} and \c{assign("v",2,envir=env)} write 2 in
+\item \c{env\$v<-2} and \c{assign("v",2,envir=env)} write 2 in
   \c{v}. If not found, \c{v} is created in \c{env}.
 \end{itemize}
 \noindent Environments are often used as hashtables by programmers as
@@ -636,17 +643,17 @@ is defined in a function returned by a higher-order function, or it can be a
 generated called from package native code. However, this is a meager
 \CranUndefinedRatio of all \eval calls and is unlikely to affect our
 analysis. We ignore calls to the native \eval function exposed by R. We also
-ignore the \c{rlang::tidy_eval} function which uses native \eval internally
+ignore the \c{rlang::tidy\_eval} function which uses native \eval internally
 because \c{rlang} is used to implement a DSL for data analysis in R. It
 introduces a new first-class promise object called \c{quosure} for which it
-implements special evaluation support in \c{tidy_eval}.
+implements special evaluation support in \c{tidy\_eval}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Usage Metrics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 This section focuses on our corpus of \Corpus CRAN packages that use
-\eval; these represent {\bf 28.9\%} of the entire repository. To provide % \Corpus / \CranAll 
+\eval; these represent {\bf 28.9\%} of the entire repository. To provide % \Corpus / \CranAll
 a picture of \eval usage, all runnable code in CRAN was executed. Runs
 that did not exercise an \eval in the corpus were discarded. We
 retained \Nbruns to generate the data presented here. In total,
@@ -752,7 +759,7 @@ corresponding to a single expression, such as \c{x+1}), and
 \Expressionpercent are \c{expression} objects (multiple statements).
 Further inspection reveals that most symbols, \Ggplotsymbolpercent to
 be exact, come from a single call in the \c{ggplot2} package and have
-have the value \c{_inherit}. Even if we remove this outlier, the
+have the value \c{\_inherit}. Even if we remove this outlier, the
 majority of \evals are simple expressions.
 
 To estimate how much executable code is dynamically injected into the
@@ -820,7 +827,7 @@ Out of \kaggleStaticeval static \eval sites, we exercise \kaggleTriggeredeval of
 The previous section gave a quantitative view of the usage of \eval;
 in this section we try to elucidate \emph{what} it does.
 
-\subsection{Arguments of \eval} 
+\subsection{Arguments of \eval}
 
 \eval has three arguments, two of which we study in more details:
 
@@ -846,18 +853,16 @@ environments can be created using \c{new.env}. They can be provided a
 parent environment which becomes the enclosing scope of the new
 environment.
 
-We looked at the environments passed to all the \eval calls in our
-corpus. Table~\ref{tab:environments} summarizes the results. A numeric
-environment class \c{n} denotes the environment of the $n$-th call
-stack frame from the current function. \c{global} denotes the
-top-level environment and \c{list} denotes a list passed for
-evaluation of formulas. Environment classes of the form $n+$ denote
-the $n$-th environment extended with a new environment. The new
-environment provides a limited form of sandboxing. All assignments
-using the \c{\<-} function occur inside it and prevent the extended
-environment from mutation. However, it is still possible to mutate the
-extended environment using the \c{\<\<-} or \c{assign} functions; but,
-that happens rarely.
+We looked at the environments passed to all the \eval calls in our corpus.
+Table~\ref{tab:environments} summarizes the results. A numeric environment class
+\c{n} denotes the environment of the $n$-th call stack frame from the current
+function. \c{global} denotes the top-level environment and \c{list} denotes a
+list passed for evaluation of formulas. Environment classes of the form $n+$
+denote the $n$-th environment extended with a new environment. The new
+environment provides a limited form of sandboxing. All assignments using the
+$\leftarrow$ function occur inside it and prevent the extended environment from
+mutation. However, it is still possible to mutate the extended environment using
+the $\leftarrow$ or \c{assign} functions; but, that happens rarely.
 
 \begin{table}[htbp]{ \centering
 		\begin{tabular}{c|c|c|c}\hline
@@ -883,7 +888,7 @@ in the top-level environment to access the bindings.
 
 The \c{imchange} function of package \c{imager} makes it possible to
 modify images using a dedicated formula syntax using
-\c{\~}.\footnote{Inspired by {map} in package \emph{purr}.} Here,
+\~.\footnote{Inspired by {map} in package \emph{purr}.} Here,
 \eval is evaluated in \c{newenv}, which creates a new environment that
 inherits from \c{parent.frame()} by default (classified as 1+).
 
@@ -914,7 +919,7 @@ arguments of \c{h2}.
 \end{lstlisting}
 
 
-\subsubsection{The expression passed to \eval.} 
+\subsubsection{The expression passed to \eval.}
 
 During tracing, we gather all source expressions and all resolved expression arguments passed to \eval. For instance, a non-resolved expression and some of its resolved expressions can be:
 
@@ -965,7 +970,7 @@ Note that a site can exhibit several minimized expressions (see Figure~\ref{fig:
 
 
 \begin{figure}[htbp]
-	\centering 
+	\centering
 	\includegraphics[width=\textwidth]{package_combination_minimized.pdf}
 	\caption{Most frequent combinations of minimized expressions per site, with a cumulative share of 95\% of the sites.} \label{fig:frequentcombinationminimized}
 \end{figure}
@@ -1144,7 +1149,7 @@ prompts the user for input, parses it, and passes it to \eval.
 
 \section{\eval expressivity and macros}
 
-% The Thomas Lumley's article, Programmer's Niche: Macros in R, (https://www.r-project.org/doc/Rnews/Rnews_2001-3.pdf) describes how to write a `defmacro` function that would like as a macro creator, using `substitute` and `eval`.  There are no local macro variables in this implementation though. 
+% The Thomas Lumley's article, Programmer's Niche: Macros in R, (https://www.r-project.org/doc/Rnews/Rnews_2001-3.pdf) describes how to write a `defmacro` function that would like as a macro creator, using `substitute` and `eval`.  There are no local macro variables in this implementation though.
 
 \section{The dangers of \eval} \label{sec:dangerseval}
 
@@ -1192,19 +1197,19 @@ contribute to 77.1\% of all \eval calls.
 Expression & Eval Call &  \% \\\hline
 \c{Environment} &                                  989302   & 61\%\\
 \c{column[rows] <<- what} &                        55677    & 3.5\%\\
-\c{function(value) freduce(value, `_function_list`)} & 37251& 2.3\%\\
+\c{function(value) freduce(value, `function.list`)} & 37251& 2.3\%\\
 \c{NULL} &                         32005    & 2\%\\
 \c{List} &                         22293    & 1.4\%\\
 \c{c("default", "default2012", "default2011" ...}& 20610    & 1.3\%\\
 \c{force(..1)}            &                        20461    & 1.3\%\\
-\c{alist(`_spec`)}       &                         18532    & 1.2\%\\
+\c{alist(`spec`)}       &                         18532    & 1.2\%\\
 \c{inner}               &                          18530    & 1.2\%\\
 \c{String Vector}      &                           17487     & 1.1\%\\
 \end{tabular}\caption{Top ten eval calls in CRAN} \label{C}
 \end{table}
 
 The expression \c{Environment} occurs because of the four callsites
-explained above, \c{ggplot2::ggproto}, \c{R6::generator_funs},
+explained above, \c{ggplot2::ggproto}, \c{R6::generator\_funs},
 \c{future::backtrace} and \c{RModel::str.RMmodel}. The next
 expression, \c{column[rows] <<- what}, is used inside the
 \c{plyr::rbind.fill} function to merge data frames by assigning
@@ -1212,24 +1217,24 @@ concatenated vectors to rows. The \c{<<-} operator is interesting in
 that it skips the current scope and assigns in a parent scope in which
 the variable is already present. In our corpus, all these \eval calls
 contribute to a single side-effect. The expression \c{function(value)
-  freduce(value, `_function_list`)} arises from the
+  freduce(value, `function.list`)} arises from the
 \c{magrittr::\%>\%} function which is a pipe operator that pipes the
 output of previous command to the next one. The expression is
 evaluated in a custom environment to create a function binding for
 evaluating the components of the pipe.\c{String Vector} and \c{List}
 also arise from the same function when a string or a list is piped
 using the \c{\%>\%} function into the next expression. The \c{NULL}
-arises from \c{R6::generator_funs} function when the \eval is passed a
-\c{NULL} argument by the \c{DataMask_generator} package. The
+arises from \c{R6::generator\_funs} function when the \eval is passed a
+\c{NULL} argument by the \c{DataMask\_generator} package. The
 \c{c("default", "default2012", "default2011" ...} pattern arises from
 \c{copula::polyG} where it reflectively access the default expression
 for its formal parameter and evaluates it. The \c{force(..1)} and
-\c{alist(`_spec`)} patterns occur in \c{glue::glue_data} function
+\c{alist(`spec`)} patterns occur in \c{glue::glue\_data} function
 which concatenates and interpolates strings. The two patterns occur
 because the function captures unevaluated unnamed arguments and maps
 the evaluation of \c{force(..1)} on them. The \c{force} function
 forces promises and returns the result of evaluation. The \c{inner}
-pattern arises from \c{glue::identity_transformer} which enables the
+pattern arises from \c{glue::identity\_transformer} which enables the
 creation of custom transformation functions for affecting the
 interpolation and concatenation of input by the \c{glue} package.
 
@@ -1283,7 +1288,7 @@ z <- q.f(dp, ...)
 		& Julia & Javascript & Python & R \tabularnewline
 		\hline % lstlinline does not like tabular environments...
 		{\eval} & \texttt{eval(expr)} & \texttt{eval(expr)} & \texttt{eval(expr[, globals[, locals]])} &  \texttt{eval(expr[, envir[, enclos]])}  \tabularnewline
-		\hline 
+		\hline
 		Environments &Global  & Local & Global or local  & Any \tabularnewline
 		\hline
 	\end{tabularx}
