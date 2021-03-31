@@ -185,51 +185,85 @@ surprising features that impact the use of reflective features of the
 language. We then look at the semantics of \eval in R and discuss some
 design choices. Lastly, we put this paper in context of previous work.
 
-\subsection{R in a nutshell}
+\subsection{R, Briefly}
 
-R is a lazy functional programming language~\cite{ecoop12} with
-dynamic features that allow to write object-oriented code. Most data
-types are vectorized. Values are constructed by the \c{c(...)}
-function, e.g. \c{c("a","bc")} creates a vector of two strings. To
-enable equational reasoning, R copies values accessible through
-multiple variables when they are written to. Values can be tagged by
-user-defined attributes. For instance, one can attach the attribute
-\c{dim} to the value \c{x<-c(1,2,3,4)} with \c{attr(x,"dim")<-c(2,2)}.
-This causes arithmetic functions to treat \c x as a $2 \times 2$
-matrix. Another attribute is \c{class} which can be bound to a list of
-names, e.g., \c{class(x)<-"human"}. This sets the class of \c{x} to
-\c{human}; classes are used for object-oriented dispatch. Every R
-linguistic construct is desugared to a function call, even control
-flow statements, assignments, and bracketing. Furthermore, all
-functions can be redefined in user code. This makes R both flexible
-and challenging to compile~\cite{dls19}. Arguments to user-defined
-functions are bundled into thunks called \emph{promises}. Logically, a
-promise combines an expression's code, its environment, and its value.
-To access the value of a promise, one must force it. Forcing a promise
-triggers evaluation and the computed value is captured for future
-reference.
+\citet{ecoop12} gave a programming language-centric overview of the R language.
+They characterized it as a lazy, vectorized, functional language with rich
+dynamic features that allow layering several object systems. Most data types are
+sequences of primitive values constructed by calling the combination function
+\c{c}, so that \c{c(1,2)} evaluates to a vector of two strings, and constants
+such as \c{42} are vectors of length one. To enable equational reasoning, values
+accessible through multiple aliases are copied when written to. Furthermore,
+values can be tagged by user-defined attributes, key-value pairs. For instance,
+the attribute \c{dim}-\c{c(2,2)} can be attached to the value at \c{x} by the
+call \c{attr(x,"dim")<-c(2,2)}. In this case, the addition of this attribute
+ensure that the vector \c x will be treated as a $2 \times 2$ matrix by all
+arithmetic operations. The \c{class} attribute is used to give a 'class', in the
+object-oriented sense, to values. So, \c{class(x)<-"human"} sets the class of
+\c{x} to \c{human}; classes are used for method dispatch. Every linguistic
+construct is desugared to a function call, even control flow statements,
+assignments, and bracketing. All functions can be shadowed or redefined, making
+the language at the same time remarkably flexible and exceeding challenging to
+compile statically as vividly detailed by~\citet{dls19}. R uses a relaxed call-by-need convention for
+passing arguments to functions. Each argument is a thunk composed of an
+expression, its environment, and a slot for the result, these are called
+\emph{promises}. To get the value of an argument, the corresponding promise must
+be forced, once forced the promise's result is cached for future use.
 
 
-\subsection{Eval Semantics}
+\subsection{The Semantics of Eval and Friends}
 
-The expressive power of \eval depends on design decisions along two
-axes:
-\begin{itemize}
-\item {\bf Scoping:} What environment does \eval executes its argument
-  in? JavaScript and R evaluate it in the current environment, thus
-  exposing local variables and parameters and breaking the caller's
-  abstraction boundary. Julia is more restrictive, \eval runs at the
-  ``top level'', in the global environment. JavaScript has a global
-  \eval that behaves like Julia, and a ``strict mode'' in which \eval
-  may access local variables, but fobidden from injecting new ones in
-  the local environment. In Java, one can implement \eval with
-  Julia-semantics.\footnote{While \eval used to be the purview of
-  interpreted languages, just-in-time compilation lifted this
-  restriction. \Eval takes its input, wraps it in a static method of a
-  new anonymous class, generates bytecode for that class, invokes
-  the class loader to install that code, and finally reflectively
-  calls the method. }
-\item {\bf Reflective API:} What other reflective operations are
+While a facility to transform data into code is available in many languages,
+some design choices affect the expressive power of \eval and related functions.
+The key design choices that we review here are the input format, the environment
+in which \eval-generated code is evaluated and the reflective operations that
+are available to that code. Fig.~\ref{comp} summarizes design choices for
+several popular languages.
+
+\begin{figure}[!t]\center\small
+\begin{tabular}{r|l|l|l}\hline
+\tiny\sc Language&\sc\tiny Input&\sc\tiny Scope&\tiny\sc Reflective operations\\\hline
+\bf Julia     & expression& toplevel         & ??\\
+\bf Java      & bytecode  & classloader       & data\\
+\bf JavaScript& text      & current, toplevel& data\\
+\bf R         & expression& programmatic      & data, stack, envir.\\\hline
+\end{tabular}
+\caption{Design space of \eval}\label{comp}
+\end{figure}
+
+The input to \eval can be any format that can be turned into code. Both Julia
+and R mandate that the input format be parsed expressions. JavaScript allows any
+expression as a character string. Java is the most restrictive as a classloader
+only accepts complete classes in the bytecode format recognized by the virtual
+machine.
+
+The environment in which \eval executes the code can be the lexically enclosing
+environment of \eval (current), the global environment (toplevel), a limited
+global environment (classloader), or an environment chosen by the caller of
+\eval (programmatic). The most restrictive variant is that of Java, where the
+scope of newly loaded code is the set of classes exposed by the current class
+loader. Julia is the next most restrictive, as only global definitions can be
+observed and modified by \eval. JavaScript has a variant of \eval that runs in
+the current scope and a most strict mode that is restricted to global variables.
+Finally, R allows the caller to choose which environment to use with \eval.
+
+
+WORK IN  PROGREESS
+
+
+JavaScript and R evaluate it in the current environment, thus exposing local
+variables and parameters and breaking the caller's abstraction boundary. Julia
+is more restrictive, \eval runs at the ``top level'', in the global environment.
+JavaScript has a global \eval that behaves like Julia, and a ``strict mode'' in
+which \eval may access local variables, but fobidden from injecting new ones in
+the local environment. In Java, one can implement \eval with
+Julia-semantics.\footnote{While \eval used to be the purview of interpreted
+languages, just-in-time compilation lifted this restriction. \Eval takes its
+input, wraps it in a static method of a new anonymous class, generates bytecode
+for that class, invokes the class loader to install that code, and finally
+reflectively calls the method. }
+
+ {\bf Reflective API:} What other reflective operations are
   exposed to user code? JavaScript provides few reflective functions
   (other than enumeration of an object's properties and string-based
   indexing), the impact of \eval is thus limited. R, on the other
@@ -237,7 +271,6 @@ axes:
   walk the call stack and arbitrarily add and delete local variables.
   This means that there are few limits to the side-effects of an
   \eval.
-\end{itemize}
 
 \noindent
 These design choices impact our ability to reason about code when
