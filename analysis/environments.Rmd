@@ -103,6 +103,7 @@ if(params$force_rebuild || rebuild) {
     file, #                       Script file name (name of this run)
     ev_package = eval_source, #   Package of the call site
     type = expr_resolved_type_tag, #   Argument type
+    ev_call = eval_call_expression,
     ev_expr = expr_expression,
     n_op = interp_eval,
     envir = envir_expression,
@@ -173,22 +174,56 @@ We show the most frequent environment expression per site. There is only one env
 
 ```{r envir_most_common}
 frequent_envir <- E_envir %>% group_by(src_ref) %>% 
-  summarize(n_envir = n_distinct(envir), envir = paste0(unique(envir), collapse = " ; "))
+  summarize(n_envir = n_distinct(envir), envir = paste0(unique(envir), collapse = " ; "), envir_type = paste0(unique(envir_type), collapse = " ; "))
 
-stopifnot(frequent_envir$n_envir <= 1)
+#stopifnot(frequent_envir$n_envir <= 1)
+```
+
+```{r}
+freq_envir <- frequent_envir %>% count(envir, sort = TRUE) %>% 
+  mutate(percent = round(100 * n / nb_call_sites, 2), cum_percent = cumsum(percent))
+
+nb_parent.frame_sites <- freq_envir %>% filter(envir == "parent.frame()") %>% .$n
+nb_data_sites <- freq_envir %>% filter(envir == "data") %>% .$n
+
+overview_table(
+  r("nb parent france sites", nb_parent.frame_sites),
+  r("nb parent france site percent", ratio(nb_parent.frame_sites, nb_call_sites)),
+  r("nb data sites", nb_data_sites),
+  r("nb data sites", ratio(nb_data_sites, nb_call_sites))
+)
+```
+
+```{r}
+freq_envir %>% filter(cum_percent <= 90) %>%
+  ggplot() +
+  geom_col(aes(x = fct_reorder(envir, percent), y = percent)) + 
+  coord_flip()
+  
+ggsave_prefix("envir_expressions.pdf")
 ```
 
 
-# `envir` with Rcpp
+Let's classify the expressions, between calls and variables:
 
-```{r envir_rcpp}
-eval_calls_rcpp <- eval_calls_explicit %>% filter(str_detect(expr_expression, "C\\+\\+Constructor|C\\+\\+Field|C\\+\\+OverloadedMethods"))
+```{r}
+envir_var <- frequent_envir %>% filter(envir != "NA", str_detect(envir, "^(?:\\.[:alpha]|[:alpha:])[[:alpha:][:digit:]_\\.]*$"))
 
-nb_rcpp <- count(eval_calls_rcpp, wt = duplicates)
-nb_rcpp_sites <- nb_eval_call_sites(eval_calls_rcpp)
+nb_envir_var_sites <- nrow(envir_var)
 
-eval_calls_explicit <- eval_calls_explicit %>% anti_join(eval_calls_rcpp)
+overview_table(
+  r("envir variable sites", nb_envir_var_sites),
+  r("envir variable site percent", ratio(nb_envir_var_sites, nb_explicit_sites))
+)
 ```
+
+
+What about we classify them by type?
+
+```{r}
+frequent_envir %>% count(envir_type, sort = TRUE) %>% datatable()
+```
+
 
 
 
@@ -199,11 +234,17 @@ eval_calls_env_list <- eval_calls_explicit %>% filter(envir_type == "list")
 
 nb_env_list <- count(eval_calls_env_list, wt = duplicates)
 nb_env_list_sites <- nb_eval_call_sites(eval_calls_env_list)
+
+overview_table(
+  r("nb env list", nb_env_list),
+  r("nb env list sites", nb_env_list_sites),
+  r("nb env list site percent", ratio(nb_env_list_sites, nb_call_sites))
+)
 ```
 
 ## `envir` as an argument from the caller function
 
-```{r envir_arg_caller}
+```{r envir_arg_caller, eval = FALSE}
 eval_calls_arg_caller <- eval_calls_explicit %>% filter(!is.na(envir_from_arg))
 
 nb_arg_caller <- count(eval_calls_arg_caller, wt = duplicates)
@@ -213,7 +254,7 @@ nb_arg_caller_sites <- nb_eval_call_sites(eval_calls_arg_caller)
 
 Most of the eval calls directly use the argument, but some seem to modify it a lot:
 
-```{r}
+```{r eval = FALSE}
 eval_calls_arg_caller %>%
   count(envir_from_arg, wt = duplicates, sort = TRUE) %>%
   knitr::kable()
@@ -227,32 +268,30 @@ In the current dataset, there are no examples of sandbox usage but we should see
 
 ```{r envir_absolute}
 eval_calls_absolute <- eval_calls_explicit %>%
-  anti_join(eval_calls_env_list) %>%
-  anti_join(eval_calls_arg_caller)
+  anti_join(eval_calls_env_list) #%>%
+  #anti_join(eval_calls_arg_caller)
 
 nb_absolute <- count(eval_calls_absolute, wt = duplicates)
 nb_absolute_sites <- nb_eval_call_sites(eval_calls_absolute)
+
+overview_table(
+  r("nb absolute envir", nb_absolute$n),
+  r("nb absolute sites", nb_absolute_sites),
+  r("nb absolute site percent", ratio(nb_absolute_sites, nb_eval_calls))
+)
 ```
 
 Let's do a sanity check: is the environment class the same in that category?
 
 ```{r}
-eval_calls_absolute <- eval_calls_absolute %>%
-  group_by(eval_call_srcref) %>%
-  mutate(envir_distinct = n_distinct(environment_class))
+absolute_diversity <- eval_calls_absolute %>%
+  group_by(src_ref) %>%
+  summarize(envir_distinct = n_distinct(environment_class), envir = paste0(environment_class, collapse = " ; "))
 
-eval_calls_absolute %>%
-  ungroup() %>%
+absolute_diversity %>%
   count(envir_distinct, sort = TRUE)
 ```
 
-We can also see a few examples:
-
-```{r}
-eval_calls_absolute %>%
-  filter(envir_distinct == 2) %>%
-  select(ev_expr, environment_class, envir_distinct)
-```
 
 Now, we can further decompose the environment class to get more insights. It has three components:
 
@@ -271,22 +310,101 @@ env_calls <- eval_calls_absolute %>% ungroup() %>%
   mutate(specific_env = if_else(specific_env == "emptyR_EmptyEnv", "empty", specific_env))
 ```
 
+```{r}
+env_calls %>% group_by(new_env) %>% summarize(n = n_distinct(src_ref), percent = round(100 * n / nb_call_sites, 2), cum_percent = cumsum(percent)) %>% arrange(desc(n))
+
+env_calls %>% group_by(hierarchy) %>% summarize(n = n_distinct(src_ref), percent = round(100 * n / nb_call_sites, 2), cum_percent = cumsum(percent)) %>% arrange(desc(n))
+
+
+```
+
+
+
 _ggplot2_ again is responsible for this `new.env` 4 times!
 
 ```{r}
 env_calls %>% filter(!is.na(new_env), specific_env == "global") %>% count(new_env, wt = duplicates, sort = TRUE)
 
-env_calls %>% filter(new_env == 4, specific_env == "global") %>% count(eval_source, wt = duplicates, sort = TRUE)
+env_calls %>% filter(new_env == 4, specific_env == "global") %>% count(ev_package, wt = duplicates, sort = TRUE)
 ```
 
+
+# Specific environments
+
+
+```{r}
+specific_env <- env_calls %>% group_by(specific_env) %>% summarize(n = n_distinct(src_ref), n_packages = n_distinct(ev_package), percent = round(100 * n / nb_call_sites, 2), cum_percent = cumsum(percent)) %>% arrange(desc(n))
+
+nb_global_env_sites <- specific_env %>% filter(specific_env == "global") %>% .$n
+nb_callee_env_sites <- specific_env %>% filter(specific_env == "callee") %>% .$n
+nb_empty_env_sites <- specific_env %>% filter(specific_env == "empty") %>% .$n
+nb_base_env_sites <- specific_env %>% filter(specific_env == "base") %>% .$n
+
+overview_table(
+  r("nb global env sites", nb_global_env_sites),
+  r("nb global env site percent", ratio(nb_global_env_sites, nb_call_sites)),
+  r("nb callee env sites", nb_callee_env_sites),
+  r("nb callee env site percent", ratio(nb_callee_env_sites, nb_call_sites)),
+  r("nb empty env sites", nb_empty_env_sites),
+  r("nb empty env site percent", ratio(nb_empty_env_sites, nb_call_sites)),
+  r("nb base env sites", nb_base_env_sites),
+  r("nb base env site percent", ratio(nb_base_env_sites, nb_call_sites))
+)
+```
+
+
+## Package environments
+
+Our tracer leaks here: 3 srcref are seeing `package:evil`, from `test_that`, `R.oo` and `envnames`.
+
+What are the ones looking into packages?
+
+```{r}
+package_env <- E_envir %>% filter(str_detect(environment_class, fixed("package:"))) %>% count(ev_package, sort = TRUE)
+
+nb_package_env_sites <- E_envir %>% filter(str_detect(environment_class, fixed("package:"))) %>% pull(src_ref) %>% n_distinct()
+
+overview_table(
+  r("nb package env packages", nrow(package_env)),
+  r("nb package env sites", nb_package_env_sites),
+  r("package env site percent", ratio(nb_package_env_sites, nb_call_sites))
+)
+```
+
+They are the following:
+
+- _R.oo_: OOP system
+- _USSCXenaTools_: uses `eval` to create _hidden_ function inside its own namespace (by pasting `".p_"` in front of the function name)
+- _unitizer_: unit test framework that requires to precise the test environment
+- _envnames_: seach env by names, give a name for each environments. Traverse all the call sites with `sys.calls`
+- _testthat_: unit test framework
+
+
+## Weird packages
+
+There are 3 weird _package_ environments: `.R_Cache`, `.R_Test`, `newdir...`
+
+They all seem to implement a kind of caching mechanism. 
+
+They build the environment name with:
+
+```{r, eval = FALSE}
+env <- attach(NULL, pos, basename(directory))
+```
 
 # `envir` is an integer
 
 ```{r envir_integer}
 eval_calls_integer <- eval_calls_explicit %>% filter(envir_type == "integer")
 
-nb_integer <- count(eval_calls_integer, wt = duplicates)
+nb_integer <- count(eval_calls_integer, wt = duplicates)$n
 nb_integer_sites <- nb_eval_call_sites(eval_calls_integer)
+
+overview_table(
+  r("nb integer envir", nb_integer),
+  r("nb integer envir sites", nb_integer_sites),
+  r("nb integer envir site percent", ratio(nb_integer_sites, nb_call_sites))
+)
 ```
 
 # `envir` is `NULL`
@@ -294,8 +412,14 @@ nb_integer_sites <- nb_eval_call_sites(eval_calls_integer)
 ```{r envir_null}
 eval_calls_null <- eval_calls_explicit %>% filter(envir_type == "NULL")
 
-nb_null <- count(eval_calls_null, wt = duplicates)
+nb_null <- count(eval_calls_null, wt = duplicates)$n
 nb_null_sites <- nb_eval_call_sites(eval_calls_null)
+
+overview_table(
+  r("nb null envir", nb_null),
+  r("nb null envir sites", nb_null_sites),
+  r("nb null envir site percent", ratio(nb_null_sites, nb_eval_calls))
+)
 ```
 
 ## Summary of the categories
@@ -305,7 +429,7 @@ Total eval calls: `r nb_eval_calls`
 Total eval call sites: `r nb_call_sites`
 
 
-```{r summary}
+```{r summary, eval = FALSE}
 summary <- tribble(
   ~category, ~calls, ~percent_calls, ~callsites, ~percent_callsites,
   "Default", nb_default$n, ratio(nb_default$n, nb_eval_calls$n), nb_default_sites, ratio(nb_default_sites, nb_call_sites),

@@ -878,7 +878,7 @@ the $\leftarrow$ or \c{assign} functions; but, that happens rarely.
 \end{table}
 
 We observe that a disproportionately high number of core R \eval calls
-access the caller's caller's environment. This is because many core R
+access the  caller's environment. This is because many core R
 functions call functions that pass the result of \c{parent.frame()} to
 an \eval. A disproportionately high number of calls to \eval happens
 in an extended top-level environment. This can be explained by the
@@ -920,6 +920,10 @@ arguments of \c{h2}.
 
 
 \subsubsection{The expression passed to \eval.}
+\paragraph{Touching package environments.} It refers to the \emph{namespace} of a package. A call to \c{library(packageName)}, which load libraries in R, for instance, will populate environment \c{package:packageName}. It is a \emph{base} function though, so we do not see it in the CRAN dataset. However, R still makes it possible to access any package environments and \packageNbPackageEnvSites call sites, \ie \packagePackageEnvSitePercent access a package environment, from \packageNbPackageEnvPackages different packages. Those packages perform introspection, to represent and search any environment by name, in package \emph{envnames}, to containerize tests, as with \emph{testthat} and \emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to create poor man's hidden functions in \emph{USSCXenaTools}.
+
+It is also used to implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
+
 
 During tracing, we gather all source expressions and all resolved expression arguments passed to \eval. For instance, a non-resolved expression and some of its resolved expressions can be:
 
