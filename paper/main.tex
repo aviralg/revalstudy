@@ -712,9 +712,9 @@ are 15 normal forms. We detail the interesting cases next.
   exercised is \packageMedianRunSitesUniqueActualValue, suggesting a possible
   lack of coverage. However, manual inspection reveals cases such as:
 \begin{lstlisting}
- f1 <- eval(paste("A ~ ",paste(paste(names(X[,-1])),collapse="+")))
+ f1 <- eval(paste("A~",paste(paste(names(X[,-1])),collapse="+")))
 \end{lstlisting}
-  The code concatenates strings and \eval will simply return the string as is.
+  This concatenates to a string and \eval simply returns it as is.
   From twenty randomly selected \evals, only \packageUsefulValueEvalPercent of
   them needed to use \eval.
 %% The percentage of non default environment passed to \eval is
@@ -738,7 +738,8 @@ are 15 normal forms. We detail the interesting cases next.
   %% \packageMinimizedpercentenvirnonparenta\% of the sites, which suggests that
   %% when given a variable, \eval is often used to get value in a non-local,
   %% non-parent environment.
-\item \underline{$min(e)=\c{\$}$}: A named lookup, written \c{x\$f}, can be used
+\item \underline{$min(e)=\c{\$}$}: A name lookup, \c{x\$f}, is used
+  can be used
   to look up a name in an environment or a column in a data frame. This category
   also groups indexing operators, \c{[]} and \c{[[]]}. The presence of these
   operators subsumes constants and variables.
