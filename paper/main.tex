@@ -353,55 +353,47 @@ casual users. \Eval is also being used to reduce boilerplate code and
 provide convenience features for programmers. We now give some
 representative examples of its usage.
 
-\mypara{Intercession.} A common use case for \eval is to be combined
-with \c{match.call}. \c{match.call} walks up the call stack, captures
-the code that invoked the currently executing function, and returns it
-as an unevaluated expression. The pattern is to transform a call to
-some function \c{f} into a call to \c{g} with some arguments retained
-and others modified. As an illustration, consider the \c{vcpart}
-package's function \c{tvcglm} that is translated to a call to \c{tvcm}
-with two modifications to the argument list: argument \c{control}
-can't be missing and \c{fit} is set  \c{"glm"}. The
-function ends with a call to \c{eval.parent} to ensure that the
-rewritten call is evaluted in the same environment the original call
-was.
+\mypara{Intercession.} A common use case for \eval is to be combined with
+\c{match.call}. \c{match.call} walks up the call stack, captures the code that
+invoked the currently executing function, and returns it as an unevaluated
+expression. The pattern is to transform a call to some function \c{f} into a
+call to \c{g} with some arguments retained and others modified. As an
+illustration, consider the \c{vcpart} package's function \c{tvcglm} that is
+translated to a call to \c{tvcm} with two modifications to the argument list:
+argument \c{control} can't be missing and \c{fit} is set \c{"glm"}. The function
+ends with a call to \c{eval.parent} to ensure that the rewritten call is
+evaluted in the same environment the original call was.
 \begin{lstlisting}
- tvcglm <- function(formula, data, family, control=tvcglm_control(), ...) {
-   Call <- match.call()
-   Call[[1L]] <- as.name("tvcm")
-   if (!"control" %in% names(Call)) Call$control<-formals(tvcglm)$control
-   if ("fit" %in% names(list(...))) warning("'fit' is ignored. ")
-   Call$fit <- "glm"
-   return(eval.parent(Call))
+ tvcglm <- function(formula, data, family, ...) {
+   k <- match.call()
+   k[[1]] <- as.name("tvcm")
+   if ("fit" %in% names(list(...))) warning("'fit' ignored.")
+   k$fit <- "glm"
+   eval.parent(k)
  }
 \end{lstlisting}
 This pattern is recognizable by the fact that the expression is a call
 and the target environment is that of the parent.
 
-\mypara{Code Generation.} The more traditional use of \eval is to
-execute code that was assembled by the programmer into a string. Here
-we show the method \c{plot} for class \c{sback} in package
-\c{wsbackfit}, simplified for explanatory purposes. The function takes
-a long argument list, the names of which are captured in the list
-\c{opt}. The string \c{stub} is composed of a subset of the arguments
-passed to this function; the variable is used to construct a call to
-\c{base::plot} which will draw a plot. \NOTE{This example is a bit
-  messed up. What is var? Does the use of ... in the eval grab the
-  arguments of this call? If yes does it not end up with xlab twice?
-  HELP} The \parse and \eval combination is used by the the \source
-function in the base library to load R code from a file in the current
-workspace.
+\mypara{Code Generation.} The more traditional use of \eval is to execute code
+that was assembled by the programmer into a string. Here we show the method
+\c{plot} for class \c{sback} in package \c{wsbackfit}, simplified for
+explanatory purposes. The function takes a long argument list, the names of
+which are captured in the list \c{opt}. The string \c{stub} is composed of a
+subset of the arguments passed to this function; the variable is used to
+construct a call to \c{base::plot} which will draw a plot. \NOTE{This example is
+  a bit messed up. What is var? Does the use of ... in the eval grab the
+  arguments of this call? If yes does it not end up with xlab twice? HELP} The
+\parse and \eval combination is used by the the \source function in the base
+library to load R code from a file in the current workspace.
 \begin{lstlisting}
  plot.sback <- function(x,...) {
    opt <- names(list(...))
    stub <- paste(
     ifelse("xlab" %in% opt,"",paste(",xlab=\"",var,"\"",sep="")),
-    ifelse("main" %in% opt,"",main.aux),
-    ifelse("type" %in% opt,"",",type=\"l\""),
-    sep = "")
+    ifelse("type" %in% opt,"",",type=\"l\""), sep="")
    plot <- paste("plot(x.data,",stub,",...)",sep="")
    eval(parse(text=plot))
-   ...
 \end{lstlisting}
 This pattern is recognizable by its use of \c{parse} to turn a string
 into an expression.
@@ -414,7 +406,7 @@ uses \eval to calls the \c{options} function with named arguments
 taken from a vector of strings. While the benefits are limited in this
 example, it is an attractive tool for programmers.
 \begin{lstlisting}
-  opts = c("datatable.verbose"="FALSE", # ... many others
+  opts = c("datatable.verbose"="FALSE", # ...many others
   for (i in names(opts))
     eval(parse(text=paste0("options(",i,"=",opts[i],")")))
 \end{lstlisting}
