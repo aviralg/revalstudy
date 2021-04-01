@@ -196,22 +196,23 @@ such as \c{42} are vectors of length one. To enable equational reasoning, values
 accessible through multiple aliases are copied when written to. Furthermore,
 values can be tagged by user-defined attributes, key-value pairs. For instance,
 the attribute \c{dim}-\c{c(2,2)} can be attached to the value at \c{x} by the
-call \c{attr(x,"dim")<-c(2,2)}. In this case, the addition of this attribute
-ensure that the vector \c x will be treated as a $2 \times 2$ matrix by all
-arithmetic operations. The \c{class} attribute is used to give a 'class', in the
-object-oriented sense, to values. So, \c{class(x)<-"human"} sets the class of
-\c{x} to \c{human}; classes are used for method dispatch. Every linguistic
-construct is desugared to a function call, even control flow statements,
-assignments, and bracketing. All functions can be shadowed or redefined, making
-the language at the same time remarkably flexible and exceeding challenging to
-compile statically as vividly detailed by~\citet{dls19}. R uses a relaxed call-by-need convention for
-passing arguments to functions. Each argument is a thunk composed of an
-expression, its environment, and a slot for the result, these are called
-\emph{promises}. To get the value of an argument, the corresponding promise must
-be forced, once forced the promise's result is cached for future use.
+call \c{attr(x,"dim")$\leftarrow$c(2,2)}. In this case, the addition of this
+attribute ensure that the vector \c x will be treated as a $2 \times 2$ matrix
+by all arithmetic operations. The \c{class} attribute is used to give a 'class',
+in the object-oriented sense, to values. So, \c{class(x)<-"human"} sets the
+class of \c{x} to \c{human}; classes are used for method dispatch. Every
+linguistic construct is desugared to a function call, even control flow
+statements, assignments, and bracketing. All functions can be shadowed or
+redefined, making the language at the same time remarkably flexible and
+exceeding challenging to compile statically as vividly detailed
+by~\citet{dls19}. R uses a relaxed call-by-need convention for passing arguments
+to functions. Each argument is a thunk composed of an expression, its
+environment, and a slot for the result, these are called \emph{promises}. To get
+the value of an argument, the corresponding promise must be forced, once forced
+the promise's result is cached for future use.
 
 
-\subsection{The Semantics of Eval and Friends}
+\subsection{On the Expressive Power of Eval}
 
 While a facility to transform data into code is available in many languages,
 some design choices affect the expressive power of \eval and related functions.
@@ -221,12 +222,12 @@ are available to that code. Fig.~\ref{comp} summarizes design choices for
 several popular languages.
 
 \begin{figure}[!t]\center\small
-\begin{tabular}{r|l|l|l}\hline
-\tiny\sc Language&\sc\tiny Input&\sc\tiny Scope&\tiny\sc Reflective operations\\\hline
-\bf Julia     & expression& toplevel         & ??\\
-\bf Java      & bytecode  & classloader       & data\\
-\bf JavaScript& text      & current, toplevel& data\\
-\bf R         & expression& programmatic      & data, stack, envir.\\\hline
+\begin{tabular}{r@{~}l|l|l|l}\hline
+\tiny\sc Language&&\sc\tiny Input&\sc\tiny Scope&\tiny\sc Reflective operations\\\hline
+\bf Julia&\cite{julia}     & expression& toplevel         & data\\
+\bf Java&\cite{cl}  & bytecode  & classloader       & data\\
+\bf JavaScript&\cite{ecoop11}& text      & current, toplevel& data\\
+\bf R&\cite{R96}  & expression& programmatic      & data, stack, envir.\\\hline
 \end{tabular}
 \caption{Design space of \eval}\label{comp}
 \end{figure}
@@ -247,132 +248,100 @@ observed and modified by \eval. JavaScript has a variant of \eval that runs in
 the current scope and a most strict mode that is restricted to global variables.
 Finally, R allows the caller to choose which environment to use with \eval.
 
+The last degree of freedom in the design of \eval is what can be done from
+within the generated code. The main difference between designs lies in what part
+of the system state can be accessed and modified. In R, there is very little
+that cannot be observed from an \eval context and modified. The code can
+override the definition of variables and functions. Also, thanks to a rich
+reflective interface, code can introspect on values, walk and modify environment
+chains, and access the stack frames on the call stacks and their environments.
 
-WORK IN  PROGREESS
+Given the above, it is reasonable to claim that R's \eval are amongst the
+languages that afford the facility the most expressive power. This comes at the
+cost of the programmer's ability to reason about code in the presence of \eval.
+Expressive power translates directly into limits on the usefulness of program
+analysis.
 
+By contrast, the designers of Julia chose to limit \eval. In Julia, only global
+variables can be side-effected and environments cannot be readily manipulated.
+This is designed to shield optimized code from some of the most pernicious uses
+of the facility~\cite{oopsla18a}. Furthermore, the language provides a
+versioning mechanism, called world age, to ensure that any methods defined
+within an \eval only become visible at well-defined program points and thus that
+recompilation does not have to occur when optimized code is
+running~\cite{oopsla20a}.
 
-JavaScript and R evaluate it in the current environment, thus exposing local
-variables and parameters and breaking the caller's abstraction boundary. Julia
-is more restrictive, \eval runs at the ``top level'', in the global environment.
-JavaScript has a global \eval that behaves like Julia, and a ``strict mode'' in
-which \eval may access local variables, but fobidden from injecting new ones in
-the local environment. In Java, one can implement \eval with
-Julia-semantics.\footnote{While \eval used to be the purview of interpreted
-languages, just-in-time compilation lifted this restriction. \Eval takes its
-input, wraps it in a static method of a new anonymous class, generates bytecode
-for that class, invokes the class loader to install that code, and finally
-reflectively calls the method. }
+\subsection{Eval in R}
 
- {\bf Reflective API:} What other reflective operations are
-  exposed to user code? JavaScript provides few reflective functions
-  (other than enumeration of an object's properties and string-based
-  indexing), the impact of \eval is thus limited. R, on the other
-  hand, has a rich reflective API. For example, R allows user code to
-  walk the call stack and arbitrarily add and delete local variables.
-  This means that there are few limits to the side-effects of an
-  \eval.
-
-\noindent
-These design choices impact our ability to reason about code when
-reflection is used. A more expressive \eval translates directly into
-additional restrictions for program analysis and transformation tools.
-The reason Julia restricts \eval to the top level is to preserve the
-compiler's ability to optimize code~\cite{oopsla18a}. In particular,
-\eval had to be prevented from changing the type of local variables as
-this would require recompilation of the method. Julia even adds a
-versoning mechanism, called world age, to ensure that code added
-during an \eval does not invalidate inlining
-optimizations~\cite{oopsla20a}. More permissive languages such as R
-are much harder to deal with from a compiler's perspective.
-
-\mypara{Eval in R.} The reflective interface exposed by
-R is somewhat complex. The core library exports four functions with
-slightly different semantics, \c{eval}, \c{evalq}, \c{eval.parent},
-and \c{local}. \Eval is the more general function, and, unlike in
-JavaScript, it takes three arguments, an expression, its environment
-and the enclosing environment. The following discussion simplify some
-details which are not relevant to this paper. For the interested
-reader we recommend the excellent book by Hadley
-Wickham~\cite{hadley}. The definition of \eval starts as follows:
+The R language exposes a rich reflective interface with four functions with
+different semantics, \c{eval}, \c{evalq}, \c{eval.parent}, and
+\c{local}. The first is the most general, taking three arguments, an expression,
+its environment and an enclosing environment. The following discussion
+simplifies details not relevant to this paper, the interested reader should
+consult \citet{hadley}. It is defined as:
 
 \begin{lstlisting}
- eval <- function(expr, envir = parent.frame(),
-           enclos = if(is.list(envir)) parent.frame() else baseenv()) {...body...}
+ eval <- function(e, envir = parent.frame(),
+                   encl = if(is.list(envir)) parent.frame() else baseenv()) ...
 \end{lstlisting}
-The parameters are \c{expr}, the value to be evaluated, \c{envir}, the
-environment in which evaluation happens, and \c{enclos}, the
-environment to look up objects not found in \c{envir} (by default
-either the top level, \c{baseenv} or the environment of the caller).
-The \c{expr} parameter can take values of different type, for our
-purposes we focus on the most common, {\tt expression}s. It is easiest
-to think of an \c{expression} as an abstract syntax tree as returned
-by R's parser. The simplest way to create an \c{expression} is to call
-\c{quote} passing some R expression:
+Parameter \c e is the expression to evaluate, \c{envir} is the evaluation
+environment, and \c{encl} is used to look up variables not found in \c{envir}.
+The latter is, by default, either the environment of the function that called
+\eval or the top level. Parameter \c e can be of different types, for our
+purposes we focus on {\tt expression}s. These can be thought of as abstract
+syntax trees returned by the parser. An \c{expression} can be obtained by
+calling \c{quote} with an expression or \c{parse} wit a string:
 \begin{lstlisting}
-  > quote(a + b)
-  # a + b
+ > quote(a + b)
+ # a + b
+ > parse(text="a+b")
+ # expression(a+b)
 \end{lstlisting}
-Here the return value is an abstract syntax tree. From a
-string, use  the \c{parse} function:
+Even more commonly, expressions are obtained from promises using \c{substitute}.
+Consider a one-parameter function \c{f}, when called with \c{a+b}, the function
+returns \c{a+b} as expression.
 \begin{lstlisting}
-  > parse(text="a+b")
-  # expression(a+b)
+ > f <- function(x) substitute(x)
+ > f(a+b)
+ # expression(a+b)
+ > substitute(a+b,list(a=1,b=2))
+ # 1+2
 \end{lstlisting}
-The most common way to create an expression is to extract it from an
-argument. Each argument comes packaged inside a promise which retains
-the source code of the argument. Consider the following function
-definition, \c{f} is a function with a single parameter \c{x}. When
-the call \c{f(a+b)} is evaluated, \c{a+b} is stored inside a newly
-created promise.
+The call to \c{substitute(x)} extracts the unevaluated expression from the
+promise bound to variable \c x. Function \c{substitute(e,envir)} takes two
+arguments, the second is used as a substitution environment for free variables
+in \c e.
 \begin{lstlisting}
-  > f <- function(x) substitute(x), list(a=1)))
-  > f(a+b)
-  # expression(1+b)
-  > substitute(a+b,list(a=1,b=2))
-  # 1+2
+ > environment()
+ # <environment: R_GlobalEnv>
 \end{lstlisting}
-The call to \c{substitute(x)} extracts, from the promise bound to
-\c{x}, the expression passed in the call to \c{f}, i.e., \c{a+b}. The
-\c{substitute(exp,env)} function takes two arguments, the second is an
-object that can be used as an environment. This can be either a list
-of named values, a data frame or an actual environment. \c{substitute}
-will look for occurrences of each symbol from \c{env} in \c{exp} and
-replace them with their value taken from \c{env}.
-\begin{lstlisting}
-  > environment()
-  # <environment: R_GlobalEnv>
-\end{lstlisting}
-The above shows how to access the current environment, this can belong
-to the current function or, as above, the top level. Environments are
-nested, with each environment having a parent. This nesting is used
-when looking up names. When calling \c{new.env}, the default parent is
-the current environment. The chain of environments can be traversed
-with \c{parent.env}, ultimately one arrives at \c{emptyenv}.
-\c{parent.frame} and \c{sys.frame} grant access to environments
-further up in the calling stack, up to the global environment
-\c{.GlobalEnv}, and packages. One can also directly read, modify or
-create new bindings, given any environment:
+The \c{environment} function returns a variable environment, either from the
+currently executing function or the top level environment. Environments nest,
+each has a parent. When creating a new environment with \c{new.env}, the parent
+is the current environment. Environment chains can be traversed with
+\c{parent.env}, until \c{emptyenv} is reached. The top level environment is
+\c{.GlobalEnv}, it has parents that represent the packages that have been
+loaded. One can also directly read, modify or create new bindings, given any
+environment:
 \begin{itemize}
-\item \c{env\$v} and \c{get("v",envir=env)} read variable \c{v} in
-  environment \c{env};
-\item \c{env\$v<-2} and \c{assign("v",2,envir=env)} write 2 in
-  \c{v}. If not found, \c{v} is created in \c{env}.
+\item \c{envir\$v} and \c{get("v",envir=envir)}: read  \c{v} from \c{envir};
+\item \c{envir\$v<-2} and \c{assign("v",2,envir=envir)}: store 2 in \c{v}, if
+  not found, \c{v} is created in \c{envir}.
 \end{itemize}
-\noindent Environments are often used as hashtables by programmers as
-they have reference semantics (other are copy-on-write) and have a
-built-in string look up. across function calls, or to create package
-namespaces.
-\begin{lstlisting}
-  evalq <- function(exp,env,enclos) eval(quote(exp),env,enclos)
-  eval.parent <- function(exp,n) eval(exp,parent.frame(n))
-  local <- function(exp,env,enclos) evalq(exp,new.env())
+\noindent Programmers sometimes use environments as hash maps as they are the
+only data type with reference semantics and have a built-in string look up.
+Functions \c{parent.frame} and \c{sys.frame} return environments further up the
+call stack.
+ \begin{lstlisting}
+  evalq <- function(e,envir,encl) eval(quote(e),envir,encl)
+  eval.parent <- function(e,n) eval(e,parent.frame(n))
+  local <- function(e,envir,encl) evalq(e,new.env())
 \end{lstlisting}
-The three \eval variants can be expressed as calls to \eval. The
-\c{evalq} form quotes the argument to prevent it from being evaluated
-in the current environment. The \c{eval.parent(e,n)} form evaluates
-\c{e} in the environment of the {\tt n}-th caller of this function.
-Finally, \c{local} evaluates an \c{exp} in a new environment to
-avoid polluting the current one.
+The three \eval variants can be expressed with \eval. The \c{evalq} form quotes
+the argument to prevent it from being evaluated in the current environment. The
+\c{eval.parent(e,n)} form evaluates \c{e} in the environment of the {\tt n}-th
+caller of this function. Finally, \c{local} evaluates \c{e} in a new environment
+to avoid polluting the current one.
 
 \subsection{Eval Usage in R}
 
