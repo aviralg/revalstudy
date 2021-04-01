@@ -724,12 +724,11 @@ are 15 normal forms. We detail the interesting cases next.
 %% environment, and among the one that use a non-default environment,
 %% \packageNonDefaultEnvirWithVarPercent have at least one minimized expression
 %% with a variable inside.
-
-\item \underline{$min(e)=\c{X}$}: Variables are the most common normal form.
-  Variables subsume values, so they include arithmetic expressions in which a
-  variable occurs. \packageNbSymbolVarSitePercent of variable expression are
-  symbols, \ie just an \c{x}. A variable may refer to a promise and thus trigger
-  computation the first time it is accessed.
+\item \underline{$min(e)=\c{X}$}: Variables are the most common form. They
+  subsume values, thus \c{X} includes arithmetic expressions in which a variable
+  occurs. \packageNbSymbolVarSitePercent of variable expression are symbols, \ie
+  just an \c{x}. As a variable may refer to a promise, it may trigger
+  computation.
   %% The
   %% \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\% of
   %% the call sites. The call sites without an explicit \c{envir} argument all use
@@ -738,94 +737,61 @@ are 15 normal forms. We detail the interesting cases next.
   %% \packageMinimizedpercentenvirnonparenta\% of the sites, which suggests that
   %% when given a variable, \eval is often used to get value in a non-local,
   %% non-parent environment.
-\item \underline{$min(e)=\c{\$}$}: A name lookup, \c{x\$f}, is used
-  can be used
-  to look up a name in an environment or a column in a data frame. This category
-  also groups indexing operators, \c{[]} and \c{[[]]}. The presence of these
-  operators subsumes constants and variables.
+\item \underline{$min(e)=\c{\$}$}: A name lookup, \c{x\$f}, can be used to
+  access variable in an environment or a column in a data frame, this also
+  include vector   indexing operators, \c{[]} and \c{[[]]}. A name lookup
+  subsumes variables.
 %% It amounts for \packageNbSlotAccess sites, \ie
 %% \packageSlotAccessPercent of the sites. The non-default, non-parent environment
 %% percentage is here \packageMinimizedpercentenvirnonparentg.
-
-\item \underline{$min(e)=$~\c{<-}}: Assignments amount to
-  \packageAssignSitesPercent of the sites, they include \c{<-}, \c{<<-} and
-  \c{assign}, and subsume named lookups.
+\item \underline{$min(e)=$~\c{<-}}: Assignments account for
+  \packageAssignSitesPercent of \eval sites, they are \c{<-}, {\tt <<-} and
+  \c{assign}, and they subsume named lookups.
 %% \packageNonDefaultEnvirAssignSitesPercent of the sites with assignments. Indeed,
 %% most of those assignments occur in the default environment, \ie in the caller of
 %% \eval. This hints that side effects are not widespread in \eval.\footnote{Side
 %% effects can also happen in a function call in the \eval expression, and that
 %% function call will hide assignment operators from us. We more precisely
 %% instrument side-effects to environment in Section~REF.}
-
-\item \underline{$min(e)=\c{F()}$}: Function calls that
-
-\item \underline{$min(e)=\c{F(X)}$}: Function calls that
-
-\item \underline{$min(e)=\c{F(F(X))}$}: Function calls that
-
-\item \underline{$min(e)=\c{FUN}$}: Function calls that
-
-\item \underline{$min(e)=\c{\{\,\}}$}: Function calls that
-
-\item \underline{$min(e)=\c{model.frame}$}: Function calls that
-
-
+\item \underline{$min(e)=\c{F()}$}: A plain function call which may have some
+  values as argument but does not include variables. It should be noted that
+  function name require variable lookups -- we distinguish those as they usually
+  do not trigger computation.
+\item \underline{$min(e)=\c{F(X)}$}: Function calls whose arguments may include
+  variable references.
+\item \underline{$min(e)=\c{F(F(X))}$}: Nested function calls with variables.
+\item \underline{$min(e)=\c{FUN}$}: Function definition accounts for
+  \packageFunctionDefinitionSitesPercent of \eval sites. In addition the
+  functions inside other expressions account for
+  \packageGeneralizedFunctionDefinitionSitesPercent of sites, and give an
+  estimate of the use of higher-order functions.
+\item \underline{$min(e)=\c{\{\,\}}$}: Arbitrary-length statement blocks. These
+  are larger expressions with, on average, \packageMinimizedoperationsjRnd
+  instructions. The contents of the block are not inspected.
+\item \underline{$min(e)=\c{model.frame}$}: Call to the \c{model.frame} function
+  used to create statistical models. This subsume all other categories.
 
 \end{itemize}
 
+%% Similarly, when a function is evaluated on some variable (\c{F(X)} minimized
+%% expression), the percentage of non default, non parent environments is rather
+%% high, \packageMinimizedpercentenvirnonparentd\%.
 
-Similarly, when a function is evaluated on some variable (\c{F(X)} minimized
-expression), the percentage of non default, non parent environments is rather
-high, \packageMinimizedpercentenvirnonparentd\%.
+%% As a whole, variable access, either as the top call, or inside a function call,
+%% possibly with accessing a slot, represents
+%% \packageGeneralizedVarAccessSitePercent of the sites.
 
-As a whole, variable access, either as the top call, or inside a function call,
-possibly with accessing a slot, represents
-\packageGeneralizedVarAccessSitePercent of the sites.
+%% The minimized expression classification suggests that the presence of variables
+%% in the expression is highly correlated to the specification of a specific
+%% environment, and that \eval is used here for its power in precising the
+%% evaluation environment.
 
-
-
-
-\paragraph{\c{model.frame}}
-This is a function used to create statistical models. We explain it in more
-details in the section about the usage of \eval (see Section~REF).
-
-\paragraph{Function definition.}
-\c{FUN} represents a function definition at the top level of the expression, and
-happens in \packageFunctionDefinitionSites sites, \ie
-\packageFunctionDefinitionSitesPercent of the sites. It entails very few steps
-of the interpreter, as the function is returned by \eval, and the body of the
-new function is just stored for later execution. If we count also function
-definition inside more complex expressions, it amounts to
-\packageGeneralizedFunctionDefinitionSites sites, \ie
-\packageGeneralizedFunctionDefinitionSitesPercent and suggests the widespread
-use of higher-order functions in R, such as \c{lapply}, the R version of
-\c{map}.
-
-
-\paragraph{Large expressions.}  Compositions of functions, without variables
-(\c{F(F())} minimized expression) is the second most frequent minimized
-expression. \c{\{\}} is a sequence of statements. It is usually large, with
-in average \packageMinimizedoperationsjRnd operations in it.
-
-
-The minimized expression classification suggests that the presence of variables
-in the expression is highly correlated to the specification of a specific
-environment, and that \eval is used here for its power in precising the
-evaluation environment.
-
-
-
-
-Table~\ref{tab:minimizedexpressions} gives eleven most frequent in number of
-sites. \#sites is the number of sites; \%sites the percentage of sites across
-the total number of sites (\packageNbCallSites sites) with at least this
-minimized expression; \#packages is the number of packages with at least one of
-the minimized expression and measures how widespread a minimized expression is.
-\#operations is the average number of steps performed by the R interpreter when
-given that minimized expression, and \%envir is the percentage of call sites for
-which the \c{envir} argument is explicitly passed, and is not
-\c{parent.frame()}, which is the most common explicit environment passed to
-\eval.
+Table~\ref{tab:minimizedexpressions} gives the most frequent forms; \#sites
+(\%sites) is the number (ratio) of call sites receiving arguments of that form;
+\#packages is the number of packages with that form; \#operations is the average
+number of instructions performed by the interpreter when given that minimized
+expression; and \%envir is the percentage of call sites for which the \c{envir}
+argument is explicitly passed, and is not \c{parent.frame()}.
 
 \begin{table}[h]\small
 \begin{tabular}{|c|r|r|r|r|r|c|}\hline
@@ -845,49 +811,33 @@ $min(e)$& \#sites & \%sites & \#packages & \#operations & \%envir & example\\\hl
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
 
-
-Note that a site can exhibit several minimized expressions (see
-Figure~\ref{fig:frequentcombinationminimized}). However,
-\packageNbOneMinimizedPercent of the sites have only one minimized expression.
-Note also that if a function is called in that expression, we see only the
-function call but not the body of the function. We will trace what happens
-during the evaluation of the expression by \eval in
-Section~\ref{sec:dangerseval}, especially about side effects performed in \eval.
-
-
-\NOTE{Maybe we should ditch the table of the minimized expressions and rather
-  use the ones of combinations. It has the advantage of showing what is the most
-  frequent, per call site. But it's a long tail, and sites that have several
-  minimized expressions are not that numerous, only 13\%. But if include
-  combinations, percentages change. For instance, 3314 call sites have only X,
-  i.e. 22.51, instead of 4353 and 29.6\%. }
+A given \eval call site can be passed different forms at different invocations.
+However, \packageNbOneMinimizedPercent of sites only see a single form.
 
 \paragraph{Base}
-The ranking of minimized expressions in \emph{base} is similar to the one in
-CRAN but  the share of \c{V} is much larger, as it is present in
-\baseMinimizedpropsitesa\% of the sites and \c{X} is a distant second, in
-\baseMinimizedpropsitesb\% of the sites.
+The spread of forms in Base are similar to CRAN with a larger share of \c{V}, as
+it is present in \baseMinimizedpropsitesa\% of the sites and \c{X} is a distant
+second with \baseMinimizedpropsitesb\%.
 
 \paragraph{Kaggle}
-Kaggle is dominated by sites with minimized expression \c{V}, with
-\kaggleMinimizedcallsitesa sites, and \kaggleMinimizedpropsitesa\% of the
-\kaggleNbCallSites sites in total. All of those values are an AST size of one
-node, suggesting they do not come. \NOTE{TODO}
-%TODO: all the src ref here seem to be incorrect and not from kaggle.
+Kaggle is dominated by \c{V}, with \kaggleMinimizedpropsitesa\% of the
+\kaggleNbCallSites sites.
 
 
-\subsubsection{The environment passed to \eval.}
+\subsection{The environments of \eval}
 
-The \c{envir} argument of \eval can be an actual environment, but also \c{Null}, a list, a dataframe, a pairlist or even an integer. % Sometimes also a double, but it is cast to integer anyway.
-
-Most of the time, \ie in \packageEnvirEnvSitePercent of the sites, \eval is passed an actual environment. In \packageNbEnvirIncorrectSites sites (\packageEnvirIncorrectSitePercent), \eval is passed an incorrect argument, for instance \c{NA}, a boolean, which makes \eval fail.
-
-\c{NULL}, a \c{list} or a data frame, or an integer, happen in \packageEnvirUnusualSitePercent of the cases: \eval copies the fields of the list or data frame
-and creates bindings for them in a new environment. This pattern is used to
-evaluate formulas which can directly refer to the fields of the data. The
-\c{envir} argument can also be a number $n$. It means that the environment in
-which the expressions is evaluated will be the result of \c{sys.call(n)} where
-$n$ refers to the $n$-th stack frame.
+The \c{envir} argument of \eval can be an actual environment, but also \c{Null},
+a list, a dataframe, a pairlist or even an integer. Most of the time, \ie in
+\packageEnvirEnvSitePercent of the sites, \eval is passed an actual environment.
+In \packageNbEnvirIncorrectSites sites (\packageEnvirIncorrectSitePercent),
+\eval is passed an incorrect argument, for instance \c{NA}, a boolean, which
+makes \eval fail. \c{NULL}, a \c{list} or a data frame, or an integer, happen in
+\packageEnvirUnusualSitePercent of the cases: \eval copies the fields of the
+list or data frame and creates bindings for them in a new environment. This
+pattern is used to evaluate formulas which can directly refer to the fields of
+the data. The \c{envir} argument can also be a number $n$. It means that the
+environment in which the expressions is evaluated will be the result of
+\c{sys.call(n)} where $n$ refers to the $n$-th stack frame.
 
 The top-level environment in R is called the global environment. New
 environments can be created using \c{new.env}. They can be provided a parent
@@ -921,11 +871,11 @@ Environment Class & Eval Calls \% & Environment Class & Eval Calls\\\hline
 \end{table}
 
 We observe that a disproportionately high number of core R \eval calls access
-the caller's environment. This is because many R functions call functions
-that pass the result of \c{parent.frame()} to an \eval. A disproportionately
-high number of calls to \eval happens in an extended top-level environment. This
-can be explained by the fact that many packages evaluate code passed from the
-user's workspace in the top-level environment to access the bindings.
+the caller's environment. This is because many R functions call functions that
+pass the result of \c{parent.frame()} to an \eval. A disproportionately high
+number of calls to \eval happens in an extended top-level environment. This can
+be explained by the fact that many packages evaluate code passed from the user's
+workspace in the top-level environment to access the bindings.
 
 The \c{imchange} function of package \c{imager} makes it possible to modify
 images using a dedicated formula syntax using \~.\footnote{Inspired by {map} in
@@ -956,13 +906,13 @@ of \c{h} and the arguments of \c{h2}.
  enclos = parent.frame(2))
 \end{lstlisting}
 
-\paragraph{Package environments.} Another kind of environments that is passed to \eval is the environment of a package. 
+\paragraph{Package environments.} Another kind of environments that is passed to \eval is the environment of a package.
  It refers to the \emph{namespace} of a package. A call to
- \c{library(packageName)}, which loads libraries in R, for instance, will populate
- environment \c{package:packageName}. It is a \emph{base} function though, so we
- do not see it in the CRAN dataset. However, R still makes it possible to access
- any package environments and \packageNbPackageEnvSites call sites, \ie
- \packagePackageEnvSitePercent access a package environment, from
+ \c{library(packageName)}, which loads libraries in R, for instance, will
+ populate environment \c{package:packageName}. It is a \emph{base} function
+ though, so we do not see it in the CRAN dataset. However, R still makes it
+ possible to access any package environments and \packageNbPackageEnvSites call
+ sites, \ie \packagePackageEnvSitePercent access a package environment, from
  \packageNbPackageEnvPackages different packages. Those packages perform
  introspection, to represent and search any environment by name, in package
  \emph{envnames}, to containerize tests, as with \emph{testthat} and
@@ -974,7 +924,6 @@ of \c{h} and the arguments of \c{h2}.
 
 
 \paragraph{\c{enclos} argument.} \ \\
-
 
 \mypara{Side-effects.} XXX026 total number of reads performed by
 \eval. \NOTE{What is the definition of a read? An env lookup?} XXX027
