@@ -9,10 +9,7 @@
 \newcommand{\mypara}[1]{\medskip\noindent\emph{#1}\xspace}
 \newcommand{\NOTE}[1]{{\it Note: #1}\xspace}
 
-
-
 \begin{document}
-
 \title{What we {\sf eval} in the shadows}
 \subtitle{A large-scale study of {\sf eval} usage in R programs}
 
@@ -20,7 +17,6 @@
 %% Pierre Donat-Bouillud
 %% Filip Krikava
 %% Jan Vitek
-
 %% What is the right order?
 
 \author{Author }
@@ -30,15 +26,7 @@
 \author{Author}
 \authornotemark[1]
 \email{r@s.com}
-\affiliation{%
-	\institution{Institute for Clarity in Documentation}
-	\streetaddress{P.O. Box 1212}
-	\city{Dublin}
-	\state{Ohio}
-	\country{USA}
-	\postcode{43017-6221}
-}
-
+\affiliation{\institution{Institute}}
 
 \begin{abstract}
   \noindent Most dynamic languages allow users to turn text into code
@@ -110,68 +98,61 @@ precisely resolve its string argument at compile time.'' Alas,
 assuming that \eval does not have side-effects, or that side-effects
 will not affect the results of the analysis, may be unduly optimistic.
 
-\vspace{2mm}\noindent\emph{Is Past Prologue?} Previous work
-investigated how \eval is used in web programming, specifically in
-websites that use JavaScript~\cite{pldi10a}. In 2010, 17 of the
-largest website used the feature. In 2011, 82\% of the 10,000 most
-accessed sites used \eval~\cite{ecoop11}.  Yet, the strings passed to
-\eval, and their behaviors when executed, are far from random; it was
-shown that when one can observe several calls to \eval, the ``shape''
-of future calls can be predicted with 97\% accuracy~\cite{oopsla12b}.
-Overall, practical usage suggested that most reflective calls were
-relatively harmless. While this backs up the soundiness squad's
-approach, does it generalize to other application domains than web
-programming and to other languages?
+\vspace{2mm}\noindent\emph{Is Past Prologue?} Previous work investigated how
+\eval is used in web programming, specifically in websites that use
+JavaScript~\cite{pldi10a}. In 2010, 17 of the largest website used the feature.
+In 2011, 82\% of the 10,000 most accessed sites used \eval~\cite{ecoop11}. Yet,
+the strings passed to \eval, and their behaviors when executed, are far from
+random; it was shown that when one can observe several calls to \eval, the
+``shape'' of future calls can be predicted with 97\% accuracy~\cite{oopsla12b}.
+Overall, practical usage suggested that most reflective calls were relatively
+harmless. While this backs up the soundiness squad's approach, does it
+generalize to other application domains than web programming and to other
+languages?
 
-\vspace{2mm}\noindent\emph{The Here and Now.} In this study, we
-investigate the usage of \eval in programs written in the R
-programming language. R is language designed by statisticians for
-applications in data science~\cite{r,R96}. What makes looking at R
-after JavaScript interesting is that, while both languages are
-dynamic, they are quite different. While one can program in an
-object-oriented style in R, like in JavaScript, R is primarily a lazy,
-untyped, functional language. JavaScript was designed to run untrusted
-code in browser, while R is used for statistical computing on
-desktops. JavaScript is a general purpose language used by a wide
-community of programmers; while R is used for scientific computing by
-data scientists and domain experts with, often, limited programming
-experience. One can distinguish between library implementers,
-developers with some programming experience and a working knowledge of
-R, and end-users, who are typically not expert programmers and often
-have only a cursory knowledge of the language.\footnote{Consider that
-R evaluates function argument lazily, just like Haskell. We informally
-surveyed end-users, including computer scientists, and did not find a
-single user aware of this fact. Library developers, on the other hand,
-know about laziness and program defensively around it.} Our goal is
-thus to highlight the differences in usage between JavaScript and R,
-and try to explain those differences in terms of language features,
-application domain and programmer experience. Hopefully some of our
+\vspace{2mm}\noindent\emph{The Here and Now.} In this study, we investigate the
+usage of \eval in programs written in the R programming language. R is language
+designed by statisticians for applications in data science~\cite{r,R96}. What
+makes looking at R after JavaScript interesting is that, while both languages
+are dynamic, they are quite different. While one can program in an
+object-oriented style in R, like in JavaScript, R is primarily a lazy, untyped,
+functional language. JavaScript was designed to run untrusted code in browser,
+while R is used for statistical computing on desktops. JavaScript is a general
+purpose language used by a wide community of programmers; while R is used for
+scientific computing by data scientists and domain experts with, often, limited
+programming experience. One can distinguish between library implementers,
+developers with some programming experience and a working knowledge of R, and
+end-users, who are typically not expert programmers and often have only a
+cursory knowledge of the language.\footnote{Consider that R evaluates function
+argument lazily, just like Haskell. We informally surveyed end-users, including
+computer scientists, and did not find a single user aware of this fact. Library
+developers, on the other hand, know about laziness and program defensively
+around it.} Our goal is thus to highlight the differences in usage between
+JavaScript and R, and try to explain those differences in terms of language
+features, application domain and programmer experience. Hopefully some of our
 observations will generalize to other languages.
 
-\vspace{2mm}\noindent\emph{The What and How.} One significant benefit
-of choosing R is that every package in the CRAN repository is curated
-and comes with examples of typical usage. This gives us a large code
-base that we can analyze dynamically. To observe \eval we built a
-two-level monitoring infrastructure:\footnote{Our infrastructure is
-open source and publicly available, our anonymized code is at {\tt
-  http://url.com}, a more complete artifact will be submitted to the
-artifact evaluation committee. } we can monitor R programs by
-instrumentation --- this gives us access to many user-visible
-properties of R programs --- but we can also monitor the
-inner-workings of the R interpreter --- this allows us to capture
-details not exposed at the source level. Dynamic analysis is limited,
-it can only observe behaviors triggered by the particular inputs
-passed to a program. Luckily, CRAN libraries come with many tests and
-use-cases. The choice of corpus is crucial. Our corpus has been
-constructed to reflect the levels of sophistication of the R
-community. We distinguish between \emph{CRAN packages}
-(\CranAllPackages curated packages that pass stringent quality checks
-and are equipped with tests and sample data) and \emph{Kaggle scripts}
-(\KaggleUnique end-user written programs that performs a
-particular data analysis task). It is reasonable to expect that \eval
-usage differ between these datasets: the libraries represent a lively
-ecosystem with new libraries added each day, while end user code is
-often thrown together, run once, and never revisited.
+\vspace{2mm}\noindent\emph{The What and How.} One significant benefit of
+choosing R is that every package in the CRAN repository is curated and comes
+with examples of typical usage. This gives us a large code base that we can
+analyze dynamically. To observe \eval we built a two-level monitoring
+infrastructure:\footnote{Our infrastructure is open source and publicly
+available, our anonymized code is at {\tt http://url.com}, a more complete
+artifact will be submitted to the artifact evaluation committee. } we can
+monitor R programs by instrumentation --- this gives us access to many
+user-visible properties of R programs --- but we can also monitor the
+inner-workings of the R interpreter --- this allows us to capture details not
+exposed at the source level. Dynamic analysis is limited, it can only observe
+behaviors triggered by the particular inputs passed to a program. Luckily, CRAN
+libraries come with many tests and use-cases. The choice of corpus is crucial.
+Our corpus has been constructed to reflect the levels of sophistication of the R
+community. We distinguish between \emph{CRAN packages} (\CranAllPackages curated
+packages that pass stringent quality checks and are equipped with tests and
+sample data) and \emph{Kaggle scripts} (\KaggleUnique end-user written programs
+that performs a particular data analysis task). It is reasonable to expect that
+\eval usage differ between these datasets: the libraries represent a lively
+ecosystem with new libraries added each day, while end user code is often thrown
+together, run once, and never revisited.
 
 
 \vspace{2mm}\noindent\emph{Why do we Eval?} {\bf A short summary of the
@@ -343,80 +324,6 @@ the argument to prevent it from being evaluated in the current environment. The
 caller of this function. Finally, \c{local} evaluates \c{e} in a new environment
 to avoid polluting the current one.
 
-\subsection{Eval Usage in R}
-
-The R language was intended to be extensible, the combination of lazy
-evaluation, \c{substitute} and \c{eval} are the tools given to
-developers to this end. This API is slightly more complex than just
-passing a string, it is conceivable that this may discourage some
-casual users. \Eval is also being used to reduce boilerplate code and
-provide convenience features for programmers. We now give some
-representative examples of its usage.
-
-\mypara{Intercession.} A common use case for \eval is to be combined with
-\c{match.call}. \c{match.call} walks up the call stack, captures the code that
-invoked the currently executing function, and returns it as an unevaluated
-expression. The pattern is to transform a call to some function \c{f} into a
-call to \c{g} with some arguments retained and others modified. As an
-illustration, consider the \c{vcpart} package's function \c{tvcglm} that is
-translated to a call to \c{tvcm} with two modifications to the argument list:
-argument \c{control} can't be missing and \c{fit} is set \c{"glm"}. The function
-ends with a call to \c{eval.parent} to ensure that the rewritten call is
-evaluted in the same environment the original call was.
-\begin{lstlisting}
- tvcglm <- function(formula, data, family, ...) {
-   k <- match.call()
-   k[[1]] <- as.name("tvcm")
-   if ("fit" %in% names(list(...))) warning("'fit' ignored.")
-   k$fit <- "glm"
-   eval.parent(k)
- }
-\end{lstlisting}
-This pattern is recognizable by the fact that the expression is a call
-and the target environment is that of the parent.
-
-\mypara{Code Generation.} The more traditional use of \eval is to execute code
-that was assembled by the programmer into a string. Here we show the method
-\c{plot} for class \c{sback} in package \c{wsbackfit}, simplified for
-explanatory purposes. The function takes a long argument list, the names of
-which are captured in the list \c{opt}. The string \c{stub} is composed of a
-subset of the arguments passed to this function; the variable is used to
-construct a call to \c{base::plot} which will draw a plot. \NOTE{This example is
-  a bit messed up. What is var? Does the use of ... in the eval grab the
-  arguments of this call? If yes does it not end up with xlab twice? HELP} The
-\parse and \eval combination is used by the the \source function in the base
-library to load R code from a file in the current workspace.
-\begin{lstlisting}
- plot.sback <- function(x,...) {
-   opt <- names(list(...))
-   stub <- paste(
-    ifelse("xlab" %in% opt,"",paste(",xlab=\"",var,"\"",sep="")),
-    ifelse("type" %in% opt,"",",type=\"l\""), sep="")
-   plot <- paste("plot(x.data,",stub,",...)",sep="")
-   eval(parse(text=plot))
-\end{lstlisting}
-This pattern is recognizable by its use of \c{parse} to turn a string
-into an expression.
-
-
-\mypara{Debloating.} \Eval is often used as a means to reduce
-boilerplate code; simple and repetitive code can easily be replaced
-with judcious use of \eval. For example, the \c{data.table} package
-uses \eval to calls the \c{options} function with named arguments
-taken from a vector of strings. While the benefits are limited in this
-example, it is an attractive tool for programmers.
-\begin{lstlisting}
-  opts = c("datatable.verbose"="FALSE", # ...many others
-  for (i in names(opts))
-    eval(parse(text=paste0("options(",i,"=",opts[i],")")))
-\end{lstlisting}
-This pattern is a special case of code generation, recognizable by the
-fact that \eval is executed in a loop.
-
-\mypara{Trivial.} When values are passed to \eval, they are returned
-unchanged. They are an example of trivial uses of \eval. Another
-trivial use is the empty expression, often found in JavaScript, but
-rare in R.
 
 
 \subsection{Previous Work}
@@ -471,6 +378,7 @@ invocation of a function whose name or arguments are determined
 dynamically. For this purpose, R provides \c{do.call} and thus \eval
 is overkill.
 
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -481,31 +389,31 @@ reported results.
 
 \subsection{Corpus}
 
-Our corpus is assembled from three sources. Firstly, we start with the
-\emph{Base} libraries that are bundled with the language implementation.
-Secondly, we acquire packages hosted on \emph{CRAN}. Thirdly, we downloaded
+Our corpus is assembled from three sources: the \emph{Base} libraries that are
+bundled with the language implementation, packages hosted on \emph{CRAN} and
 scripts from \emph{Kaggle}.
 
-\mypara{Base.} The base dataset contains 13 libraries performing basic
-arithmetics, statistics, and operating system related functionalities.
+\mypara{Base.} The base dataset contains 13 core libraries performing basic
+arithmetics, statistics, and operating system related functionalities. These
+libraries are bundled with R and are executed pervasively.
 
 
 \mypara{CRAN.} The Comprehensive R Archive
-Network,\footnote{\url{cran.r-project.org}} or CRAN, is the largest curated
-repository of R packages. It hosts \CranAvailablePackagesRnd packages with 6 new
-packages submitted each day~\cite{Ligges2017}. Packages that are accepted to
-CRAN are authored by experienced developers and they must abide to a number of
-well-formedness rules automatically checked on each commit. Furthermore, each
-package comes with sample data and tests. There are three sources of runnable
-code for each package: \emph{tests, examples} and \emph{vignettes} --
-respectively, unit tests, executable code snippets from the documentation, and
-long-form executable use-cases written in Markdown. Examples and vignettes can
-be turned into scripts by extracting the relevant code. We obtained
-\CranPackages that call \eval. These packages represent \CranPackagesRatio of
-all packages or \CranCodeRatio of the entire code size of CRAN. From these we
-extracted \CranRunnableScripts scripts that contain \CranRunnableCode lines of
-code (\CranRunnableCodeExamplesRnd in examples, \CranRunnableCodeVignettesRnd in
-vignettes and \CranRunnableCodeTestsRnd in tests).
+Network\footnote{\url{cran.r-project.org}} is the largest curated repository of
+R packages. It hosts \CranAvailablePackagesRnd packages with 6 new one submitted
+each day~\cite{Ligges2017}. Packages accepted to CRAN are authored by
+experienced developers and abide to a number of well-formedness rules
+automatically checked on each commit. Furthermore, each package comes with
+sample data. There are three sources of runnable code in a package: \emph{tests,
+examples} and \emph{vignettes} -- respectively, unit tests, code snippets from
+the documentation, and long-form use-cases written in RMarkdown.
+Examples and vignettes can be turned into scripts by extracting the relevant
+code. We obtained \CranPackages that call \eval. These packages represent
+\CranPackagesRatio of all packages or \CranCodeRatio of the entire code size of
+CRAN. From these we extracted \CranRunnableScripts scripts that contain
+\CranRunnableCode lines of code (\CranRunnableCodeExamplesRnd in examples,
+\CranRunnableCodeVignettesRnd in vignettes and \CranRunnableCodeTestsRnd in
+tests).
 
 \mypara{Scripts.} Kaggle is an online platform for data
 science.\footnote{\url{kaggle.com}} It allows users to submit problems and
@@ -525,20 +433,20 @@ packages, extract scripts, executes them, traces their behavior and summarizes
 observations. Figure~\ref{fig:pipeline} shows the main steps along with their
 running time, data size, and number of elements manipulated. Timings are from a
 cluster of three 2.3GHz Intel Xeon 6140 servers, with 72 cores and 256GB of RAM,
-and shared OCFS network storage.
+and shared OCFS network storage. The pipeline steps are:
+
 
 \begin{figure}[!h]\hspace{-5mm}
   \includegraphics[width=1.05\linewidth]{pipeline.pdf}
   \caption{Pipeline UPDATE!!}\label{fig:pipeline}
 \end{figure}
 
-\noindent The pipeline steps are:
 \medskip
 \begin{compactenum}
-\item \emph{Download.} Packages are downloaded automatically from CRAN. For
-  scripts, a web crawler retrieves code and the Kaggle command line tool
-  downloads data. Installation is complicated by native dependencies which
-  are not properly documented and thus hard to automatically resolve.
+\item \emph{Download.} Packages are downloaded from CRAN. For scripts, a web
+  crawler retrieves code and the Kaggle command line tool gets data.
+  Installation is complicated by native dependencies which are not properly
+  documented and thus hard to automatically resolve.
 \item \emph{Extract.} Given installed packages and scripts, the next step is to
   create runnable programs. The \genthat tool helpfully extracts all runnable
   code snippets from a package and turns each of these into a self-standing
@@ -594,6 +502,7 @@ function which uses native \eval internally. The \c{rlang} package introduces a
 new kind of promise called \c{quosure} which is evaluated by \c{tidy\_eval}.
 None of these limitation should invalidate our conclusions.
 
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Usage Metrics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -693,6 +602,11 @@ most symbols, \Ggplotsymbolpercent to be exact, come from a single call in the
 \c{ggplot2} package and have have the value \c{\_inherit}. Even if we remove
 this outlier, the majority of \evals are simple expressions.
 
+\begin{wrapfigure}{r}{5.8cm}
+ \includegraphics[width=0.5\textwidth, trim=4.8cm 0 6cm 0, clip]{size_loaded_distribution}
+\caption{Loaded code} \label{fig:sizedistribution}
+\end{wrapfigure}
+
 To estimate how much executable code is injected through \eval, we measure the
 the number of abstract syntax tree nodes as returned by the parser; for example,
 \c{x+1} counts as 3.\footnote{We attempted to measure string lengths after
@@ -706,10 +620,6 @@ nodes, and the y-axis is the count of arguments with that size. The size drops
 rapidly, with few observations larger than 15 nodes. The long tail is omitted
 from the graph for legibility.
 
-\begin{figure}[h!]
- \includegraphics[width=0.5\textwidth, trim=4.8cm 0 6cm 0, clip]{size_loaded_distribution}
-\caption{Loaded code} \label{fig:sizedistribution}
-\end{figure}
 
 To estimate the work performed in \evals, we count the instructions executed by
 interpreter. Most invocations perform relatively little work with
@@ -803,16 +713,16 @@ mutation. However, it is still possible to mutate the extended environment using
 the $\leftarrow$ or \c{assign} functions; but, that happens rarely.
 
 \begin{table}[htbp]{ \centering
-		\begin{tabular}{c|c|c|c}\hline
-			\multicolumn{2}{c|}{Core} & \multicolumn{2}{|c}{Packages}  \\\hline
-			Environment Class & Eval Calls \% & Environment Class & Eval Calls\\\hline
-			\CoreEnvClassA & \CoreProportionA & \PackagesEnvClassA &  \PackagesProportionA\\
-			\CoreEnvClassB & \CoreProportionB & \PackagesEnvClassB &  \PackagesProportionB\\
-			\CoreEnvClassC & \CoreProportionC & \PackagesEnvClassC &  \PackagesProportionC\\
-			\CoreEnvClassD & \CoreProportionD & \PackagesEnvClassD &  \PackagesProportionD\\
-			\CoreEnvClassE & \CoreProportionE & \PackagesEnvClassE &  \PackagesProportionE\\\hline
-	\end{tabular}} \label{tab:environments}
-	\caption{Environments in terms of \eval calls}
+\begin{tabular}{c|c|c|c}\hline
+\multicolumn{2}{c|}{Core} & \multicolumn{2}{|c}{Packages}  \\\hline
+Environment Class & Eval Calls \% & Environment Class & Eval Calls\\\hline
+\CoreEnvClassA & \CoreProportionA & \PackagesEnvClassA &  \PackagesProportionA\\
+\CoreEnvClassB & \CoreProportionB & \PackagesEnvClassB &  \PackagesProportionB\\
+\CoreEnvClassC & \CoreProportionC & \PackagesEnvClassC &  \PackagesProportionC\\
+\CoreEnvClassD & \CoreProportionD & \PackagesEnvClassD &  \PackagesProportionD\\
+\CoreEnvClassE & \CoreProportionE & \PackagesEnvClassE &  \PackagesProportionE\\\hline
+\end{tabular}} \label{tab:environments}
+\caption{Environments in terms of \eval calls}
 \end{table}
 
 We observe that a disproportionately high number of core R \eval calls access
@@ -962,13 +872,11 @@ Similarly, when a function is evaluated on some variable (\c{F(X)} minimized
 expression), the percentage of non default, non parent environments is rather
 high, \packageMinimizedpercentenvirnonparentd\%.
 
-
 Minimized expression \texttt{\$} refers to a slot access, with \texttt{\$},
 \texttt{[]} or \texttt{[[]]}, as the top call in a simple expression, for
 instance \texttt{a\$slot + 1}. It amounts for \packageNbSlotAccess sites, \ie
 \packageSlotAccessPercent of the sites. The non-default, non-parent environment
 percentage is here \packageMinimizedpercentenvirnonparentg.
-
 
 As a whole, variable access, either as the top call, or inside a function call,
 possibly with accessing a slot, represents
@@ -1050,7 +958,6 @@ instrument side-effects to environment in Section~REF.}
 (\c{F(F(X))} minimized expression) is the second most frequent minimized
 expression. \c{\{BLOCK\}} is a sequence of statements. It is usually large, with
 in average \packageMinimizedoperationsjRnd operations in it.
-
 
 
 The minimized expression classification suggests that the presence of variables
@@ -1190,6 +1097,82 @@ prompts the user for input, parses it, and passes it to \eval.
 % The Thomas Lumley's article, Programmer's Niche: Macros in R, (https://www.r-project.org/doc/Rnews/Rnews_2001-3.pdf) describes how to write a `defmacro` function that would like as a macro creator, using `substitute` and `eval`.  There are no local macro variables in this implementation though.
 
 \section{The dangers of \eval} \label{sec:dangerseval}
+
+
+\subsection{Eval Usage in R}
+
+The R language was intended to be extensible, the combination of lazy
+evaluation, \c{substitute} and \c{eval} are the tools given to
+developers to this end. This API is slightly more complex than just
+passing a string, it is conceivable that this may discourage some
+casual users. \Eval is also being used to reduce boilerplate code and
+provide convenience features for programmers. We now give some
+representative examples of its usage.
+
+\mypara{Intercession.} A common use case for \eval is to be combined with
+\c{match.call}. \c{match.call} walks up the call stack, captures the code that
+invoked the currently executing function, and returns it as an unevaluated
+expression. The pattern is to transform a call to some function \c{f} into a
+call to \c{g} with some arguments retained and others modified. As an
+illustration, consider the \c{vcpart} package's function \c{tvcglm} that is
+translated to a call to \c{tvcm} with two modifications to the argument list:
+argument \c{control} can't be missing and \c{fit} is set \c{"glm"}. The function
+ends with a call to \c{eval.parent} to ensure that the rewritten call is
+evaluted in the same environment the original call was.
+\begin{lstlisting}
+ tvcglm <- function(formula, data, family, ...) {
+   k <- match.call()
+   k[[1]] <- as.name("tvcm")
+   if ("fit" %in% names(list(...))) warning("'fit' ignored.")
+   k$fit <- "glm"
+   eval.parent(k)
+ }
+\end{lstlisting}
+This pattern is recognizable by the fact that the expression is a call
+and the target environment is that of the parent.
+
+\mypara{Code Generation.} The more traditional use of \eval is to execute code
+that was assembled by the programmer into a string. Here we show the method
+\c{plot} for class \c{sback} in package \c{wsbackfit}, simplified for
+explanatory purposes. The function takes a long argument list, the names of
+which are captured in the list \c{opt}. The string \c{stub} is composed of a
+subset of the arguments passed to this function; the variable is used to
+construct a call to \c{base::plot} which will draw a plot. \NOTE{This example is
+  a bit messed up. What is var? Does the use of ... in the eval grab the
+  arguments of this call? If yes does it not end up with xlab twice? HELP} The
+\parse and \eval combination is used by the the \source function in the base
+library to load R code from a file in the current workspace.
+\begin{lstlisting}
+ plot.sback <- function(x,...) {
+   opt <- names(list(...))
+   stub <- paste(
+    ifelse("xlab" %in% opt,"",paste(",xlab=\"",var,"\"",sep="")),
+    ifelse("type" %in% opt,"",",type=\"l\""), sep="")
+   plot <- paste("plot(x.data,",stub,",...)",sep="")
+   eval(parse(text=plot))
+\end{lstlisting}
+This pattern is recognizable by its use of \c{parse} to turn a string
+into an expression.
+
+
+\mypara{Debloating.} \Eval is often used as a means to reduce
+boilerplate code; simple and repetitive code can easily be replaced
+with judcious use of \eval. For example, the \c{data.table} package
+uses \eval to calls the \c{options} function with named arguments
+taken from a vector of strings. While the benefits are limited in this
+example, it is an attractive tool for programmers.
+\begin{lstlisting}
+  opts = c("datatable.verbose"="FALSE", # ...many others
+  for (i in names(opts))
+    eval(parse(text=paste0("options(",i,"=",opts[i],")")))
+\end{lstlisting}
+This pattern is a special case of code generation, recognizable by the
+fact that \eval is executed in a loop.
+
+\mypara{Trivial.} When values are passed to \eval, they are returned
+unchanged. They are an example of trivial uses of \eval. Another
+trivial use is the empty expression, often found in JavaScript, but
+rare in R.
 
 \section{LEGACY TEXT}
 
