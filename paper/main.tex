@@ -510,21 +510,21 @@ vignettes and \CranRunnableCodeTestsRnd in tests).
 science.\footnote{\url{kaggle.com}} It allows users to submit problems and
 compete to solve them. Solutions, called \emph{kernels}, are uploaded as plain
 scripts or notebooks. The quality of code on Kaggle is not uniform. Each kernel
-is runnable, and thus there is one script per kernel. Input data is provided.
-We obtained \KaggleKernels kernels.
-Since Kaggle is not curated, used SHA-1 hashes to identify and remove
-\KaggleDuplicates duplicate entries. The remaining \KaggleUnique kernels are
-unique solutions to \KaggleCompetitions competition. They contain \KaggleCode
-lines of R code. Only \KaggleWithEvals kernels  call \eval.
+is runnable, and thus there is one script per kernel. Input data is provided. We
+obtained \KaggleKernels kernels. Since Kaggle is not curated, used SHA-1 hashes
+to identify and remove \KaggleDuplicates duplicate entries. The remaining
+\KaggleUnique kernels are unique solutions to \KaggleCompetitions competition.
+They contain \KaggleCode lines of R code. Only \KaggleWithEvals kernels call
+\eval.
 
 \subsection{Pipeline}
 
 The analysis presented in this has been automated by a pipeline that acquires
-package code, extract metadata, executes programs, traces their behavior and
-summarizes observations. Figure~\ref{fig:pipeline} shows the main steps of
-analysis along with their running time, data size, and number of elements
-manipulated. Timings are from a cluster of three 2.3GHz Intel Xeon 6140 servers,
-with 72 cores and 256GB of RAM, and shared OCFS network storage.
+packages, extract scripts, executes them, traces their behavior and summarizes
+observations. Figure~\ref{fig:pipeline} shows the main steps along with their
+running time, data size, and number of elements manipulated. Timings are from a
+cluster of three 2.3GHz Intel Xeon 6140 servers, with 72 cores and 256GB of RAM,
+and shared OCFS network storage.
 
 \begin{figure}[!h]\hspace{-5mm}
   \includegraphics[width=1.05\linewidth]{pipeline.pdf}
