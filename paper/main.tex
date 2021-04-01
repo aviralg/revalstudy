@@ -671,7 +671,10 @@ Finally, scripts are written by less sophisticated users, and likely perform
 simpler tasks, and thus have lesser need for \eval, and its uses originate from
 strings which are easier to manipulate for end-users.
 
-
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{A Taxonomy of Eval}
 
 The previous section gave a quantitative view of \eval usage; we now try to
@@ -679,121 +682,31 @@ elucidate \emph{what} it does.
 
 \subsection{Arguments of \eval}
 
-\eval has three arguments, two of which we study in more details:
+%%%%%%%% JAN:::: NOT SURE WHAT THIS IS
+%% It refers to the \emph{namespace} of a package. A call to
+%% \c{library(packageName)}, which load libraries in R, for instance, will populate
+%% environment \c{package:packageName}. It is a \emph{base} function though, so we
+%% do not see it in the CRAN dataset. However, R still makes it possible to access
+%% any package environments and \packageNbPackageEnvSites call sites, \ie
+%% \packagePackageEnvSitePercent access a package environment, from
+%% \packageNbPackageEnvPackages different packages. Those packages perform
+%% introspection, to represent and search any environment by name, in package
+%% \emph{envnames}, to containerize tests, as with \emph{testthat} and
+%% \emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to create
+%% poor man's hidden functions in \emph{USSCXenaTools}.
 
-\begin{itemize}
-	\item \c{expr}: the expression to evaluate
-	\item \c{envir}: the environment in which performing the evaluation
-	\item \c{enclos}
-\end{itemize}
+%% It is also used to implement a custom caching mechanism in packages
+%% \emph{g.data} and \emph{SOAR}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsubsection{The environment passed to \eval.}
+The argument passed to a call to \eval determines what the function will do. As
+we have seen in the previous section, there are cases where the argument is a
+value, but these are rare. The common cases are that the argument is some form
+of expression, either a single variable, a simple expression or a statement.
 
-The environment argument can be \c{NULL}, a \c{List} or a data frame. This
-happens in 3.5\% of the cases: \eval copies the fields of the list or data frame
-and creates bindings for them in a new environment. This pattern is used to
-evaluate formulas which can directly refer to the fields of the data. The
-\c{envir} argument can also be a number $n$. It means that the environment in
-which the expressions is evaluated will be the result of \c{sys.call(n)} where
-$n$ refers to the $n$-th stack frame.
-
-The top-level environment in R is called the global environment. New
-environments can be created using \c{new.env}. They can be provided a parent
-environment which becomes the enclosing scope of the new environment.
-
-We looked at the environments passed to all the \eval calls in our corpus.
-Table~\ref{tab:environments} summarizes the results. A numeric environment class
-\c{n} denotes the environment of the $n$-th call stack frame from the current
-function. \c{global} denotes the top-level environment and \c{list} denotes a
-list passed for evaluation of formulas. Environment classes of the form $n+$
-denote the $n$-th environment extended with a new environment. The new
-environment provides a limited form of sandboxing. All assignments using the
-$\leftarrow$ function occur inside it and prevent the extended environment from
-mutation. However, it is still possible to mutate the extended environment using
-the $\leftarrow$ or \c{assign} functions; but, that happens rarely.
-
-\begin{table}[htbp]{ \centering
-\begin{tabular}{c|c|c|c}\hline
-\multicolumn{2}{c|}{Core} & \multicolumn{2}{|c}{Packages}  \\\hline
-Environment Class & Eval Calls \% & Environment Class & Eval Calls\\\hline
-\CoreEnvClassA & \CoreProportionA & \PackagesEnvClassA &  \PackagesProportionA\\
-\CoreEnvClassB & \CoreProportionB & \PackagesEnvClassB &  \PackagesProportionB\\
-\CoreEnvClassC & \CoreProportionC & \PackagesEnvClassC &  \PackagesProportionC\\
-\CoreEnvClassD & \CoreProportionD & \PackagesEnvClassD &  \PackagesProportionD\\
-\CoreEnvClassE & \CoreProportionE & \PackagesEnvClassE &  \PackagesProportionE\\\hline
-\end{tabular}} \label{tab:environments}
-\caption{Environments in terms of \eval calls}
-\end{table}
-
-We observe that a disproportionately high number of core R \eval calls access
-the caller's environment. This is because many core R functions call functions
-that pass the result of \c{parent.frame()} to an \eval. A disproportionately
-high number of calls to \eval happens in an extended top-level environment. This
-can be explained by the fact that many packages evaluate code passed from the
-user's workspace in the top-level environment to access the bindings.
-
-
-The \c{imchange} function of package \c{imager} makes it possible to modify
-images using a dedicated formula syntax using \~.\footnote{Inspired by {map} in
-package \emph{purr}.} Here, \eval is evaluated in \c{newenv}, which creates a
-new environment that inherits from \c{parent.frame()} by default (classified as
-1+).
-
-
-\begin{lstlisting}
-	newenv <- new.env()
-	...
-	fo <- parse(text=as.character(fo)[2])
-	im[where] <- eval(fo,envir=newenv,enclos=env)
-\end{lstlisting}
-
-\c{adjCoef} in package \emph{actuar} find the root of an equation defined by a
-function \c{h} whose arguments must be named \c{x} and \c{y}. \c{h} is
-transformed into an auxiliary function \c{h2} that can be optimized. Here, the
-list used for \c{envir} ensures the correspondance between the textual arguments
-of \c{h} and the arguments of \c{h2}.
-
-
-\begin{lstlisting}
-	sh <- substitute(h)
-	fcall <- paste(sh, "(x, y)")
-	...
-	h2 <- function(x, y)
-	eval(parse(text = fcall),
-	envir = list(x = x, y = y),
-	enclos = parent.frame(2))
-\end{lstlisting}
-
-
-\subsubsection{The expression passed to \eval.}
-\paragraph{Touching package environments.}
-It refers to the \emph{namespace} of a package. A call to
-\c{library(packageName)}, which load libraries in R, for instance, will populate
-environment \c{package:packageName}. It is a \emph{base} function though, so we
-do not see it in the CRAN dataset. However, R still makes it possible to access
-any package environments and \packageNbPackageEnvSites call sites, \ie
-\packagePackageEnvSitePercent access a package environment, from
-\packageNbPackageEnvPackages different packages. Those packages perform
-introspection, to represent and search any environment by name, in package
-\emph{envnames}, to containerize tests, as with \emph{testthat} and
-\emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to create
-poor man's hidden functions in \emph{USSCXenaTools}.
-
-It is also used to implement a custom caching mechanism in packages
-\emph{g.data} and \emph{SOAR}.
-
-
-During tracing, we gather all source expressions and all resolved expression
-arguments passed to \eval. For instance, a non-resolved expression and some of
-its resolved expressions can be:
-
-\begin{lstlisting}
-parse(text = paste0(\"options(\", i, \"=\", opts[i], \")\"))
-
-options(datatable.alloccol = 1024L)
-options(datatable.allow.cartesian = FALSE)
-options(datatable.print.keys = FALSE)
-\end{lstlisting}
+To categorize the expressions, consider a function $min(e)$ which for a given
+expression $e$ returns a normal form that abstracts many incidental details
+allowing the reader to focus on the structure.
 
 We classify the resolved expressions to take into account the structure of the
 expression passed to \eval. However, we do not want to discriminate expressions
@@ -808,19 +721,19 @@ different \emph{minimized} expressions, of which we show the eleven first most
 frequent in number of sites in Table~\ref{tab:minimizedexpressions}.
 
 \begin{table}[h]\small
-\begin{tabular}{|c|c|c|c|c|c|}\hline
-Minimized & \#sites & \%sites & \#packages & \#operations & \%envir \\	\hline
-\texttt{X} & \packageMinimizedcallsitesa  & \packageMinimizedpropsitesa & \packageMinimizedpackagea & \packageMinimizedoperationsaRnd & \packageMinimizedpercentenvirnonparenta \\\hline
-\texttt{F(F())} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedoperationsbRnd & \packageMinimizedpercentenvirnonparentb \\\hline
-\texttt{V} & \packageMinimizedcallsitesc & \packageMinimizedpropsitesc & \packageMinimizedpackagec & \packageMinimizedoperationscRnd & \packageMinimizedpercentenvirnonparentc \\\hline
-\texttt{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & \packageMinimizedpercentenvirnonparentd \\\hline
-\texttt{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvirnonparente \\\hline
-\texttt{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirnonparentf \\\hline
-\texttt{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirnonparentg \\\hline
-\texttt{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirnonparenth \\\hline
-\texttt{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenvirnonparenti \\\hline
-\texttt{\{BLOCK\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirnonparentj \\\hline
-\texttt{F(F(<-))} & \packageMinimizedcallsitesk & \packageMinimizedpropsitesk & \packageMinimizedpackagek & \packageMinimizedoperationskRnd & \packageMinimizedpercentenvirnonparentk \\\hline
+\begin{tabular}{|c|r|r|r|r|r|c|}\hline
+$min(e)$& \#sites & \%sites & \#packages & \#operations & \%envir & example\\\hline
+\c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedoperationsaRnd &\packageMinimizedpercentenvirnonparenta & \c{y+1}\\\hline
+\c{F(F())} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedoperationsbRnd & \packageMinimizedpercentenvirnonparentb & \c{gbov( mean(x), a-1)}\\\hline
+\c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedoperationscRnd &\packageMinimizedpercentenvirnonparentc&c(42,21,0)\\\hline
+\c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & \packageMinimizedpercentenvirnonparentd \\\hline
+\c{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvirnonparente \\\hline
+\c{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirnonparentf \\\hline
+\c{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirnonparentg \\\hline
+\c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirnonparenth \\\hline
+\c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenvirnonparenti \\\hline
+\c{\{\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirnonparentj \\\hline
+\c{F(F(<-))} & \packageMinimizedcallsitesk & \packageMinimizedpropsitesk & \packageMinimizedpackagek & \packageMinimizedoperationskRnd & \packageMinimizedpercentenvirnonparentk \\\hline
 \end{tabular}
 \caption{Minimized expressions: eleven most frequent in number of sites. \#sites
   is the number of sites; \%sites the percentage of sites across the total
@@ -890,8 +803,11 @@ that is later constant folded. \c{V} corresponds to two main categories of
 expressions passed to \eval:
 
 \begin{itemize}
-	\item \eval is passed an actual value, a double, an integer, an environment, a closure and other simple types,
-	\item \eval is passed a language expression that trivially evaluates to a value, for instance, \c{quote(1)}, \c{quote(1 + 1)}, \quote{c("a", "b", "c")}, and does not include variables, so does not depend on a specific environment.
+\item \eval is passed an actual value, a double, an integer, an environment, a
+  closure and other simple types,
+\item \eval is passed a language expression that trivially evaluates to a value,
+  for instance, \c{quote(1)}, \c{quote(1 + 1)}, \quote{c("a", "b", "c")}, and
+  does not include variables, so does not depend on a specific environment.
 \end{itemize}
 
 For the first category, \eval is not necessary. In
@@ -926,7 +842,9 @@ environment, and among the one that use a non-default environment,
 with a variable inside.
 
 
-\paragraph{\c{model.frame}} This is a function used to create statistical models. We explain it in more details in the section about the usage of \eval (see Section~REF).
+\paragraph{\c{model.frame}}
+This is a function used to create statistical models. We explain it in more
+details in the section about the usage of \eval (see Section~REF).
 
 \paragraph{Function definition.}
 \c{FUN} represents a function definition at the top level of the expression, and
@@ -974,11 +892,98 @@ evaluation environment.
   i.e. 22.51, instead of 4353 and 29.6\%. }
 
 
-\paragraph{Base.} The ranking of minimized expressions in \emph{base} is similar to the one in CRAN bu the share of \c{V} is much larger, as it is present in \baseMinimizedpropsitesa\% of the sites and \c{X} is a distant second, in \baseMinimizedpropsitesb\% of the sites.
 
-\paragraph{Kaggle.} Kaggle is dominated by sites with minimized expression \c{V}, with \kaggleMinimizedcallsitesa sites, and  \kaggleMinimizedpropsitesa\% of the \kaggleNbCallSites sites in total. All of those values are an AST size of one node, suggesting they do not come. \NOTE{TODO}
+
+\subsubsection{The environment passed to \eval.}
+
+The environment argument can be \c{NULL}, a \c{List} or a data frame. This
+happens in 3.5\% of the cases: \eval copies the fields of the list or data frame
+and creates bindings for them in a new environment. This pattern is used to
+evaluate formulas which can directly refer to the fields of the data. The
+\c{envir} argument can also be a number $n$. It means that the environment in
+which the expressions is evaluated will be the result of \c{sys.call(n)} where
+$n$ refers to the $n$-th stack frame.
+
+The top-level environment in R is called the global environment. New
+environments can be created using \c{new.env}. They can be provided a parent
+environment which becomes the enclosing scope of the new environment.
+
+We looked at the environments passed to all the \eval calls in our corpus.
+Table~\ref{tab:environments} summarizes the results. A numeric environment class
+\c{n} denotes the environment of the $n$-th call stack frame from the current
+function. \c{global} denotes the top-level environment and \c{list} denotes a
+list passed for evaluation of formulas. Environment classes of the form $n+$
+denote the $n$-th environment extended with a new environment. The new
+environment provides a limited form of sandboxing. All assignments using the
+$\leftarrow$ function occur inside it and prevent the extended environment from
+mutation. However, it is still possible to mutate the extended environment using
+the $\leftarrow$ or \c{assign} functions; but, that happens rarely.
+
+\begin{table}[htbp]{ \centering
+\begin{tabular}{c|c|c|c}\hline
+\multicolumn{2}{c|}{Core} & \multicolumn{2}{|c}{Packages}  \\\hline
+Environment Class & Eval Calls \% & Environment Class & Eval Calls\\\hline
+\CoreEnvClassA & \CoreProportionA & \PackagesEnvClassA &  \PackagesProportionA\\
+\CoreEnvClassB & \CoreProportionB & \PackagesEnvClassB &  \PackagesProportionB\\
+\CoreEnvClassC & \CoreProportionC & \PackagesEnvClassC &  \PackagesProportionC\\
+\CoreEnvClassD & \CoreProportionD & \PackagesEnvClassD &  \PackagesProportionD\\
+\CoreEnvClassE & \CoreProportionE & \PackagesEnvClassE &  \PackagesProportionE\\\hline
+\end{tabular}} \label{tab:environments}
+\caption{Environments in terms of \eval calls}
+\end{table}
+
+We observe that a disproportionately high number of core R \eval calls access
+the caller's environment. This is because many core R functions call functions
+that pass the result of \c{parent.frame()} to an \eval. A disproportionately
+high number of calls to \eval happens in an extended top-level environment. This
+can be explained by the fact that many packages evaluate code passed from the
+user's workspace in the top-level environment to access the bindings.
+
+The \c{imchange} function of package \c{imager} makes it possible to modify
+images using a dedicated formula syntax using \~.\footnote{Inspired by {map} in
+package \emph{purr}.} Here, \eval is evaluated in \c{newenv}, which creates a
+new environment that inherits from \c{parent.frame()} by default (classified as
+1+).
+
+\begin{lstlisting}
+ newenv <- new.env()
+ ...
+ fo <- parse(text=as.character(fo)[2])
+ im[where] <- eval(fo,envir=newenv,enclos=env)
+\end{lstlisting}
+
+\c{adjCoef} in package \emph{actuar} find the root of an equation defined by a
+function \c{h} whose arguments must be named \c{x} and \c{y}. \c{h} is
+transformed into an auxiliary function \c{h2} that can be optimized. Here, the
+list used for \c{envir} ensures the correspondance between the textual arguments
+of \c{h} and the arguments of \c{h2}.
+
+\begin{lstlisting}
+ sh <- substitute(h)
+ fcall <- paste(sh, "(x, y)")
+ ...
+ h2 <- function(x, y)
+ eval(parse(text = fcall),
+ envir = list(x = x, y = y),
+ enclos = parent.frame(2))
+\end{lstlisting}
+
+\subsubsection{The expression passed to \eval.}
+\paragraph{Touching package environments.}
+
+
+\paragraph{Base}
+The ranking of minimized expressions in \emph{base} is similar to the one in
+CRAN bu the share of \c{V} is much larger, as it is present in
+\baseMinimizedpropsitesa\% of the sites and \c{X} is a distant second, in
+\baseMinimizedpropsitesb\% of the sites.
+
+\paragraph{Kaggle}
+Kaggle is dominated by sites with minimized expression \c{V}, with
+\kaggleMinimizedcallsitesa sites, and \kaggleMinimizedpropsitesa\% of the
+\kaggleNbCallSites sites in total. All of those values are an AST size of one
+node, suggesting they do not come. \NOTE{TODO}
 %TODO: all the src ref here seem to be incorrect and not from kaggle.
-
 
 
 \mypara{Side-effects.} XXX026 total number of reads performed by
