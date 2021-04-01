@@ -849,7 +849,7 @@ Section~\ref{sec:dangerseval}, especially about side effects performed in \eval.
 
 \paragraph{Base}
 The ranking of minimized expressions in \emph{base} is similar to the one in
-CRAN but the share of \c{V} is much larger, as it is present in
+CRAN but  the share of \c{V} is much larger, as it is present in
 \baseMinimizedpropsitesa\% of the sites and \c{X} is a distant second, in
 \baseMinimizedpropsitesb\% of the sites.
 
@@ -863,8 +863,11 @@ node, suggesting they do not come. \NOTE{TODO}
 
 \subsubsection{The environment passed to \eval.}
 
-The environment argument can be \c{NULL}, a \c{List} or a data frame. This
-happens in 3.5\% of the cases: \eval copies the fields of the list or data frame
+The \c{envir} argument of \eval can be an actual environment, but also \c{Null}, a list, a dataframe, a pairlist or even an integer. % Sometimes also a double, but it is cast to integer anyway.
+
+Most of the time, \ie in \packageEnvirEnvSitePercent of the sites, \eval is passed an actual environment. In \packageNbEnvirIncorrectSites sites (\packageEnvirIncorrectSitePercent), \eval is passed an incorrect argument, for instance \c{NA}, a boolean, which makes \eval fail.
+
+\c{NULL}, a \c{list} or a data frame, or an integer, happen in \packageEnvirUnusualSitePercent of the cases: \eval copies the fields of the list or data frame
 and creates bindings for them in a new environment. This pattern is used to
 evaluate formulas which can directly refer to the fields of the data. The
 \c{envir} argument can also be a number $n$. It means that the environment in
@@ -900,7 +903,7 @@ Environment Class & Eval Calls \% & Environment Class & Eval Calls\\\hline
 \end{table}
 
 We observe that a disproportionately high number of core R \eval calls access
-the caller's environment. This is because many core R functions call functions
+the caller's environment. This is because many R functions call functions
 that pass the result of \c{parent.frame()} to an \eval. A disproportionately
 high number of calls to \eval happens in an extended top-level environment. This
 can be explained by the fact that many packages evaluate code passed from the
@@ -937,7 +940,7 @@ of \c{h} and the arguments of \c{h2}.
 
 \paragraph{Package environments.} Another kind of environments that is passed to \eval is the environment of a package.
  It refers to the \emph{namespace} of a package. A call to
- \c{library(packageName)}, which load libraries in R, for instance, will populate
+ \c{library(packageName)}, which loads libraries in R, for instance, will populate
  environment \c{package:packageName}. It is a \emph{base} function though, so we
  do not see it in the CRAN dataset. However, R still makes it possible to access
  any package environments and \packageNbPackageEnvSites call sites, \ie
@@ -952,7 +955,7 @@ of \c{h} and the arguments of \c{h2}.
  \emph{g.data} and \emph{SOAR}.
 
 
-
+\paragraph{\c{enclos} argument.}
 
 
 \mypara{Side-effects.} XXX026 total number of reads performed by

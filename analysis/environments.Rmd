@@ -218,13 +218,40 @@ overview_table(
 ```
 
 
+# Types in `envir`
+
 What about we classify them by type?
 
 ```{r}
 frequent_envir %>% count(envir_type, sort = TRUE) %>% datatable()
 ```
 
+And just individual types:
 
+```{r}
+E_envir %>% count(envir_type, sort = TRUE) %>% datatable()
+```
+
+We realize that there are some types that are passed to eval that are not admissible according to the documentation.
+
+```{r}
+envir_env <- E_envir %>% filter(envir_type == "environment") 
+envir_unusual <- E_envir %>% filter(envir_type %in% c("list", "integer", "double", "NULL", "pairlist"))
+envir_incorrect <- E_envir %>% anti_join(envir_env) %>% anti_join(envir_unusual)
+
+nb_envir_env_sites <- envir_env %>% pull(src_ref) %>% n_distinct()
+nb_envir_unusual_sites <- envir_unusual %>% pull(src_ref) %>% n_distinct()
+nb_envir_incorrect_sites <- envir_incorrect %>% pull(src_ref) %>% n_distinct()
+
+overview_table(
+  r("nb envir env sites", nb_envir_env_sites),
+  r("envir env site percent", ratio(nb_envir_env_sites, nb_call_sites)),
+  r("nb envir unusual sites", nb_envir_unusual_sites),
+  r("envir unusual site percent", ratio(nb_envir_unusual_sites, nb_call_sites)),
+  r("nb envir incorrect sites", nb_envir_incorrect_sites),
+  r("envir incorrect site percent", ratio(nb_envir_incorrect_sites, nb_call_sites)),
+)
+```
 
 
 ##  `envir` as a list or data frame
