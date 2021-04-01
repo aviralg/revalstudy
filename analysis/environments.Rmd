@@ -236,7 +236,8 @@ We realize that there are some types that are passed to eval that are not admiss
 
 ```{r}
 envir_env <- E_envir %>% filter(envir_type == "environment") 
-envir_unusual <- E_envir %>% filter(envir_type %in% c("list", "integer", "double", "NULL", "pairlist"))
+# S4 class: from pim package, uses an environment under the hood
+envir_unusual <- E_envir %>% filter(envir_type %in% c("list", "integer", "double", "NULL", "pairlist", "S4"))
 envir_incorrect <- E_envir %>% anti_join(envir_env) %>% anti_join(envir_unusual)
 
 nb_envir_env_sites <- envir_env %>% pull(src_ref) %>% n_distinct()
