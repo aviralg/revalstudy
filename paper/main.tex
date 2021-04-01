@@ -725,15 +725,15 @@ frequent in number of sites in Table~\ref{tab:minimizedexpressions}.
 $min(e)$& \#sites & \%sites & \#packages & \#operations & \%envir & example\\\hline
 \c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedoperationsaRnd &\packageMinimizedpercentenvirnonparenta & \c{y+1}\\\hline
 \c{F(F())} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedoperationsbRnd & \packageMinimizedpercentenvirnonparentb & \c{gbov( mean(x), a-1)}\\\hline
-\c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedoperationscRnd &\packageMinimizedpercentenvirnonparentc&c(42,21,0)\\\hline
-\c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & \packageMinimizedpercentenvirnonparentd \\\hline
-\c{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvirnonparente \\\hline
-\c{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirnonparentf \\\hline
-\c{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirnonparentg \\\hline
-\c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirnonparenth \\\hline
-\c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenvirnonparenti \\\hline
-\c{\{\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirnonparentj \\\hline
-\c{F(F(<-))} & \packageMinimizedcallsitesk & \packageMinimizedpropsitesk & \packageMinimizedpackagek & \packageMinimizedoperationskRnd & \packageMinimizedpercentenvirnonparentk \\\hline
+\c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedoperationscRnd &\packageMinimizedpercentenvirnonparentc& \c{c(42,21,0)}\\\hline
+\c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & \packageMinimizedpercentenvirnonparentd & \c{seq\_len(iters)} \\\hline
+\c{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvirnonparente & \c{model.frame(formula = Z ~ U)} \\\hline
+\c{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirnonparentf & \c{rgamma(3, 2, n = 10L)} \\\hline
+\c{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirnonparentg & \c{DF\$B} \\\hline
+\c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirnonparenth & \c{function(x, y) x + 3 * y} \\\hline
+\c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenvirnonparenti & \c{x[1, 2:3, 2:3] <- value}\\\hline
+\c{\{\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirnonparentj & \c{\{ write.csv(iris, tf) \textbackslash n file.size(tf) \}} \\\hline
+\c{F(F(<-))} & \packageMinimizedcallsitesk & \packageMinimizedpropsitesk & \packageMinimizedpackagek & \packageMinimizedoperationskRnd & \packageMinimizedpercentenvirnonparentk & \c{opt\$h.weights <- rep(1, length(x))} \\\hline
 \end{tabular}
 \caption{Minimized expressions: eleven most frequent in number of sites. \#sites
   is the number of sites; \%sites the percentage of sites across the total
@@ -873,8 +873,8 @@ function call will hide assignment operators from us. We more precisely
 instrument side-effects to environment in Section~REF.}
 
 \paragraph{Large expressions.}  Compositions of functions, without variables
-(\c{F(F(X))} minimized expression) is the second most frequent minimized
-expression. \c{\{BLOCK\}} is a sequence of statements. It is usually large, with
+(\c{F(F())} minimized expression) is the second most frequent minimized
+expression. \c{\{\}} is a sequence of statements. It is usually large, with
 in average \packageMinimizedoperationsjRnd operations in it.
 
 

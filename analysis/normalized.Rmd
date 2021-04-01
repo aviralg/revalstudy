@@ -210,6 +210,15 @@ r_vec("MinimizedPercentEnvirNonParent", nrows, pull(widespread_minimized, percen
 
 `n_operations` is the average of R interpreter eval loop per minimized expression. `prop_envir` shows how much often an *explicit* environment is passed to `eval`. Looking up to a variable and applying a function to a variable, are the two non-trivial categories that most of the time explicitly use the `envir` argument of `eval`.
 
+# Examples of minimized expression
+
+```{r}
+examples_minimized <- E_cano %>% group_by(minimized) %>% filter(!is.na(expr_resolved) & str_length(expr_resolved) < 50) %>% 
+  summarise(example = nth(unique(expr_resolved), 100))
+
+examples_minimized %>% datatable()
+```
+
 # How does it evolve per call site
 
 To check whether the normalization makes sense, we have a look at how many normalized expressions we have per call sites.
@@ -792,4 +801,7 @@ overview_table(
   r("generalized var access site percent", ratio(nb_gen_var_sites, nb_call_sites))
 )
 ```
+
+
+
 
