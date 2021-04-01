@@ -476,8 +476,8 @@ is overkill.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Methodology}
 
-This section explains our methodology for selecting the corpus that
-will be analyzed and how we implemented our dynamic analysis.
+This section explains how we selected our corpus and how we obtained the
+reported results.
 
 \subsection{Corpus}
 
@@ -485,7 +485,7 @@ Our corpus is assembled out of two set of programs, one consisting of libraries
 obtained from \emph{CRAN} (Comprehensive R Archive Network\footnote{CRAN is the
   largest repository of R code with almost \CranAvailablePackagesRnd packages.
   It receives about 6 new package submissions a day~\cite{Ligges2017}. \cf
-  \url{https://cran.r-project.org/web/packages/index.html}}) and the other from
+  \url{https://cran.r-project.org}}) and the other from
 the \emph{Kaggle} data science competition website\footnote{\cf
   \url{https://kaggle.com}}. The intent here is to contrast code written by
 experienced developers (CRAN) with code authored by typical end users of the
@@ -497,125 +497,103 @@ is admitted in the archive. Kaggle on the other hand is more like GitHub, anyone
 can submit any code. All the code in our corpus is runnable, \ie we have scripts
 that invoke the CRAN packages and the Kaggle programs have input data.
 
-% Clearly code coverage will vary; as is the case for any dynamic analysis, the
-% quality of results is predicated on how representative the executions we can
-% observe are with respect to all possible runs of the corpus. To mitigate the
-% threat to validity attached to limited coverage, we obtain clients that will
-% generate multiple \emph{runs} of CRAN packages. In this context, a run is the
-% execution of a CRAN package or Kaggle program with a particular set of input
-% values.
+\mypara{Packages.} We obtained \CranAllPackages packages from CRAN, only
+excluding packages that did not install due to missing native dependencies.
+Using \c{cloc}, we measured \CranAllRCodeRnd lines of R and
+\CranAllNativeCodeRnd lines of native code. Out of these packages, \CranPackages
+(\CranPackagesRatio) call eval. These packages represent \CranCodeRatio of the
+code size. To analyze a package, we need client code that invokes its methods.
+There are three sources of built-in runnable code that come with each CRAN
+package: \emph{tests, examples} and \emph{vignettes}. They are, respectively,
+traditional unit tests, code snippets from the documentation, and long-form
+use-cases written in \LaTeX\xspace or Markdown with executable snippets of R
+code. Examples and vignettes are automatically extracted and turned into
+scripts, their input is bundled with the package. Tests are directly runnable.
+Together we there are \CranRunnableScripts scripts that contain
+\CranRunnableCode lines of code (\CranRunnableCodeExamplesRnd in examples,
+\CranRunnableCodeVignettesRnd in vignettes and \CranRunnableCodeTestsRnd in
+tests).
 
-% \begin{figure}[!h]\centering\includegraphics[width=.7\linewidth]
-%   {corpus.pdf}\caption{CRAN packages}\label{fig:corpus}
-% \end{figure}
+\mypara{Scripts.} Kaggle is an online platform for data science. It allows users
+to submit problems and compete to solve them. Solutions, called \emph{kernels},
+are uploaded as plain scripts or notebooks. We obtained \KaggleKernels kernels.
+Since Kaggle is not curated, used SHA-1 hashes to identify and remove
+\KaggleDuplicates duplicate entries. The remaining \KaggleUnique kernels are
+unique solutions to \KaggleCompetitions competition. They contain \KaggleCode
+lines of R code. Only \KaggleWithEvals kernels  call \eval.
 
-\mypara{CRAN Packages.} We used \CranAllPackages packages. These are almost all
-of the available packages except for a few that we could not install due to
-missing native dependencies. The packages are implemented in R with native C and
-Fortran code. Using \c{cloc}, we measure a total \CranAllRCodeRnd lines of R
-code and \CranAllNativeCodeRnd lines of native code. Out of these packages,
-\CranPackages (\CranPackagesRatio) call eval. These packages represent
-\CranCodeRatio of the code size.
+\subsection{Pipeline}
 
-To analyze a package, we need client code that invokes its methods. There are
-three sources of built-in runnable code that come with each CRAN package:
-\emph{tests, examples} and \emph{vignettes}. They are, respectively, traditional
-unit tests, code snippets from the documentation, and long-form use-cases
-written in \LaTeX\xspace or Markdown with executable snippets of R code.
-Examples and vignettes are automatically extracted and turned into scripts,
-their input is bundled with the package. Tests are directly runnable. Together
-we there are \CranRunnableScripts scripts that contain \CranRunnableCode lines
-of code (\CranRunnableCodeExamplesRnd in examples, \CranRunnableCodeVignettesRnd
-in vignettes and \CranRunnableCodeTestsRnd in tests).
-
-\mypara{Kaggle Scripts.} Kaggle is an online platform for data-science and
-machine-learning. The website allows people to submit data-analysis problems,
-users compete to find the best solution. The solutions, called \emph{kernels},
-are uploaded to the platform as either plain scripts or notebooks. We obtained
-\KaggleKernels kernels. Since Kaggle is not a curated repository, we first had
-to remove duplicates. We used SHA-1 hash to identify \KaggleDuplicates
-whole-file copies. The remaining \KaggleUnique kernels represent unique
-solutions to \KaggleCompetitions Kaggle competition. Together, they contain
-\KaggleCode lines of R code. Out of the \KaggleUniqueRnd kernels, only
-\KaggleWithEvals contain calls to eval.
-
-
-\subsection{Analysis Pipeline}
-
-The results presented in this paper are the result of an automated analysis
-pipeline that acquires the code of packages, extract metadata, executes
-programs, traces their behavior and summarizes the observations.
-Figure~\ref{fig:pipeline} shows the main steps of the pipeline along with
-approximate time to execute each step, the data size, and the number of elements
-manipulated by the stage. Timings are for runs on a cluster of three servers
-with Intel Xeon 6140, 2.30GHz with 72 cores and 256GB of RAM using a shared OCFS
-network storage.
+The analysis presented in this has been automated by a pipeline that acquires
+package code, extract metadata, executes programs, traces their behavior and
+summarizes observations. Figure~\ref{fig:pipeline} shows the main steps of
+analysis along with their running time, data size, and number of elements
+manipulated. Timings are from a cluster of three 2.3GHz Intel Xeon 6140 servers,
+with 72 cores and 256GB of RAM, and shared OCFS network storage.
 
 \begin{figure}[!h]\hspace{-5mm}
   \includegraphics[width=1.05\linewidth]{pipeline.pdf}
-  \caption{Analysis Pipeline UPDATE!!}\label{fig:pipeline}
+  \caption{Pipeline UPDATE!!}\label{fig:pipeline}
 \end{figure}
 
-\noindent The pipeline has the following steps:
+\noindent The pipeline steps are:
 \begin{compactenum}
   \item \emph{Download.} The first step consists of downloading and installing
-  CRAN packages and acquiring Kaggle corpus. We try to install all available
-  CRAN packages. This is somewhat complicated by the fact that many of packages
-  depend on native libraries, but these dependencies are not explicitly stated
-  in the package description and thus it is hard to automate. For Kaggle we use
-  a web crawler to get the programs and the a Kaggle official command line tool
-  to download the datasets.
+    CRAN packages and acquiring Kaggle corpus. We try to install all available
+    CRAN packages. This is somewhat complicated by the fact that many of
+    packages depend on native libraries, but these dependencies are not
+    explicitly stated in the package description and thus it is hard to
+    automate. For Kaggle we use a web crawler to get the programs and the a
+    Kaggle official command line tool to download the datasets.
   \item \emph{Runnable code extraction.} Next step is to extract runnabale code.
-  For CRAN package we use \genthat~\cite{issta18}, a tool which converts
-  runnable code snippets from package documentation and vignettes as well as R
-  tests into standalone executable scripts. For Kaggle programs that are not
-  already R scripts, we use \c{rmarkdown} and \c{knitr} R packages to extract
-  the runnable code from the Rmarkdown or the Jupyter notebook formats
-  respectively. Duplicated Kaggle programs are removed. Each of the extracted
-  script is wrapped into a call to our dynamic analyzer so we only record eval
-  usage triggered by running th script. Without this, the data would include
-  eval calls from the unit testing frameworks as well as from bootstrapping R
-  virtual machine itself.
+    For CRAN package we use \genthat~\cite{issta18}, a tool which converts
+    runnable code snippets from package documentation and vignettes as well as R
+    tests into standalone executable scripts. For Kaggle programs that are not
+    already R scripts, we use \c{rmarkdown} and \c{knitr} R packages to extract
+    the runnable code from the Rmarkdown or the Jupyter notebook formats
+    respectively. Duplicated Kaggle programs are removed. Each of the extracted
+    script is wrapped into a call to our dynamic analyzer so we only record eval
+    usage triggered by running th script. Without this, the data would include
+    eval calls from the unit testing frameworks as well as from bootstrapping R
+    virtual machine itself.
   \item \emph{Tracing.} With the scripts ready, we run our dynamic analysis that
-  traces the calls to eval and captures other runtime information. For the CRAN
-  packages we run two configurations:
+    traces the calls to eval and captures other runtime information. For the
+    CRAN packages we run two configurations:
   \begin{inparaenum}[(1)]
     \item all of the \CranRunnableScriptsRnd scripts while tracing calls to eval
-    originating in any of the \CranAllPackages installed CRAN package, and
+      originating in any of the \CranAllPackages installed CRAN package, and
     \item a random selection of 1/4 of the scripts while tracing only eval calls
-    originating in the core R packages that come bundled with the language.
+      originating in the core R packages that come bundled with the language.
   \end{inparaenum}
-  The reason for this split is that the core R packages are intertwined with the
-  language implementation and the usage is different form the user written
-  packages hosted on CRAN. For Kaggle, we only trace the eval calls that
-  originate in the programs themselves. To avoid any interference, each program
-  is run in isolation, in its own R instance.
+    The reason for this split is that the core R packages are intertwined with
+    the language implementation and the usage is different form the user written
+    packages hosted on CRAN. For Kaggle, we only trace the eval calls that
+    originate in the programs themselves. To avoid any interference, each
+    program is run in isolation, in its own R instance.
   \item \emph{Analysis.} In the final step, the output from the dynamic analysis
-  is merged, cleaned and summarized in the post-processing phase by custom R
-  scripts. The summarized data is then analyzed in RMarkdown notebooks to gather
-  insights. Apart from the figures, the data points included in the paper are
-  also generated by RMarkdown notebooks as \LaTeX macros.
+    is merged, cleaned and summarized in the post-processing phase by custom R
+    scripts. The summarized data is then analyzed in RMarkdown notebooks to
+    gather insights. Apart from the figures, the data points included in the
+    paper are also generated by RMarkdown notebooks as \LaTeX macros.
 \end{compactenum}
 
-The code extraction and tracing steps of the pipeline are run in parallel on
-three servers using GNU parallel~\cite{GNUparallel}. To make sure, all three
-servers have identical environment, we use docker images that have all the
-dependencies installed. The pipeline is implemented in 500 lines of Makefile and
-3K lines of auxiliary R and shell scripts. Their main function is to gracefully
-handle and report failures across large-scale program runs which greatly aids
-debugging of the pipeline.
+\medskip\noindent
+The code extraction and tracing steps of the pipeline are run in
+parallel~\cite{GNUparallel}. Servers have identical environment thanks to docker
+images with all dependencies installed. The pipeline consists of 3.5K lines of
+Make, R and shell scripts.
 
-\subsection{Dynamic Analysis}
+\subsection{Analysis}
 
 For this study we need two things: information about calls to eval and related
 functions and low-level data such as object allocation and deallocation and
 side-effects that happen during eval. The former we can get by injecting code to
 the corresponding functions at runtime. For the latter we use
-\rdyntrace~\cite{oopsla19a}. It is a modified R virtual machine based on
-GNU R 4.0.2 that exposes a number of hooks allowing us to get low-level
-information about the R interpreter. \rdyntrace only works with the R
-interpreter and not the byte-code compiler. However, this does not affect the
-result since the compiler does not optimize eval calls.
+\rdyntrace~\cite{oopsla19a}. It is a modified R virtual machine based on GNU R
+4.0.2 that exposes a number of hooks allowing us to get low-level information
+about the R interpreter. \rdyntrace only works with the R interpreter and not
+the byte-code compiler. However, this does not affect the result since the
+compiler does not optimize eval calls.
 
 We use source location to uniquely identify eval call sites. R only retains
 source references at the top-level block expressions. A nested call such as
@@ -626,21 +604,16 @@ traversing functions' AST and attaching source reference attribute manually.
 The dynamic analysis is implemented as a R package in 1.5K lines of R code and
 2K lines of C++.
 
-\mypara{Limitations.}
-%
-% We turn off the bytecode compiler for this study. The bytecode
-% compiler can also call \eval.
-%
-We do not get source locations for \CranUndefinedRnd \eval calls. In
-these cases \eval is either passed as an argument to a higher-order functions or
-is defined in a function returned by a higher-order function, or it can be a
-generated called from package native code. However, this is a meager
-\CranUndefinedRatio of all \eval calls and is unlikely to affect our
-analysis. We ignore calls to the native \eval function exposed by R. We also
-ignore the \c{rlang::tidy\_eval} function which uses native \eval internally
-because \c{rlang} is used to implement a DSL for data analysis in R. It
-introduces a new first-class promise object called \c{quosure} for which it
-implements special evaluation support in \c{tidy\_eval}.
+\mypara{Limitations.} We do not get source locations for \CranUndefinedRnd \eval
+calls. In these cases \eval is either passed as an argument to a higher-order
+functions or is defined in a function returned by a higher-order function, or it
+can be a generated called from package native code. However, this is a meager
+\CranUndefinedRatio of all \eval calls and is unlikely to affect our analysis.
+We ignore calls to the native \eval function exposed by R. We also ignore the
+\c{rlang::tidy\_eval} function which uses native \eval internally because
+\c{rlang} is used to implement a DSL for data analysis in R. It introduces a new
+first-class promise object called \c{quosure} for which it implements special
+evaluation support in \c{tidy\_eval}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Usage Metrics}
