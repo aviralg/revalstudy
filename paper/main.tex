@@ -26,7 +26,7 @@
 \author{Author}
 \authornotemark[1]
 \email{r@s.com}
-\affiliation{\institution{Institute}}
+\affiliation{\institution{Institute} \country{Country}}
 
 \begin{abstract}
   \noindent Most dynamic languages allow users to turn text into code
@@ -683,20 +683,7 @@ elucidate \emph{what} it does.
 \subsection{Arguments of \eval}
 
 %%%%%%%% JAN:::: NOT SURE WHAT THIS IS
-%% It refers to the \emph{namespace} of a package. A call to
-%% \c{library(packageName)}, which load libraries in R, for instance, will populate
-%% environment \c{package:packageName}. It is a \emph{base} function though, so we
-%% do not see it in the CRAN dataset. However, R still makes it possible to access
-%% any package environments and \packageNbPackageEnvSites call sites, \ie
-%% \packagePackageEnvSitePercent access a package environment, from
-%% \packageNbPackageEnvPackages different packages. Those packages perform
-%% introspection, to represent and search any environment by name, in package
-%% \emph{envnames}, to containerize tests, as with \emph{testthat} and
-%% \emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to create
-%% poor man's hidden functions in \emph{USSCXenaTools}.
-
-%% It is also used to implement a custom caching mechanism in packages
-%% \emph{g.data} and \emph{SOAR}.
+% The namespace stuff of packages was meant for the description of the envir argument.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 The argument passed to a call to \eval determines what the function will do. As
@@ -874,7 +861,18 @@ Section~\ref{sec:dangerseval}, especially about side effects performed in \eval.
   combinations, percentages change. For instance, 3314 call sites have only X,
   i.e. 22.51, instead of 4353 and 29.6\%. }
 
+\paragraph{Base}
+The ranking of minimized expressions in \emph{base} is similar to the one in
+CRAN but the share of \c{V} is much larger, as it is present in
+\baseMinimizedpropsitesa\% of the sites and \c{X} is a distant second, in
+\baseMinimizedpropsitesb\% of the sites.
 
+\paragraph{Kaggle}
+Kaggle is dominated by sites with minimized expression \c{V}, with
+\kaggleMinimizedcallsitesa sites, and \kaggleMinimizedpropsitesa\% of the
+\kaggleNbCallSites sites in total. All of those values are an AST size of one
+node, suggesting they do not come. \NOTE{TODO}
+%TODO: all the src ref here seem to be incorrect and not from kaggle.
 
 
 \subsubsection{The environment passed to \eval.}
@@ -951,22 +949,24 @@ of \c{h} and the arguments of \c{h2}.
  enclos = parent.frame(2))
 \end{lstlisting}
 
-\subsubsection{The expression passed to \eval.}
-\paragraph{Touching package environments.}
+\paragraph{Package environments.} Another kind of environments that is passed to \eval is the environment of a package. 
+ It refers to the \emph{namespace} of a package. A call to
+ \c{library(packageName)}, which load libraries in R, for instance, will populate
+ environment \c{package:packageName}. It is a \emph{base} function though, so we
+ do not see it in the CRAN dataset. However, R still makes it possible to access
+ any package environments and \packageNbPackageEnvSites call sites, \ie
+ \packagePackageEnvSitePercent access a package environment, from
+ \packageNbPackageEnvPackages different packages. Those packages perform
+ introspection, to represent and search any environment by name, in package
+ \emph{envnames}, to containerize tests, as with \emph{testthat} and
+ \emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to create
+ poor man's hidden functions in \emph{USSCXenaTools}.
+
+ It is also used to implement a custom caching mechanism in packages
+ \emph{g.data} and \emph{SOAR}.
 
 
-\paragraph{Base}
-The ranking of minimized expressions in \emph{base} is similar to the one in
-CRAN bu the share of \c{V} is much larger, as it is present in
-\baseMinimizedpropsitesa\% of the sites and \c{X} is a distant second, in
-\baseMinimizedpropsitesb\% of the sites.
 
-\paragraph{Kaggle}
-Kaggle is dominated by sites with minimized expression \c{V}, with
-\kaggleMinimizedcallsitesa sites, and \kaggleMinimizedpropsitesa\% of the
-\kaggleNbCallSites sites in total. All of those values are an AST size of one
-node, suggesting they do not come. \NOTE{TODO}
-%TODO: all the src ref here seem to be incorrect and not from kaggle.
 
 
 \mypara{Side-effects.} XXX026 total number of reads performed by
