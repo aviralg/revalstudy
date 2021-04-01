@@ -486,8 +486,9 @@ Our corpus is assembled from three sources. Firstly, we start with the
 Secondly, we acquire packages hosted on \emph{CRAN}. Thirdly, we downloaded
 scripts from \emph{Kaggle}.
 
-\mypara{Base.}
-???
+\mypara{Base.} The base dataset contains 13 libraries performing basic
+arithmetics, statistics, and operating system related functionalities.
+
 
 \mypara{CRAN.} The Comprehensive R Archive
 Network,\footnote{\url{cran.r-project.org}} or CRAN, is the largest curated
@@ -597,26 +598,22 @@ None of these limitation should invalidate our conclusions.
 \section{Usage Metrics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-This section focuses on our corpus of \Corpus CRAN packages that use
-\eval; these represent {\bf 28.9\%} of the entire repository. To provide % \Corpus / \CranAll
-a picture of \eval usage, all runnable code in CRAN was executed. Runs
-that did not exercise an \eval in the corpus were discarded. We
-retained \Nbruns to generate the data presented here. In total,
-\Allcalls invocations of \eval and its variants were recorded. Out of
-the \Staticatleastonecallsite packages that use \eval, \Triggeredpkgs
-packages were observed calling it in our runs --- the difference can
-be chalked down to incomplete code coverage and occasional
-infrastructure failures.
-
-
-Figure~\ref{freq} summarizes the frequency of calls to \eval over all
-runs. The left column is the number of observed calls, the right
-column is the number of packages falling in that range. There are
-\Fewcalls packages with low \eval frequency, i.e. fewer than 100
-calls; and a similar number of packages, \Manycalls to be precise,
-that use \eval more than 1,000 times. One package, \Maxcallspack,
-calls it \Maxcalls times and thus accounts for over half of the
-observed data.
+This section focuses on CRAN packages and reports statistics about the usage of
+\eval. Calls to \eval appear in {\bf 28\%} of the packages hosted on CRAN. There
+are \Corpus packages with an \eval, all programs extracted from these packages
+were executed, any run that did not exercise one of the \eval call sites in the
+packages was discarded. This left \Nbruns runs of some of the \Corpus packages
+to generate the data presented here. There were \Allcalls invocations of \eval
+and its variants occurring in \Triggeredpkgs packages.\footnote{Not all packages
+with static call sites of \eval were observed triggering that call site, this
+can be chalked down to incomplete code coverage and occasional infrastructure
+failures of our analysis infrastructure.} Figure~\ref{freq} summarizes the
+frequency of dynamic calls to \eval with the left column being the number of
+calls and the right, the number of packages in that range. There are \Fewcalls
+packages with low \eval frequency, fewer than 100 calls; and a similar number of
+packages, \Manycalls to be precise, that use \eval more than 1,000 times. One
+package, \Maxcallspack, calls it \Maxcalls times and thus accounts for over half
+of the observed calls.
 
 \begin{figure}[!h]
 
@@ -625,7 +622,7 @@ observed data.
   \begin{tabular}{|r@{\,}r@{\,}l@{}r|r@{\,}r@{\,}l@{}r|} \hline
     \multicolumn{3}{|c}{\small\#calls} &\small \#pck
 &     \multicolumn{3}{c}{\small\#calls} &\small\#pck \\\hline
-\tt 0 &--& \tt 10      & \Bina  & \tt 1K &--&\tt 100K  & \Bine\\
+\tt 1 &--& \tt 10      & \Bina  & \tt 1K &--&\tt 100K  & \Bine\\
 \tt 11 &--& \tt 100    & \Binb  & \tt 100K &--&\tt 1M  & \Binf\\
 \tt 101 &--& \tt 1K    & \Binc  & \tt 1M &--&\tt 10M   & \Bing\\
 \tt 1K &--& \tt 10K    & \Bind  & \tt 10M &--& \tt 100M & \Binh\\\hline
@@ -634,18 +631,14 @@ observed data.
 \end{minipage}
 &
 \begin{minipage}{7cm}
-\begin{tabular}{|@{\,}r@{\,}|@{\,}rrrr@{\,}|}\hline
+\begin{tabular}{|@{\,}r|rrrr|}\hline
   &\eval & \c{evalq} & \c{eval} & \c{local}\\[-2mm]
            & & & \c{.parent} &\\\hline
 \small Static sites &\Staticeval&\Staticevalq&\Staticevalparent&\Staticlocal \\
 \small Exercised sites&\Triggeredeval&\Triggeredevalq&\Triggeredevalparent&\Triggeredlocal\\
 \small Invocations&\EvalsRnd&\EvalqsRnd&\EparentsRnd&\LocalsRnd\\\hline
 \end{tabular}~\\[2mm]\caption{Variants}\label{tab:variantseval}
-\end{minipage}
-\end{tabular}
-\end{figure}
-
-
+\end{minipage}\end{tabular}\end{figure}
 
 \begin{wrapfigure}{r}{5.8cm}
 \vspace{-4mm}
@@ -659,82 +652,71 @@ observed data.
 \tt 251 &--& \tt 500 & \Runbind & \tt 2001 &--& \tt 3000 & \Runbinh\\\hline
 \end{tabular}
 
-\medskip  (a) All
+  \medskip  (a) All
+  \medskip
+  \medskip
 
   \includegraphics[width=5.4cm, trim=5.5cm 0 5cm 0, clip]{calls_per_run_per_call_site}
 
   (b) Small
 
-\vspace{-2mm}
-    \caption{Normalized invocations} \label{cn}
-\vspace{-2mm}
+\vspace{-2mm} \caption{Normalized invocations} \label{cn}\vspace{-2mm}
 \end{wrapfigure}
 
 
-Figure~\ref{tab:variantseval} illustrates the use of variants of
-\eval. For each of the four variants, the first rows shows the number
-of call sites occurring in the corpus (\emph{static}), the second row
-is the number of call sites that were encountered during tracing
-(\emph{exercised}), the last row is the number of calls
-(\emph{invocations}). The vast majority of call sites, and calls, are
-to \eval itself, \c{eval.parent} is rare, as for \c{evalq} and
-\c{local} are barely used at all. The difference between static and
-exercised reflects spotty code coverage and is a limitation
-of dynamic analysis.
+Figure~\ref{tab:variantseval} enumerate the use of variants of \eval. For each
+of the four variants, the first rows shows the number of call sites in the
+corpus (\emph{static}), the second row is the number of call sites that were
+encountered during analysis (\emph{exercised}), the last row is the number of
+calls (\emph{invocations}). The overwhelming majority of call sites and dynamic
+calls, are to \eval itself, \c{eval.parent} is rare, and both \c{evalq} and
+\c{local} are barely used at all. The difference between sites and exercised
+sites underscores the limitations due to code coverage.
 
-Figure~\ref{cn}(a) shows normalized invocation counts. The column on
-the left is the average number of calls from a particular site for any
-given run (\emph{\#calls}). On the right is the count of sites that
-fall in that range (\emph{\#sites}). For instance, \Runbinh sites are
-invoked on average over 2,001 times per run. Larger numbers suggest
-uses from within a loop or a recursive context -- this seems to be the
-exception as most \evals, \Runbina, are exercised 50 times or less.
-Figure~\ref{cn}(b) zooms in on low frequency call sites. The x-axis
-shows normalized invocations and the y-axis is the number sites for
-that value. Most low-frequency \evals are invoked only once, about
-half as many are invoked twice; after that the frequency quickly
-drops.
+Figure~\ref{cn}(a) shows normalized invocation counts per call site; on the left
+are average number of calls from a given site and given run, on the right are
+counts of sites that fall in that range. For instance, \Runbinh sites are
+invoked on average over 2,000+ times per run. Larger numbers suggest loops or
+recursive contexts -- this seems to be the exception as most \evals, \Runbina,
+are exercised 50 times or less. Figure~\ref{cn}(b) zooms in on low frequency
+call sites. The x-axis shows normalized invocations and the y-axis is the number
+sites for that value. Most low-frequency \evals are invoked only once, about
+half as many are invoked twice; after that the frequency quickly drops.
 
-Arguments to \eval can be either code or values, in the latter case
-\eval has no effect. Code accounts for \Codepercent of arguments in
-our corpus. More specifically, \Symbolpercent of arguments are
-\c{symbol}s (i.e. these are single variables such as \c{x}),
-\Languagepercent are \c{language} object (an internal R type roughly
-corresponding to a single expression, such as \c{x+1}), and
-\Expressionpercent are \c{expression} objects (multiple statements).
-Further inspection reveals that most symbols, \Ggplotsymbolpercent to
-be exact, come from a single call in the \c{ggplot2} package and have
-have the value \c{\_inherit}. Even if we remove this outlier, the
-majority of \evals are simple expressions.
+The \eval can be passed any value, but if the argument is not an expression,
+\eval returns it without doing anything. Expressions account for \Codepercent of
+arguments in our corpus. More specifically, \Symbolpercent of arguments are
+\c{symbol}s (single variables such as \c{x}), \Languagepercent are \c{language}
+object (a single expression, such as \c{x+1}), and \Expressionpercent are
+\c{expression} objects (multiple statements). Further inspection reveals that
+most symbols, \Ggplotsymbolpercent to be exact, come from a single call in the
+\c{ggplot2} package and have have the value \c{\_inherit}. Even if we remove
+this outlier, the majority of \evals are simple expressions.
 
-To estimate how much executable code is dynamically injected into the
-program through \eval, we measure the size of arguments in number of
-abstract syntax tree nodes as returned by R's parser; for example,
-\c{x+1} counts as 3 nodes.\footnote{We experimented with measuring
-code size by de-parsing the expressions to strings, but these
-measurements were dominated by de-parsed data objects, these could
-range in the MBs.} The median argument size is \Medianszeval (recall
-the large number of symbols) and the average is \Avgszeval nodes. The
-largest \eval input observed is \Maxszeval\,-- a significant chunk of
-code. Figure~\ref{fig:sizedistribution} shows the distribution of
-sizes for arguments of fewer or equal to 25 nodes. The x-axis is the
-size of arguments in number of nodes, and the y-axis is the count of
-arguments with that size. The size drops rapidly, with few
-observations larger than 15 nodes. The long tail is omitted from the
-graph for legibility.
+To estimate how much executable code is injected through \eval, we measure the
+the number of abstract syntax tree nodes as returned by the parser; for example,
+\c{x+1} counts as 3.\footnote{We attempted to measure string lengths after
+de-parsing expressions, but these measurements were dominated by de-parsed data
+objects, which could range in the MBs.} The median argument size is
+\Medianszeval (due to the many symbols) and the average is \Avgszeval nodes. The
+largest \eval input observed is \Maxszeval\,-- a significant chunk of code.
+Figure~\ref{fig:sizedistribution} shows the distribution of sizes for arguments
+of fewer or equal to 25 nodes. The x-axis is the size of arguments in number of
+nodes, and the y-axis is the count of arguments with that size. The size drops
+rapidly, with few observations larger than 15 nodes. The long tail is omitted
+from the graph for legibility.
 
 \begin{figure}[h!]
  \includegraphics[width=0.5\textwidth, trim=4.8cm 0 6cm 0, clip]{size_loaded_distribution}
 \caption{Loaded code} \label{fig:sizedistribution}
 \end{figure}
 
-To measure the work performed in \evals, we count the instructions
-executed by interpreter during evaluation of the argument.  Most invocations perform relatively little
-work with \Smalleventspct of \evals executing 50 or fewer
-instructions. The violin plot of Figure~\ref{ev}(a) corresponds to
-\evals executing $\leq$ 50 instructions, it is dominated by trivial
-symbol look ups. Figure~\ref{ev}(b) has the work-intensive \evals
-which go all the way to \MaxeventsRnd instructions.
+To estimate the work performed in \evals, we count the instructions executed by
+interpreter. Most invocations perform relatively little work with
+\Smalleventspct of \evals executing 50 or fewer instructions. The violin plot of
+Figure~\ref{ev}(a) corresponds to \evals executing $\leq$ 50 instructions, it is
+dominated by trivial symbol look ups. Figure~\ref{ev}(b) has the work-intensive
+\evals which go all the way to \MaxeventsRnd instructions.
 
 \begin{figure}[h!]
 \begin{tabular}{@{}c@{}c@{}}
@@ -745,32 +727,45 @@ which go all the way to \MaxeventsRnd instructions.
 \end{minipage}\\[-3mm]
 \small (a) Small & \small (b) Large
 \end{tabular}
- \caption{Instructions per packages} \label{ev}
+ \caption{Instructions per \eval} \label{ev}
 \end{figure}
 
-\paragraph{Base} The base dataset contains 13 packages. All of them trigger at least one \eval call. In total, \baseAllcalls \eval  were recorded. Most of them are calls to the main \eval. There are a few calls to the other variants, less than 4\%. Contrary to the CRAN dataset, there are calls to \c{evalq} (\baseEvalqs). Out of \baseStaticeval \eval static sites, \baseTriggeredeval are exercised, i.e. \baseTriggeredevalpct, out of \baseStaticevalq, \baseTriggeredevalq are exercised, and out of \baseStaticevalparent, \baseTriggeredevalparent are exercised.  Most of the arguments, \baseCodepercent,  are code objects. However, contrary to CRAN, few arguments, only \baseSymbolpercent, are symbols, but are rather language objects, \baseLanguagepercent. There are also few expression objects: \baseExpressionpercent. The prevalence of language objects suggests that \emph{base} mainly performs metaprogramming with \eval.
-The median argument size is \baseMedianszeval, which is more than for CRAN, which was dominated by symbol evaluation. The maximum size is \baseMaxszeval. Small event evals (less than 50 events) amount for \baseSmalleventspct of the events inside \eval calls.
+\paragraph{Base}
+We recorded \baseAllcalls \eval calls in the base libraries with fewer than 4\%
+of those being to any variants. Unlike CRAN, Base calls \c{evalq} (\baseEvalqs).
+Out of \baseStaticeval call sites, \baseTriggeredevalpct are exercised. Most
+arguments, \baseCodepercent, are expressions. However, unlike CRAN,
+\baseLanguagepercent of the arguments are language objects. The median argument
+size is \baseMedianszeval, which is more than for CRAN. The maximum size is
+\baseMaxszeval. Small instruction counts, less than 50, amount for
+\baseSmalleventspct of calls.
 
-% Figures for evalq are weird: more triggered than static call sites
+\paragraph{Kaggle}
+Only \kaggleNbruns scripts trigger \eval. In total, \kaggleAllcalls \eval were
+recorded; none are calls to variants. Out of \kaggleStaticeval call sites,
+\kaggleTriggeredeval were exercised. Most call sites are invoked only once. Only
+one site is called \kaggleMaxcalls times. Expressions amount for
+\kaggleCodepercent of arguments. Unlike CRAN corpus, there are very few symbols
+(\kaggleSymbolpercent). Most expressions result from calls to \c{parse}, thus
+most \evals start with strings. The median argument size is \kaggleMedianszeval,
+Which makes sense, as few arguments are only symbols. The largest argument is
+\kaggleMaxszeval. The distribution of instructions per eval is similar to CRAN;
+\kaggleSmalleventspct of \evals execute fewer than 50 instructions.
 
-\paragraph{Kaggle} In the Kaggle dataset, \kaggleNbruns notebooks trigger at least one \eval. In total, \kaggleAllcalls \eval were recorded. All of them are calls to the normal \eval.
-Out of \kaggleStaticeval static \eval sites, we exercise \kaggleTriggeredeval of them. Most \eval are invoked only once. Only one \eval amounts for several thousand, \kaggleMaxcalls,  invocations. Code amounts for \kaggleCodepercent of arguments in the kaggle corpus. However, contrary to the CRAN corpus, they are all expressions, and there are very few symbols (\kaggleSymbolpercent) and no language objects. Most expression objects result from a call to the \c{parse} function, suggesting that most \eval in Kaggle parse and evaluate strings. The median argument size is \kaggleMedianszeval, which makes sense, as there are very few arguments that are only symbols. The largest argument size is \kaggleMaxszeval. The distribution of events is similar to the one for CRAN or \emph{base}: \kaggleSmalleventspct of \eval calls amount for less than 50 events.
 
-
-\paragraph{Discussion} \emph{Base} is more akin to using \eval for metaprogramming, \emph{kaggle} to evaluating parsed strings, and CRAN is dominated by symbol evaluation. In terms of number of calls, a few calls dominate, with a call from \emph{ggplot} being prominent in the CRAN corpus. When looking at the \eval sites, \eval is more spread out. Those two measures emphasize two different points of view:
-
-\begin{itemize}
-	\item The number of calls is relevant to an optimizing compiler: the most frequent calls are the ones to be optimized first.
-	\item The number of sites is relevant to the programmer/user: it describes better how programmers use \eval.
-\end{itemize}
-
-% What about a threat model?
+\paragraph{Discussion}
+These results show that \eval is central to the language implementation as it is
+omnipresent in the relatively small Base library. Packages, which are developed
+by experienced programmers, make regular and varied use of the facility.
+Finally, scripts are written by less sophisticated users, and likely perform
+simpler tasks, and thus have lesser need for \eval, and its uses originate from
+strings which are easier to manipulate for end-users.
 
 
 \section{A Taxonomy of Eval}
 
-The previous section gave a quantitative view of the usage of \eval;
-in this section we try to elucidate \emph{what} it does.
+The previous section gave a quantitative view of \eval usage; we now try to
+elucidate \emph{what} it does.
 
 \subsection{Arguments of \eval}
 
@@ -784,19 +779,17 @@ in this section we try to elucidate \emph{what} it does.
 
 \subsubsection{The environment passed to \eval.}
 
-The environment argument can be \c{NULL}, a \c{List}
-or a data frame. This happens in 3.5\% of the cases: \eval copies the
-fields of the list or data frame and creates bindings for them in a
-new environment. This pattern is used to evaluate formulas which can
-directly refer to the fields of the data. The \c{envir} argument can
-also be a number $n$. It means that the environment in which the
-expressions is evaluated will be the result of \c{sys.call(n)} where
+The environment argument can be \c{NULL}, a \c{List} or a data frame. This
+happens in 3.5\% of the cases: \eval copies the fields of the list or data frame
+and creates bindings for them in a new environment. This pattern is used to
+evaluate formulas which can directly refer to the fields of the data. The
+\c{envir} argument can also be a number $n$. It means that the environment in
+which the expressions is evaluated will be the result of \c{sys.call(n)} where
 $n$ refers to the $n$-th stack frame.
 
 The top-level environment in R is called the global environment. New
-environments can be created using \c{new.env}. They can be provided a
-parent environment which becomes the enclosing scope of the new
-environment.
+environments can be created using \c{new.env}. They can be provided a parent
+environment which becomes the enclosing scope of the new environment.
 
 We looked at the environments passed to all the \eval calls in our corpus.
 Table~\ref{tab:environments} summarizes the results. A numeric environment class
@@ -822,20 +815,19 @@ the $\leftarrow$ or \c{assign} functions; but, that happens rarely.
 	\caption{Environments in terms of \eval calls}
 \end{table}
 
-We observe that a disproportionately high number of core R \eval calls
-access the  caller's environment. This is because many core R
-functions call functions that pass the result of \c{parent.frame()} to
-an \eval. A disproportionately high number of calls to \eval happens
-in an extended top-level environment. This can be explained by the
-fact that many packages evaluate code passed from the user's workspace
-in the top-level environment to access the bindings.
+We observe that a disproportionately high number of core R \eval calls access
+the caller's environment. This is because many core R functions call functions
+that pass the result of \c{parent.frame()} to an \eval. A disproportionately
+high number of calls to \eval happens in an extended top-level environment. This
+can be explained by the fact that many packages evaluate code passed from the
+user's workspace in the top-level environment to access the bindings.
 
 
-The \c{imchange} function of package \c{imager} makes it possible to
-modify images using a dedicated formula syntax using
-\~.\footnote{Inspired by {map} in package \emph{purr}.} Here,
-\eval is evaluated in \c{newenv}, which creates a new environment that
-inherits from \c{parent.frame()} by default (classified as 1+).
+The \c{imchange} function of package \c{imager} makes it possible to modify
+images using a dedicated formula syntax using \~.\footnote{Inspired by {map} in
+package \emph{purr}.} Here, \eval is evaluated in \c{newenv}, which creates a
+new environment that inherits from \c{parent.frame()} by default (classified as
+1+).
 
 
 \begin{lstlisting}
@@ -845,12 +837,11 @@ inherits from \c{parent.frame()} by default (classified as 1+).
 	im[where] <- eval(fo,envir=newenv,enclos=env)
 \end{lstlisting}
 
-\c{adjCoef} in package \emph{actuar} find the root of an equation
-defined by a function \c{h} whose arguments must be named \c{x} and
-\c{y}. \c{h} is transformed into an auxiliary function \c{h2} that can
-be optimized. Here, the list used for \c{envir} ensures the
-correspondance between the textual arguments of \c{h} and the
-arguments of \c{h2}.
+\c{adjCoef} in package \emph{actuar} find the root of an equation defined by a
+function \c{h} whose arguments must be named \c{x} and \c{y}. \c{h} is
+transformed into an auxiliary function \c{h2} that can be optimized. Here, the
+list used for \c{envir} ensures the correspondance between the textual arguments
+of \c{h} and the arguments of \c{h2}.
 
 
 \begin{lstlisting}
@@ -865,12 +856,26 @@ arguments of \c{h2}.
 
 
 \subsubsection{The expression passed to \eval.}
-\paragraph{Touching package environments.} It refers to the \emph{namespace} of a package. A call to \c{library(packageName)}, which load libraries in R, for instance, will populate environment \c{package:packageName}. It is a \emph{base} function though, so we do not see it in the CRAN dataset. However, R still makes it possible to access any package environments and \packageNbPackageEnvSites call sites, \ie \packagePackageEnvSitePercent access a package environment, from \packageNbPackageEnvPackages different packages. Those packages perform introspection, to represent and search any environment by name, in package \emph{envnames}, to containerize tests, as with \emph{testthat} and \emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to create poor man's hidden functions in \emph{USSCXenaTools}.
+\paragraph{Touching package environments.}
+It refers to the \emph{namespace} of a package. A call to
+\c{library(packageName)}, which load libraries in R, for instance, will populate
+environment \c{package:packageName}. It is a \emph{base} function though, so we
+do not see it in the CRAN dataset. However, R still makes it possible to access
+any package environments and \packageNbPackageEnvSites call sites, \ie
+\packagePackageEnvSitePercent access a package environment, from
+\packageNbPackageEnvPackages different packages. Those packages perform
+introspection, to represent and search any environment by name, in package
+\emph{envnames}, to containerize tests, as with \emph{testthat} and
+\emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to create
+poor man's hidden functions in \emph{USSCXenaTools}.
 
-It is also used to implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
+It is also used to implement a custom caching mechanism in packages
+\emph{g.data} and \emph{SOAR}.
 
 
-During tracing, we gather all source expressions and all resolved expression arguments passed to \eval. For instance, a non-resolved expression and some of its resolved expressions can be:
+During tracing, we gather all source expressions and all resolved expression
+arguments passed to \eval. For instance, a non-resolved expression and some of
+its resolved expressions can be:
 
 \begin{lstlisting}
 parse(text = paste0(\"options(\", i, \"=\", opts[i], \")\"))
@@ -880,108 +885,192 @@ options(datatable.allow.cartesian = FALSE)
 options(datatable.print.keys = FALSE)
 \end{lstlisting}
 
-We classify the resolved expressions to take into account the structure of the expression passed to \eval.
-However, we do not want to discriminate expressions based on specific values. Hence, the expression goes through several simplification steps: constant folding of arithmetic and string expressions that use commonly used functions (addition, string concatenation), discarding of specific value to a symbolic value holder, variable absorption. We keep track of variables, as they are evaluated in the environment specified to \eval, contrary to values that are left unchanged. We also track whether assignment operators are used in the expression or not. After the simplification steps, we obtain 15 different \emph{minimized} expressions, of which we show the eleven first most frequent in number of sites in Table~\ref{tab:minimizedexpressions}.
+We classify the resolved expressions to take into account the structure of the
+expression passed to \eval. However, we do not want to discriminate expressions
+based on specific values. Hence, the expression goes through several
+simplification steps: constant folding of arithmetic and string expressions that
+use commonly used functions (addition, string concatenation), discarding of
+specific value to a symbolic value holder, variable absorption. We keep track of
+variables, as they are evaluated in the environment specified to \eval, contrary
+to values that are left unchanged. We also track whether assignment operators
+are used in the expression or not. After the simplification steps, we obtain 15
+different \emph{minimized} expressions, of which we show the eleven first most
+frequent in number of sites in Table~\ref{tab:minimizedexpressions}.
 
-\begin{table}[h]
-	\begin{tabular}{|c|c|c|c|c|c|}
-		\hline
-		Minimized & \#sites & \%sites & \#packages & \#operations & \%envir \\
-		\hline
-		\texttt{X} & \packageMinimizedcallsitesa  & \packageMinimizedpropsitesa & \packageMinimizedpackagea & \packageMinimizedoperationsaRnd & \packageMinimizedpercentenvirnonparenta \\
-		\hline
-		\texttt{F(F())} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedoperationsbRnd & \packageMinimizedpercentenvirnonparentb \\
-		\hline
-		\texttt{V} & \packageMinimizedcallsitesc & \packageMinimizedpropsitesc & \packageMinimizedpackagec & \packageMinimizedoperationscRnd & \packageMinimizedpercentenvirnonparentc \\
-		\hline
-		\texttt{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & \packageMinimizedpercentenvirnonparentd \\
-		\hline
-		\texttt{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvirnonparente \\
-		\hline
-		\texttt{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirnonparentf \\
-		\hline
-		\texttt{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirnonparentg \\
-		\hline
-		\texttt{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirnonparenth \\
-		\hline
-		\texttt{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenvirnonparenti \\
-		\hline
-		\texttt{\{BLOCK\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirnonparentj \\
-		\hline
-		\texttt{F(F(<-))} & \packageMinimizedcallsitesk & \packageMinimizedpropsitesk & \packageMinimizedpackagek & \packageMinimizedoperationskRnd & \packageMinimizedpercentenvirnonparentk \\
-		\hline
-	\end{tabular}
-	\caption{Minimized expressions: eleven most frequent in number of sites. \#sites is the number of sites; \%sites the percentage of sites across the total number of sites (\packageNbCallSites sites) with at least this minimized expression; \#packages is the number of packages with at least one of the minimized expression and measures how widespread a minimized expression is. \#operations is the average number of steps performed by the R interpreter when given that minimized expression, and \%envir is the percentage of call sites for which the \c{envir} argument is explicitly passed, and is not \c{parent.frame()}, which is the most common explicit environment passed to \eval.} \label{tab:minimizedexpressions}
+\begin{table}[h]\small
+\begin{tabular}{|c|c|c|c|c|c|}\hline
+Minimized & \#sites & \%sites & \#packages & \#operations & \%envir \\	\hline
+\texttt{X} & \packageMinimizedcallsitesa  & \packageMinimizedpropsitesa & \packageMinimizedpackagea & \packageMinimizedoperationsaRnd & \packageMinimizedpercentenvirnonparenta \\\hline
+\texttt{F(F())} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedoperationsbRnd & \packageMinimizedpercentenvirnonparentb \\\hline
+\texttt{V} & \packageMinimizedcallsitesc & \packageMinimizedpropsitesc & \packageMinimizedpackagec & \packageMinimizedoperationscRnd & \packageMinimizedpercentenvirnonparentc \\\hline
+\texttt{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & \packageMinimizedpercentenvirnonparentd \\\hline
+\texttt{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvirnonparente \\\hline
+\texttt{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirnonparentf \\\hline
+\texttt{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirnonparentg \\\hline
+\texttt{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirnonparenth \\\hline
+\texttt{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenvirnonparenti \\\hline
+\texttt{\{BLOCK\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirnonparentj \\\hline
+\texttt{F(F(<-))} & \packageMinimizedcallsitesk & \packageMinimizedpropsitesk & \packageMinimizedpackagek & \packageMinimizedoperationskRnd & \packageMinimizedpercentenvirnonparentk \\\hline
+\end{tabular}
+\caption{Minimized expressions: eleven most frequent in number of sites. \#sites
+  is the number of sites; \%sites the percentage of sites across the total
+  number of sites (\packageNbCallSites sites) with at least this minimized
+  expression; \#packages is the number of packages with at least one of the
+  minimized expression and measures how widespread a minimized expression is.
+  \#operations is the average number of steps performed by the R interpreter
+  when given that minimized expression, and \%envir is the percentage of call
+  sites for which the \c{envir} argument is explicitly passed, and is not
+  \c{parent.frame()}, which is the most common explicit environment passed to
+  \eval.} \label{tab:minimizedexpressions}
 \end{table}
 
 
-Note that a site can exhibit several minimized expressions (see Figure~\ref{fig:frequentcombinationminimized}). However, \packageNbOneMinimizedPercent of the sites have only one minimized expression. Note also that if a function is called in that expression, we see only the function call but not the body of the function. We will trace what happens during the evaluation of the expression by \eval in Section~\ref{sec:dangerseval}, especially about side effects performed in \eval.
+Note that a site can exhibit several minimized expressions (see
+Figure~\ref{fig:frequentcombinationminimized}). However,
+\packageNbOneMinimizedPercent of the sites have only one minimized expression.
+Note also that if a function is called in that expression, we see only the
+function call but not the body of the function. We will trace what happens
+during the evaluation of the expression by \eval in
+Section~\ref{sec:dangerseval}, especially about side effects performed in \eval.
 
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\textwidth]{package_combination_minimized.pdf}
-	\caption{Most frequent combinations of minimized expressions per site, with a cumulative share of 95\% of the sites.} \label{fig:frequentcombinationminimized}
+	\caption{Most frequent combinations of minimized expressions per site,
+          with a cumulative share of 95\% of the
+          sites.} \label{fig:frequentcombinationminimized}
 \end{figure}
 
 \paragraph{Variables.}
-The most common minimized expression is a variable.\footnote{An arithmetic expression with some variables and constant, \eg \c{1 + x}, will also be normalized to \c{X}, i.e. a variable.} It happens in \packageMinimizedpropsitesa\% of the sites and is widespread across packages as it is found in \packageMinimizedpackagea packages across our CRAN corpus. \packageNbSymbolVarSitePercent are only symbols, \ie not complex expressions. The \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\% of the call sites. The call sites without an explicit \c{envir} argument all use a specific \eval variant, \c{eval.parent}. Moreover, the \c{envir} argument is both explicit and different from \c{parent.frame()} in \packageMinimizedpercentenvirnonparenta\% of the sites, which suggests that when given a variable, \eval is often used to get  value in a non-local, non-parent environment.
+The most common minimized expression is a variable.\footnote{An arithmetic
+expression with some variables and constant, \eg \c{1 + x}, will also be
+normalized to \c{X}, i.e. a variable.} It happens in
+\packageMinimizedpropsitesa\% of the sites and is widespread across packages as
+it is found in \packageMinimizedpackagea packages across our CRAN corpus.
+\packageNbSymbolVarSitePercent are only symbols, \ie not complex expressions.
+The \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\%
+of the call sites. The call sites without an explicit \c{envir} argument all use
+a specific \eval variant, \c{eval.parent}. Moreover, the \c{envir} argument is
+both explicit and different from \c{parent.frame()} in
+\packageMinimizedpercentenvirnonparenta\% of the sites, which suggests that when
+given a variable, \eval is often used to get value in a non-local, non-parent
+environment.
 
 
-Similarly, when a function is evaluated on some variable (\c{F(X)} minimized expression), the percentage of non default, non parent environments is rather high, \packageMinimizedpercentenvirnonparentd\%.
+Similarly, when a function is evaluated on some variable (\c{F(X)} minimized
+expression), the percentage of non default, non parent environments is rather
+high, \packageMinimizedpercentenvirnonparentd\%.
 
 
-Minimized expression \texttt{\$} refers to a slot access, with \texttt{\$}, \texttt{[]} or \texttt{[[]]}, as the top call in a simple expression, for instance \texttt{a\$slot + 1}.  It amounts for \packageNbSlotAccess sites, \ie \packageSlotAccessPercent of the sites. The non-default, non-parent environment percentage is here \packageMinimizedpercentenvirnonparentg.
+Minimized expression \texttt{\$} refers to a slot access, with \texttt{\$},
+\texttt{[]} or \texttt{[[]]}, as the top call in a simple expression, for
+instance \texttt{a\$slot + 1}. It amounts for \packageNbSlotAccess sites, \ie
+\packageSlotAccessPercent of the sites. The non-default, non-parent environment
+percentage is here \packageMinimizedpercentenvirnonparentg.
 
 
-As a whole, variable access, either as the top call, or inside a function call, possibly with accessing a slot, represents \packageGeneralizedVarAccessSitePercent of the sites.
+As a whole, variable access, either as the top call, or inside a function call,
+possibly with accessing a slot, represents
+\packageGeneralizedVarAccessSitePercent of the sites.
 
 
 \paragraph{Values.}
-Many sites evaluates to \c{V}.  \packageValOneNodePercent of those sites are only passed an expression with one node, \ie one value, not a more complex expression that is later constant folded. \c{V} corresponds to two main categories of expressions passed to \eval:
+Many sites evaluates to \c{V}. \packageValOneNodePercent of those sites are only
+passed an expression with one node, \ie one value, not a more complex expression
+that is later constant folded. \c{V} corresponds to two main categories of
+expressions passed to \eval:
 
 \begin{itemize}
 	\item \eval is passed an actual value, a double, an integer, an environment, a closure and other simple types,
 	\item \eval is passed a language expression that trivially evaluates to a value, for instance, \c{quote(1)}, \c{quote(1 + 1)}, \quote{c("a", "b", "c")}, and does not include variables, so does not depend on a specific environment.
 \end{itemize}
 
-For the first category, \eval is not necessary. In \packageNbCallSitesUniqueActualValue sites exhibiting \c{V}, \ie \packageCallSitesUniqueActualValuePercent\% sites, it is only passed such actual values. The median number of runs for those sites is \packageMedianRunSitesUniqueActualValue (average \packageAverageRunSitesUniqueActualValue, standard deviation \packageSdRunSitesUniqueActualValue), suggesting it happens because of a lack of coverage, because there are rarely triggered in our dataset and all paths are not taken. However, manual inspection of the source code of some examples shows that some sites actually pass values. For instance, in package \emph{ctmle}, in function \c{evaluate\_candidate\_glmnet}:
+For the first category, \eval is not necessary. In
+\packageNbCallSitesUniqueActualValue sites exhibiting \c{V}, \ie
+\packageCallSitesUniqueActualValuePercent\% sites, it is only passed such actual
+values. The median number of runs for those sites is
+\packageMedianRunSitesUniqueActualValue (average
+\packageAverageRunSitesUniqueActualValue, standard deviation
+\packageSdRunSitesUniqueActualValue), suggesting it happens because of a lack of
+coverage, because there are rarely triggered in our dataset and all paths are
+not taken. However, manual inspection of the source code of some examples shows
+that some sites actually pass values. For instance, in package \emph{ctmle}, in
+function \c{evaluate\_candidate\_glmnet}:
 
 \begin{lstlisting}
 f1 <- eval(paste("A ~ ", paste(paste(names(X[,-1]), sep=''), collapse=" + ")))
 f2 <- as.formula(f1)
 \end{lstlisting}
 
-\c{paste} concatenates strings and \eval will just return that string. \c{as.formula} can take a string and convert it to a formula; \eval is not needed here. In 20 random sites among the ones with values, a conservative manual inspection showed that \packageUsefulValueEvalPercent of the sites  had a  legitimate reason to use \eval.
+\c{paste} concatenates strings and \eval will just return that string.
+\c{as.formula} can take a string and convert it to a formula; \eval is not
+needed here. In 20 random sites among the ones with values, a conservative
+manual inspection showed that \packageUsefulValueEvalPercent of the sites had a
+legitimate reason to use \eval.
 
-The percentage of non default environment passed to \eval is \packageMinimizedpercentenvirc when the minimized expression is a value. Some sites which are passed a value, are also passed different minimized expressions. For those ones, \packageNonDefaultEnvirValuePercent use a non-default environment, and among the one that use a non-default environment, \packageNonDefaultEnvirWithVarPercent have at least one minimized expression with a variable inside.
+The percentage of non default environment passed to \eval is
+\packageMinimizedpercentenvirc when the minimized expression is a value. Some
+sites which are passed a value, are also passed different minimized expressions.
+For those ones, \packageNonDefaultEnvirValuePercent use a non-default
+environment, and among the one that use a non-default environment,
+\packageNonDefaultEnvirWithVarPercent have at least one minimized expression
+with a variable inside.
 
 
 \paragraph{\c{model.frame}} This is a function used to create statistical models. We explain it in more details in the section about the usage of \eval (see Section~REF).
 
-\paragraph{Function definition.} \c{FUN} represents a function definition at the top level of the expression, and happens in \packageFunctionDefinitionSites sites, \ie \packageFunctionDefinitionSitesPercent of the sites. It entails very few steps of the interpreter, as the function is returned by \eval, and the body of the new function is just stored for later execution. If we count also function definition inside more complex expressions, it amounts to \packageGeneralizedFunctionDefinitionSites sites, \ie \packageGeneralizedFunctionDefinitionSitesPercent and suggests the widespread use of higher-order functions in R, such as \c{lapply}, the R version of \c{map}.
+\paragraph{Function definition.}
+\c{FUN} represents a function definition at the top level of the expression, and
+happens in \packageFunctionDefinitionSites sites, \ie
+\packageFunctionDefinitionSitesPercent of the sites. It entails very few steps
+of the interpreter, as the function is returned by \eval, and the body of the
+new function is just stored for later execution. If we count also function
+definition inside more complex expressions, it amounts to
+\packageGeneralizedFunctionDefinitionSites sites, \ie
+\packageGeneralizedFunctionDefinitionSitesPercent and suggests the widespread
+use of higher-order functions in R, such as \c{lapply}, the R version of
+\c{map}.
 
-\paragraph{Assignments.} This amounts to \packageAssignSitesPercent of the sites and corresponds to minimized expressions \c{<-}, where the assignment is the top call, and \c{F(F(<-))}, where the assignment happens inside, and others that we were not enough present to be shown in table~\ref{tab:minimizedexpressions}.  Assignments are performed with \c{<-}, \c{<<-} or \c{assign}. Most often, assignment happens in top call position. A non-default environment is specified only in \packageNonDefaultEnvirAssignSitesPercent of the sites with assignments. Indeed, most of those assignments occur in the default environment, \ie in the caller of \eval. This hints that side effects are not widespread in \eval.\footnote{Side effects can also happen in a function call in the \eval expression, and that function call will hide assignment operators from us. We more precisely instrument side-effects to environment in Section~REF.}
+\paragraph{Assignments.}
+This amounts to \packageAssignSitesPercent of the sites and corresponds to
+minimized expressions \c{<-}, where the assignment is the top call, and
+\c{F(F(<-))}, where the assignment happens inside, and others that we were not
+enough present to be shown in table~\ref{tab:minimizedexpressions}. Assignments
+are performed with \c{<-}, \c{<<-} or \c{assign}. Most often, assignment happens
+in top call position. A non-default environment is specified only in
+\packageNonDefaultEnvirAssignSitesPercent of the sites with assignments. Indeed,
+most of those assignments occur in the default environment, \ie in the caller of
+\eval. This hints that side effects are not widespread in \eval.\footnote{Side
+effects can also happen in a function call in the \eval expression, and that
+function call will hide assignment operators from us. We more precisely
+instrument side-effects to environment in Section~REF.}
 
-\paragraph{Large expressions.}  Compositions of functions, without variables (\c{F(F(X))} minimized expression) is the second most frequent minimized expression. \c{\{BLOCK\}} is a sequence of statements. It is usually large, with in average \packageMinimizedoperationsjRnd operations in it.
+\paragraph{Large expressions.}  Compositions of functions, without variables
+(\c{F(F(X))} minimized expression) is the second most frequent minimized
+expression. \c{\{BLOCK\}} is a sequence of statements. It is usually large, with
+in average \packageMinimizedoperationsjRnd operations in it.
 
 
 
-The minimized expression classification suggests that the presence of variables in the expression is highly correlated to the specification of a specific environment, and that \eval is used here for its power in precising the evaluation environment.
+The minimized expression classification suggests that the presence of variables
+in the expression is highly correlated to the specification of a specific
+environment, and that \eval is used here for its power in precising the
+evaluation environment.
 
 
-
-
-
-\NOTE{Maybe we should ditch the table of the minimized expressions and rather use the ones of combinations. It has the advantage of showing what is the most frequent, per call site. But it's a long tail, and sites that have several minimized expressions are not that numerous, only 13\%. But if include combinations, percentages change. For instance, 3314 call sites have only X, i.e. 22.51, instead of 4353 and 29.6\%. }
+\NOTE{Maybe we should ditch the table of the minimized expressions and rather
+  use the ones of combinations. It has the advantage of showing what is the most
+  frequent, per call site. But it's a long tail, and sites that have several
+  minimized expressions are not that numerous, only 13\%. But if include
+  combinations, percentages change. For instance, 3314 call sites have only X,
+  i.e. 22.51, instead of 4353 and 29.6\%. }
 
 
 \paragraph{Base.} The ranking of minimized expressions in \emph{base} is similar to the one in CRAN bu the share of \c{V} is much larger, as it is present in \baseMinimizedpropsitesa\% of the sites and \c{X} is a distant second, in \baseMinimizedpropsitesb\% of the sites.
 
 \paragraph{Kaggle.} Kaggle is dominated by sites with minimized expression \c{V}, with \kaggleMinimizedcallsitesa sites, and  \kaggleMinimizedpropsitesa\% of the \kaggleNbCallSites sites in total. All of those values are an AST size of one node, suggesting they do not come. \NOTE{TODO}
 %TODO: all the src ref here seem to be incorrect and not from kaggle.
-
-
 
 
 
