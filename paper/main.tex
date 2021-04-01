@@ -481,42 +481,37 @@ reported results.
 
 \subsection{Corpus}
 
-Our corpus is assembled out of two set of programs, one consisting of libraries
-obtained from \emph{CRAN} (Comprehensive R Archive Network\footnote{CRAN is the
-  largest repository of R code with almost \CranAvailablePackagesRnd packages.
-  It receives about 6 new package submissions a day~\cite{Ligges2017}. \cf
-  \url{https://cran.r-project.org}}) and the other from
-the \emph{Kaggle} data science competition website\footnote{\cf
-  \url{https://kaggle.com}}. The intent here is to contrast code written by
-experienced developers (CRAN) with code authored by typical end users of the
-language (Kaggle). Another difference is that CRAN is a curated repository. Each
-submitted package must abide to a number of well-formedness rules that are
-automatically checked asserting certain quality. Most relevant for this work is
-that all of the runnable code is tested and only a successfully running package
-is admitted in the archive. Kaggle on the other hand is more like GitHub, anyone
-can submit any code. All the code in our corpus is runnable, \ie we have scripts
-that invoke the CRAN packages and the Kaggle programs have input data.
+Our corpus is assembled from three sources. Firstly, we start with the
+\emph{Base} libraries that are bundled with the language implementation.
+Secondly, we acquire packages hosted on \emph{CRAN}. Thirdly, we downloaded
+scripts from \emph{Kaggle}.
 
-\mypara{Packages.} We obtained \CranAllPackages packages from CRAN, only
-excluding packages that did not install due to missing native dependencies.
-Using \c{cloc}, we measured \CranAllRCodeRnd lines of R and
-\CranAllNativeCodeRnd lines of native code. Out of these packages, \CranPackages
-(\CranPackagesRatio) call eval. These packages represent \CranCodeRatio of the
-code size. To analyze a package, we need client code that invokes its methods.
-There are three sources of built-in runnable code that come with each CRAN
-package: \emph{tests, examples} and \emph{vignettes}. They are, respectively,
-traditional unit tests, code snippets from the documentation, and long-form
-use-cases written in \LaTeX\xspace or Markdown with executable snippets of R
-code. Examples and vignettes are automatically extracted and turned into
-scripts, their input is bundled with the package. Tests are directly runnable.
-Together we there are \CranRunnableScripts scripts that contain
-\CranRunnableCode lines of code (\CranRunnableCodeExamplesRnd in examples,
-\CranRunnableCodeVignettesRnd in vignettes and \CranRunnableCodeTestsRnd in
-tests).
+\mypara{Base.}
+???
 
-\mypara{Scripts.} Kaggle is an online platform for data science. It allows users
-to submit problems and compete to solve them. Solutions, called \emph{kernels},
-are uploaded as plain scripts or notebooks. We obtained \KaggleKernels kernels.
+\mypara{CRAN.} The Comprehensive R Archive
+Network,\footnote{\url{cran.r-project.org}} or CRAN, is the largest curated
+repository of R packages. It hosts \CranAvailablePackagesRnd packages with 6 new
+packages submitted each day~\cite{Ligges2017}. Packages that are accepted to
+CRAN are authored by experienced developers and they must abide to a number of
+well-formedness rules automatically checked on each commit. Furthermore, each
+package comes with sample data and tests. There are three sources of runnable
+code for each package: \emph{tests, examples} and \emph{vignettes} --
+respectively, unit tests, executable code snippets from the documentation, and
+long-form executable use-cases written in Markdown. Examples and vignettes can
+be turned into scripts by extracting the relevant code. We obtained
+\CranPackages that call \eval. These packages represent \CranPackagesRatio of
+all packages or \CranCodeRatio of the entire code size of CRAN. From these we
+extracted \CranRunnableScripts scripts that contain \CranRunnableCode lines of
+code (\CranRunnableCodeExamplesRnd in examples, \CranRunnableCodeVignettesRnd in
+vignettes and \CranRunnableCodeTestsRnd in tests).
+
+\mypara{Scripts.} Kaggle is an online platform for data
+science.\footnote{\url{kaggle.com}} It allows users to submit problems and
+compete to solve them. Solutions, called \emph{kernels}, are uploaded as plain
+scripts or notebooks. The quality of code on Kaggle is not uniform. Each kernel
+is runnable, and thus there is one script per kernel. Input data is provided.
+We obtained \KaggleKernels kernels.
 Since Kaggle is not curated, used SHA-1 hashes to identify and remove
 \KaggleDuplicates duplicate entries. The remaining \KaggleUnique kernels are
 unique solutions to \KaggleCompetitions competition. They contain \KaggleCode
