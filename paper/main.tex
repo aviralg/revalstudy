@@ -725,11 +725,11 @@ are 15 normal forms. We detail the interesting cases next.
 %% \packageNonDefaultEnvirWithVarPercent have at least one minimized expression
 %% with a variable inside.
 
-\item \underline{$min(e)=\c{X}$}: Variables are the most common normal form.
-  Variables subsume values, so they include arithmetic expressions in which a
-  variable occurs. \packageNbSymbolVarSitePercent of variable expression are
-  symbols, \ie just an \c{x}. A variable may refer to a promise and thus trigger
-  computation the first time it is accessed.
+\item \underline{$min(e)=\c{X}$}: Variables are the most common form. They
+  subsume values, thus \c{X} includes arithmetic expressions in which a variable
+  occurs. \packageNbSymbolVarSitePercent of variable expression are symbols, \ie
+  just an \c{x}. As a variable may refer to a promise, it may trigger
+  computation.
   %% The
   %% \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\% of
   %% the call sites. The call sites without an explicit \c{envir} argument all use
@@ -738,18 +738,17 @@ are 15 normal forms. We detail the interesting cases next.
   %% \packageMinimizedpercentenvirnonparenta\% of the sites, which suggests that
   %% when given a variable, \eval is often used to get value in a non-local,
   %% non-parent environment.
-\item \underline{$min(e)=\c{\$}$}: A name lookup, \c{x\$f}, is used
-  can be used
-  to look up a name in an environment or a column in a data frame. This category
-  also groups indexing operators, \c{[]} and \c{[[]]}. The presence of these
-  operators subsumes constants and variables.
+\item \underline{$min(e)=\c{\$}$}: A name lookup, \c{x\$f}, can be used to
+  access variable in an environment or a column in a data frame, this also
+  include vector   indexing operators, \c{[]} and \c{[[]]}. A name lookup
+  subsumes variables.
 %% It amounts for \packageNbSlotAccess sites, \ie
 %% \packageSlotAccessPercent of the sites. The non-default, non-parent environment
 %% percentage is here \packageMinimizedpercentenvirnonparentg.
 
-\item \underline{$min(e)=$~\c{<-}}: Assignments amount to
-  \packageAssignSitesPercent of the sites, they include \c{<-}, \c{<<-} and
-  \c{assign}, and subsume named lookups.
+\item \underline{$min(e)=$~\c{<-}}: Assignments account for
+  \packageAssignSitesPercent of \eval sites, they are \c{<-}, {\tt <<-} and
+  \c{assign}, and they subsume named lookups.
 %% \packageNonDefaultEnvirAssignSitesPercent of the sites with assignments. Indeed,
 %% most of those assignments occur in the default environment, \ie in the caller of
 %% \eval. This hints that side effects are not widespread in \eval.\footnote{Side
@@ -757,19 +756,29 @@ are 15 normal forms. We detail the interesting cases next.
 %% function call will hide assignment operators from us. We more precisely
 %% instrument side-effects to environment in Section~REF.}
 
-\item \underline{$min(e)=\c{F()}$}: Function calls that
+\item \underline{$min(e)=\c{F()}$}: A plain function call which may have some
+  values as argument but does not include variables. It should be noted that
+  function name require variable lookups -- we distinguish those as they usually
+  do not trigger computation.
 
-\item \underline{$min(e)=\c{F(X)}$}: Function calls that
+\item \underline{$min(e)=\c{F(X)}$}: Function calls whose arguments may include
+  variable references.
 
-\item \underline{$min(e)=\c{F(F(X))}$}: Function calls that
+\item \underline{$min(e)=\c{F(F(X))}$}: Nested function calls with variables.
 
-\item \underline{$min(e)=\c{FUN}$}: Function calls that
+\item \underline{$min(e)=\c{FUN}$}: Function definition accounts for
+  \packageFunctionDefinitionSitesPercent of \eval sites. In addition the
+  functions inside other expressions account for
+  \packageGeneralizedFunctionDefinitionSitesPercent of sites, and give an
+  estimate of the use of higher-order functions.
 
-\item \underline{$min(e)=\c{\{\,\}}$}: Function calls that
+\item \underline{$min(e)=\c{\{\,\}}$}: Arbitrary-length statement blocks. These
+  are larger expressions with, on average, \packageMinimizedoperationsjRnd
+  instructions.
 
-\item \underline{$min(e)=\c{model.frame}$}: Function calls that
 
-
+\item \underline{$min(e)=\c{model.frame}$}: Call to the \c{model.frame} function
+  used to create statistical models.
 
 \end{itemize}
 
@@ -785,34 +794,10 @@ possibly with accessing a slot, represents
 
 
 
-\paragraph{\c{model.frame}}
-This is a function used to create statistical models. We explain it in more
-details in the section about the usage of \eval (see Section~REF).
-
-\paragraph{Function definition.}
-\c{FUN} represents a function definition at the top level of the expression, and
-happens in \packageFunctionDefinitionSites sites, \ie
-\packageFunctionDefinitionSitesPercent of the sites. It entails very few steps
-of the interpreter, as the function is returned by \eval, and the body of the
-new function is just stored for later execution. If we count also function
-definition inside more complex expressions, it amounts to
-\packageGeneralizedFunctionDefinitionSites sites, \ie
-\packageGeneralizedFunctionDefinitionSitesPercent and suggests the widespread
-use of higher-order functions in R, such as \c{lapply}, the R version of
-\c{map}.
-
-
-\paragraph{Large expressions.}  Compositions of functions, without variables
-(\c{F(F())} minimized expression) is the second most frequent minimized
-expression. \c{\{\}} is a sequence of statements. It is usually large, with
-in average \packageMinimizedoperationsjRnd operations in it.
-
-
 The minimized expression classification suggests that the presence of variables
 in the expression is highly correlated to the specification of a specific
 environment, and that \eval is used here for its power in precising the
 evaluation environment.
-
 
 
 
@@ -950,7 +935,7 @@ of \c{h} and the arguments of \c{h2}.
  enclos = parent.frame(2))
 \end{lstlisting}
 
-\paragraph{Package environments.} Another kind of environments that is passed to \eval is the environment of a package. 
+\paragraph{Package environments.} Another kind of environments that is passed to \eval is the environment of a package.
  It refers to the \emph{namespace} of a package. A call to
  \c{library(packageName)}, which load libraries in R, for instance, will populate
  environment \c{package:packageName}. It is a \emph{base} function though, so we
