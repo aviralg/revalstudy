@@ -109,7 +109,8 @@ if(params$force_rebuild || rebuild) {
     envir = envir_expression,
     envir_type,
     caller_expression,
-    environment_class
+    environment_class,
+    enclos = enclos_expression
   ) -> E_envir
   
   
@@ -217,6 +218,16 @@ overview_table(
 )
 ```
 
+# Global ranking of environment classes
+
+```{r}
+env_class_ranking <- E_envir %>% group_by(environment_class) %>% 
+  summarize(n = n_distinct(src_ref)) %>% 
+  arrange(desc(n))
+
+env_class_ranking %>% datatable()
+```
+
 
 # Types in `envir`
 
@@ -314,10 +325,13 @@ Let's do a sanity check: is the environment class the same in that category?
 ```{r}
 absolute_diversity <- eval_calls_absolute %>%
   group_by(src_ref) %>%
-  summarize(envir_distinct = n_distinct(environment_class), envir = paste0(environment_class, collapse = " ; "))
+  summarize(envir_distinct = n_distinct(environment_class), envir = paste0(unique(environment_class), collapse = " ; "))
 
 absolute_diversity %>%
   count(envir_distinct, sort = TRUE)
+
+absolute_diversity %>%
+  count(envir, sort = TRUE)
 ```
 
 
@@ -344,16 +358,6 @@ env_calls %>% group_by(new_env) %>% summarize(n = n_distinct(src_ref), percent =
 env_calls %>% group_by(hierarchy) %>% summarize(n = n_distinct(src_ref), percent = round(100 * n / nb_call_sites, 2), cum_percent = cumsum(percent)) %>% arrange(desc(n))
 
 
-```
-
-
-
-_ggplot2_ again is responsible for this `new.env` 4 times!
-
-```{r}
-env_calls %>% filter(!is.na(new_env), specific_env == "global") %>% count(new_env, wt = duplicates, sort = TRUE)
-
-env_calls %>% filter(new_env == 4, specific_env == "global") %>% count(ev_package, wt = duplicates, sort = TRUE)
 ```
 
 
@@ -450,26 +454,36 @@ overview_table(
 )
 ```
 
-## Summary of the categories
+# `enclos` argument
 
-Total eval calls: `r nb_eval_calls`
+```{r}
+enclos_present <- E_envir %>% filter(!is.na(enclos))
 
-Total eval call sites: `r nb_call_sites`
+nb_enclos_sites <- enclos_present %>% pull(src_ref) %>% n_distinct()
 
-
-```{r summary, eval = FALSE}
-summary <- tribble(
-  ~category, ~calls, ~percent_calls, ~callsites, ~percent_callsites,
-  "Default", nb_default$n, ratio(nb_default$n, nb_eval_calls$n), nb_default_sites, ratio(nb_default_sites, nb_call_sites),
-  "Rcpp", nb_rcpp$n, ratio(nb_rcpp$n, nb_eval_calls$n), nb_rcpp_sites, ratio(nb_rcpp_sites, nb_call_sites),
-  "List or dataframe", nb_env_list$n, ratio(nb_env_list$n, nb_eval_calls$n), nb_env_list_sites, ratio(nb_env_list_sites, nb_call_sites),
-  "Argument of caller", nb_arg_caller$n, ratio(nb_arg_caller$n, nb_eval_calls$n), nb_arg_caller_sites, ratio(nb_arg_caller_sites, nb_call_sites),
-  "Absolute", nb_absolute$n, ratio(nb_absolute$n, nb_eval_calls$n), nb_absolute_sites, ratio(nb_absolute_sites, nb_call_sites),
-  "Integer", nb_integer$n, ratio(nb_integer$n, nb_eval_calls$n), nb_integer_sites, ratio(nb_integer_sites, nb_call_sites),
-  "Null", nb_null$n, ratio(nb_null$n, nb_eval_calls$n), nb_null_sites, ratio(nb_null_sites, nb_call_sites),
+overview_table(
+  r("nb enclos sites", nb_enclos_sites),
+  r("enclos site percent", ratio(nb_enclos_sites, nb_call_sites))
 )
+```
 
-summary %>% datatable(colnames = c("", "Eval calls", "%", "Call sites", "%"))
+To which type of `envir`is it associated? It should be either pairlists, data frames (list) or NULL (NULL being interpreted as the empty list).
+
+```{r}
+enclos_types <- enclos_present %>% group_by(envir_type) %>% 
+  summarize(n = n_distinct(src_ref)) %>% 
+  arrange(desc(n)) %>% 
+  datatable()
+
+nb_enclos_with_list_sites <- enclos_present %>% 
+  filter(envir_type %in% c("list", "NULL")) %>% 
+  pull(src_ref) %>% 
+  n_distinct()
+
+overview_table(
+  r("nb enclos with list sites", nb_enclos_with_list_sites),
+  r("enclos with list percent", ratio(nb_enclos_with_list_sites, nb_enclos_sites))
+)
 ```
 
 

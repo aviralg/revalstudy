@@ -894,7 +894,9 @@ of \c{h} and the arguments of \c{h2}.
 \end{lstlisting}
 
 
-\paragraph{\c{enclos} argument.} \ \\
+\paragraph{\c{enclos} argument.} The \c{enclos} argument of \eval can be provided when \c{envir} is a pairlist or a dataframe. It indicates in which environment to look for elements not present in \c{envir}. In our dataset, \c{enclos} is passed explicitly to \eval in \packageEnclosSitePercent of the sites.
+% 85% (\packageEnclosWithListPercent) actually have a list \c{(envir)}. The rest of 
+% of them have environment \c{envir}. In that case, \eval ignores \c{enclos} anyway
 
 
 Categorize side-effects between env passed to eval and other envs:
@@ -931,7 +933,8 @@ bindings using super-assign, assign and define.
 only from within eval.
 
 \mypara{Non-local returns} Eval can do non-local returns effective bypassing
-evaluation of the rest of the function. This can be useful for static analyzers.
+evaluation of the rest of the function. For instance, it can inject a \c{break} or \c{next} instructions in a loop. It is very rare however, as it happens only twice in our dataset. % What kind of non-local returns?
+% eval(quote(return(89))) does not work 
 
 \mypara{Purity.} Conclude with number of evals that are ``pure'', i.e. evals
 which could be ignored by a static analyzer without any problem.
