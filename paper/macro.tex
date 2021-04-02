@@ -413,7 +413,7 @@
   stringstyle=\color{DarkGray}, %
   literate={<-}{{$\leftarrow$\,}}1{<<-}{{$\twoheadleftarrow$}}1,
   keywords={new, env, match, call, eval, evalq, function, local, parent, quote
-            return, ifelse, for, in},
+            return, ifelse, for, in, frame, basenv},
 }
 
 \lstdefinestyle{R}{ language=R, breaklines=true }
@@ -442,7 +442,7 @@
 \newcommand{\ggproto}{\c{ggproto}}
 \newcommand{\ggplot}{\c{ggplot2}}
 \newcommand{\base}{\c{base}}
-\renewcommand{\c}[1]{{\small\sf #1}\xspace}
+\renewcommand{\c}[1]{{\sf #1}\xspace}
 \newcommand{\miss}[1]{{\textcolor{red}{#1}}\xspace}
 \newcommand{\evil}{\emph{evil}\xspace}
 \newcommand{\instrumentr}{\emph{instrumentr}\xspace}

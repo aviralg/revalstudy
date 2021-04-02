@@ -10,7 +10,7 @@
 \newcommand{\NOTE}[1]{{\it Note: #1}\xspace}
 
 \begin{document}
-\title{What we {\sf eval} in the shadows}
+\title{What We Eval in the Shadows}
 \subtitle{A large-scale study of {\sf eval} usage in R programs}
 
 %% Aviral Goel
@@ -682,10 +682,6 @@ elucidate \emph{what} it does.
 
 \subsection{Arguments of \eval}
 
-%%%%%%%% JAN:::: NOT SURE WHAT THIS IS
-% The namespace stuff of packages was meant for the description of the envir argument.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 The argument passed to a call to \eval determines what the function will do. As
 we have seen in the previous section, there are cases where the argument is a
 value, but these are rare. The common cases are that the argument is some form
@@ -717,42 +713,18 @@ are 15 normal forms. We detail the interesting cases next.
   This concatenates to a string and \eval simply returns it as is.
   From twenty randomly selected \evals, only \packageUsefulValueEvalPercent of
   them needed to use \eval.
-%% The percentage of non default environment passed to \eval is
-%% \packageMinimizedpercentenvirc when the minimized expression is a value. Some
-%% sites which are passed a value, are also passed different minimized expressions.
-%% For those ones, \packageNonDefaultEnvirValuePercent use a non-default
-%% environment, and among the one that use a non-default environment,
-%% \packageNonDefaultEnvirWithVarPercent have at least one minimized expression
-%% with a variable inside.
 \item \underline{$min(e)=\c{X}$}: Variables are the most common form. They
   subsume values, thus \c{X} includes arithmetic expressions in which a variable
   occurs. \packageNbSymbolVarSitePercent of variable expression are symbols, \ie
   just an \c{x}. As a variable may refer to a promise, it may trigger
   computation.
-  %% The
-  %% \c{envir} argument is explicitly passed in \packageMinimizedpercentenvira\% of
-  %% the call sites. The call sites without an explicit \c{envir} argument all use
-  %% a specific \eval variant, \c{eval.parent}. Moreover, the \c{envir} argument is
-  %% both explicit and different from \c{parent.frame()} in
-  %% \packageMinimizedpercentenvirnonparenta\% of the sites, which suggests that
-  %% when given a variable, \eval is often used to get value in a non-local,
-  %% non-parent environment.
 \item \underline{$min(e)=\c{\$}$}: A name lookup, \c{x\$f}, can be used to
   access variable in an environment or a column in a data frame, this also
   include vector   indexing operators, \c{[]} and \c{[[]]}. A name lookup
   subsumes variables.
-%% It amounts for \packageNbSlotAccess sites, \ie
-%% \packageSlotAccessPercent of the sites. The non-default, non-parent environment
-%% percentage is here \packageMinimizedpercentenvirnonparentg.
 \item \underline{$min(e)=$~\c{<-}}: Assignments account for
   \packageAssignSitesPercent of \eval sites, they are \c{<-}, {\tt <<-} and
   \c{assign}, and they subsume named lookups.
-%% \packageNonDefaultEnvirAssignSitesPercent of the sites with assignments. Indeed,
-%% most of those assignments occur in the default environment, \ie in the caller of
-%% \eval. This hints that side effects are not widespread in \eval.\footnote{Side
-%% effects can also happen in a function call in the \eval expression, and that
-%% function call will hide assignment operators from us. We more precisely
-%% instrument side-effects to environment in Section~REF.}
 \item \underline{$min(e)=\c{F()}$}: A plain function call which may have some
   values as argument but does not include variables. It should be noted that
   function name require variable lookups -- we distinguish those as they usually
@@ -772,19 +744,6 @@ are 15 normal forms. We detail the interesting cases next.
   used to create statistical models. This subsume all other categories.
 
 \end{itemize}
-
-%% Similarly, when a function is evaluated on some variable (\c{F(X)} minimized
-%% expression), the percentage of non default, non parent environments is rather
-%% high, \packageMinimizedpercentenvirnonparentd\%.
-
-%% As a whole, variable access, either as the top call, or inside a function call,
-%% possibly with accessing a slot, represents
-%% \packageGeneralizedVarAccessSitePercent of the sites.
-
-%% The minimized expression classification suggests that the presence of variables
-%% in the expression is highly correlated to the specification of a specific
-%% environment, and that \eval is used here for its power in precising the
-%% evaluation environment.
 
 Table~\ref{tab:minimizedexpressions} gives the most frequent forms; \#sites
 (\%sites) is the number (ratio) of call sites receiving arguments of that form;
@@ -823,25 +782,56 @@ second with \baseMinimizedpropsitesb\%.
 Kaggle is dominated by \c{V}, with \kaggleMinimizedpropsitesa\% of the
 \kaggleNbCallSites sites.
 
-
 \subsection{The environments of \eval}
 
-The \c{envir} argument of \eval can be an actual environment, but also \c{Null},
-a list, a dataframe, a pairlist or even an integer. Most of the time, \ie in
-\packageEnvirEnvSitePercent of the sites, \eval is passed an actual environment.
-In \packageNbEnvirIncorrectSites sites (\packageEnvirIncorrectSitePercent),
-\eval is passed an incorrect argument, for instance \c{NA}, a boolean, which
-makes \eval fail. \c{NULL}, a \c{list} or a data frame, or an integer, happen in
-\packageEnvirUnusualSitePercent of the cases: \eval copies the fields of the
-list or data frame and creates bindings for them in a new environment. This
-pattern is used to evaluate formulas which can directly refer to the fields of
-the data. The \c{envir} argument can also be a number $n$. It means that the
-environment in which the expressions is evaluated will be the result of
-\c{sys.call(n)} where $n$ refers to the $n$-th stack frame.
+The environment in which evaluation happens determines what will be visible to
+the computation started by \eval, and the potential reach of side-effects. The
+second argument to \eval, \c{envir}, defines the evaluation environment of the
+expression. That argument can be omitted, in which case the default value is
+\c{parent.frame()} which returns the caller of the \eval function.
+
+Other possible values for the environment include, lists, dataframes, pairlists,
+integers and \c{Null}. Lists and dataframe are coerced to new environments,
+integers values are passed to the \c{sys.call} function which returns the
+environment of a stack frame at the requested offset.
+
+
 
 The top-level environment in R is called the global environment. New
 environments can be created using \c{new.env}. They can be provided a parent
 environment which becomes the enclosing scope of the new environment.
+
+Another kind of environments that is passed to \eval is the environment of a
+package. It refers to the \emph{namespace} of a package. A call to
+\c{library(packageName)}, which loads libraries in R, for instance, will
+populate environment \c{package:packageName}. It is a \emph{base} function
+though, so we do not see it in the CRAN dataset. However, R still makes it
+possible to access any package environments and \packageNbPackageEnvSites call
+sites, \ie \packagePackageEnvSitePercent access a package environment, from
+\packageNbPackageEnvPackages different packages. Those packages perform
+introspection, to represent and search any environment by name, in package
+\emph{envnames}, to containerize tests, as with \emph{testthat} and
+\emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to create
+poor man's hidden functions in \emph{USSCXenaTools}. It is also used to
+implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
+
+
+\subsubsection{Bits of text, possibly reusable}
+
+Most of the time, \ie in \packageEnvirEnvSitePercent of the sites, \eval is
+passed an actual environment.
+
+In \packageNbEnvirIncorrectSites sites (\packageEnvirIncorrectSitePercent),
+\eval is passed an incorrect argument, for instance \c{NA}, a boolean, which
+makes \eval fail.
+
+\c{NULL}, a \c{list} or a data frame, or an integer, happen in
+\packageEnvirUnusualSitePercent of the cases: \eval copies the fields of the
+list or data frame and creates bindings for them in a new environment.
+
+This pattern is used to evaluate formulas which can directly refer to the fields
+of the data.
+
 
 We looked at the environments passed to all the \eval calls in our corpus.
 Table~\ref{tab:environments} summarizes the results. A numeric environment class
@@ -878,10 +868,9 @@ be explained by the fact that many packages evaluate code passed from the user's
 workspace in the top-level environment to access the bindings.
 
 The \c{imchange} function of package \c{imager} makes it possible to modify
-images using a dedicated formula syntax using \~.\footnote{Inspired by {map} in
-package \emph{purr}.} Here, \eval is evaluated in \c{newenv}, which creates a
-new environment that inherits from \c{parent.frame()} by default (classified as
-1+).
+images using a dedicated formula syntax.\footnote{Inspired by {map} in package
+\emph{purr}.} Here, \eval is evaluated in \c{newenv}, which creates a new
+environment that inherits from \c{parent.frame()} by default (classified as 1+).
 
 \begin{lstlisting}
  newenv <- new.env()
@@ -906,44 +895,9 @@ of \c{h} and the arguments of \c{h2}.
  enclos = parent.frame(2))
 \end{lstlisting}
 
-\paragraph{Package environments.} Another kind of environments that is passed to \eval is the environment of a package.
- It refers to the \emph{namespace} of a package. A call to
- \c{library(packageName)}, which loads libraries in R, for instance, will
- populate environment \c{package:packageName}. It is a \emph{base} function
- though, so we do not see it in the CRAN dataset. However, R still makes it
- possible to access any package environments and \packageNbPackageEnvSites call
- sites, \ie \packagePackageEnvSitePercent access a package environment, from
- \packageNbPackageEnvPackages different packages. Those packages perform
- introspection, to represent and search any environment by name, in package
- \emph{envnames}, to containerize tests, as with \emph{testthat} and
- \emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to create
- poor man's hidden functions in \emph{USSCXenaTools}.
-
- It is also used to implement a custom caching mechanism in packages
- \emph{g.data} and \emph{SOAR}.
-
 
 \paragraph{\c{enclos} argument.} \ \\
 
-\mypara{Side-effects.} XXX026 total number of reads performed by
-\eval. \NOTE{What is the definition of a read? An env lookup?} XXX027
-average number of reads. XXX028 total number of writes performed by
-\eval. Average number XXX029.
-
-\NOTE{Aviral wrote''measure number of reads and writes by eval outside
-  of its bubble'' --- what is the bubble here?}
-
-XXX029 reads to caller environment -- where caller is the caller of
-\eval.
-
-XXX030 reads to other caller environment -- i.e. envs that are on the
-call stack.
-
-XXX031 reads to caller environment -- where caller is the caller of
-\eval.
-
-XXX032 reads to other caller environment -- i.e. envs that are on the
-call stack.
 
 Categorize side-effects between env passed to eval and other envs:
 \begin{itemize}
@@ -957,37 +911,32 @@ Categorize side-effects between env passed to eval and other envs:
 
 In the corpus we observe \AllWritesRnd writes to variables of which
 \EvalWritesRnd writes happen inside \eval. However, all writes are not
-dangerous. Only writes to environments not local to the computation
-spawned by \eval are side-effecting. These writes outlive the
-computation and hence are visible outside it. The remaining writes are
-local to the computation. We observe that \EvalSideEffectingWritesRnd
-writes inside evals are side-effecting. This is only
-\EvalSideEffectingWritesEvalPerc of all variable writes inside \eval
-and \EvalSideEffectingWritesAllPerc of all variable writes in the
-corpus.
+dangerous. Only writes to environments not local to the computation spawned by
+\eval are side-effecting. These writes outlive the computation and hence are
+visible outside it. The remaining writes are local to the computation. We
+observe that \EvalSideEffectingWritesRnd writes inside evals are side-effecting.
+This is only \EvalSideEffectingWritesEvalPerc of all variable writes inside
+\eval and \EvalSideEffectingWritesAllPerc of all variable writes in the corpus.
 
-An \eval is considered side-effecting if it performs a side-effecting
-write to a variable, directly or indirectly. Only
-\SideEffectingCoreCallPerc \eval calls in Core R are side-effecting
-and \SideEffectingPackageCallPerc \eval calls in CRAN packages are
-side-effecting.
+An \eval is considered side-effecting if it performs a side-effecting write to a
+variable, directly or indirectly. Only \SideEffectingCoreCallPerc \eval calls in
+Core R are side-effecting and \SideEffectingPackageCallPerc \eval calls in CRAN
+packages are side-effecting.
 
 
-\mypara{New Bindings.} Find number of times, eval introduces new
-bindings. There are many ways -- library, load, attach, source, and
-explicitly introduce bindings using super-assign, assign and define.
+\mypara{New Bindings.} Find number of times, eval introduces new bindings. There
+are many ways -- library, load, attach, source, and explicitly introduce
+bindings using super-assign, assign and define.
 
-\mypara{C Calls.} Find number of times, eval makes call to native code
-using - .Call, .External, etc. Find out if there are native functions
-that are called only from within eval.
+\mypara{C Calls.} Find number of times, eval makes call to native code using -
+.Call, .External, etc. Find out if there are native functions that are called
+only from within eval.
 
-\mypara{Non-local returns}
-Eval can do non-local returns effective bypassing evaluation of the
-rest of the function. This can be useful for static analyzers.
+\mypara{Non-local returns} Eval can do non-local returns effective bypassing
+evaluation of the rest of the function. This can be useful for static analyzers.
 
-\mypara{Purity.}
-Conclude with number of evals that are ``pure'', i.e. evals which
-could be ignored by a static analyzer without any problem.
+\mypara{Purity.} Conclude with number of evals that are ``pure'', i.e. evals
+which could be ignored by a static analyzer without any problem.
 
 \mypara{Source.}
 There are various ways to obtain expressions:
@@ -1099,12 +1048,11 @@ This pattern is recognizable by its use of \c{parse} to turn a string
 into an expression.
 
 
-\mypara{Debloating.} \Eval is often used as a means to reduce
-boilerplate code; simple and repetitive code can easily be replaced
-with judcious use of \eval. For example, the \c{data.table} package
-uses \eval to calls the \c{options} function with named arguments
-taken from a vector of strings. While the benefits are limited in this
-example, it is an attractive tool for programmers.
+\mypara{Debloating.} \Eval is often used as a means to reduce boilerplate code;
+simple and repetitive code can easily be replaced with judcious use of \eval.
+For example, the \c{data.table} package uses \eval to calls the \c{options}
+function with named arguments taken from a vector of strings. While the benefits
+are limited in this example, it is an attractive tool for programmers.
 \begin{lstlisting}
   opts = c("datatable.verbose"="FALSE", # ...many others
   for (i in names(opts))
@@ -1141,18 +1089,16 @@ Expression & Eval Call &  \% \\\hline
 \caption{Top ten eval calls in Core}\label{B}
 \end{table}
 
-The expression \c{\{info <- loadingNamespaceInfo(...} is added by core
-R to a package directory during installation. To load the package,
-this code is executed. It creates a namespace for the package, injects
-the package bindings, and attaches the namespace to the program search
-path. The \c{NULL} comes from a call to \c{substitute(subset)} in
-\c{stats::model.frame.default} function which has a default value of
-\c{subset} as \c{NULL}. The \c{Symbol} arises from a call to
-\c{as.name} in \c{base::str} function that returns a symbol that is
-looked up by evaluating it in a specific environment. The remaining
-cases arise from calls to \c{match.arg} which is used to look up the
-default choices for a variable and match against the choice passed by
-the caller.
+The expression \c{\{info <- loadingNamespaceInfo(...} is added by core R to a
+package directory during installation. To load the package, this code is
+executed. It creates a namespace for the package, injects the package bindings,
+and attaches the namespace to the program search path. The \c{NULL} comes from a
+call to \c{substitute(subset)} in \c{stats::model.frame.default} function which
+has a default value of \c{subset} as \c{NULL}. The \c{Symbol} arises from a call
+to \c{as.name} in \c{base::str} function that returns a symbol that is looked up
+by evaluating it in a specific environment. The remaining cases arise from calls
+to \c{match.arg} which is used to look up the default choices for a variable and
+match against the choice passed by the caller.
 
 The most frequent ten expressions to eval calls from CRAN packages
 contribute to 77.1\% of all \eval calls.
@@ -1173,35 +1119,31 @@ Expression & Eval Call &  \% \\\hline
 \end{tabular}\caption{Top ten eval calls in CRAN} \label{C}
 \end{table}
 
-The expression \c{Environment} occurs because of the four callsites
-explained above, \c{ggplot2::ggproto}, \c{R6::generator\_funs},
-\c{future::backtrace} and \c{RModel::str.RMmodel}. The next
-expression, \c{column[rows] <<- what}, is used inside the
-\c{plyr::rbind.fill} function to merge data frames by assigning
-concatenated vectors to rows. The \c{<<-} operator is interesting in
-that it skips the current scope and assigns in a parent scope in which
-the variable is already present. In our corpus, all these \eval calls
-contribute to a single side-effect. The expression \c{function(value)
-  freduce(value, `function.list`)} arises from the
-\c{magrittr::\%>\%} function which is a pipe operator that pipes the
-output of previous command to the next one. The expression is
-evaluated in a custom environment to create a function binding for
-evaluating the components of the pipe.\c{String Vector} and \c{List}
-also arise from the same function when a string or a list is piped
-using the \c{\%>\%} function into the next expression. The \c{NULL}
-arises from \c{R6::generator\_funs} function when the \eval is passed a
-\c{NULL} argument by the \c{DataMask\_generator} package. The
+The expression \c{Environment} occurs because of the four callsites explained
+above, \c{ggplot2::ggproto}, \c{R6::generator\_funs}, \c{future::backtrace} and
+\c{RModel::str.RMmodel}. The next expression, \c{column[rows] <<- what}, is used
+inside the \c{plyr::rbind.fill} function to merge data frames by assigning
+concatenated vectors to rows. The \c{<<-} operator is interesting in that it
+skips the current scope and assigns in a parent scope in which the variable is
+already present. In our corpus, all these \eval calls contribute to a single
+side-effect. The expression \c{function(value) freduce(value, `function.list`)}
+arises from the \c{magrittr::\%>\%} function which is a pipe operator that pipes
+the output of previous command to the next one. The expression is evaluated in a
+custom environment to create a function binding for evaluating the components of
+the pipe.\c{String Vector} and \c{List} also arise from the same function when a
+string or a list is piped using the \c{\%>\%} function into the next expression.
+The \c{NULL} arises from \c{R6::generator\_funs} function when the \eval is
+passed a \c{NULL} argument by the \c{DataMask\_generator} package. The
 \c{c("default", "default2012", "default2011" ...} pattern arises from
-\c{copula::polyG} where it reflectively access the default expression
-for its formal parameter and evaluates it. The \c{force(..1)} and
-\c{alist(`spec`)} patterns occur in \c{glue::glue\_data} function
-which concatenates and interpolates strings. The two patterns occur
-because the function captures unevaluated unnamed arguments and maps
-the evaluation of \c{force(..1)} on them. The \c{force} function
-forces promises and returns the result of evaluation. The \c{inner}
-pattern arises from \c{glue::identity\_transformer} which enables the
-creation of custom transformation functions for affecting the
-interpolation and concatenation of input by the \c{glue} package.
+\c{copula::polyG} where it reflectively access the default expression for its
+formal parameter and evaluates it. The \c{force(..1)} and \c{alist(`spec`)}
+patterns occur in \c{glue::glue\_data} function which concatenates and
+interpolates strings. The two patterns occur because the function captures
+unevaluated unnamed arguments and maps the evaluation of \c{force(..1)} on them.
+The \c{force} function forces promises and returns the result of evaluation. The
+\c{inner} pattern arises from \c{glue::identity\_transformer} which enables the
+creation of custom transformation functions for affecting the interpolation and
+concatenation of input by the \c{glue} package.
 
 
 \section{Why do we Eval}
@@ -1213,19 +1155,18 @@ Yeah, why?
 \subsection{Can we do without?}
 
 
-We look at how \emph{consistent} the \c{expr} argument of \eval can
-be, \ie how many different types of the resolved \c{expr} there are
-per call sites. Most of the call sites, \ie \PercentMonomorphic, are
-\emph{consistent}, and this is similar to javascript. However, a few
-ones are highly \emph{polymorphic} (10 different types). They are the
-pipe operators \c{\%>\%}, \c{\%<>\%} and \c{\%\$\%} in package
-\emph{magrittr}. It is effectively used to compose functions on their
-first argument, which can be of any type.
+We look at how \emph{consistent} the \c{expr} argument of \eval can be, \ie how
+many different types of the resolved \c{expr} there are per call sites. Most of
+the call sites, \ie \PercentMonomorphic, are \emph{consistent}, and this is
+similar to javascript. However, a few ones are highly \emph{polymorphic} (10
+different types). They are the pipe operators \c{\%>\%}, \c{\%<>\%} and
+\c{\%\$\%} in package \emph{magrittr}. It is effectively used to compose
+functions on their first argument, which can be of any type.
 
-Similarly to JavaScript, there are also unnecessary uses of \eval. For
-example, the \c{PerformanceAnalytics} package contains a function
-\c{chart.QQPlot} that uses \eval to resolve a string into function and
-another to call it and assign its results into a variable:
+Similarly to JavaScript, there are also unnecessary uses of \eval. For example,
+the \c{PerformanceAnalytics} package contains a function \c{chart.QQPlot} that
+uses \eval to resolve a string into function and another to call it and assign
+its results into a variable:
 \begin{lstlisting}
 function (R, d="norm", dp, ...) {
 q.f <- eval(parse(text=paste("q",d,sep="")))
@@ -1242,23 +1183,6 @@ z <- q.f(dp, ...)
 \end{lstlisting}
   or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
-\subsection{Comparison with Javascript}
-
-
-
-
-\begin{table}[h]
-	\begin{tabularx}{\textwidth}{|X|X|X|X|X|}
-		\hline
-		& Julia & Javascript & Python & R \tabularnewline
-		\hline % lstlinline does not like tabular environments...
-		{\eval} & \texttt{eval(expr)} & \texttt{eval(expr)} & \texttt{eval(expr[, globals[, locals]])} &  \texttt{eval(expr[, envir[, enclos]])}  \tabularnewline
-		\hline
-		Environments &Global  & Local & Global or local  & Any \tabularnewline
-		\hline
-	\end{tabularx}
-	\caption{Relative power of \eval throughout languages: in which environment it can evaluate its expression.}
-\end{table}
 
 
 \section{Conclusion}
