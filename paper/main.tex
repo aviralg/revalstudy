@@ -784,15 +784,13 @@ Kaggle is dominated by \c{V}, with \kaggleMinimizedpropsitesa\% of the
 
 \subsection{The environments of \eval}
 
-The environment in which evaluation happens determines what will be visible to
-the computation started by \eval, and the potential reach of side-effects. The
-second argument to \eval, \c{envir}, defines the evaluation environment of the
-expression. That argument can be omitted, in which case the default value is
-\c{parent.frame()} which returns the caller of the \eval function.
-
-Other possible values for the environment include, lists, dataframes, pairlists,
-integers and \c{Null}. Lists and dataframe are coerced to new environments,
-integers values are passed to the \c{sys.call} function which returns the
+The environment in which evaluation happens determines what is visible to the
+computation started by \eval, and the potential reach of its side-effects. The
+second argument to \eval, \c{envir}, defines that environment. It can be
+omitted, in which case its defaults to \c{parent.frame()} which returns the
+caller's environment. Other possible values for \c{envir} include, lists,
+dataframes, pairlists, integers and \c{Null}. Lists and dataframe are coerced to
+new environments, integer values are passed to \c{sys.call} which returns the
 environment of a stack frame at the requested offset.
 
 
