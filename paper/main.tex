@@ -485,27 +485,28 @@ events~\cite{oopsla19b}.
 \mypara{Tracer.} The tracer registers callbacks to all \eval functions as well
 as a few other ones that allow us to better identify where do the expressions
 come from. For example, we taint the results of calls to \c{parse} (turns
-string into expression) and \c{match.call} (reflects on current call). We
-also capture calls to R API for dynamic code loading (\eg\xspace \c{library},
+string into expression) and \c{match.call} (reflects on current call). We also
+capture calls to R API for dynamic code loading (\eg\xspace \c{library},
 \c{require} and \c{source}). Next, we subscribe to the events related to a
 variable definition and assignment allowing us to record side effects that
 happen in environments while evaluating code in \eval. One challenge we
 encountered during the analysis was that essentially R only provides source
-references for top-level calls in a function body or in the block surrounded by
-braces. That is to say, a method whose body would \c{eval(x)} would not have
+references for top-level calls in a function body or in the block surrounded
+by braces. That is to say, a method whose body would \c{eval(x)} would not have
 debug information that we can use to identify that particular \eval. The same
 expression surrounded by braces would have a line number and source reference.
 This is unfortunately not easily fixed in the R implementation. Instead, we
 extended the dynamic analysis tool to attach synthetic source code references
 to all \eval call sites by traversing AST.  The tracer is implemented as an R
-package in 3.2K C++ and 1.3K of R code. For performance reasons, most of the
+package in 3.2K C++ and 1.3K of R code. For performance reason, most of the
 tracing is done in C++. While in theory the implementation is rather
 straightforward, what makes it hard in practice is that (1) some of the core R
 functionality such as package loading is implemented using \eval which then
 leaks to the tracer in unexpected places, (2) lazy evaluation makes it harder
-to analyze function arguments while tracing (3) running large amount of
-real-world code triggers exercises a lot of corner cases of highly
-underspecified R behavior.
+to analyze function arguments while tracing as prematurely forcing a promise
+might have consequences, and finally (3) running large amount of real-world
+code triggers exercises a lot of corner cases of highly underspecified R
+behavior.
 
 \mypara{Limitations.} The analysis has some limitation. Even with the extension
 described above, there are still \PkgUndefinedRnd \eval calls without source
@@ -518,6 +519,8 @@ alternate \c{rlang::tidy\_eval} function which uses native \eval internally.
 The \c{rlang} package introduces a new kind of promise called \c{quosure} which
 is evaluated by \c{tidy\_eval}. None of these limitation should invalidate our
 conclusions.
+
+\newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Usage Metrics}
@@ -558,7 +561,7 @@ that range. There are \Fewcalls packages with low \eval frequency, fewer than
 \eval more than 1,000 times.  One package, \Maxcallspack, calls it \Maxcalls
 times and thus accounts for over half of the observed calls.
 
-\begin{figure}[!h]
+\begin{figure}[b]
 
 \begin{tabular}{@{}l@{\hspace{1.5cm}}l@{}}
 \begin{minipage} {5cm}
@@ -593,7 +596,7 @@ calls, are to \eval itself, \c{eval.parent} is rare, and both \c{evalq} and
 \c{local} are barely used at all. The difference between sites and exercised
 sites underscores the limitations due to code coverage.
 
-\begin{wrapfigure}{r}{5.8cm}
+\begin{wrapfigure}{4}{5.8cm}
 \vspace{-4mm}
 \centering
   \begin{tabular}{|r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r|} \hline
