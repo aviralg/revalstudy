@@ -40,7 +40,7 @@
   application domain specific; we focus on data science code written
   in R, and compare our results to previous work that analyzed web
   programming in JavaScript. Dynamic analysis of a corpus of
-  \CranAllPackages libraries and \KaggleCode end-user code confirms that
+  \CranPackages libraries and \KaggleCode end-user code confirms that
   \eval is indeed in widespread use; R's \eval is more dangerous in
   some ways, and safer in others, than what was previously reported
   for JavaScript.
@@ -146,7 +146,7 @@ exposed at the source level. Dynamic analysis is limited, it can only observe
 behaviors triggered by the particular inputs passed to a program. Luckily, CRAN
 libraries come with many tests and use-cases. The choice of corpus is crucial.
 Our corpus has been constructed to reflect the levels of sophistication of the R
-community. We distinguish between \emph{CRAN packages} (\CranAllPackages curated
+community. We distinguish between \emph{CRAN packages} (\CranPackages curated
 packages that pass stringent quality checks and are equipped with tests and
 sample data) and \emph{Kaggle scripts} (\KaggleUnique end-user written programs
 that performs a particular data analysis task). It is reasonable to expect that
@@ -393,10 +393,13 @@ Our corpus is assembled from three sources: the \emph{Base} libraries that are
 bundled with the language implementation, packages hosted on \emph{CRAN} and
 scripts from \emph{Kaggle}.
 
-\mypara{Base.} The base dataset contains 13 core libraries performing basic
-arithmetics, statistics, and operating system related functionalities. These
-libraries are bundled with R and are executed pervasively.
-
+\mypara{Base.} The base dataset contains \BasePackages core libraries
+performing basic arithmetics, statistics, and operating system related
+functionalities. These libraries are bundled with R and are executed
+pervasively. Together they contain \BaseEvalCallSites calls to \eval in
+\BaseFunsWithEvals functions. Some of these functions provide basic R
+functionalities such as package loading and thus there is hardly any R code
+which does not invoke one of these \eval call sites.
 
 \mypara{CRAN.} The Comprehensive R Archive
 Network\footnote{\url{cran.r-project.org}} is the largest curated repository of
@@ -408,18 +411,16 @@ sample data. There are three sources of runnable code in a package: \emph{tests,
 examples} and \emph{vignettes} -- respectively, unit tests, code snippets from
 the documentation, and long-form use-cases written in RMarkdown.
 Examples and vignettes can be turned into scripts by extracting the relevant
-code. We obtained \CranPackages that call \eval. These packages represent
-\CranPackagesRatio of all packages or \CranCodeRatio of the entire code size of
-CRAN. From these we extracted \CranRunnableScripts scripts that contain
+code. From \CranPackages packages we extracted \CranRunnableScripts scripts that contain
 \CranRunnableCode lines of code (\CranRunnableCodeExamplesRnd in examples,
 \CranRunnableCodeVignettesRnd in vignettes and \CranRunnableCodeTestsRnd in
 tests).
 
-\mypara{Scripts.} Kaggle is an online platform for data
-science.\footnote{\url{kaggle.com}} It allows users to submit problems and
-compete to solve them. Solutions, called \emph{kernels}, are uploaded as plain
-scripts or notebooks. The quality of code on Kaggle is not uniform. Each kernel
-is runnable, and thus there is one script per kernel. Input data is provided. We
+\mypara{Kaggle.} The Kaggle website\footnote{\url{kaggle.com}} is an online
+platform for data science. It allows users to submit problems and compete to
+solve them. Solutions, called \emph{kernels}, are uploaded as plain scripts or
+notebooks. The quality of code on Kaggle is not uniform. Each kernel is
+runnable, and thus there is one script per kernel. Input data is provided. We
 obtained \KaggleKernels kernels. Since Kaggle is not curated, used SHA-1 hashes
 to identify and remove \KaggleDuplicates duplicate entries. The remaining
 \KaggleUnique kernels are unique solutions to \KaggleCompetitions competition.
@@ -462,6 +463,8 @@ and shared OCFS network storage. The pipeline steps are:
   capture \eval calls originating from package code, and a second time to
   capture calls coming from the base libraries. To avoid any interference, each
   program is run in its own process.
+  As the GNU R bytecode compiler is written in R, we turn it off
+  to avoid recording \eval in its code, and fallback on the interpreter.
 \item \emph{Analyze.} Finally, analysis output is merged, cleaned and summarized
   in a post-processing phase driven by series of R scripts. The summarized data
   is then analyzed in RMarkdown notebooks to gather insights. All figures and
@@ -469,60 +472,91 @@ and shared OCFS network storage. The pipeline steps are:
   produced in PDF by \c{ggplot2}, numbers are exported as \LaTeX macros.
 \end{compactenum}
 
-\medskip\noindent
-The code extraction and tracing steps of the pipeline are run in
-parallel~\cite{GNUparallel}. Servers have identical environment thanks to docker
-images with all dependencies installed. The pipeline consists of 3.5K lines of
-Make, R and shell scripts.
+\medskip\noindent The code extraction and tracing steps of the pipeline are run
+in parallel~\cite{GNUparallel} orchestrated by a Makefile. Servers have
+identical environment thanks to docker images with all dependencies installed.
 
-\subsection{Analysis}
+\subsection{Dynamic Analysis}
 
 The dynamic analysis is performed by \rdyntrace, a modified R virtual machine
 based on GNU R 4.0.2 that exposes low-level callbacks for a variety of runtime
-events~\cite{oopsla19a}. As the GNU R bytecode compiler is written in R, we turn
-it off to avoid recording \eval in its code, and fallback on the interpreter.
-This study requires recording a large number of events, calls to \eval,
-side-effects, function entries and exits, environments, etc. One challenge we
-encountered during the analysis was that R does not produce source references
-for top-level blocks. That is to say, a method whose body would \c{eval(x)}
-would not have debug information that we can use to identify that particular
-\eval. The same expression surrounded by braces would have a line number and
-source reference. This is unfortunately not easily fixed in the R
-implementation. Instead, we extended the dynamic analysis tool to add missing
-source references heuristically.
+events~\cite{oopsla19b}.
 
-The analysis has some limitation. Even with the extension described above, there
-are still \CranUndefinedRnd \eval calls without source references. This occurs
-when a reference to the \eval function is passed as argument to a higher-order
-functions or when the \eval call originates from native code. However, these
-missing source references account for a meager \CranUndefinedRatio of all calls;
-they are unlikely to affect our results. Other limitations are that we ignore
-calls to the native \eval function and to the alternate \c{rlang::tidy\_eval}
-function which uses native \eval internally. The \c{rlang} package introduces a
-new kind of promise called \c{quosure} which is evaluated by \c{tidy\_eval}.
-None of these limitation should invalidate our conclusions.
+\mypara{Tracer.} The tracer registers callbacks to all \eval functions as well
+as a few other ones that allow us to better identify where do the expressions
+come from. For example, we taint the results of calls to \c{parse} (turns
+string into expression) and \c{match.call} (reflects on current call). We
+also capture calls to R API for dynamic code loading (\eg\xspace \c{library},
+\c{require} and \c{source}). Next, we subscribe to the events related to a
+variable definition and assignment allowing us to record side effects that
+happen in environments while evaluating code in \eval. One challenge we
+encountered during the analysis was that essentially R only provides source
+references for top-level calls in a function body or in the block surrounded by
+braces. That is to say, a method whose body would \c{eval(x)} would not have
+debug information that we can use to identify that particular \eval. The same
+expression surrounded by braces would have a line number and source reference.
+This is unfortunately not easily fixed in the R implementation. Instead, we
+extended the dynamic analysis tool to attach synthetic source code references
+to all \eval call sites by traversing AST.  The tracer is implemented as an R
+package in 3.2K C++ and 1.3K of R code. For performance reasons, most of the
+tracing is done in C++. While in theory the implementation is rather
+straightforward, what makes it hard in practice is that (1) some of the core R
+functionality such as package loading is implemented using \eval which then
+leaks to the tracer in unexpected places, (2) lazy evaluation makes it harder
+to analyze function arguments while tracing (3) running large amount of
+real-world code triggers exercises a lot of corner cases of highly
+underspecified R behavior.
 
-\newpage
+\mypara{Limitations.} The analysis has some limitation. Even with the extension
+described above, there are still \PkgUndefinedRnd \eval calls without source
+references. This occurs when a reference to the \eval function is passed as
+argument to a higher-order functions or when the \eval call originates from
+native code. However, these missing source references account for a meager
+\PkgUndefinedRatio of all calls; they are unlikely to affect our results. Other
+limitations are that we ignore calls to the native \eval function and to the
+alternate \c{rlang::tidy\_eval} function which uses native \eval internally.
+The \c{rlang} package introduces a new kind of promise called \c{quosure} which
+is evaluated by \c{tidy\_eval}. None of these limitation should invalidate our
+conclusions.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Usage Metrics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\begin{wrapfigure}{r}{5cm} \hspace*{-12mm}
+  \includegraphics[width=75mm]{pkgs-eval-callsites-hist.pdf} \caption{CRAN
+  \eval call sites}%
+  \label{fig:pkgs-eval-callsites-hist}
+\end{wrapfigure}
+%
 This section focuses on CRAN packages and reports statistics about the usage of
-\eval. Calls to \eval appear in {\bf 28\%} of the packages hosted on CRAN. There
-are \Corpus packages with an \eval, all programs extracted from these packages
-were executed, any run that did not exercise one of the \eval call sites in the
-packages was discarded. This left \Nbruns runs of some of the \Corpus packages
-to generate the data presented here. There were \Allcalls invocations of \eval
-and its variants occurring in \Triggeredpkgs packages.\footnote{Not all packages
-with static call sites of \eval were observed triggering that call site, this
-can be chalked down to incomplete code coverage and occasional infrastructure
-failures of our analysis infrastructure.} Figure~\ref{freq} summarizes the
-frequency of dynamic calls to \eval with the left column being the number of
-calls and the right, the number of packages in that range. There are \Fewcalls
-packages with low \eval frequency, fewer than 100 calls; and a similar number of
-packages, \Manycalls to be precise, that use \eval more than 1,000 times. One
-package, \Maxcallspack, calls it \Maxcalls times and thus accounts for over half
-of the observed calls.
+\eval. There are \PkgEvalCallSites calls to \eval in \PkgPackages packages.
+These represent \PkgPackagesRatio of all packages or \PkgCodeRatio of the
+entire code size of CRAN. Over half of the packages have less than 3 \eval
+call sites and except \MaxEvalCallSitesPackage (\MaxEvalCallSitesCount \eval
+calls), all packages contain less than \MaxEvalCallSitesRest \eval call sites
+(\cf Fig~\ref{fig:pkgs-eval-callsites-hist}) These \eval calls appear in
+\PkgFunsWithEval R functions (\CranFunsWithEvalRatio of all R functions in
+CRAN).
+
+For the dynamic analysis, we execute all the \CranRunnableScripts programs
+extracted from \CranPackages packages. Any run that did not exercise one of the
+\eval call sites in the packages was discarded. This left \Nbruns runs of some
+of the \Corpus packages to generate the data presented here. There were
+\Allcalls invocations of \eval and its variants occurring in \Triggeredpkgs
+packages. Out of \PkgEvalCallSitesRnd \eval call sites, \PkgHitEvalCallSites
+were hit at least once\footnote{Not all packages with static call sites of
+\eval were observed triggering that call site, this can be chalked down to
+incomplete code coverage and occasional tracer failure (\PkgFailedProgramsRatio
+of programs do not terminate successfully or within 30 minute timeout).}. On
+average, the analysis covers \PkgHitEvalCallSitesAvgRatio of package \eval call
+sites, which similar to the \PkgCodeCoverage of average package code coverage.
+Figure~\ref{freq} summarizes the frequency of dynamic calls to \eval with the
+left column being the number of calls and the right, the number of packages in
+that range. There are \Fewcalls packages with low \eval frequency, fewer than
+100 calls; and a similar number of packages, \Manycalls to be precise, that use
+\eval more than 1,000 times.  One package, \Maxcallspack, calls it \Maxcalls
+times and thus accounts for over half of the observed calls.
 
 \begin{figure}[!h]
 
@@ -549,6 +583,16 @@ of the observed calls.
 \end{tabular}~\\[2mm]\caption{Variants}\label{tab:variantseval}
 \end{minipage}\end{tabular}\end{figure}
 
+
+Figure~\ref{tab:variantseval} enumerate the use of variants of \eval. For each
+of the four variants, the first rows shows the number of call sites in the
+corpus (\emph{static}), the second row is the number of call sites that were
+encountered during analysis (\emph{exercised}), the last row is the number of
+calls (\emph{invocations}). The overwhelming majority of call sites and dynamic
+calls, are to \eval itself, \c{eval.parent} is rare, and both \c{evalq} and
+\c{local} are barely used at all. The difference between sites and exercised
+sites underscores the limitations due to code coverage.
+
 \begin{wrapfigure}{r}{5.8cm}
 \vspace{-4mm}
 \centering
@@ -572,16 +616,6 @@ of the observed calls.
 \vspace{-2mm} \caption{Normalized invocations} \label{cn}\vspace{-2mm}
 \end{wrapfigure}
 
-
-Figure~\ref{tab:variantseval} enumerate the use of variants of \eval. For each
-of the four variants, the first rows shows the number of call sites in the
-corpus (\emph{static}), the second row is the number of call sites that were
-encountered during analysis (\emph{exercised}), the last row is the number of
-calls (\emph{invocations}). The overwhelming majority of call sites and dynamic
-calls, are to \eval itself, \c{eval.parent} is rare, and both \c{evalq} and
-\c{local} are barely used at all. The difference between sites and exercised
-sites underscores the limitations due to code coverage.
-
 Figure~\ref{cn}(a) shows normalized invocation counts per call site; on the left
 are average number of calls from a given site and given run, on the right are
 counts of sites that fall in that range. For instance, \Runbinh sites are
@@ -602,11 +636,6 @@ most symbols, \Ggplotsymbolpercent to be exact, come from a single call in the
 \c{ggplot2} package and have have the value \c{\_inherit}. Even if we remove
 this outlier, the majority of \evals are simple expressions.
 
-\begin{wrapfigure}{r}{5.8cm}
- \includegraphics[width=0.5\textwidth, trim=4.8cm 0 6cm 0, clip]{size_loaded_distribution}
-\caption{Loaded code} \label{fig:sizedistribution}
-\end{wrapfigure}
-
 To estimate how much executable code is injected through \eval, we measure the
 the number of abstract syntax tree nodes as returned by the parser; for example,
 \c{x+1} counts as 3.\footnote{We attempted to measure string lengths after
@@ -615,11 +644,18 @@ objects, which could range in the MBs.} The median argument size is
 \Medianszeval (due to the many symbols) and the average is \Avgszeval nodes. The
 largest \eval input observed is \Maxszeval\,-- a significant chunk of code.
 Figure~\ref{fig:sizedistribution} shows the distribution of sizes for arguments
-of fewer or equal to 25 nodes. The x-axis is the size of arguments in number of
+of fewer or equal to 25 nodes.
+%
+\begin{wrapfigure}{r}{5.8cm}
+ \hspace*{-10mm}
+ \includegraphics[width=0.5\textwidth, trim=4.8cm 0 6cm 0, clip]{size_loaded_distribution}
+ \caption{Loaded code} \label{fig:sizedistribution}
+\end{wrapfigure}
+%
+The x-axis is the size of arguments in number of
 nodes, and the y-axis is the count of arguments with that size. The size drops
 rapidly, with few observations larger than 15 nodes. The long tail is omitted
 from the graph for legibility.
-
 
 To estimate the work performed in \evals, we count the instructions executed by
 interpreter. Most invocations perform relatively little work with
@@ -628,7 +664,7 @@ Figure~\ref{ev}(a) corresponds to \evals executing $\leq$ 50 instructions, it is
 dominated by trivial symbol look ups. Figure~\ref{ev}(b) has the work-intensive
 \evals which go all the way to \MaxeventsRnd instructions.
 
-\begin{figure}[h!]
+\begin{figure}[tb!]
 \begin{tabular}{@{}c@{}c@{}}
 \begin{minipage}{7.5cm}
  \includegraphics[width=\textwidth]{events_per_pack_small}

@@ -2,8 +2,9 @@
 # PATHS
 ################################################################################
 
-DATA_DIR  <- params$base_dir
-PACKAGE_DATA_DIR  <- path(DATA_DIR, "package")
+DATA_DIR         <- params$base_dir
+BASE_DATA_DIR  <- path(DATA_DIR, "base")
+PACKAGE_DATA_DIR <- path(DATA_DIR, "package")
 KAGGLE_DATA_DIR  <- path(DATA_DIR, "kaggle")
 
 PAPER_DIR <- path("..", "paper")
@@ -13,13 +14,15 @@ TAGS_DIR  <- path(PAPER_DIR, "tag")
 if (!dir_exists(PLOT_DIR)) dir_create(PLOT_DIR)
 if (!dir_exists(TAGS_DIR)) dir_create(TAGS_DIR)
 
-CORPUS_ALL_FILE <- path(DATA_DIR, "corpus-all.fst")
-CORPUS_FILE <- path(DATA_DIR, "corpus.fst")
+BASE_CORPUS_FILE       <- path(BASE_DATA_DIR, "corpus.txt")
+BASE_EVALS_STATIC_FILE <- path(BASE_DATA_DIR, "evals-static.csv")
 
-PACKAGE_SUM_CALLS_FILE <- path(PACKAGE_DATA_DIR, "summarized.fst")
-PACKAGE_UNDEFINED_FILE <- path(PACKAGE_DATA_DIR, "undefined.fst")
-PACKAGE_EVALS_STATIC_FILE <-path(PACKAGE_DATA_DIR, "evals-static.csv")
-PACKAGE_CODE_FILE <- path(PACKAGE_DATA_DIR, "code.fst")
+PACKAGE_CORPUS_FILE       <- path(PACKAGE_DATA_DIR, "corpus.fst")
+PACKAGE_SUM_CALLS_FILE    <- path(PACKAGE_DATA_DIR, "summarized.fst")
+PACKAGE_UNDEFINED_FILE    <- path(PACKAGE_DATA_DIR, "undefined.fst")
+PACKAGE_EVALS_STATIC_FILE <- path(PACKAGE_DATA_DIR, "evals-static.csv")
+PACKAGE_CODE_FILE         <- path(PACKAGE_DATA_DIR, "code.fst")
+PACKAGE_TRACE_LOG_FILE    <- path(PACKAGE_DATA_DIR, "trace-log.csv")
 
 KAGGLE_KERNEL_FILE <- path(KAGGLE_DATA_DIR, "kernel.csv")
 KAGGLE_EVALS_STATIC_FILE <- path(KAGGLE_DATA_DIR, "evals-static.csv")
