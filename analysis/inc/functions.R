@@ -37,3 +37,9 @@ classify_exitval <- function(x) {
     TRUE      ~ str_c("Failure: ", x)
   )
 }
+
+cs_count <- function(df, ...) {
+  n_rows = nrow(df)
+  count(df, ..., sort=TRUE) %>%
+    mutate(p=n/n_rows*100, cp=cumsum(p))
+}

@@ -1,5 +1,5 @@
 ---
-title: "Usage metrics"
+title: "Corpus"
 output:
     html_document:
         gallery: false
@@ -49,49 +49,54 @@ theme_set(theme_minimal())
 ## Load data
 
 ```{r load corpus}
-CRAN_eval_traces <- 
+PKG_S <- 
   read_fst(PACKAGE_SUM_CALLS_FILE) %>%
   # remove evals that are inside the scripts,
-  # for CRAN we are only interested in evals in packages
+  # for PKG_C we are only interested in evals in packages
   filter(!str_starts(eval_call_srcref, "::global::main")) %>% 
   as_tibble()
 
-CRAN_eval_traces_per_package <- 
-  count(CRAN_eval_traces, caller_package, eval_call_srcref) %>%
+PKG_evals_per_package <- 
+  count(PKG_S, caller_package, eval_call_srcref) %>%
   count(caller_package) %>% 
-  rename(package=caller_package, evals_hit=n)
+  rename(
+    package=caller_package, 
+    evals_hit=n
+  )
 
-ALL_CRAN <- 
-  read_fst(CORPUS_ALL_FILE) %>%
-  mutate_if(is.numeric, replace_na, 0) %>%
-  mutate(evals=as.integer(evals)) %>% 
-  filter(loadable, package_code > 0) %>% 
-  as_tibble()
-
-CRAN <- 
-  read_fst(CORPUS_FILE) %>%
-  filter(package_code > 0) %>%
-  left_join(CRAN_eval_traces_per_package, by="package") %>% 
+CRAN_C <- 
+  read_fst(PACKAGE_CORPUS_FILE) %>%
   mutate_if(is.numeric, replace_na, 0) %>%
   mutate(
-    evals=as.integer(evals),
+    evals=as.integer(evals), 
+    package_code=package_native_code + package_r_code
+  ) %>%
+  filter(loadable) %>% 
+  as_tibble()
+
+PKG_C <- 
+  CRAN_C %>%
+  filter(in_corpus, package_code > 0) %>%
+  left_join(PKG_evals_per_package, by="package") %>% 
+  mutate(
     evals_hit=as.integer(evals_hit),
     # this is the case when there is eval in package loading code
     # this we will always run
     evals_hit=if_else(evals_hit > evals, evals, evals_hit),
     evals_coverage=evals_hit/evals
   ) %>% 
+  mutate_if(is.numeric, replace_na, 0) %>%
   as_tibble()
 
-ALL_CRAN_eval_callsites <- 
+CRAN_E <- 
   read_csv(PACKAGE_EVALS_STATIC_FILE) %>% 
   # TODO: There are very few NA, plus when srcref is NA, the rest of the row in NA
   # we should look at this
   filter(!is.na(srcref))
 
-CRAN_eval_callsites <- semi_join(ALL_CRAN_eval_callsites, CRAN, by="package")
+PKG_E <- semi_join(CRAN_E, PKG_C, by="package")
 
-ALL_KAGGLE <- local({
+KAGGLE_ALL <- local({
   kernels <- read_csv(KAGGLE_KERNEL_FILE)
   evals <- read_csv(KAGGLE_EVALS_STATIC_FILE) %>% count(package) %>% rename(evals=n)
   left_join(kernels, evals, by="package") 
@@ -100,80 +105,156 @@ ALL_KAGGLE <- local({
   mutate(evals=as.integer(evals)) %>% 
   as_tibble()
 
-KAGGLE <- filter(ALL_KAGGLE, evals > 0)
+KAGGLE <- filter(KAGGLE_ALL, evals > 0)
 
-UNDEFINED <- 
+PKG_undefined <- 
   read_fst(PACKAGE_UNDEFINED_FILE) %>% 
   as_tibble()
+
+TRACE_LOG <- read_csv(PACKAGE_TRACE_LOG_FILE, col_types = cols(
+  Seq = col_double(),
+  Host = col_character(),
+  Starttime = col_double(),
+  JobRuntime = col_double(),
+  Send = col_double(),
+  Receive = col_double(),
+  Exitval = col_double(),
+  Signal = col_double(),
+  Command = col_character(),
+  V1 = col_character(),
+  Stdout = col_logical(),
+  Stderr = col_logical()
+))
+
+BASE_packages <- read_lines(BASE_CORPUS_FILE)
+BASE_evals_per_package <- read_csv(BASE_EVALS_STATIC_FILE, col_types = cols(
+  package = col_character(),
+  fun_name = col_character(),
+  srcref = col_character(),
+  call_fun_name = col_character(),
+  args = col_character()
+))
+
+BASE_C <- 
+  tibble(package=BASE_packages) %>%
+  left_join(rename(count(BASE_evals_per_package, package), evals=n), by="package") %>%
+  left_join(rename(count(BASE_evals_per_package, package, fun_name) %>% count(package), funs_with_eval=n), by="package")
 ```
 
 ## Overview
 
-### Cran
+```{r}
+overview_table(
+  r("base packages", BASE_C),
+  r("base eval call sites", sum(BASE_C$evals)),
+  r("base funs with evals", sum(BASE_C$funs_with_eval)),
+)
+```
+
+
+### Packages
 
 ```{r}
-cran_all_funs <- sum(ALL_CRAN$funs_public) + sum(ALL_CRAN$funs_private)
-cran_funs <- sum(CRAN$funs_public) + sum(CRAN$funs_private)
-cran_funs_with_eval <- sum(CRAN$funs_with_eval)
-cran_code <- sum(CRAN$package_code)
-cran_all_code <- sum(ALL_CRAN$package_code)
-cran_evals <- CRAN$evals
-cran_evals_hit <- CRAN$evals_hit
-cran_runnable_code <- sum(ALL_CRAN$runnable_code)
-cran_eval_calls <- sum(CRAN_eval_traces$nb_ev_calls)
+cran_funs          <- sum(CRAN_C$funs_public) + sum(CRAN_C$funs_private)
+cran_code          <- sum(CRAN_C$package_code)
+cran_r_code        <- sum(CRAN_C$package_r_code)
+cran_native_code   <- sum(CRAN_C$package_native_code)
+cran_runnable_code <- sum(CRAN_C$runnable_code)
+
+pkg_funs           <- sum(PKG_C$funs_public) + sum(PKG_C$funs_private)
+pkg_funs_with_eval <- sum(PKG_C$funs_with_eval)
+pkg_code           <- sum(PKG_C$package_code)
+pkg_r_code         <- sum(PKG_C$package_r_code)
+pkg_native_code    <- sum(PKG_C$package_native_code)
+pkg_evals          <- PKG_C$evals
+pkg_evals_hit      <- PKG_C$evals_hit
+pkg_runnable_code  <- sum(PKG_C$runnable_code)
+pkg_eval_calls     <- sum(PKG_S$nb_ev_calls)
+
+pkg_failed_programs <- filter(TRACE_LOG, Exitval > 1)
 
 overview_table(
-  r("CRAN available packages", 15962), #length(available.packages()[,1])), # from the CRAN mirror
-  r("CRAN all packages", ALL_CRAN),
-  r("CRAN packages", CRAN),
-  r("CRAN packages ratio", ratio(CRAN, ALL_CRAN)),
-  r("CRAN all code", cran_all_code),
-  r("CRAN all r code", sum(ALL_CRAN$package_r_code)),
-  r("CRAN all native code", sum(ALL_CRAN$package_native_code)),
+  r("CRAN available packages", 15962), #length(available.packages()[,1])), # from the PKG_C mirror
+  r("CRAN packages", CRAN_C),
+  r("PKG packages", PKG_C),
+  r("PKG packages ratio", ratio(PKG_C, CRAN_C)),
   r("CRAN code", cran_code),
-  r("CRAN code ratio", ratio(cran_code, cran_all_code)),
-  r("CRAN all funs", cran_all_funs),
+  r("CRAN r code", sum(CRAN_C$package_r_code)),
+  r("CRAN native code", sum(CRAN_C$package_native_code)),
+  r("PKG code", pkg_code),
+  r("PKG code ratio", ratio(pkg_code, cran_code)),
+  r("PKG r code", pkg_r_code),
+  r("PKG r code ratio", ratio(pkg_r_code, cran_r_code)),
+  r("PKG native code", pkg_native_code),
+  r("PKG native code ratio", ratio(pkg_native_code, cran_native_code)),
   r("CRAN funs", cran_funs),
-  r("CRAN funs with eval", cran_funs_with_eval),
-  r("CRAN funs with eval ratio", ratio(cran_funs_with_eval, cran_funs)),
-  r("CRAN all funs with eval ratio", ratio(cran_funs_with_eval, cran_all_funs)),
-  r("CRAN eval call sites", sum(cran_evals)),
-  r("CRAN hit eval call sites", sum(cran_evals_hit)),
-  r("CRAN hit eval call sites avg ratio", percent(mean(cran_evals_hit/cran_evals))),
-  r("CRAN runnable scripts", sum(ALL_CRAN$runnable_files)),
+  r("PKG funs", pkg_funs),
+  r("PKG funs with eval", pkg_funs_with_eval),
+  r("PKG funs with eval ratio", ratio(pkg_funs_with_eval, pkg_funs)),
+  r("CRAN funs with eval ratio", ratio(pkg_funs_with_eval, cran_funs)),
+  r("PKG eval call sites", sum(pkg_evals)),
+  r("PKG hit eval call sites", sum(pkg_evals_hit)),
+  r("PKG hit eval call sites avg ratio", percent(mean(pkg_evals_hit/pkg_evals))),
+  r("PKG code coverage", percent(mean(PKG_C$coverage)/100)),
+  r("CRAN code coverage", percent(mean(CRAN_C$coverage)/100)),
+  r("CRAN runnable scripts", sum(CRAN_C$runnable_files)),
   r("CRAN runnable code", cran_runnable_code),
-  r("CRAN runnable code examples", sum(ALL_CRAN$runnable_code_examples)),
-  r("CRAN runnable code tests", sum(ALL_CRAN$runnable_code_tests)),
-  r("CRAN runnable code vignettes", sum(ALL_CRAN$runnable_code_vignettes)),
-  r("CRAN undefined", UNDEFINED),
-  r("CRAN undefined ratio", ratio(nrow(UNDEFINED), cran_eval_calls))
+  r("CRAN runnable code examples", sum(CRAN_C$runnable_code_examples)),
+  r("CRAN runnable code tests", sum(CRAN_C$runnable_code_tests)),
+  r("CRAN runnable code vignettes", sum(CRAN_C$runnable_code_vignettes)),
+  r("PKG undefined", PKG_undefined),
+  r("PKG undefined ratio", ratio(PKG_undefined, pkg_eval_calls)),
+  r("PKG failed programs", pkg_failed_programs),
+  r("PKG failed programs ratio", ratio(pkg_failed_programs, TRACE_LOG))
 )
 ```
 
 ### Kaggle
 
 ```{r}
-kaggle <- distinct(ALL_KAGGLE, hash, .keep_all=TRUE)
+kaggle <- distinct(KAGGLE_ALL, hash, .keep_all=TRUE)
 kaggle_code <- sum(kaggle$code)
 kaggle_evals <- filter(kaggle, evals > 0)
 kaggle_evals_code <- sum(kaggle_evals$code)
 
 overview_table(
-  r("Kaggle kernels", ALL_KAGGLE),
-  r("Kaggle duplicates", nrow(ALL_KAGGLE)-nrow(kaggle)),
+  r("Kaggle kernels", KAGGLE_ALL),
+  r("Kaggle duplicates", nrow(KAGGLE_ALL)-nrow(kaggle)),
   r("Kaggle unique", kaggle),
   r("Kaggle code", kaggle_code),
   r("Kaggle competitions", count(kaggle, competition)),
   r("Kaggle with evals", kaggle_evals),
-  r("Kaggle with evals code", ratio(kaggle_evals_code, kaggle_code))
+  r("Kaggle with evals code", kaggle_evals_code),
+  r("Kaggle with evals code ratio", ratio(kaggle_evals_code, kaggle_code))
 )
 ```
+
+```{r}
+cs_count(PKG_C, evals)
+```
+
+### Details
+
+```{r}
+max_eval_cs_idx <- which.max(PKG_C$evals)
+max_eval_cs_package <- PKG_C$package[max_eval_cs_idx]
+max_eval_cs_count <- PKG_C$evals[max_eval_cs_idx]
+
+
+overview_table(
+  r("PKG eval call sites median", median(PKG_C$evals)),
+  r("Max eval call sites count", max_eval_cs_count),
+  r("Max eval call sites package", max_eval_cs_package),
+  r("Max eval call sites rest", round(max(PKG_C$evals[-max_eval_cs_idx])/100)*100)
+)
+```
+
 
 ### All
 
 ```{r}
 overview_table(
-  r("Corpus code", kaggle_code + cran_runnable_code)
+  r("Corpus code", kaggle_code + pkg_runnable_code)
 )
 ```
 
@@ -198,17 +279,18 @@ The dynamic analysis traced `r fmt(ratio(filter(matched_eval_callsites, hit>0), 
 ### Plot
 
 ```{r}
-eval_call_sites_hist <- function(df, df_all, y_lab, max_evals=15L) {
+eval_call_sites_hist <- function(df, df_all, y_lab, max_evals=20L) {
+  median_evals <- median(df$evals)
   df %>% 
     mutate(
-      evals=if_else(evals < max_evals, evals, max_evals)
+      evals=ifelse(evals < max_evals, evals, max_evals)
     ) %>%
     ggplot(aes(x=evals)) + 
     geom_histogram(binwidth=1, color="black", fill="blue", alpha=0.3) +
-    geom_vline(aes(xintercept=mean(df$evals)), linetype="dashed", color="red", size=0.2) +
+    geom_vline(aes(xintercept=median_evals), linetype="dashed", color="red", size=0.2) +
     scale_x_continuous(
       limits=c(0, max_evals + 1), 
-      breaks=as.integer(seq(1, 15, length.out=4)), 
+      breaks=as.integer(sort(c(seq(1, max_evals, length.out=4), round(median_evals)))), 
       labels=function(x) c(head(x, -1), str_c(tail(x, 1), "+"))
     ) +
     scale_y_continuous(
@@ -218,13 +300,14 @@ eval_call_sites_hist <- function(df, df_all, y_lab, max_evals=15L) {
         labels=scales::percent_format(accuracy=.1), 
         name=y_lab)
     ) +
-    labs(x = "Eval call sites", y=y_lab) +
-    theme(text = element_text(size=17),
+    labs(y=y_lab) +
+    theme(text = element_text(size=21),
+          axis.title.x = element_blank(),
           panel.grid.minor.x = element_blank(), aspect.ratio = 4/3) 
 }
 
-eval_call_sites_hist(CRAN, ALL_CRAN, "CRAN packages")
-#ggsave(path(PLOT_DIR, "cran-eval-callsites-hist.pdf"))
-eval_call_sites_hist(KAGGLE, ALL_KAGGLE, "KAGGLE programs")
-#ggsave(path(PLOT_DIR, "kaggle-eval-callsites-hist.pdf"))
+eval_call_sites_hist(PKG_C, CRAN_C, "CRAN packages")
+ggsave(path(PLOT_DIR, "pkgs-eval-callsites-hist.pdf"))
+eval_call_sites_hist(KAGGLE, KAGGLE_ALL, "KAGGLE programs")
+ggsave(path(PLOT_DIR, "kaggle-eval-callsites-hist.pdf"))
 ```
