@@ -939,7 +939,12 @@ evaluation of the rest of the function. For instance, it can inject a \c{break} 
 \mypara{Purity.} Conclude with number of evals that are ``pure'', i.e. evals
 which could be ignored by a static analyzer without any problem.
 
-\mypara{Source.}
+\mypara{Source.} % rename to provenance
+
+% Substitute/match.call
+% parse/expression
+% bytecode?
+
 There are various ways to obtain expressions:
 \begin{itemize}
   \item \c{substitute} synthesizes ASTs from expressions by replacing
@@ -971,18 +976,44 @@ prompts the user for input, parses it, and passes it to \eval.
 
 
 
-\section{\eval patterns and anti-patterns}
+\section{Usage of \eval}
 
 
-\subsection{Evaluating variables in a specific environment}
+We present here the main uses of \eval we have witnessed in R. Sometimes, they are design patterns, sometimes, \eval could be replaced by more specific functions. For each use of \eval, we discuss whether it is necessary to use.
+
+\subsection{Variable lookup}
+
+\eval is used to look-up the value of a variable in a given environment, different from the current scope so the \c{envir} argument of \eval is explicitly specified.
+
+% TODO: numbers on the prevalence of the pattern
+
+\eval is not necessary in that case and can be replaced by \c{get}, as follows:
+
+\begin{lstlisting}
+ eval(quote(x), envir = env)
+\end{lstlisting}
+$\Downarrow$
+\begin{lstlisting}
+get("x", envir = env)
+\end{lstlisting}
+
+% This is actually linked to NSE, as the symbol given to \eval usually comes
+% from match.call or susbtitute
+
+\subsection{Non-Standard Evaluation} % Or metaprogramming
+
+\subsection{\c{substitute}}
 
 \subsection{\c{match.call}}
 
-\subsection{Meta-programming}
+
+
 
 \subsection{Logging}
 
 \subsection{Code transform}
+
+% Derivation of symbolic expressions
 
 \subsection{Plotting}
 
