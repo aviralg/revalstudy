@@ -1072,7 +1072,7 @@ prompts the user for input, parses it, and passes it to \eval.
 
 % The Thomas Lumley's article, Programmer's Niche: Macros in R, (https://www.r-project.org/doc/Rnews/Rnews_2001-3.pdf) describes how to write a `defmacro` function that would like as a macro creator, using `substitute` and `eval`.  There are no local macro variables in this implementation though.
 
-The R language was intended to be extensible, the combination of lazy
+The R language was intended to be extensible. The combination of lazy
 evaluation, \c{substitute} and \c{eval} are the tools given to
 developers to this end. This API is slightly more complex than just
 passing a string, it is conceivable that this may discourage some
@@ -1080,27 +1080,24 @@ casual users. \Eval is also being used to reduce boilerplate code and
 provide convenience features for programmers. We now give some
 representative examples of its usage.
 
-\mypara{Intercession.} A common use case for \eval is to be combined with
-\c{match.call}. \c{match.call} walks up the call stack, captures the code that
-invoked the currently executing function, and returns it as an unevaluated
-expression. The pattern is to transform a call to some function \c{f} into a
-call to \c{g} with some arguments retained and others modified. As an
+\mypara{Intercession.} \todo{Pierre: update wrt the previous section if we want
+to keep it. Also perhaps we could start with a simpler pattern and then show
+this one} A common use case for \eval is to be combined with \c{match.call}.
+\c{match.call} walks up the call stack, captures the code that invoked the
+currently executing function, and returns it as an unevaluated expression. The
+pattern is to transform a call to some function \c{f} into a call to \c{g} with
+some arguments retained and others modified.  \todo{or change the target
+function. Both are described as "patterns" in the R documentation.} As an
 illustration, consider the \c{vcpart} package's function \c{tvcglm} that is
 translated to a call to \c{tvcm} with two modifications to the argument list:
-argument \c{control} can't be missing and \c{fit} is set \c{"glm"}. The function
-ends with a call to \c{eval.parent} to ensure that the rewritten call is
-evaluted in the same environment the original call was.
-\begin{lstlisting}
- tvcglm <- function(formula, data, family, ...) {
-   k <- match.call()
-   k[[1]] <- as.name("tvcm")
-   if ("fit" %in% names(list(...))) warning("'fit' ignored.")
-   k$fit <- "glm"
-   eval.parent(k)
- }
-\end{lstlisting}
-This pattern is recognizable by the fact that the expression is a call
-and the target environment is that of the parent.
+argument \c{control} can't be missing and \c{fit} is set \c{"glm"}. The
+function ends with a call to \c{eval.parent} to ensure that the rewritten call
+is evaluted in the same environment the original call was.  \begin{lstlisting}
+tvcglm <- function(formula, data, family, ...) { k <- match.call() k[[1]] <-
+as.name("tvcm") if ("fit" %in% names(list(...))) warning("'fit' ignored.")
+k$fit <- "glm" eval.parent(k) } \end{lstlisting} This pattern is recognizable
+by the fact that the expression is a call and the target environment is that of
+the parent.
 
 \mypara{Code Generation.} The more traditional use of \eval is to execute code
 that was assembled by the programmer into a string. Here we show the method
@@ -1108,25 +1105,21 @@ that was assembled by the programmer into a string. Here we show the method
 explanatory purposes. The function takes a long argument list, the names of
 which are captured in the list \c{opt}. The string \c{stub} is composed of a
 subset of the arguments passed to this function; the variable is used to
-construct a call to \c{base::plot} which will draw a plot. \NOTE{This example is
-  a bit messed up. What is var? Does the use of ... in the eval grab the
-  arguments of this call? If yes does it not end up with xlab twice? HELP} The
-\parse and \eval combination is used by the the \source function in the base
-library to load R code from a file in the current workspace.
-\begin{lstlisting}
- plot.sback <- function(x,...) {
-   opt <- names(list(...))
-   stub <- paste(
-    ifelse("xlab" %in% opt,"",paste(",xlab=\"",var,"\"",sep="")),
-    ifelse("type" %in% opt,"",",type=\"l\""), sep="")
-   plot <- paste("plot(x.data,",stub,",...)",sep="")
-   eval(parse(text=plot))
-\end{lstlisting}
-This pattern is recognizable by its use of \c{parse} to turn a string
-into an expression.
+construct a call to \c{base::plot} which will draw a plot. \NOTE{This example
+  is a bit messed up. What is var? Does the use of ... in the eval grab the
+arguments of this call? If yes does it not end up with xlab twice? HELP}
+\todo{Does this comment still applies?} The \parse and \eval combination is
+used by the the \source function in the base library to load R code from a file
+in the current workspace.  \begin{lstlisting} plot.sback <- function(x,...) {
+opt <- names(list(...)) stub <- paste( ifelse("xlab" %in%
+opt,"",paste(",xlab=\"",var,"\"",sep="")), ifelse("type" %in%
+  opt,"",",type=\"l\""), sep="") plot <-
+  paste("plot(x.data,",stub,",...)",sep="") eval(parse(text=plot))
+  \end{lstlisting} This pattern is recognizable by its use of \c{parse} to turn
+  a string into an expression.
 
 
-\mypara{Debloating.} \Eval is often used as a means to reduce boilerplate code;
+\mypara{Debloating.} \todo{Wouldn't reducing boilerplate be a better name?} \Eval is often used as a means to reduce boilerplate code;
 simple and repetitive code can easily be replaced with judcious use of \eval.
 For example, the \c{data.table} package uses \eval to calls the \c{options}
 function with named arguments taken from a vector of strings. While the benefits
@@ -1142,7 +1135,7 @@ fact that \eval is executed in a loop.
 \mypara{Trivial.} When values are passed to \eval, they are returned
 unchanged. They are an example of trivial uses of \eval. Another
 trivial use is the empty expression, often found in JavaScript, but
-rare in R.
+rare in R. \todo{Given that we do not have any data I would get rid of it}
 
 \mypara{Unnecessary use of \eval}
 
