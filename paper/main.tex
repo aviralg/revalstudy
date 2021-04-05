@@ -828,13 +828,24 @@ A given \eval call site can be passed different forms at different invocations.
 However, \packageNbOneMinimizedPercent of sites only see a single form.
 
 \paragraph{Base}
+\todo{I would remove this - we conclude Base in 4}
 The spread of forms in Base are similar to CRAN with a larger share of \c{V}, as
 it is present in \baseMinimizedpropsitesa\% of the sites and \c{X} is a distant
 second with \baseMinimizedpropsitesb\%.
 
 \paragraph{Kaggle}
+\todo{I would remove this - we conclude Kaggle in 4}
 Kaggle is dominated by \c{V}, with \kaggleMinimizedpropsitesa\% of the
 \kaggleNbCallSites sites.
+
+\todo{The following should be either removed or positioned properly}
+We look at how \emph{consistent} the \c{expr} argument of \eval can be, \ie how
+many different types of the resolved \c{expr} there are per call sites. Most of
+the call sites, \ie \PercentMonomorphic, are \emph{consistent}, and this is
+similar to javascript. However, a few ones are highly \emph{polymorphic} (10
+different types). They are the pipe operators \c{\%>\%}, \c{\%<>\%} and
+\c{\%\$\%} in package \emph{magrittr}. It is effectively used to compose
+functions on their first argument, which can be of any type.
 
 \subsection{The environments of \eval}
 
@@ -1133,102 +1144,7 @@ unchanged. They are an example of trivial uses of \eval. Another
 trivial use is the empty expression, often found in JavaScript, but
 rare in R.
 
-\section{LEGACY TEXT}
-
-We looked at the top ten expressions passed to core and package \eval
-calls. The most frequent ten expressions to eval calls from core R
-contribute to 85\% of all \eval calls.
-
-\begin{table}[!h] \centering
-\begin{tabular}{@{}l|rr@{}} \hline
-Expression & Eval Call &  \% \\\hline
-\c{c("auto", "shell", "radix")} & 1,987,105 & 29\%\\
-\c{c("auto", "shell", "quick", "radix")} & 1,593,169  & 23\%\\
-\c{\{info <- loadingNamespaceInfo(...} & 1,008,632 &       14\%\\
-\c{c("onLoad", "attach", "detach", "onUnload")}   & 470,566 &      6.9\%\\
-\c{c("append", "prepend", "replace")} &              261,587&       3.9\% \\
-\c{c("left", "right", "centre", "none")} & 162,086     & 2.4\%\\
-\c{c("no", "ifany", "always")}   &                71,580 &       1.1\%\\
-\c{c("pearson", "kendall", "spearman")}  & 72,962 &      1.1\%\\
-\c{NULL}& 75,330  &      1.1\% \\
-\c{Symbol}&                 66,279&       1\%\\\hline
-\end{tabular}
-\caption{Top ten eval calls in Core}\label{B}
-\end{table}
-
-The expression \c{\{info <- loadingNamespaceInfo(...} is added by core R to a
-package directory during installation. To load the package, this code is
-executed. It creates a namespace for the package, injects the package bindings,
-and attaches the namespace to the program search path. The \c{NULL} comes from a
-call to \c{substitute(subset)} in \c{stats::model.frame.default} function which
-has a default value of \c{subset} as \c{NULL}. The \c{Symbol} arises from a call
-to \c{as.name} in \c{base::str} function that returns a symbol that is looked up
-by evaluating it in a specific environment. The remaining cases arise from calls
-to \c{match.arg} which is used to look up the default choices for a variable and
-match against the choice passed by the caller.
-
-The most frequent ten expressions to eval calls from CRAN packages
-contribute to 77.1\% of all \eval calls.
-
-\begin{table}[!h]  \centering
-\begin{tabular}{@{}l@{~}|@{~}r@{~}r@{}} \hline
-Expression & Eval Call &  \% \\\hline
-\c{Environment} &                                  989302   & 61\%\\
-\c{column[rows] <<- what} &                        55677    & 3.5\%\\
-\c{function(value) freduce(value, `function.list`)} & 37251& 2.3\%\\
-\c{NULL} &                         32005    & 2\%\\
-\c{List} &                         22293    & 1.4\%\\
-\c{c("default", "default2012", "default2011" ...}& 20610    & 1.3\%\\
-\c{force(..1)}            &                        20461    & 1.3\%\\
-\c{alist(`spec`)}       &                         18532    & 1.2\%\\
-\c{inner}               &                          18530    & 1.2\%\\
-\c{String Vector}      &                           17487     & 1.1\%\\
-\end{tabular}\caption{Top ten eval calls in CRAN} \label{C}
-\end{table}
-
-The expression \c{Environment} occurs because of the four callsites explained
-above, \c{ggplot2::ggproto}, \c{R6::generator\_funs}, \c{future::backtrace} and
-\c{RModel::str.RMmodel}. The next expression, \c{column[rows] <<- what}, is used
-inside the \c{plyr::rbind.fill} function to merge data frames by assigning
-concatenated vectors to rows. The \c{<<-} operator is interesting in that it
-skips the current scope and assigns in a parent scope in which the variable is
-already present. In our corpus, all these \eval calls contribute to a single
-side-effect. The expression \c{function(value) freduce(value, `function.list`)}
-arises from the \c{magrittr::\%>\%} function which is a pipe operator that pipes
-the output of previous command to the next one. The expression is evaluated in a
-custom environment to create a function binding for evaluating the components of
-the pipe.\c{String Vector} and \c{List} also arise from the same function when a
-string or a list is piped using the \c{\%>\%} function into the next expression.
-The \c{NULL} arises from \c{R6::generator\_funs} function when the \eval is
-passed a \c{NULL} argument by the \c{DataMask\_generator} package. The
-\c{c("default", "default2012", "default2011" ...} pattern arises from
-\c{copula::polyG} where it reflectively access the default expression for its
-formal parameter and evaluates it. The \c{force(..1)} and \c{alist(`spec`)}
-patterns occur in \c{glue::glue\_data} function which concatenates and
-interpolates strings. The two patterns occur because the function captures
-unevaluated unnamed arguments and maps the evaluation of \c{force(..1)} on them.
-The \c{force} function forces promises and returns the result of evaluation. The
-\c{inner} pattern arises from \c{glue::identity\_transformer} which enables the
-creation of custom transformation functions for affecting the interpolation and
-concatenation of input by the \c{glue} package.
-
-
-\section{Why do we Eval}
-
-\subsection{Discussion}
-
-Yeah, why?
-
-\subsection{Can we do without?}
-
-
-We look at how \emph{consistent} the \c{expr} argument of \eval can be, \ie how
-many different types of the resolved \c{expr} there are per call sites. Most of
-the call sites, \ie \PercentMonomorphic, are \emph{consistent}, and this is
-similar to javascript. However, a few ones are highly \emph{polymorphic} (10
-different types). They are the pipe operators \c{\%>\%}, \c{\%<>\%} and
-\c{\%\$\%} in package \emph{magrittr}. It is effectively used to compose
-functions on their first argument, which can be of any type.
+\mypara{Unnecessary use of \eval}
 
 Similarly to JavaScript, there are also unnecessary uses of \eval. For example,
 the \c{PerformanceAnalytics} package contains a function \c{chart.QQPlot} that
@@ -1248,13 +1164,11 @@ q.f <- get(paste0("q",d))
 z <- q.f(dp, ...)
 }
 \end{lstlisting}
-  or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
+or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
-
+\todo{Aviral's story when he contacted a developer about his use of eval}
 
 \section{Conclusion}
-
-
 
 \bibliography{bib/bibliography,bib/jv}
 
