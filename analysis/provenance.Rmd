@@ -133,12 +133,12 @@ There are `r nb_eval_calls` eval calls and `r nb_call_sites` eval call sites in 
 
 # Classification of provenance
 
-## Expression tyoes
+## Expression types
 
 ```{r}
 expressions <- E_prov %>% filter(type == "expression")
 
-parsed_exprs <- E_prov %>% filter(!is.na(parsed))
+parsed_exprs <- expressions %>% filter(!is.na(parsed))
 
 not_parsed_exprs <- expressions %>% anti_join(parsed_exprs)
 
@@ -163,7 +163,7 @@ languages <- E_prov %>% filter(type == "language")
 
 match_call_exprs <- E_prov %>% filter(!is.na(match_call))
 
-str2lang_exprs <- language %>% filter(!is.na(parsed))
+str2lang_exprs <- languages %>% filter(!is.na(parsed))
 
 # Substitute, quote, bquote etc...
 other_langs <- languages %>% anti_join(match_call_exprs) %>% anti_join(str2lang_exprs)
@@ -197,6 +197,20 @@ overview_table(
     r("bytecode site percent", ratio(nb_bytecode_sites, nb_call_sites))
 )
 ```
+
+## Sites wwith less signficant provenance
+
+```{r}
+unknown_prov <- E_prov %>% anti_join(expressions) %>% anti_join(languages) %>% anti_join(bytecode_exprs)
+
+nb_unknown_prov_sites <- unknown_prov %>% pull(src_ref) %>% n_distinct()
+
+overview_table(
+    r("nb unknown prov sites", nb_unknown_prov_sites),
+    r("unknown prov site percent", ratio(nb_unknown_prov_sites, nb_call_sites))
+)
+```
+
 
 # More details for `parse` and expressions
 
