@@ -333,7 +333,7 @@ eval_plot_df %>%
   ) %>%
   ggplot(aes(x=evals, y=evals_hit, size=package_r_code, label=label)) + 
     geom_jitter(alpha=0.3) +
-    geom_text(nudge_y = .15, check_overlap = TRUE, size=4) +
+    geom_text(nudge_y = .25, check_overlap = TRUE, size=4) +
     scale_x_continuous(
       trans="log10",
       breaks=function(x) {
@@ -356,8 +356,11 @@ eval_plot_df %>%
       labels=scales::comma_format(accuracy = 1)
     ) +
 #    geom_smooth(method = "lm", se = FALSE, show.legend = FALSE, linetype="dashed", color="red", size=0.2) +
-    labs(x="Eval call sites (log)", y="Traced eval call sites (log)", size="Package code size") +
-    theme(legend.position = c(0.15, 0.8))
+    labs(x="Eval call sites (log)", y="Traced eval call sites (log)", size="Package R code size") +
+    theme(
+      text = element_text(size=17),
+      legend.position = c(0.15, 0.8)
+    )
 ggsave(path(PLOT_DIR, "traced-eval-callsites.pdf"))
 ```
 
