@@ -526,12 +526,6 @@ conclusions.
 \section{Usage Metrics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{wrapfigure}{r}{5cm} \hspace*{-12mm}
-  \includegraphics[width=75mm]{pkgs-eval-callsites-hist.pdf} \caption{CRAN
-  \eval call sites}%
-  \label{fig:pkgs-eval-callsites-hist}
-\end{wrapfigure}
-%
 This section focuses on CRAN packages and reports statistics about the usage of
 \eval. There are \PkgEvalCallSites calls to \eval in \PkgPackages packages.
 These represent \PkgPackagesRatio of all packages or \PkgCodeRatio of the
@@ -548,18 +542,35 @@ extracted from \CranPackages packages. Any run that did not exercise one of the
 of the \Corpus packages to generate the data presented here. There were
 \Allcalls invocations of \eval and its variants occurring in \Triggeredpkgs
 packages. Out of \PkgEvalCallSitesRnd \eval call sites, \PkgHitEvalCallSites
-were hit at least once\footnote{Not all packages with static call sites of
-\eval were observed triggering that call site, this can be chalked down to
-incomplete code coverage and occasional tracer failure (\PkgFailedProgramsRatio
-of programs do not terminate successfully or within 30 minute timeout).}. On
-average, the analysis covers \PkgHitEvalCallSitesAvgRatio of package \eval call
-sites, which similar to the \PkgCodeCoverage of average package code coverage.
-Figure~\ref{freq} summarizes the frequency of dynamic calls to \eval with the
-left column being the number of calls and the right, the number of packages in
-that range. There are \Fewcalls packages with low \eval frequency, fewer than
-100 calls; and a similar number of packages, \Manycalls to be precise, that use
-\eval more than 1,000 times.  One package, \Maxcallspack, calls it \Maxcalls
-times and thus accounts for over half of the observed calls.
+were hit at least once (\cf Fig~\ref{fig:traced-eval-callsites}). On average,
+the analysis covers \PkgHitEvalCallSitesAvgRatio of package \eval call sites,
+which similar to the \PkgCodeCoverage of average package code
+coverage\footnote{Not all packages with static call sites of \eval were
+observed triggering that call site, this can be chalked down to incomplete code
+coverage and occasional tracer failure (\PkgFailedProgramsRatio of programs do
+not terminate successfully or within 30 minute timeout).}.  Figure~\ref{freq}
+summarizes the frequency of dynamic calls to \eval with the left column being
+the number of calls and the right, the number of packages in that range. There
+are \Fewcalls packages with low \eval frequency, fewer than 100 calls; and a
+similar number of packages, \Manycalls to be precise, that use \eval more than
+1,000 times.  One package, \Maxcallspack, calls it \Maxcalls times and thus
+accounts for over half of the observed calls.
+
+\begin{figure}[t]
+\begin{minipage}{.3\textwidth}
+  \vspace*{14mm}
+  \hspace*{-10mm}
+  \includegraphics[width=1.5\textwidth]{pkgs-eval-callsites-hist.pdf} \caption{CRAN
+  \eval call sites}%
+  \label{fig:pkgs-eval-callsites-hist}
+\end{minipage}
+\begin{minipage}{.6\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{traced-eval-callsites.pdf}
+  \caption{\eval call sites coverage of the \PkgPackages packages.}%
+  \label{fig:traced-eval-callsites}
+\end{minipage}
+\end{figure}
 
 \begin{figure}[b]
 
