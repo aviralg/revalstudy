@@ -8,6 +8,8 @@
 \input{macro}
 \newcommand{\mypara}[1]{\medskip\noindent\emph{#1}\xspace}
 \newcommand{\NOTE}[1]{{\it Note: #1}\xspace}
+\newcommand{\authorcomment}[3]{\xspace\textcolor{#1}{{\bf #2} #3}\xspace}
+\newcommand{\todo}[1]{\authorcomment{red}{TODO}{#1}}
 
 \begin{document}
 \title{What We Eval in the Shadows}
@@ -378,6 +380,8 @@ invocation of a function whose name or arguments are determined
 dynamically. For this purpose, R provides \c{do.call} and thus \eval
 is overkill.
 
+\todo{Look at Improving dynamic code analysis by code abstraction, VPT'21}
+
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -526,6 +530,13 @@ conclusions.
 \section{Usage Metrics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\begin{wrapfigure}{r}{5cm} \hspace*{-12mm}
+  \centering
+  \includegraphics[width=75mm]{pkgs-eval-callsites-hist.pdf} \caption{CRAN
+  \eval call sites}%
+  \label{fig:pkgs-eval-callsites-hist}
+\end{wrapfigure}
+%
 This section focuses on CRAN packages and reports statistics about the usage of
 \eval. There are \PkgEvalCallSites call sites to \eval in \PkgPackages
 packages.  These represent \PkgPackagesRatio of all packages or \PkgCodeRatio
@@ -556,20 +567,12 @@ similar number of packages, \Manycalls to be precise, that use \eval more than
 1,000 times.  One package, \Maxcallspack, calls it \Maxcalls times and thus
 accounts for over half of the observed calls.
 
-\begin{figure}[t]
-\begin{minipage}{.3\textwidth}
-  \vspace*{14mm}
-  \hspace*{-10mm}
-  \includegraphics[width=1.5\textwidth]{pkgs-eval-callsites-hist.pdf}
-  \caption{CRAN \eval call sites}%
-  \label{fig:pkgs-eval-callsites-hist}
-\end{minipage}
-\begin{minipage}{.6\textwidth}
+\begin{figure}[tb]
   \centering
-  \includegraphics[width=\textwidth]{traced-eval-callsites.pdf}
+  \includegraphics[width=.8\textwidth]{traced-eval-callsites.pdf}
+  \centering
   \caption{\eval call sites coverage of the \PkgPackages packages.}%
   \label{fig:traced-eval-callsites}
-\end{minipage}
 \end{figure}
 
 \begin{figure}[b]
@@ -659,6 +662,10 @@ objects, which could range in the MBs.} The median argument size is
 largest \eval input observed is \Maxszeval\,-- a significant chunk of code.
 Figure~\ref{fig:sizedistribution} shows the distribution of sizes for arguments
 of fewer or equal to 25 nodes.
+The x-axis is the size of arguments in number of
+nodes, and the y-axis is the count of arguments with that size. The size drops
+rapidly, with few observations larger than 15 nodes. The long tail is omitted
+from the graph for legibility.
 %
 \begin{wrapfigure}{r}{5.8cm}
  \hspace*{-10mm}
@@ -666,10 +673,6 @@ of fewer or equal to 25 nodes.
  \caption{Loaded code} \label{fig:sizedistribution}
 \end{wrapfigure}
 %
-The x-axis is the size of arguments in number of
-nodes, and the y-axis is the count of arguments with that size. The size drops
-rapidly, with few observations larger than 15 nodes. The long tail is omitted
-from the graph for legibility.
 
 To estimate the work performed in \evals, we count the instructions executed by
 interpreter. Most invocations perform relatively little work with
@@ -699,6 +702,7 @@ arguments, \baseCodepercent, are expressions. However, unlike CRAN,
 size is \baseMedianszeval, which is more than for CRAN. The maximum size is
 \baseMaxszeval. Small instruction counts, less than 50, amount for
 \baseSmalleventspct of calls.
+\todo{More info about base and conclude it here.}
 
 \paragraph{Kaggle}
 Only \kaggleNbruns scripts trigger \eval. In total, \kaggleAllcalls \eval were
@@ -711,7 +715,7 @@ most \evals start with strings. The median argument size is \kaggleMedianszeval,
 Which makes sense, as few arguments are only symbols. The largest argument is
 \kaggleMaxszeval. The distribution of instructions per eval is similar to CRAN;
 \kaggleSmalleventspct of \evals execute fewer than 50 instructions.
-
+\todo{More info about kaggle and conclude it here.}
 
 \paragraph{Discussion}
 These results show that \eval is central to the language implementation as it is
@@ -866,12 +870,9 @@ implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
 
 \subsubsection{Bits of text, possibly reusable}
 
+\todo{Pierre: check the numbers - we want to know when it is an environment, when it is a list / data frame}
 Most of the time, \ie in \packageEnvirEnvSitePercent of the sites, \eval is
 passed an actual environment.
-
-In \packageNbEnvirIncorrectSites sites (\packageEnvirIncorrectSitePercent),
-\eval is passed an incorrect argument, for instance \c{NA}, a boolean, which
-makes \eval fail.
 
 \c{NULL}, a \c{list} or a data frame, or an integer, happen in
 \packageEnvirUnusualSitePercent of the cases: \eval copies the fields of the
@@ -973,7 +974,7 @@ variable, directly or indirectly. Only \SideEffectingCoreCallPerc \eval calls in
 Core R are side-effecting and \SideEffectingPackageCallPerc \eval calls in CRAN
 packages are side-effecting.
 
-\paragraph{Provenance.} 
+\subsection{Provenance.}
 % Explain tha some generate expression objects and other language objects?
 There are various ways to obtain expressions that \eval will evaluate:
 \begin{itemize}
@@ -1024,74 +1025,41 @@ identified one function in core R, \c{invokeRestartInteractively} that
 prompts the user for input, parses it, and passes it to \eval.
 
 
-\mypara{New Bindings.} Find number of times, eval introduces new bindings. There
-are many ways -- library, load, attach, source, and explicitly introduce
-bindings using super-assign, assign and define.
+\subsection{Side effects in \eval}
 
-\mypara{C Calls.} Find number of times, eval makes call to native code using -
-.Call, .External, etc. Find out if there are native functions that are called
-only from within eval.
-
-\mypara{Non-local returns} Eval can do non-local returns effective bypassing
-evaluation of the rest of the function. For instance, it can inject a \c{break} or \c{next} instructions in a loop. It is very rare however, as it happens only twice in our dataset. % What kind of non-local returns?
-% eval(quote(return(89))) does not work 
-
-\mypara{Purity.} Conclude with number of evals that are ``pure'', i.e. evals
-which could be ignored by a static analyzer without any problem.
-
-
-
-
+\todo{Filip: discuss the side-effects}
 
 \section{Usage of \eval}
 
-
-We present here the main uses of \eval we have witnessed in R. Sometimes, they are design patterns, sometimes, \eval could be replaced by more specific functions. For each use of \eval, we discuss whether it is necessary to use.
-
-\subsection{Variable lookup}
-
-\eval is used to look-up the value of a variable in a given environment, different from the current scope so the \c{envir} argument of \eval is explicitly specified.
-
-% TODO: numbers on the prevalence of the pattern
-
-\eval is not necessary in that case and can be replaced by \c{get}, as follows:
-
-\begin{lstlisting}
- eval(quote(x), envir = env)
-\end{lstlisting}
-$\Downarrow$
-\begin{lstlisting}
-get("x", envir = env)
-\end{lstlisting}
-
-% This is actually linked to NSE, as the symbol given to \eval usually comes
-% from match.call or susbtitute
-
-\subsection{Non-Standard Evaluation} % Or metaprogramming
-
-\subsection{\c{substitute}}
-
-\subsection{\c{match.call}}
+\todo{Illustrate things that we have discussed in Section 5 - examples}
+\todo{Things to discuss: model.frame, match.call, substitute, parse, plots}
 
 
+% We present here the main uses of \eval we have witnessed in R. Sometimes, they are design patterns, sometimes, \eval could be replaced by more specific functions. For each use of \eval, we discuss whether it is necessary to use.
 
+% \subsection{Variable lookup}
 
-\subsection{Logging}
+% \eval is used to look-up the value of a variable in a given environment, different from the current scope so the \c{envir} argument of \eval is explicitly specified.
 
-\subsection{Code transform}
+% \subsection{Metaprogramming}
 
-% Derivation of symbolic expressions
+% \mypara{\c{substitute}}
 
-\subsection{Plotting}
+% \mypara{\c{match.call}}
 
-\section{\eval expressivity and macros}
+% \todo{Talk about model.frame}
+
+% \subsection{Logging}
+
+% \subsection{Code transform}
+
+% % Derivation of symbolic expressions
+
+% \subsection{Plotting}
+
+% \section{\eval expressivity and macros}
 
 % The Thomas Lumley's article, Programmer's Niche: Macros in R, (https://www.r-project.org/doc/Rnews/Rnews_2001-3.pdf) describes how to write a `defmacro` function that would like as a macro creator, using `substitute` and `eval`.  There are no local macro variables in this implementation though.
-
-\section{The dangers of \eval} \label{sec:dangerseval}
-
-
-\subsection{Eval Usage in R}
 
 The R language was intended to be extensible, the combination of lazy
 evaluation, \c{substitute} and \c{eval} are the tools given to
