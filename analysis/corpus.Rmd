@@ -51,17 +51,16 @@ theme_set(theme_minimal())
 ```{r load corpus}
 PKG_S <- 
   read_fst(PACKAGE_SUM_CALLS_FILE) %>%
-  # remove evals that are inside the scripts,
-  # for PKG_C we are only interested in evals in packages
-  filter(!str_starts(eval_call_srcref, "::global::main")) %>% 
   as_tibble()
 
 PKG_evals_per_package <- 
-  count(PKG_S, caller_package, eval_call_srcref) %>%
-  count(caller_package) %>% 
+  PKG_S %>%
+  group_by(eval_source) %>% 
+  summarise(
+    evals_hit=n_distinct(eval_call_srcref)
+  ) %>%
   rename(
-    package=caller_package, 
-    evals_hit=n
+    package=eval_source
   )
 
 CRAN_C <- 
@@ -76,20 +75,29 @@ CRAN_C <-
 
 PKG_C <- 
   CRAN_C %>%
-  filter(in_corpus, package_code > 0) %>%
+  filter(in_corpus) %>%
   left_join(PKG_evals_per_package, by="package") %>% 
+  mutate_if(is.numeric, replace_na, 0) %>%
   mutate(
     evals_hit=as.integer(evals_hit),
-    # this is the case when there is eval in package loading code
-    # this we will always run
-    evals_hit=if_else(evals_hit > evals, evals, evals_hit),
+    # this is because some evals are defined in functions that are stored in environments (asserthat/base.r)
+    # or lists
+    evals=ifelse(evals < evals_hit, evals_hit, evals),
     evals_coverage=evals_hit/evals
   ) %>% 
-  mutate_if(is.numeric, replace_na, 0) %>%
   as_tibble()
 
 CRAN_E <- 
-  read_csv(PACKAGE_EVALS_STATIC_FILE) %>% 
+  read_csv(
+    PACKAGE_EVALS_STATIC_FILE,
+    col_types=cols(
+      package = col_character(),
+      fun_name = col_character(),
+      srcref = col_character(),
+      call_fun_name = col_character(),
+      args = col_character()
+    )
+  ) %>% 
   # TODO: There are very few NA, plus when srcref is NA, the rest of the row in NA
   # we should look at this
   filter(!is.na(srcref))
@@ -97,8 +105,33 @@ CRAN_E <-
 PKG_E <- semi_join(CRAN_E, PKG_C, by="package")
 
 KAGGLE_ALL <- local({
-  kernels <- read_csv(KAGGLE_KERNEL_FILE)
-  evals <- read_csv(KAGGLE_EVALS_STATIC_FILE) %>% count(package) %>% rename(evals=n)
+  kernels <- read_csv(
+    KAGGLE_KERNEL_FILE,
+    col_types = cols(
+      package = col_character(),
+      file = col_character(),
+      id = col_character(),
+      language = col_character(),
+      kernel_type = col_character(),
+      competition = col_character(),
+      blank = col_double(),
+      comment = col_double(),
+      code = col_double(),
+      hash = col_character()
+    )
+  )
+  evals <- read_csv(
+    KAGGLE_EVALS_STATIC_FILE,
+    col_types = cols(
+      package = col_character(),
+      fun_name = col_character(),
+      srcref = col_character(),
+      call_fun_name = col_character(),
+      args = col_character()
+    )
+  ) %>% 
+    count(package) %>% 
+    rename(evals=n)
   left_join(kernels, evals, by="package") 
 }) %>%
   mutate_if(is.numeric, replace_na, 0) %>% 
