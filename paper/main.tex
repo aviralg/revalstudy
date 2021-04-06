@@ -885,14 +885,13 @@ the $\leftarrow$ or \c{assign} functions; but, that happens rarely.
 % This table is old and incorrect
 % Working on updating it
 \begin{table}[htbp]{ \centering
-\begin{tabular}{c|c|c|c}\hline
-\multicolumn{2}{c|}{Core} & \multicolumn{2}{|c}{Packages}  \\\hline
-Environment Class & Eval Calls \% & Environment Class & Eval Calls\\\hline
-\CoreEnvClassA & \CoreProportionA & \PackagesEnvClassA &  \PackagesProportionA\\
-\CoreEnvClassB & \CoreProportionB & \PackagesEnvClassB &  \PackagesProportionB\\
-\CoreEnvClassC & \CoreProportionC & \PackagesEnvClassC &  \PackagesProportionC\\
-\CoreEnvClassD & \CoreProportionD & \PackagesEnvClassD &  \PackagesProportionD\\
-\CoreEnvClassE & \CoreProportionE & \PackagesEnvClassE &  \PackagesProportionE\\\hline
+\begin{tabular}{|c|c|}\hline
+ Environment Class & Eval Calls\\\hline
+ \PackagesEnvClassA &  \PackagesProportionA\\
+ \PackagesEnvClassB &  \PackagesProportionB\\
+ \PackagesEnvClassC &  \PackagesProportionC\\
+ \PackagesEnvClassD &  \PackagesProportionD\\
+\PackagesEnvClassE &  \PackagesProportionE\\\hline
 \end{tabular}} \label{tab:environments}
 \caption{Environments in terms of \eval calls}
 \end{table}
@@ -962,46 +961,56 @@ variable, directly or indirectly. Only \SideEffectingCoreCallPerc \eval calls in
 Core R are side-effecting and \SideEffectingPackageCallPerc \eval calls in CRAN
 packages are side-effecting.
 
-\paragraph{Provenance.} 
-% Explain tha some generate expression objects and other language objects?
+\subsection{Provenance.} 
+% Explain that some generate expression objects and other language objects?
 There are various ways to obtain expressions that \eval will evaluate:
 \begin{itemize}
     \item \c{substitute} synthesizes ASTs from expressions by replacing
     symbols with their bindings in the specified environment.
     \item \c{match.call} captures a call and its arguments as expressions.
-    \item \c{quote}, \c{enquote} returns its argument unevaluated, as an R expression.
+    \item \c{quote}, \c{enquote} returns its argument unevaluated, as an R expression. % Aldd \c{call} ?
     \item \c{expression}  creates a vector of expression
     objects from text.
     \item \c{parse}, \c{str2expression} and \c{str2lang} turn strings into
     expressions.
     \item \c{comp} compiles R code into R bytecode.
 \end{itemize}
+We show the distribution of the different provenances in Table~\ref{tab:provenance}. Note that one site could be passed arguments from different provenances depending on the invokation. For some arguments, we could not determine their provenance or it was a value or a symbol, for which the provenance is less significant. % Not clear... Or maybe add symbols in that table?
+% One can create a symbol with as.name, as.symbol etc. That would be the provenance (but a symbol can also come from quote for instance...)
 
 \begin{table}[h]
-  \begin{tabular}{|c|c|c|}
-      \hline
-      & \#sites & \%sites \\
-       \hline
-         \c{substitute}, \c{quote}, ... & \packageNbOtherLangsSites & \packageOtherLangsSitePercent \\
-      \hline
-      \c{parse}, \c{str2expression} & \packageNbParseExprsSites & \packageParseExprsSitePercent \\
-      \hline
+    \begin{tabular}{|c|c|c|}
+        \hline
+        & \#sites & \%sites \\
+        \hline
+        \c{substitute}, \c{quote}, ... & \packageNbOtherLangsSites & \packageOtherLangsSitePercent \\
+        \hline
+        \c{parse}, \c{str2expression} & \packageNbParseExprsSites & \packageParseExprsSitePercent \\
+        \hline
         \c{match.call} &  \packageNbMatchCallExprsSites & \packageMatchCallExprsSitePercent  \\   
-      \hline
-      \c{expression} & \packageNbNotParseExprsSites & \packageNotParseExprsSitePercent  \\
-      \hline
-      \c{str2lang} & \packageNbStrlangSites  & \packageStrlangSitePercent  \\
-      \hline
-      \c{comp} & \packageNbBytecodeSites & \packageBytecodeSitePercent \\
-      \hline
-  \end{tabular}
-\caption{Provenances of \eval expressions. }
+        \hline
+        \c{expression} & \packageNbNotParseExprsSites & \packageNotParseExprsSitePercent  \\
+        \hline
+        \c{str2lang} & \packageNbStrlangSites  & \packageStrlangSitePercent  \\
+        \hline
+        \c{comp} & \packageNbBytecodeSites & \packageBytecodeSitePercent \\
+        \hline \hline 
+        Other & \packageNbUnknownProvSites & \packageUnknownProvSitePercent \\
+        \hline
+    \end{tabular}
+    \caption{Provenances of \eval expressions. } \label{tab:provenance}
 \end{table}
 
-% \packageUnknownProvSitePercent : provenance not relavant (values, symbols etc)
+
+We taint the result of a call to \c{parse}, \c{str2lang} and \c{str2expression}, by attaching an R attribute to it. R attributes are lost under copy or modification of their attaching object, so we underestimate the number of sites in that case. However, we observed that most of the time, the result of \c{parse} is not touched and directly passed to \eval.
+
+We taint the result of \c{match.call} by remembering the addresses of all the elements of the call list. As R GC is non-moving, it makes it possible to track them individually, as we observed that calls are modified and individual elements are sometimes evaluated. This is also an underestimation of the number of sites though, as we would lose an individual element of the call list that would be modified.
+
+% explain also how we get the numbers of the other categories?
 
 
-\c{eval(parse(...))} can be used for dynamic code loading. This forms
+
+\c{eval(parse(...))} (and \c{str2expression}, and \c{str2lang}) can be used for dynamic code loading. This forms
 the core of \c{source} and \c{sys.source} functions in R that are
 commonly used for loading code in R files in interactive settings. We
 investigated the number of cases in which the output of \c{parse} and
@@ -1012,6 +1021,7 @@ calls consume the result of calling \c{parse} on a string. We also
 identified one function in core R, \c{invokeRestartInteractively} that
 prompts the user for input, parses it, and passes it to \eval.
 
+In Kaggle, most of the sites, \ie \kaggleParseExprsSitePercent, are passed  an expressions that result from a call to \c{parse}.
 
 \mypara{New Bindings.} Find number of times, eval introduces new bindings. There
 are many ways -- library, load, attach, source, and explicitly introduce

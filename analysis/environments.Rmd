@@ -93,7 +93,8 @@ if (file.exists(lock_path)) {
 if(params$force_rebuild || rebuild) {
   read_fst(calls_path) %>% as_tibble() -> E_raw
   
-  E_raw <- E_raw %>% mutate(envir_expression = if_else(envir_type == "NULL" & is.na(envir_expression), "NULL", envir_expression))
+  E_raw <- E_raw %>% mutate(envir_expression = if_else(envir_type == "NULL" & is.na(envir_expression), "NULL", envir_expression)) %>% 
+    mutate(envir_expression = na_if(envir_expression, "NA"))
   
   E_raw %>% select(
     run_package = package, #      The package which was run to trigger the eval
@@ -149,12 +150,14 @@ We distinguish between 5 main categories of `eval` calls with respect to their `
 ## `envir` as default argument
 
 ```{r envir_default}
-eval_calls_default <- E_envir %>% filter(is.na(envir))
+eval_calls_default <- E_envir %>% filter(is.na(envir)) # yes :(
+# Or use E_envir %>% filter(ev_variant == "eval", !str_detect(ev_call, "\\benvir\\b|eval\\([^,]+,"))
+# But that regex misses about 1000 sites
 
 nb_default <- count(eval_calls_default, wt = duplicates)
 nb_default_sites <- nb_eval_call_sites(eval_calls_default)
 
-eval_calls_explicit <- E_envir %>% filter(!is.na(envir))
+eval_calls_explicit <- E_envir %>% filter(is.na(envir))
 nb_explicit <- count(eval_calls_explicit, wt = duplicates)
 nb_explicit_sites <- nb_eval_call_sites(eval_calls_explicit)
 
@@ -175,7 +178,7 @@ We show the most frequent environment expression per site. There is only one env
 
 ```{r envir_most_common}
 frequent_envir <- E_envir %>% group_by(src_ref) %>% 
-  summarize(n_envir = n_distinct(envir), envir = paste0(unique(envir), collapse = " ; "), envir_type = paste0(unique(envir_type), collapse = " ; "))
+  summarize(n_envir = n_distinct(envir), envir = paste0(unique(envir), collapse = " ; "), envir_type = paste0(unique(envir_type), collapse = " ; ")) 
 
 #stopifnot(frequent_envir$n_envir <= 1)
 ```
@@ -208,7 +211,7 @@ ggsave_prefix("envir_expressions.pdf")
 Let's classify the expressions, between calls and variables:
 
 ```{r}
-envir_var <- frequent_envir %>% filter(envir != "NA", str_detect(envir, "^(?:\\.[:alpha]|[:alpha:])[[:alpha:][:digit:]_\\.]*$"))
+envir_var <- frequent_envir %>% filter(is.na(envir), str_detect(envir, "^(?:\\.[:alpha]|[:alpha:])[[:alpha:][:digit:]_\\.]*$"))
 
 nb_envir_var_sites <- nrow(envir_var)
 
@@ -222,7 +225,7 @@ overview_table(
 
 ```{r}
 env_class_ranking <- E_envir %>% group_by(environment_class) %>% 
-  summarize(n = n_distinct(src_ref)) %>% 
+  summarize(n = n_distinct(src_ref), percent = round(100 * n / nb_call_sites, 2), cumpercent = cumsum(percent)) %>% 
   arrange(desc(n))
 
 env_class_ranking %>% datatable()
@@ -234,13 +237,17 @@ env_class_ranking %>% datatable()
 What about we classify them by type?
 
 ```{r}
-frequent_envir %>% count(envir_type, sort = TRUE) %>% datatable()
+frequent_envir %>% count(envir_type, sort = TRUE) %>%
+  mutate(percent = round(100 * n / nb_call_sites, 2), cumpercent = cumsum(percent)) %>% 
+  datatable()
 ```
 
 And just individual types:
 
 ```{r}
-E_envir %>% count(envir_type, sort = TRUE) %>% datatable()
+E_envir %>% count(envir_type, sort = TRUE)  %>%
+  mutate(percent = round(100 * n / nb_call_sites, 2), cumpercent = cumsum(percent)) %>% 
+ datatable()
 ```
 
 We realize that there are some types that are passed to eval that are not admissible according to the documentation.
@@ -369,8 +376,11 @@ specific_env <- env_calls %>% group_by(specific_env) %>% summarize(n = n_distinc
 
 nb_global_env_sites <- specific_env %>% filter(specific_env == "global") %>% .$n
 nb_callee_env_sites <- specific_env %>% filter(specific_env == "callee") %>% .$n
+if(length(nb_callee_env_sites) == 0) nb_callee_env_sites <- 0
 nb_empty_env_sites <- specific_env %>% filter(specific_env == "empty") %>% .$n
+if(length(nb_empty_env_sites) == 0) nb_empty_env_sites <- 0
 nb_base_env_sites <- specific_env %>% filter(specific_env == "base") %>% .$n
+if(length(nb_base_env_sites) == 0) nb_base_env_sites <- 0
 
 overview_table(
   r("nb global env sites", nb_global_env_sites),

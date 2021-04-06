@@ -18,9 +18,6 @@ FILES := \
   package/summarized.fst \
   package/summarized-externals.fst \
   package/undefined.fst \
-  package/trace-log.csv \
-  package/run-log.csv \
-  package/runnable-code.csv \
   base/corpus.txt \
   base/evals-static.csv \
   base/normalized-expressions.csv \
