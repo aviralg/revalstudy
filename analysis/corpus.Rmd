@@ -230,7 +230,7 @@ overview_table(
 ```
 
 ```{r}
-cs_count(PKG_C, evals)
+cs_count(PKG_C, evals) %>% print(n=Inf)
 ```
 
 ### Details
@@ -290,7 +290,7 @@ eval_call_sites_hist <- function(df, df_all, y_lab, max_evals=20L) {
     geom_vline(aes(xintercept=median_evals), linetype="dashed", color="red", size=0.2) +
     scale_x_continuous(
       limits=c(0, max_evals + 1), 
-      breaks=as.integer(sort(c(seq(1, max_evals, length.out=4), round(median_evals)))), 
+      breaks=as.integer(sort(c(seq(1, max_evals, length.out=4), median_evals))), 
       labels=function(x) c(head(x, -1), str_c(tail(x, 1), "+"))
     ) +
     scale_y_continuous(
@@ -311,3 +311,56 @@ ggsave(path(PLOT_DIR, "pkgs-eval-callsites-hist.pdf"))
 eval_call_sites_hist(KAGGLE, KAGGLE_ALL, "KAGGLE programs")
 ggsave(path(PLOT_DIR, "kaggle-eval-callsites-hist.pdf"))
 ```
+
+### Eval plot
+
+```{r}
+eval_plot_df <- PKG_C %>%
+  filter(package_r_code > 0) %>%
+  select(package, evals, evals_hit, package_r_code)
+
+size_breaks <- c(1e3, 5e3, 10e3, 25e3, 50e3, 100e3)
+# size_labels <- str_c(
+#   c("≤ ", rep("> ", 6)),
+#   scales::comma(accuracy = 1, x=size_breaks[-1])
+# )
+
+eval_plot_df %>% 
+#  filter(evals > 0, evals_hit > 0) %>%
+  mutate(
+    # size=cut(package_r_code, size_breaks, size_labels, include.lowest=T),
+    label=ifelse(evals %in% tail(sort(evals),3), package, NA)
+  ) %>%
+  ggplot(aes(x=evals, y=evals_hit, size=package_r_code, label=label)) + 
+    geom_jitter(alpha=0.3) +
+    geom_text(nudge_y = .25, check_overlap = TRUE, size=4) +
+    scale_x_continuous(
+      trans="log10",
+      breaks=function(x) {
+        f <- scales::breaks_log()
+        sort(c(f(x), max(eval_plot_df$evals)))
+      },
+      labels=scales::comma_format(accuracy = 1)
+    ) +
+    scale_y_continuous(
+      trans="pseudo_log",
+      breaks=function(x) {
+        f <- scales::breaks_log()
+        sort(c(0, 1, f(c(1, x[2])), max(eval_plot_df$evals_hit)))
+      },
+      labels=scales::comma_format(accuracy = 1)
+    ) +
+    scale_size_binned(
+      range=c(1,10),
+      breaks = size_breaks,
+      labels=scales::comma_format(accuracy = 1)
+    ) +
+#    geom_smooth(method = "lm", se = FALSE, show.legend = FALSE, linetype="dashed", color="red", size=0.2) +
+    labs(x="Eval call sites (log)", y="Traced eval call sites (log)", size="Package R code size") +
+    theme(
+      text = element_text(size=17),
+      legend.position = c(0.15, 0.8)
+    )
+ggsave(path(PLOT_DIR, "traced-eval-callsites.pdf"))
+```
+
