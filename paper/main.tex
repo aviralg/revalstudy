@@ -549,9 +549,9 @@ CRAN).
 
 For the dynamic analysis, we execute all the \CranRunnableScripts programs
 extracted from \CranPackages packages. Any run that did not exercise one of the
-\eval call sites in the packages was discarded. This left \Nbruns runs of some
-of the \Corpus packages to generate the data presented here. There were
-\Allcalls invocations of \eval and its variants occurring in \Triggeredpkgs
+\eval call sites in the packages was discarded. This left \packageNbruns runs of some
+of the \packageCorpus packages to generate the data presented here. There were
+\packageAllcalls invocations of \eval and its variants occurring in \packageTriggeredpkgs
 packages. Out of \PkgEvalCallSitesRnd \eval call sites, \PkgHitEvalCallSites
 were hit at least once (\cf Fig~\ref{fig:traced-eval-callsites}). On average,
 the analysis covers \PkgHitEvalCallSitesAvgRatio of package \eval call sites,
@@ -562,9 +562,9 @@ coverage and occasional tracer failure (\PkgFailedProgramsRatio of programs do
 not terminate successfully or within 30 minute timeout).}.  Figure~\ref{freq}
 summarizes the frequency of dynamic calls to \eval with the left column being
 the number of calls and the right, the number of packages in that range. There
-are \Fewcalls packages with low \eval frequency, fewer than 100 calls; and a
-similar number of packages, \Manycalls to be precise, that use \eval more than
-1,000 times.  One package, \Maxcallspack, calls it \Maxcalls times and thus
+are \packageFewcalls packages with low \eval frequency, fewer than 100 calls; and a
+similar number of packages, \packageManycalls to be precise, that use \eval more than
+1,000 times.  One package, \packageMaxcallspack, calls it \packageMaxcalls times and thus
 accounts for over half of the observed calls.
 
 \begin{figure}[tb]
@@ -582,10 +582,10 @@ accounts for over half of the observed calls.
   \begin{tabular}{|r@{\,}r@{\,}l@{}r|r@{\,}r@{\,}l@{}r|} \hline
     \multicolumn{3}{|c}{\small\#calls} &\small \#pck
 &     \multicolumn{3}{c}{\small\#calls} &\small\#pck \\\hline
-\tt 1 &--& \tt 10      & \Bina  & \tt 1K &--&\tt 100K  & \Bine\\
-\tt 11 &--& \tt 100    & \Binb  & \tt 100K &--&\tt 1M  & \Binf\\
-\tt 101 &--& \tt 1K    & \Binc  & \tt 1M &--&\tt 10M   & \Bing\\
-\tt 1K &--& \tt 10K    & \Bind  & \tt 10M &--& \tt 100M & \Binh\\\hline
+\tt 1 &--& \tt 10      & \packageBina  & \tt 1K &--&\tt 100K  & \packageBine\\
+\tt 11 &--& \tt 100    & \packageBinb  & \tt 100K &--&\tt 1M  & \packageBinf\\
+\tt 101 &--& \tt 1K    & \packageBinc  & \tt 1M &--&\tt 10M   & \packageBing\\
+\tt 1K &--& \tt 10K    & \packageBind  & \tt 10M &--& \tt 100M & \packageBinh\\\hline
 \end{tabular}
 \caption{Call frequency}\label{freq}
 \end{minipage}
@@ -594,9 +594,9 @@ accounts for over half of the observed calls.
 \begin{tabular}{|@{\,}r|rrrr|}\hline
   &\eval & \c{evalq} & \c{eval} & \c{local}\\[-2mm]
            & & & \c{.parent} &\\\hline
-\small Static sites &\Staticeval&\Staticevalq&\Staticevalparent&\Staticlocal \\
-\small Exercised sites&\Triggeredeval&\Triggeredevalq&\Triggeredevalparent&\Triggeredlocal\\
-\small Invocations&\EvalsRnd&\EvalqsRnd&\EparentsRnd&\LocalsRnd\\\hline
+\small Static sites &\packageStaticeval&\packageStaticevalq&\packageStaticevalparent&\packageStaticlocal \\
+\small Exercised sites&\packageTriggeredeval&\packageTriggeredevalq&\packageTriggeredevalparent&\packageTriggeredlocal\\
+\small Invocations&\packageEvalsRnd&\packageEvalqsRnd&\packageEparentsRnd&\packageLocalsRnd\\\hline
 \end{tabular}~\\[2mm]\caption{Variants}\label{tab:variantseval}
 \end{minipage}\end{tabular}\end{figure}
 
@@ -616,10 +616,10 @@ sites underscores the limitations due to code coverage.
   \begin{tabular}{|r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r|} \hline
 \multicolumn{3}{|c}{\small\#calls} &\small\#sites &
 \multicolumn{3}{c}{\small\#calls} &\small\#sites \\\hline
-\tt 0 &--& \tt 50    & \Runbina & \tt 501 &--& \tt 1000   & \Runbine\\
-\tt 51 &--& \tt 100  & \Runbinb & \tt 1001 &--& \tt 1500  & \Runbinf\\
-\tt 101 &--& \tt 250 & \Runbinc & \tt 1501 &--& \tt 2000  & \Runbing\\
-\tt 251 &--& \tt 500 & \Runbind & \tt 2001 &--& \tt 3000 & \Runbinh\\\hline
+\tt 0 &--& \tt 50    & \packageRunbina & \tt 501 &--& \tt 1000   & \packageRunbine\\
+\tt 51 &--& \tt 100  & \packageRunbinb & \tt 1001 &--& \tt 1500  & \packageRunbinf\\
+\tt 101 &--& \tt 250 & \packageRunbinc & \tt 1501 &--& \tt 2000  & \packageRunbing\\
+\tt 251 &--& \tt 500 & \packageRunbind & \tt 2001 &--& \tt 3000 & \packageRunbinh\\\hline
 \end{tabular}
 
   \medskip  (a) All
@@ -635,21 +635,21 @@ sites underscores the limitations due to code coverage.
 
 Figure~\ref{cn}(a) shows normalized invocation counts per call site; on the left
 are average number of calls from a given site and given run, on the right are
-counts of sites that fall in that range. For instance, \Runbinh sites are
+counts of sites that fall in that range. For instance, \packageRunbinh sites are
 invoked on average over 2,000+ times per run. Larger numbers suggest loops or
-recursive contexts -- this seems to be the exception as most \evals, \Runbina,
+recursive contexts -- this seems to be the exception as most \evals, \packageRunbina,
 are exercised 50 times or less. Figure~\ref{cn}(b) zooms in on low frequency
 call sites. The x-axis shows normalized invocations and the y-axis is the number
 sites for that value. Most low-frequency \evals are invoked only once, about
 half as many are invoked twice; after that the frequency quickly drops.
 
 The \eval can be passed any value, but if the argument is not an expression,
-\eval returns it without doing anything. Expressions account for \Codepercent of
-arguments in our corpus. More specifically, \Symbolpercent of arguments are
-\c{symbol}s (single variables such as \c{x}), \Languagepercent are \c{language}
-object (a single expression, such as \c{x+1}), and \Expressionpercent are
+\eval returns it without doing anything. Expressions account for \packageCodepercent of
+arguments in our corpus. More specifically, \packageSymbolpercent of arguments are
+\c{symbol}s (single variables such as \c{x}), \packageLanguagepercent are \c{language}
+object (a single expression, such as \c{x+1}), and \packageExpressionpercent are
 \c{expression} objects (multiple statements). Further inspection reveals that
-most symbols, \Ggplotsymbolpercent to be exact, come from a single call in the
+most symbols, \packageGgplotsymbolpercent to be exact, come from a single call in the
 \c{ggplot2} package and have have the value \c{\_inherit}. Even if we remove
 this outlier, the majority of \evals are simple expressions.
 
@@ -658,8 +658,8 @@ the number of abstract syntax tree nodes as returned by the parser; for example,
 \c{x+1} counts as 3.\footnote{We attempted to measure string lengths after
 de-parsing expressions, but these measurements were dominated by de-parsed data
 objects, which could range in the MBs.} The median argument size is
-\Medianszeval (due to the many symbols) and the average is \Avgszeval nodes. The
-largest \eval input observed is \Maxszeval\,-- a significant chunk of code.
+\packageMedianszeval (due to the many symbols) and the average is \packageAvgszeval nodes. The
+largest \eval input observed is \packageMaxszeval\,-- a significant chunk of code.
 Figure~\ref{fig:sizedistribution} shows the distribution of sizes for arguments
 of fewer or equal to 25 nodes.
 The x-axis is the size of arguments in number of
@@ -676,10 +676,10 @@ from the graph for legibility.
 
 To estimate the work performed in \evals, we count the instructions executed by
 interpreter. Most invocations perform relatively little work with
-\Smalleventspct of \evals executing 50 or fewer instructions. The violin plot of
+\packageSmalleventspct of \evals executing 50 or fewer instructions. The violin plot of
 Figure~\ref{ev}(a) corresponds to \evals executing $\leq$ 50 instructions, it is
 dominated by trivial symbol look ups. Figure~\ref{ev}(b) has the work-intensive
-\evals which go all the way to \MaxeventsRnd instructions.
+\evals which go all the way to \packageMaxeventsRnd instructions.
 
 \begin{figure}[tb!]
 \begin{tabular}{@{}c@{}c@{}}
