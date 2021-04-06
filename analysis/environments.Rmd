@@ -91,7 +91,7 @@ if (file.exists(lock_path)) {
 }
 
 if(params$force_rebuild || rebuild) {
-  read_fst(calls_path) %>% as_tibble() -> E_raw
+  read_fst(calls_path) %>% as_tibble() %>% semi_join(C_raw, by = c("eval_source" = "package")) -> E_raw
   
   E_raw <- E_raw %>% mutate(envir_expression = if_else(envir_type == "NULL" & is.na(envir_expression), "NULL", envir_expression)) %>% 
     mutate(envir_expression = na_if(envir_expression, "NA"))
@@ -178,9 +178,10 @@ We show the most frequent environment expression per site. There is only one env
 
 ```{r envir_most_common}
 frequent_envir <- E_envir %>% group_by(src_ref) %>% 
-  summarize(n_envir = n_distinct(envir), envir = paste0(unique(envir), collapse = " ; "), envir_type = paste0(unique(envir_type), collapse = " ; ")) 
+  summarize(n_envir = n_distinct(envir), envir = paste0(unique(envir), collapse = " ; "), envir_type = paste0(unique(envir_type), collapse = " ; "), n_types = n_distinct(envir_type)) 
 
 #stopifnot(frequent_envir$n_envir <= 1)
+# 2 sites have 2 envir...
 ```
 
 ```{r}
@@ -230,6 +231,7 @@ env_class_ranking <- E_envir %>% group_by(environment_class) %>%
 
 env_class_ranking %>% datatable()
 ```
+
 
 
 # Types in `envir`
@@ -352,6 +354,7 @@ Now, we can further decompose the environment class to get more insights. It has
 # new+new+new+new+caller-2-global
 # str_match("caller-2-", "((?:new\\+)*)caller-([[:digit:]]+)-(.*)")
 
+# TODO: handle scientific notation for caller-1e+00-
 
 env_calls <- eval_calls_absolute %>% ungroup() %>%
   extract(environment_class, regex = "((?:new\\+)*)caller-([[:digit:]]+)-(.*)", into = c("new_env", "hierarchy", "specific_env"), remove = FALSE, convert = TRUE) %>%
@@ -433,6 +436,16 @@ They build the environment name with:
 ```{r, eval = FALSE}
 env <- attach(NULL, pos, basename(directory))
 ```
+
+# Better-looking env class
+
+`caller-n` wins over any specific env. We add `+` if there are any `new`.
+
+```{r}
+env_calls <- env_calls %>%
+  mutate(env_class = if_else(environment_class == "loop", "loop", paste0(if_else(is.na(hierarchy), specific_env, as.character(hierarchy)), if_else(is.na(new_env), "", "+"))))
+```
+
 
 # `envir` is an integer
 
