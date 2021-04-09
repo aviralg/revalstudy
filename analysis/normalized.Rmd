@@ -208,6 +208,7 @@ r_vec("MinimizedPackage", nrows, pull(widespread_minimized, n_packages))
 r_vec("MinimizedOperations", nrows, pull(widespread_minimized, n_operations))
 r_vec("MinimizedMedianOperations", nrows, pull(widespread_minimized, med_operations))
 r_vec("MinimizedPercentEnvir", nrows, pull(widespread_minimized, percent_envir), digits=0)
+r_vec("MinimizedPercentCallsEnvir", nrows, pull(widespread_minimized, percent_envir_calls), digits=0)
 r_vec("MinimizedPercentEnvirNonParent", nrows, pull(widespread_minimized, percent_envir_non_parentframe), digits=0)
 ```
 

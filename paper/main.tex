@@ -751,30 +751,24 @@ expression $e$ that is normalized to the particular form.
 \begin{table}[h]\small
 \begin{tabular}{|c|r|r|r|r|r|c|}\hline
   $min(e)$& \#sites & \%sites & \#packages & \#operations & \%envir & example\\\hline
-%% JAN: simplifying osme mumers and adding %
-\c X&\packageMinimizedcallsitesa & 28\% &\packageMinimizedpackagea & 768 &77\% & \c{y+1}\\\hline
-\c{F(F(X))} & \packageMinimizedcallsitesb  & 20\% & \packageMinimizedpackageb  & 466K & 55\% & \c{gbov( mean(x), a-1)}\\\hline
-\c{V}&\packageMinimizedcallsitesc & 17\% &\packageMinimizedpackagec &\packageMinimizedoperationscRnd & 71\%& \c{c(42,21,0)}\\\hline
-\c{F(X)}& \packageMinimizedcallsitesd & 14\% & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & 75\% & \c{seq\_len(iters)} \\\hline
-\c{model.frame} & \packageMinimizedcallsitese & 7\% & \packageMinimizedpackagee & 3K & 21\% & \c{model.frame(formula = Z ~ U)} \\\hline
-\c{F()}& \packageMinimizedcallsitesf & 6\% & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & 73\% & \c{rgamma(3, 2, n = 10L)} \\\hline
-\c{\$}& \packageMinimizedcallsitesg & 6\% & \packageMinimizedpackageg & 2K & 78\% & \c{DF\$B} \\\hline
-\c{FUN} & \packageMinimizedcallsitesh & 6\% & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & 23\% & \c{function(x, y) x + 3 * y} \\\hline
-\c{<-} & \packageMinimizedcallsitesi  & 5\% & \packageMinimizedpackagei & 11K & 73\% & \c{x[1, 2:3, 2:3] <- value}\\\hline
-\c{BLOCK} & \packageMinimizedcallsitesj & 4\% & \packageMinimizedpackagej & 440K & 73\% & \c{\{ write.csv(iris, tf); file.size(tf) \}} \\\hline
-%% \c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa\% &\packageMinimizedpackagea &\packageMinimizedoperationsaRnd &\packageMinimizedpercentenvirnonparenta\% & \c{y+1}\\\hline
-%% \c{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedoperationsbRnd & \packageMinimizedpercentenvirnonparentb & \c{gbov( mean(x), a-1)}\\\hline
-%% \c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedoperationscRnd &\packageMinimizedpercentenvirnonparentc& \c{c(42,21,0)}\\\hline
-%% \c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & \packageMinimizedpercentenvirnonparentd & \c{seq\_len(iters)} \\\hline
-%% \c{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvirnonparente & \c{model.frame(formula = Z ~ U)} \\\hline
-%% \c{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirnonparentf & \c{rgamma(3, 2, n = 10L)} \\\hline
-%% \c{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirnonparentg & \c{DF\$B} \\\hline
-%% \c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirnonparenth & \c{function(x, y) x + 3 * y} \\\hline
-%% \c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenvirnonparenti & \c{x[1, 2:3, 2:3] <- value}\\\hline
-%% \c{\{\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirnonparentj & \c{\{ write.csv(iris, tf) \textbackslash n file.size(tf) \}} \\\hline
+  % macros are properly rounded and show the percentage sign now
+\c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedoperationsaRnd &\packageMinimizedpercentenvirnonparenta & \c{y+1}\\\hline
+\c{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedoperationsbRnd & \packageMinimizedpercentenvirnonparentb & \c{gbov( mean(x), a-1)}\\\hline
+\c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedoperationscRnd &\packageMinimizedpercentenvirnonparentc& \c{c(42,21,0)}\\\hline
+\c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & \packageMinimizedpercentenvirnonparentd & \c{seq\_len(iters)} \\\hline
+\c{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvirnonparente & \c{model.frame(formula = Z ~ U)} \\\hline
+\c{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirnonparentf & \c{rgamma(3, 2, n = 10L)} \\\hline
+\c{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirnonparentg & \c{DF\$B} \\\hline
+\c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirnonparenth & \c{function(x, y) x + 3 * y} \\\hline
+\c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenvirnonparenti & \c{x[1, 2:3, 2:3] <- value}\\\hline
+\c{\{\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirnonparentj & \c{\{ write.csv(iris, tf) ; file.size(tf) \}} \\\hline
 \end{tabular}
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
+% Other macros that can be used:
+% - \packageMinimizedMedianOperations: median number of operations
+% - \packageMinimizedPercentEnvir: percentages of sites with the default argument
+% - \packageMinimizedPercentCallsEnvir: percentage of calls with the default envir argument
 
 \noindent
 We detail these forms and discuss their implication for the behavior of \eval.
