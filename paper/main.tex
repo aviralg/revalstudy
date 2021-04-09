@@ -827,37 +827,47 @@ if the function is returned by a promise or if the function name is shadowed by
 a promise containing a value, then computation will occur. This form occurs in
 6\% of sites.
 
-\medskip\noindent\EE{$min(e)=\c{F(X)}$} This form allows function calls whose
-arguments may include variable references. Assignments are excluded from this
-form. It occurs in 14\% of the sites in the corpus.
+\medskip\noindent\EE{$min(e)=\c{F(X)}$} This form allows for a simple function
+call whose arguments may include variable references. Assignments are excluded
+from this form. It occurs in 14\% of the sites in the corpus.
 
-\medskip\noindent\EE{$min(e)=\c{F(F(X))}$} Nested function calls with variables.
+\medskip\noindent\EE{$min(e)=\c{F(F(X))}$} This form extends the previous one
+with nested function calls. It is the second most common argument to \eval,
+occurring in 20\% of the sites.
 
-\medskip\noindent\EE{$min(e)=\c{FUN}$} Function definition accounts for
-  \packageFunctionDefinitionSitesPercent of \eval sites. In addition the
-  functions inside other expressions account for
-  \packageGeneralizedFunctionDefinitionSitesPercent of sites, and give an
-  estimate of the use of higher-order functions.
+\medskip\noindent\EE{$min(e)=\c{FUN}$} This form captures expressions that are
+function definitions, \eg~\c{function(x)x+1}. \c{FUN} occurs in
+\packageFunctionDefinitionSitesPercent of sites. One data point we have not
+recorded is the side effects that are performed when the generated functions are
+eventually run. In addition to \c{FUN} there
+\packageGeneralizedFunctionDefinitionSitesPercent of sites create functions
+nested in other expressions, this gives an idea of the use of higher-order
+functions.
 
-\medskip\noindent\EE{$min(e)=\c{\{\,\}}$} Arbitrary-length statement blocks.
-These are larger expressions with, on average, \packageMinimizedoperationsjRnd
-instructions. The contents of the block are not inspected.
+\medskip\noindent\EE{$min(e)=\c{BLOCK}$} This form captures blocks of code with
+multiple statements. These are larger expressions, we do not inspect contents of
+the blocks. They occur in 4\% of the sites.
 
-\medskip\noindent\EE{$min(e)=\c{model.frame}$} Call to the \c{model.frame}
-function used to create statistical models. This subsume all other categories.
+\medskip\noindent\EE{$min(e)=\c{model.frame}$} This is a very specific form
+intended to capture the construction of calls to the \c{model.frame} function.
+This function creates statistical models. This subsumes \c{F(F(X))}, \c{FUN} and
+assignments. This particular form occurs in 7\% of the sites.
+
+\paragraph{Consistency} It is interesting to consider how many different
+forms any given site sees. The more forms, the harder it will be to characterize
+the behavior of the program at that site. Luckily, \packageNbOneMinimizedPercent
+of sites only see a single form. There are few sites that are highly polymorphic
+(8 or more different forms), these include the pipe operator of the \c{magrittr}
+package which is used to compose functions.
+
+\paragraph{Discussion} The variety of uses of \eval is evidenced by the number
+of different forms observed in CRAN. In comparison, JavaScript \eval usage was
+simpler and more predictable as reported by \citet{oopsla12b}. Nevertheless,
+simple forms dominate and there are many cases where \eval could be replaced
+by less powerful constructs.
 
 
-A given \eval call site can be passed different forms at different invocations.
-However, \packageNbOneMinimizedPercent of sites only see a single form.
-
-\todo{The following should be either removed or positioned properly}
-We look at how \emph{consistent} the \c{expr} argument of \eval can be, \ie how
-many different types of the resolved \c{expr} there are per call sites. Most of
-the call sites, \ie \PercentMonomorphic, are \emph{consistent}, and this is
-similar to javascript. However, a few ones are highly \emph{polymorphic} (10
-different types). They are the pipe operators \c{\%>\%}, \c{\%<>\%} and
-\c{\%\$\%} in package \emph{magrittr}. It is effectively used to compose
-functions on their first argument, which can be of any type.
+\newpage
 
 \subsection{The environments of \eval}
 
