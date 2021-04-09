@@ -157,7 +157,7 @@ eval_calls_default <- E_envir %>% filter(is.na(envir)) # yes :(
 nb_default <- count(eval_calls_default, wt = duplicates)
 nb_default_sites <- nb_eval_call_sites(eval_calls_default)
 
-eval_calls_explicit <- E_envir %>% filter(is.na(envir))
+eval_calls_explicit <- E_envir %>% filter(!is.na(envir))
 nb_explicit <- count(eval_calls_explicit, wt = duplicates)
 nb_explicit_sites <- nb_eval_call_sites(eval_calls_explicit)
 
@@ -315,9 +315,7 @@ In the current dataset, there are no examples of sandbox usage but we should see
 ## `envir` absolutely computed
 
 ```{r envir_absolute}
-eval_calls_absolute <- eval_calls_explicit %>%
-  anti_join(eval_calls_env_list) #%>%
-  #anti_join(eval_calls_arg_caller)
+eval_calls_absolute <- eval_calls_explicit %>% filter(envir_type == "environment")
 
 nb_absolute <- count(eval_calls_absolute, wt = duplicates)
 nb_absolute_sites <- nb_eval_call_sites(eval_calls_absolute)
@@ -378,7 +376,7 @@ env_calls %>% group_by(hierarchy) %>% summarize(n = n_distinct(src_ref), percent
 specific_env <- env_calls %>% group_by(specific_env) %>% summarize(n = n_distinct(src_ref), n_packages = n_distinct(ev_package), percent = round(100 * n / nb_call_sites, 2), cum_percent = cumsum(percent)) %>% arrange(desc(n))
 
 nb_global_env_sites <- specific_env %>% filter(specific_env == "global") %>% .$n
-nb_callee_env_sites <- specific_env %>% filter(specific_env == "callee") %>% .$n
+nb_callee_env_sites <- specific_env %>% filter(specific_env == "callee") %>% .$n # Seems it is actually for envir == "new.env()"
 if(length(nb_callee_env_sites) == 0) nb_callee_env_sites <- 0
 nb_empty_env_sites <- specific_env %>% filter(specific_env == "empty") %>% .$n
 if(length(nb_empty_env_sites) == 0) nb_empty_env_sites <- 0
@@ -437,14 +435,6 @@ They build the environment name with:
 env <- attach(NULL, pos, basename(directory))
 ```
 
-# Better-looking env class
-
-`caller-n` wins over any specific env. We add `+` if there are any `new`.
-
-```{r}
-env_calls <- env_calls %>%
-  mutate(env_class = if_else(environment_class == "loop", "loop", paste0(if_else(is.na(hierarchy), specific_env, as.character(hierarchy)), if_else(is.na(new_env), "", "+"))))
-```
 
 
 # `envir` is an integer
@@ -507,6 +497,94 @@ overview_table(
   r("nb enclos with list sites", nb_enclos_with_list_sites),
   r("enclos with list percent", ratio(nb_enclos_with_list_sites, nb_enclos_sites))
 )
+```
+
+
+# Better-looking env class
+
+`caller-n` wins over any specific env. We add `+` if there are any `new`.
+
+
+TODO: if there is both new , a caller-n, a specific class, rather ignore the caller-n
+```{r}
+env_classes <- env_calls %>%
+  mutate(env_class = if_else(environment_class == "loop", "loop", paste0(if_else(is.na(hierarchy), specific_env, as.character(hierarchy)), if_else(is.na(new_env), "", "+"))))
+
+env_classes %>% count(env_class, wt = duplicates, sort = TRUE) %>%
+  mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) %>%
+  datatable()
+
+env_classes %>% group_by(env_class) %>% summarise(n = n_distinct(src_ref)) %>%
+  arrange(desc(n)) %>%
+  mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) %>%
+  datatable()
+```
+
+
+# Specific envir with their environment class
+
+For the default argument:
+
+```{r}
+eval_calls_default %>% count(environment_class, wt = duplicates, sort = TRUE) %>%
+  mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) 
+
+eval_calls_default %>% group_by(environment_class) %>% summarise(n = n_distinct(src_ref)) %>%
+  arrange(desc(n)) %>%
+   mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) 
+
+# caller-2- is eval.parent
+eval_calls_default %>% filter(environment_class == "caller-2-") %>% count(ev_variant)
+  
+```
+
+`eval` is not problematic:
+
+```{r}
+eval_calls_default %>% filter(ev_variant == "eval") %>% count(environment_class, wt = duplicates, sort = TRUE)
+```
+
+But `eval.parent` is:
+
+```{r}
+eval_calls_default %>% filter(ev_variant == "eval.parent") %>% count(environment_class, wt = duplicates, sort = TRUE)
+```
+
+It might be because `parent.frame` is equivalent to  `sys.frame(sys.parent(n))` and `sys.parent(n)` can get surprising result of it is called near the top level...
+
+For `parent.frame()` :
+
+```{r}
+E_envir %>% filter(envir == "parent.frame()") %>% count(environment_class, wt = duplicates, sort = TRUE) %>%
+  mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) 
+
+E_envir %>% filter(envir == "parent.frame()") %>% group_by(environment_class) %>%
+  summarise(n = n_distinct(src_ref)) %>%
+  arrange(desc(n)) %>%
+   mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) 
+
+```
+
+For `new.env()`:
+
+```{r}
+E_envir %>% filter(envir == "new.env()") %>% count(environment_class, wt = duplicates, sort = TRUE) %>%
+  mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) 
+
+E_envir %>% filter(envir == "new.env()") %>% group_by(environment_class) %>%
+  summarise(n = n_distinct(src_ref)) %>%
+  arrange(desc(n)) %>%
+   mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) 
+
+```
+
+For each envir expression, what is the most common environment class? (in calls, in sites)
+
+```{r}
+env_class_envir <- E_envir %>% group_by(envir) %>%
+  group_by(environment_class, .add = TRUE) %>% summarise(n = n_distinct(src_ref)) %>%
+  summarise(env_class = first(environment_class, order_by = order(n, decreasing = TRUE)), n = sum(n)) %>% 
+  arrange(desc(n))
 ```
 
 

@@ -188,7 +188,7 @@ widespread_minimized <- E_cano %>%
   summarize(n_call_sites = n_distinct(src_ref), 
             proportion = ratio(n_call_sites, nb_call_sites), 
             n_packages = n_distinct(ev_package),
-            n_operations = round(mean(n_op, na.rm=TRUE), 2), 
+            n_operations = round(mean(n_op, na.rm=TRUE)), 
             med_operations = median(n_op, na.rm = TRUE),
             percent_envir = ratio(n_distinct(cur_data()$src_ref[!is.na(cur_data()$envir)]),  n_call_sites), 
             percent_envir_calls = ratio(sum(!is.na(envir)), n()), 
@@ -203,11 +203,12 @@ widespread_minimized %>%
 ```{r}
 nrows <- min(12, nrow(widespread_minimized)) # kaggle has less than 12 rows
 r_vec("MinimizedCallSites", nrows, pull(widespread_minimized, n_call_sites))
-r_vec("MinimizedPropSites", nrows, pull(widespread_minimized, proportion))
+r_vec("MinimizedPropSites", nrows, pull(widespread_minimized, proportion), digits=0)
 r_vec("MinimizedPackage", nrows, pull(widespread_minimized, n_packages))
 r_vec("MinimizedOperations", nrows, pull(widespread_minimized, n_operations))
-r_vec("MinimizedPercentEnvir", nrows, pull(widespread_minimized, percent_envir))
-r_vec("MinimizedPercentEnvirNonParent", nrows, pull(widespread_minimized, percent_envir_non_parentframe))
+r_vec("MinimizedMedianOperations", nrows, pull(widespread_minimized, med_operations))
+r_vec("MinimizedPercentEnvir", nrows, pull(widespread_minimized, percent_envir), digits=0)
+r_vec("MinimizedPercentEnvirNonParent", nrows, pull(widespread_minimized, percent_envir_non_parentframe), digits=0)
 ```
 
 `n_operations` is the average of R interpreter eval loop per minimized expression. `prop_envir` shows how much often an *explicit* environment is passed to `eval`. Looking up to a variable and applying a function to a variable, are the two non-trivial categories that most of the time explicitly use the `envir` argument of `eval`.
