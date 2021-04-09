@@ -161,11 +161,12 @@ together, run once, and never revisited.
 results should go here.}
 
 
+\newpage
 \section{Background and Previous work}
 
 This section provides a short introduction to R and the reflective features of
 the language; then looks at the semantics of \eval in R and discusses design
-choices; lastly, this paper is put in context of previous work.
+choices; lastly, this work is put in context.
 
 \subsection{R, Briefly}
 
@@ -196,13 +197,12 @@ for future use.
 
 \subsection{On the Expressive Power of Eval}
 
-While a facility to transform data into code is available in many languages,
-some design choices affect the expressive power of \eval. The key choices are
-the input format, the environment in which generated code is evaluated and the
-reflective operations available to that code. Fig.~\ref{comp} summarizes
-several designs.
+While a data-to-code facility is available in many languages, some design
+choices affect the expressive power of \eval. The key choices are the input
+format, the environment in which generated code is evaluated and the reflective
+operations available to that code. Fig.~\ref{comp} summarizes designs.
 
-\begin{figure}[!t]\center\small\begin{tabular}{r@{~}l|l|l|l}\hline
+\begin{figure}[!h]\center\small\begin{tabular}{r@{~}l|l|l|l}\hline
 \tiny\sc Language&&\sc\tiny Input&\sc\tiny Scope&\tiny\sc Reflective operations\\\hline
 \bf Julia&\cite{julia}     & expression& toplevel         & data\\
 \bf Java&\cite{cl}  & bytecode  & classloader       & data\\
@@ -246,22 +246,21 @@ does not have to occur when optimized code is running~\cite{oopsla20a}.
 
 \subsection{Eval in R}
 
-The R language exposes a rich reflective interface with four main functions,
-\c{eval}, \c{evalq}, \c{eval.parent}, and \c{local}. The first is the most
-general with three arguments, an expression, its environment and enclosing
-environment. The following simplifies details not relevant to this paper, the
-interested reader should consult \citet{hadley}.
+R exposes a rich reflective interface with functions, \c{eval},
+\c{evalq}, \c{eval.parent}, and \c{local}. The following simplifies details not
+relevant to this paper, the interested reader should consult \citet{hadley}.
 
 \begin{lstlisting}
  eval <- function(e, envir = parent.frame(),
                    encl = if(is.list(envir)) parent.frame() else baseenv()) ...
 \end{lstlisting}
-Parameter \c e is the \c{expression} to evaluate, \c{envir} is the evaluation
-environment, and \c{encl} is used to look up variables not found in \c{envir}.
-The default value of latter is either the caller's environment or top level.
-\Eval can take several types for \c e, for our purposes on the \c{expression}.
-These can be thought of as the abstract syntax trees returned by the parser. An
-\c{expression} can be obtained by calling \c{quote} or \c{parse} wit a string:
+The most general is \eval. Parameter \c e is the \c{expression} to evaluate,
+\c{envir} is the evaluation environment, and \c{encl} is used to look up
+variables not found in \c{envir}. The default value of latter is either the
+caller's environment or top level. \Eval can take several types for \c e, for
+our purposes on the \c{expression}. These can be thought of as the abstract
+syntax trees returned by the parser. An \c{expression} can be obtained by
+calling \c{quote} or \c{parse} with a string:
 \begin{lstlisting}
  > quote(a + b)
  # a + b
@@ -278,8 +277,8 @@ function called with \c{x = a+b}, then \c f returns an expression object.
  # 1+2
 \end{lstlisting}
 The call to \c{substitute(x)} extracts the unevaluated expression from the
-promise bound to \c x. Function \c{substitute(e,envir)} takes two arguments, the
-second is used as a substitution environment for free variables in \c e.
+promise \c x. Function \c{substitute(e,envir)} takes two arguments, the second
+is used to substitute free variables in \c e.
 \begin{lstlisting}
  > environment()
  # <environment: R_GlobalEnv>
@@ -296,22 +295,19 @@ environment:
 \item \c{envir\$v<-2} and \c{assign("v",2,envir=envir)}: store 2 in \c{v}, if
   not found, \c{v} is created in \c{envir}.
 \end{itemize}
-\noindent Programmers sometimes use environments as hash maps as they are the
-only data type with reference semantics and have a built-in string look up.
-Functions \c{parent.frame} and \c{sys.frame} return environments further up the
-call stack.
+\noindent Environments are used as hash maps as they have reference semantics
+and a built-in string look up. Functions \c{parent.frame} and \c{sys.frame}
+return environments further up the call stack.
  \begin{lstlisting}
   evalq <- function(e,envir,encl) eval(quote(e),envir,encl)
   eval.parent <- function(e,n) eval(e,parent.frame(n))
   local <- function(e,envir,encl) evalq(e,new.env())
 \end{lstlisting}
-The three \eval variants can be expressed with \eval. The \c{evalq} form quotes
-the argument to prevent it from being evaluated in the current environment. The
-\c{eval.parent(e,n)} form evaluates \c{e} in the environment of the {\tt n}-th
-caller of this function. Finally, \c{local} evaluates \c{e} in a new environment
+The three variants can be expressed with \eval: \c{evalq} quotes its
+argument to prevent evaluation in the current environment,
+\c{eval.parent(e,n)} evaluates \c{e} in the environment of the {\tt n}-th
+caller of this function; finally, \c{local} evaluates \c{e} in a new environment
 to avoid polluting the current one.
-
-
 
 \subsection{Previous Work}
 
@@ -326,10 +322,10 @@ be replaced with equivalent and safer code. They categorized inputs to \eval so
 as to cover the vast majority of input strings. Restricting themselves to \eval
 in which all named variables refer to the global scope, many patterns could be
 replaced by more disciplined code~\cite{oopsla12b, moller12}. The work did not
-measure code coverage, so the numbers presented are a lower bound on the
-possible behaviors. Furthermore, JavaScript usage in 2011 is likely different
-from today, e.g. Node.js was not covered by Richards. More details about dynamic
-analysis of JavaScript can be found in~\cite{liang}.
+measure code coverage, so the numbers presented are a lower bound on possible
+behaviors. Furthermore, JavaScript usage in 2011 is likely different from today,
+e.g. Node.js was not covered. More details about dynamic analysis of JavaScript
+can be found in~\cite{liang}.
 
 \citet{wang} analyzed use of dynamic features in 18 Python programs to find if
 they affect file change-proneness. Files with dynamic features are significantly
@@ -381,30 +377,28 @@ Our corpus is assembled from three sources: the \emph{Base} libraries that are
 bundled with the language implementation, packages hosted on \emph{CRAN} and
 scripts from \emph{Kaggle}.
 
-\mypara{Base.} The base dataset contains \BasePackages core libraries
-performing basic arithmetics, statistics, and operating system related
-functionalities. These libraries are bundled with R and are executed
-pervasively. Together they contain \BaseEvalCallSites calls to \eval in
-\BaseFunsWithEvals functions. Some of these functions provide basic R
-functionalities such as package loading and thus there is hardly any R code
-which does not invoke one of these \eval call sites.
+\mypara{Base.} The dataset contains \BasePackages libraries performing basic
+arithmetics, statistics, and operating system functionalities. These libraries
+are bundled with R and executed pervasively. Together they contain
+\BaseEvalCallSites calls to \eval in \BaseFunsWithEvals functions. Some of these
+functions provide basic functionalities such as package loading and thus there
+is hardly any code which does not invoke one of these.
 
-\mypara{CRAN.} The Comprehensive R Archive
-Network\footnote{\url{cran.r-project.org}} is the largest curated repository of
-R packages. It hosts \CranAvailablePackagesRnd packages with 6 new one submitted
-each day~\cite{Ligges2017}. Packages accepted to CRAN are authored by
-experienced developers and abide to a number of well-formedness rules
-automatically checked on each commit. Furthermore, each package comes with
-sample data. There are three sources of runnable code in a package: \emph{tests,
-examples} and \emph{vignettes} -- respectively, unit tests, code snippets from
-the documentation, and long-form use-cases written in RMarkdown.
-Examples and vignettes can be turned into scripts by extracting the relevant
-code. From \CranPackages packages we extracted \CranRunnableScripts scripts that contain
-\CranRunnableCode lines of code (\CranRunnableCodeExamplesRnd in examples,
-\CranRunnableCodeVignettesRnd in vignettes and \CranRunnableCodeTestsRnd in
-tests).
+\mypara{CRAN.} The Comprehensive R Archive Network
+(\small{\url{cran.r-project.org}}) is the largest curated repository of R
+packages. It hosts \CranAvailablePackagesRnd packages with 6 new ones submitted
+daily~\cite{Ligges2017}. Packages are authored by experienced developers and
+abide by well-formedness rules automatically checked on each commit.
+Each package comes with sample data. There are three sources of
+runnable code in a package: \emph{tests, examples} and \emph{vignettes} --
+respectively, unit tests, code snippets from the documentation, and long-form
+use-cases written in RMarkdown. Examples and vignettes can be turned into
+scripts by extracting the relevant code. From \CranPackages packages we
+extracted \CranRunnableScripts scripts that contain \CranRunnableCode lines of
+code (\CranRunnableCodeExamplesRnd in examples, \CranRunnableCodeVignettesRnd in
+vignettes and \CranRunnableCodeTestsRnd in tests).
 
-\mypara{Kaggle.} The Kaggle website\footnote{\url{kaggle.com}} is an online
+\mypara{Kaggle.} The Kaggle website (\small{\url{kaggle.com}}) is an online
 platform for data science. It allows users to submit problems and compete to
 solve them. Solutions, called \emph{kernels}, are uploaded as plain scripts or
 notebooks. The quality of code on Kaggle is not uniform. Each kernel is
@@ -426,7 +420,7 @@ and shared OCFS network storage. The pipeline steps are:
 
 
 \begin{figure}[!h]\hspace{-5mm}
-  \includegraphics[width=1.05\linewidth]{pipeline.pdf}
+  \includegraphics[width=.95\linewidth]{pipeline.pdf}
   \caption{Pipeline}\label{fig:pipeline}
 \end{figure}
 
@@ -470,31 +464,30 @@ The dynamic analysis is performed by \rdyntrace, a modified R virtual machine
 based on GNU R 4.0.2 that exposes low-level callbacks for a variety of runtime
 events~\cite{oopsla19b}.
 
-\mypara{Tracer.} The tracer registers callbacks to all \eval functions as well
-as a few other ones that allow us to better identify where do the expressions
-come from. For example, we taint the results of calls to \c{parse} (turns
-string into expression) and \c{match.call} (reflects on current call). We also
-capture calls to R API for dynamic code loading (\eg\xspace \c{library},
-\c{require} and \c{source}). Next, we subscribe to the events related to a
-variable definition and assignment allowing us to record side effects that
-happen in environments while evaluating code in \eval. One challenge we
-encountered during the analysis was that essentially R only provides source
-references for top-level calls in a function body or in the block surrounded
-by braces. That is to say, a method whose body would \c{eval(x)} would not have
-debug information that we can use to identify that particular \eval. The same
-expression surrounded by braces would have a line number and source reference.
-This is unfortunately not easily fixed in the R implementation. Instead, we
-extended the dynamic analysis tool to attach synthetic source code references
-to all \eval call sites by traversing AST.  The tracer is implemented as an R
-package in 3.2K C++ and 1.3K of R code. For performance reason, most of the
-tracing is done in C++. While in theory the implementation is rather
-straightforward, what makes it hard in practice is that (1) some of the core R
-functionality such as package loading is implemented using \eval which then
-leaks to the tracer in unexpected places, (2) lazy evaluation makes it harder
-to analyze function arguments while tracing as prematurely forcing a promise
-might have consequences, and finally (3) running large amount of real-world
-code triggers exercises a lot of corner cases of highly underspecified R
-behavior.
+The tracer registers callbacks to all \eval functions as well as a few other
+ones that allow us to better identify where do the expressions come from. For
+example, we taint the results of calls to \c{parse} (turns string into
+expression) and \c{match.call} (reflects on current call). We also capture calls
+to R API for dynamic code loading (\eg\xspace \c{library}, \c{require} and
+\c{source}). Next, we subscribe to the events related to a variable definition
+and assignment allowing us to record side effects that happen in environments
+while evaluating code in \eval. One challenge we encountered during the analysis
+was that essentially R only provides source references for top-level calls in a
+function body or in the block surrounded by braces. That is to say, a method
+whose body would \c{eval(x)} would not have debug information that we can use to
+identify that particular \eval. The same expression surrounded by braces would
+have a line number and source reference. This is unfortunately not easily fixed
+in the R implementation. Instead, we extended the dynamic analysis tool to
+attach synthetic source code references to all \eval call sites by traversing
+AST. The tracer is implemented as an R package in 3.2K C++ and 1.3K of R code.
+For performance reason, most of the tracing is done in C++. While in theory the
+implementation is rather straightforward, what makes it hard in practice is that
+(1) some of the core R functionality such as package loading is implemented
+using \eval which then leaks to the tracer in unexpected places, (2) lazy
+evaluation makes it harder to analyze function arguments while tracing as
+prematurely forcing a promise might have consequences, and finally (3) running
+large amount of real-world code triggers exercises a lot of corner cases of
+highly underspecified R behavior.
 
 \mypara{Limitations.} The analysis has some limitation. Even with the extension
 described above, there are still \PkgUndefinedRnd \eval calls without source
