@@ -410,10 +410,13 @@ ggsave_prefix <- function(name, tags=get_default_tags()) {
   ggsave(path(PLOT_DIR, paste0(prefix, "_", name)))
 }
 
-r_vec <- function(name, nrows, v) {
+r_vec <- function(name, nrows, v, ...) {
   stopifnot(length(v) >= nrows)
   startLetter <- utf8ToInt("A") - 1 # LateX does not like numbers so we suffix with letters of the alphabet
+  attrs <- attributes(v) # propagate attributes to each of the elements in the vector
   for(i in 1:nrows) {
-    r(paste0(name, intToUtf8(startLetter + i)), v[[i]])
+    elem <- v[[i]]
+    attributes(elem) <- attrs
+    r(paste0(name, intToUtf8(startLetter + i)), elem, ...)
   }
 }
