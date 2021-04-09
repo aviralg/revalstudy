@@ -743,7 +743,7 @@ $min(\c{g(f(x),h(z))})=\c{F(F(X))}$ and a number of other simplifications.
 Table~\ref{tab:minimizedexpressions} gives the 10 most frequent forms; \#sites
 and \%sites are, respectively, the number and ratio of sites receiving arguments
 of that form; \#packages is the number of packages with that form; \#operations
-is the average number of instructions performed by the interpreter; and \%envir
+is the median number of instructions performed by the interpreter; and \%envir
 is the percentage of sites for which the \c{envir} argument is explicitly passed
 to \eval and is not \c{parent.frame()}. The example column shows one sample
 expression $e$ that is normalized to the particular form.
@@ -752,16 +752,16 @@ expression $e$ that is normalized to the particular form.
 \begin{tabular}{|c|r|r|r|r|r|c|}\hline
   $min(e)$& \#sites & \%sites & \#packages & \#operations & \%envir & example\\\hline
   % macros are properly rounded and show the percentage sign now
-\c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedoperationsaRnd &\packageMinimizedpercentenvirnonparenta & \c{y+1}\\\hline
-\c{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedoperationsbRnd & \packageMinimizedpercentenvirnonparentb & \c{gbov( mean(x), a-1)}\\\hline
-\c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedoperationscRnd &\packageMinimizedpercentenvirnonparentc& \c{c(42,21,0)}\\\hline
-\c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & \packageMinimizedpercentenvirnonparentd & \c{seq\_len(iters)} \\\hline
-\c{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvirnonparente & \c{model.frame(formula = Z ~ U)} \\\hline
-\c{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirnonparentf & \c{rgamma(3, 2, n = 10L)} \\\hline
-\c{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirnonparentg & \c{DF\$B} \\\hline
-\c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirnonparenth & \c{function(x, y) x + 3 * y} \\\hline
-\c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenvirnonparenti & \c{x[1, 2:3, 2:3] <- value}\\\hline
-\c{\{\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirnonparentj & \c{\{ write.csv(iris, tf) ; file.size(tf) \}} \\\hline
+\c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedmedianoperationsaRnd &\packageMinimizedpercentenvirnonparenta & \c{y+1}\\\hline
+\c{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedmedianoperationsbRnd & \packageMinimizedpercentenvirnonparentb & \c{gbov( mean(x), a-1)}\\\hline
+\c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedmedianoperationscRnd &\packageMinimizedpercentenvirnonparentc& \c{c(42,21,0)}\\\hline
+\c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedmedianoperationsdRnd & \packageMinimizedpercentenvirnonparentd & \c{seq\_len(iters)} \\\hline
+\c{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedmedianoperationseRnd & \packageMinimizedpercentenvirnonparente & \c{model.frame(formula = Z ~ U)} \\\hline
+\c{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedmedianoperationsfRnd & \packageMinimizedpercentenvirnonparentf & \c{rgamma(3, 2, n = 10L)} \\\hline
+\c{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedmedianoperationsgRnd & \packageMinimizedpercentenvirnonparentg & \c{DF\$B} \\\hline
+\c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentenvirnonparenth & \c{function(x, y) x + 3 * y} \\\hline
+\c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedmedianoperationsiRnd & \packageMinimizedpercentenvirnonparenti & \c{x[1, 2:3, 2:3] <- value}\\\hline
+\c{\{\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentenvirnonparentj & \c{\{ write.csv(iris, tf) ; file.size(tf) \}} \\\hline
 \end{tabular}
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}

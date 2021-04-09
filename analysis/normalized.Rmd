@@ -95,7 +95,8 @@ if(params$force_rebuild || rebuild) {
   read_fst(calls_path) %>% as_tibble() %>% semi_join(C_raw, by = c("eval_source" = "package")) -> E_raw
   
   E_raw <- E_raw %>% mutate(envir_expression = if_else(envir_type == "NULL", "NULL", envir_expression)) %>% 
-    mutate(envir_expression = na_if(envir_expression, "NA"))
+    mutate(envir_expression = na_if(envir_expression, "NA")) %>%
+    mutate(interp_eval = interp_eval - 14)  # 14 is the magic number corresponding to the number of steps of `eval(1)` (or `eval(some value)`)
   
   read_csv(normalized_path, col_types = cols(
     minimized = col_character(),
