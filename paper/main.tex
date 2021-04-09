@@ -730,24 +730,54 @@ the relative paucity of data in Kaggle, we do not pursue the data set further.
 The previous section gave a quantitative view of \eval usage; we now try to
 elucidate \emph{what} it does.
 
-\subsection{Arguments of \eval}
+\subsection{The arguments of \eval}
 
-The argument passed to a call to \eval determines what the function will do. As
-we have seen in the previous section, there are cases where the argument is a
-value, but these are rare. The common cases are that the argument is some form
-of expression, either a single variable, a simple expression or a statement.
-
-To categorize the expressions, consider a function $min(e)$ which for a given
-expression $e$ returns a normal form that abstracts many incidental details
-allowing the reader to focus on the structure of the evaluated code. The
-minimization function performs several simplifications steps. It performs
-constant folding of arithmetic and string expressions for base operators, e.g.
+The expressions passed to \eval vary widely. In order to categorize them, let us
+use a minimization function $min(e)$ which for a given expression $e$ returns a
+normal form that abstracts incidental details allowing the reader to focus on
+the structure of the evaluated code. The minimization function performs constant
+folding of arithmetic and string expressions for base operators, e.g.
 $min(\c{1+1})=\c{V}$, value simplification, $min(\c{c(1,2,3+2)})=\c{V}$,
 variable absorption, $min(\c{x+y})=\c{X}$, function absorption,
-$min(\c{g(f(x),h(z))})=\c{F(F(X))}$ and a number of other simplification. There
-are 15 normal forms. We detail the interesting cases next.
+$min(\c{g(f(x),h(z))})=\c{F(F(X))}$ and a number of other simplifications.
+Table~\ref{tab:minimizedexpressions} gives the 10 most frequent forms; \#sites
+and \%sites are, respectively, the number and ratio of sites receiving arguments
+of that form; \#packages is the number of packages with that form; \#operations
+is the average number of instructions performed by the interpreter; and \%envir
+is the percentage of sites for which the \c{envir} argument is explicitly passed
+to \eval and is not \c{parent.frame()}.
 
-\newcommand{\EE}[1]{{{\emph{\framebox{#1}}}}}
+\begin{table}[h]\small
+\begin{tabular}{|c|r|r|r|r|r|c|}\hline
+  $min(e)$& \#sites & \%sites & \#packages & \#operations & \%envir & example\\\hline
+%% JAN: simplifying osme mumers and adding %
+\c X&\packageMinimizedcallsitesa & 28\% &\packageMinimizedpackagea & 768 &77\% & \c{y+1}\\\hline
+\c{F(F(X))} & \packageMinimizedcallsitesb  & 20\% & \packageMinimizedpackageb  & 466K & 55\% & \c{gbov( mean(x), a-1)}\\\hline
+\c{V}&\packageMinimizedcallsitesc & 17\% &\packageMinimizedpackagec &\packageMinimizedoperationscRnd & 71\%& \c{c(42,21,0)}\\\hline
+\c{F(X)}& \packageMinimizedcallsitesd & 14\% & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & 75\% & \c{seq\_len(iters)} \\\hline
+\c{model.frame} & \packageMinimizedcallsitese & 7\% & \packageMinimizedpackagee & 3K & 21\% & \c{model.frame(formula = Z ~ U)} \\\hline
+\c{F()}& \packageMinimizedcallsitesf & 6\% & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & 73\% & \c{rgamma(3, 2, n = 10L)} \\\hline
+\c{\$}& \packageMinimizedcallsitesg & 6\% & \packageMinimizedpackageg & 2K & 78\% & \c{DF\$B} \\\hline
+\c{FUN} & \packageMinimizedcallsitesh & 6\% & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & 23\% & \c{function(x, y) x + 3 * y} \\\hline
+\c{<-} & \packageMinimizedcallsitesi  & 5\% & \packageMinimizedpackagei & 11K & 73\% & \c{x[1, 2:3, 2:3] <- value}\\\hline
+\c{BLOCK} & \packageMinimizedcallsitesj & 4\% & \packageMinimizedpackagej & 440K & 73\% & \c{\{ write.csv(iris, tf) \textbackslash n file.size(tf) \}} \\\hline
+%% \c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa\% &\packageMinimizedpackagea &\packageMinimizedoperationsaRnd &\packageMinimizedpercentenvirnonparenta\% & \c{y+1}\\\hline
+%% \c{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedoperationsbRnd & \packageMinimizedpercentenvirnonparentb & \c{gbov( mean(x), a-1)}\\\hline
+%% \c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedoperationscRnd &\packageMinimizedpercentenvirnonparentc& \c{c(42,21,0)}\\\hline
+%% \c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & \packageMinimizedpercentenvirnonparentd & \c{seq\_len(iters)} \\\hline
+%% \c{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvirnonparente & \c{model.frame(formula = Z ~ U)} \\\hline
+%% \c{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirnonparentf & \c{rgamma(3, 2, n = 10L)} \\\hline
+%% \c{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirnonparentg & \c{DF\$B} \\\hline
+%% \c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirnonparenth & \c{function(x, y) x + 3 * y} \\\hline
+%% \c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenvirnonparenti & \c{x[1, 2:3, 2:3] <- value}\\\hline
+%% \c{\{\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirnonparentj & \c{\{ write.csv(iris, tf) \textbackslash n file.size(tf) \}} \\\hline
+\end{tabular}
+\caption{Minimized expressions} \label{tab:minimizedexpressions}
+\end{table}
+
+15 normal forms. We detail the interesting cases next.
+
+\newcommand{\EE}[1]{{{\emph{\framebox{#1}}}}\\[1mm]}
 
 \medskip\noindent\EE{$min(e)=\c{V}$} Expression that represent values are
 frequently passed to \eval. The majority of those, \packageValOneNodePercent,
@@ -802,31 +832,6 @@ instructions. The contents of the block are not inspected.
 \medskip\noindent\EE{$min(e)=\c{model.frame}$} Call to the \c{model.frame}
 function used to create statistical models. This subsume all other categories.
 
-
-Table~\ref{tab:minimizedexpressions} gives the most frequent forms; \#sites
-(\%sites) is the number (ratio) of call sites receiving arguments of that form;
-\#packages is the number of packages with that form; \#operations is the average
-number of instructions performed by the interpreter when given that minimized
-expression; and \%envir is the percentage of call sites for which the \c{envir}
-argument is explicitly passed, and is not \c{parent.frame()}.
-
-\begin{table}[h]\small
-\begin{tabular}{|c|r|r|r|r|r|c|}\hline
-$min(e)$& \#sites & \%sites & \#packages & \#operations & \%envir & example\\\hline
-\c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedoperationsaRnd &\packageMinimizedpercentenvirnonparenta & \c{y+1}\\\hline
-\c{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedoperationsbRnd & \packageMinimizedpercentenvirnonparentb & \c{gbov( mean(x), a-1)}\\\hline
-\c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedoperationscRnd &\packageMinimizedpercentenvirnonparentc& \c{c(42,21,0)}\\\hline
-\c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedoperationsdRnd & \packageMinimizedpercentenvirnonparentd & \c{seq\_len(iters)} \\\hline
-\c{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedoperationseRnd & \packageMinimizedpercentenvirnonparente & \c{model.frame(formula = Z ~ U)} \\\hline
-\c{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedoperationsfRnd & \packageMinimizedpercentenvirnonparentf & \c{rgamma(3, 2, n = 10L)} \\\hline
-\c{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedoperationsgRnd & \packageMinimizedpercentenvirnonparentg & \c{DF\$B} \\\hline
-\c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & \packageMinimizedpercentenvirnonparenth & \c{function(x, y) x + 3 * y} \\\hline
-\c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedoperationsiRnd & \packageMinimizedpercentenvirnonparenti & \c{x[1, 2:3, 2:3] <- value}\\\hline
-\c{\{\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedoperationsjRnd & \packageMinimizedpercentenvirnonparentj & \c{\{ write.csv(iris, tf) \textbackslash n file.size(tf) \}} \\\hline
-\c{F(F(<-))} & \packageMinimizedcallsitesk & \packageMinimizedpropsitesk & \packageMinimizedpackagek & \packageMinimizedoperationskRnd & \packageMinimizedpercentenvirnonparentk & \c{opt\$h.weights <- rep(1, length(x))} \\\hline
-\end{tabular}
-\caption{Minimized expressions} \label{tab:minimizedexpressions}
-\end{table}
 
 A given \eval call site can be passed different forms at different invocations.
 However, \packageNbOneMinimizedPercent of sites only see a single form.
