@@ -861,8 +861,10 @@ environment of a stack frame at the requested offset.
 
 
 The top-level environment in R is called the global environment. New
-environments can be created using \c{new.env}. They can be provided a parent
+environments can be created using \c{new.env}, or \c{list2env}. They can be provided a parent
 environment which becomes the enclosing scope of the new environment.
+% as.environment also can be used sometimes for that
+% list2env creates an environment only if its argument envir is not provided
 
 Another kind of environments that is passed to \eval is the environment of a
 package. It refers to the \emph{namespace} of a package. A call to
@@ -879,15 +881,17 @@ poor man's hidden functions in \emph{USSCXenaTools}. It is also used to
 implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
 
 
-\subsubsection{Bits of text, possibly reusable}
 
-\todo{Pierre: check the numbers - we want to know when it is an environment, when it is a list / data frame}
+
+
 Most of the time, \ie in \packageEnvirEnvSitePercent of the sites, \eval is
 passed an actual environment.
 
-\c{NULL}, a \c{list} or a data frame, or an integer, happen in
-\packageEnvirUnusualSitePercent of the cases: \eval copies the fields of the
+\c{NULL}, a \c{list} or a data frame, or an integer: \eval copies the fields of the
 list or data frame and creates bindings for them in a new environment.
+
+
+\subsubsection{Bits of text, possibly reusable}
 
 This pattern is used to evaluate formulas which can directly refer to the fields
 of the data.
@@ -1091,11 +1095,13 @@ casual users. \Eval is also being used to reduce boilerplate code and
 provide convenience features for programmers. We now give some
 representative examples of its usage.
 
-\mypara{Intercession.} \todo{Pierre: update wrt the previous section if we want
-to keep it. Also perhaps we could start with a simpler pattern and then show
-this one} A common use case for \eval is to be combined with \c{match.call}.
+\mypara{Variable lookup.} % predominant usage of eval in base
+
+\mypara{Symbolic differentiation.} % D and deriv
+
+\mypara{Capturing a call.}  A common use case for \eval is to be combined with \c{match.call}.
 \c{match.call} walks up the call stack, captures the code that invoked the
-currently executing function, and returns it as an unevaluated expression. The
+currently executing function, and returns it as an unevaluated expression that includes the call function and its unevaluated arguments. The
 pattern is to transform a call to some function \c{f} into a call to \c{g} with
 some arguments retained and others modified.  \todo{or change the target
 function. Both are described as "patterns" in the R documentation.} As an
@@ -1103,12 +1109,21 @@ illustration, consider the \c{vcpart} package's function \c{tvcglm} that is
 translated to a call to \c{tvcm} with two modifications to the argument list:
 argument \c{control} can't be missing and \c{fit} is set \c{"glm"}. The
 function ends with a call to \c{eval.parent} to ensure that the rewritten call
-is evaluted in the same environment the original call was.  \begin{lstlisting}
+is evaluated in the same environment the original call was.  \begin{lstlisting}
 tvcglm <- function(formula, data, family, ...) { k <- match.call() k[[1]] <-
 as.name("tvcm") if ("fit" %in% names(list(...))) warning("'fit' ignored.")
 k$fit <- "glm" eval.parent(k) } \end{lstlisting} This pattern is recognizable
 by the fact that the expression is a call and the target environment is that of
 the parent.
+
+% We have quantitative data on that if needed...
+This pattern is very often (more than half of the cases) used in relation with statistical models, to build a new model. \c{model.frame} to build a new generic model, or a more specialized model like \c{glm} or, \c{lm}.
+% Show example
+
+A related pattern is not to change the call but rather to evaluate the arguments in the parent frame. This can also be achieved with \c{substitute}.
+% Example
+
+In the R community, the call capturing pattern is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}.
 
 \mypara{Code Generation.} The more traditional use of \eval is to execute code
 that was assembled by the programmer into a string. Here we show the method
@@ -1131,7 +1146,7 @@ opt,"",paste(",xlab=\"",var,"\"",sep="")), ifelse("type" %in%
 
 
 \mypara{Debloating.} \todo{Wouldn't reducing boilerplate be a better name?} \Eval is often used as a means to reduce boilerplate code;
-simple and repetitive code can easily be replaced with judcious use of \eval.
+simple and repetitive code can easily be replaced with judicious use of \eval.
 For example, the \c{data.table} package uses \eval to calls the \c{options}
 function with named arguments taken from a vector of strings. While the benefits
 are limited in this example, it is an attractive tool for programmers.
@@ -1147,6 +1162,9 @@ fact that \eval is executed in a loop.
 unchanged. They are an example of trivial uses of \eval. Another
 trivial use is the empty expression, often found in JavaScript, but
 rare in R. \todo{Given that we do not have any data I would get rid of it}
+\todo{We have the normalized expressions V and the small study I did on values passed to eval. And I did not find any eval() (empty) in the dataset. }
+
+% Creating macros?
 
 \mypara{Unnecessary use of \eval}
 
