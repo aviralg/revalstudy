@@ -745,7 +745,8 @@ and \%sites are, respectively, the number and ratio of sites receiving arguments
 of that form; \#packages is the number of packages with that form; \#operations
 is the average number of instructions performed by the interpreter; and \%envir
 is the percentage of sites for which the \c{envir} argument is explicitly passed
-to \eval and is not \c{parent.frame()}.
+to \eval and is not \c{parent.frame()}. The example column shows one sample
+expression $e$ that is normalized to the particular form.
 
 \begin{table}[h]\small
 \begin{tabular}{|c|r|r|r|r|r|c|}\hline
@@ -760,7 +761,7 @@ to \eval and is not \c{parent.frame()}.
 \c{\$}& \packageMinimizedcallsitesg & 6\% & \packageMinimizedpackageg & 2K & 78\% & \c{DF\$B} \\\hline
 \c{FUN} & \packageMinimizedcallsitesh & 6\% & \packageMinimizedpackageh & \packageMinimizedoperationshRnd & 23\% & \c{function(x, y) x + 3 * y} \\\hline
 \c{<-} & \packageMinimizedcallsitesi  & 5\% & \packageMinimizedpackagei & 11K & 73\% & \c{x[1, 2:3, 2:3] <- value}\\\hline
-\c{BLOCK} & \packageMinimizedcallsitesj & 4\% & \packageMinimizedpackagej & 440K & 73\% & \c{\{ write.csv(iris, tf) \textbackslash n file.size(tf) \}} \\\hline
+\c{BLOCK} & \packageMinimizedcallsitesj & 4\% & \packageMinimizedpackagej & 440K & 73\% & \c{\{ write.csv(iris, tf); file.size(tf) \}} \\\hline
 %% \c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa\% &\packageMinimizedpackagea &\packageMinimizedoperationsaRnd &\packageMinimizedpercentenvirnonparenta\% & \c{y+1}\\\hline
 %% \c{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedoperationsbRnd & \packageMinimizedpercentenvirnonparentb & \c{gbov( mean(x), a-1)}\\\hline
 %% \c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedoperationscRnd &\packageMinimizedpercentenvirnonparentc& \c{c(42,21,0)}\\\hline
@@ -775,47 +776,60 @@ to \eval and is not \c{parent.frame()}.
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
 
-15 normal forms. We detail the interesting cases next.
+\noindent
+We detail these forms and discuss their implication for the behavior of \eval.
 
 \newcommand{\EE}[1]{{{\emph{\framebox{#1}}}}\\[1mm]}
 
 \medskip\noindent\EE{$min(e)=\c{V}$} Expression that represent values are
-frequently passed to \eval. The majority of those, \packageValOneNodePercent,
-are inline constants (integers or doubles). The rest trivially evaluate to a
-value.\footnote{True as long as base functions such as \c{+} are not redefined.
-They typically aren't, but this is a limitation of this categorization.} In our
-corpus, \packageNbCallSitesUniqueActualValue call sites only ever see a simple
-values; the median number of times they are exercised is
-\packageMedianRunSitesUniqueActualValue, suggesting a possible lack of coverage.
-However, manual inspection reveals cases such as:
+frequently passed to \eval -- they represent 17\% of the calls. The majority of
+those, \packageValOneNodePercent, are inline constants (integers or doubles).
+The rest trivially evaluate to a value, \eg~\c{1+1}.\footnote{True as long as
+base functions such as \c{+} are not redefined. They typically aren't, but this
+is a limitation of this categorization.} In our corpus,
+\packageNbCallSitesUniqueActualValue call sites only ever see a simple value.
+Manual inspection reveals cases such as the following
 \begin{lstlisting}
  f1 <- eval(paste("A~",paste(paste(names(X[,-1])),collapse="+")))
 \end{lstlisting}
-  This concatenates to a string and \eval simply returns it as is.
-  From twenty randomly selected \evals, only \packageUsefulValueEvalPercent of
-  them needed to use \eval.
+where the argument to \eval is a string which \eval simply returns. From twenty
+randomly selected \evals, \packageUsefulValueEvalPercent of them do not need
+\eval. For the other cases, either we are dealing with a value that needs to be
+constructed dynamically or the value is a default case that sometimes is
+replaced by a more interesting expression.
 
-\medskip\noindent\EE{$min(e)=\c{X}$} Variables are the most common form. They
-subsume values, thus \c{X} includes arithmetic expressions in which a variable
-occurs. \packageNbSymbolVarSitePercent of variable expression are symbols, \ie
-just an \c{x}. As a variable may refer to a promise, it may trigger computation.
+\medskip\noindent\EE{$min(e)=\c{X}$} Variables lookups are the most common form,
+they are found in 28\% of the sites. This form includes simple variable reads,
+\eg~\c{x}, those are \packageNbSymbolVarSitePercent of \c X. The form also
+subsumes \c{V}, so it includes a mixture of arithmetic expressions,
+\eg~\c{x+y+1}. The operations allowed are limited to built-in arithmetics. It is
+noteworthy that, while most \c{X}\!s evaluate in a single step, the variable can
+be bound to a promise, and accessing it may trigger evaluation of that promise,
+thus resulting in an arbitrary amount of computation.
 
-\medskip\noindent\EE{$min(e)=\c{\$}$} A name lookup, \c{x\$f}, can be used to
-access variable in an environment or a column in a data frame, this also include
-vector indexing operators, \c{[]} and \c{[[]]}. A name lookup subsumes
-variables.
+\newpage
+\medskip\noindent\EE{$min(e)=\c{\$}$} This form extends \c X to include lookup
+with the dollar operator, \eg~\c{x\$f}, and vector indexing, \eg~\c{x[42]} or
+\c{x[[24]]}. As with \c X we allow arithmetics and values in this form. Lookup
+occurs in 6\% of the sites. Arbitrary computations can occur if one of the
+variables is bound to a promise.
 
-\medskip\noindent\EE{$min(e)=$~\c{<-}} Assignments account for
-\packageAssignSitesPercent of \eval sites, they are \c{<-}, {\tt <<-} and
-\c{assign}, and they subsume named lookups.
+\medskip\noindent\EE{$min(e)=$~\c{<-}} This form includes both assignments
+operator, the direct assignment {\tt <-}, and assignment to the parent
+environment {\tt <\,\!<-}, and the \c{\$} form. Assignments occur in 4\% of the
+sites. They represent the most obvious source of side-effects.
 
-\medskip\noindent\EE{$min(e)=\c{F()}$} A plain function call which may have some
-values as argument but does not include variables. It should be noted that
-function name require variable lookups -- we distinguish those as they usually
-do not trigger computation.
+\medskip\noindent\EE{$min(e)=\c{F()}$} This form captures simple function calls,
+\eg~\c{f(2)}, with neither variables or assignments. Or, more specifically it
+allows for variables in the function position but not in arguments. Usually,
+looking up function names does not trigger computation, but that is not a given
+if the function is returned by a promise or if the function name is shadowed by
+a promise containing a value, then computation will occur. This form occurs in
+6\% of sites.
 
-\medskip\noindent\EE{$min(e)=\c{F(X)}$} Function calls whose arguments may include
-variable references.
+\medskip\noindent\EE{$min(e)=\c{F(X)}$} This form allows function calls whose
+arguments may include variable references. Assignments are excluded from this
+form. It occurs in 14\% of the sites in the corpus.
 
 \medskip\noindent\EE{$min(e)=\c{F(F(X))}$} Nested function calls with variables.
 
