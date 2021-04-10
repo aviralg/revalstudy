@@ -100,6 +100,7 @@ if (params$force_rebuild | rebuild) {
     ev_package = eval_source, #   Package of the call site
     arg_size = expr_resolved_length, #   Size in characters of argument 
     ast_nodes = expr_resolved_nodes, #   Size in AST Nodes
+    func = caller_function,
     type = expr_resolved_type_tag,   #   Argument type
     opcodes = interp_eval #  Count of the AST nodes traversed by the
   ) %>% #                                interpreter during eval (non-recursive).
@@ -557,6 +558,23 @@ overview_table(
 
 `r TBL`
 
+
+# Most used function
+
+```{r}
+frequent_funcs <- E %>% count(func, wt = duplicates, sort = TRUE) %>% 
+  mutate(p = n / nb_calls, cp = cumsum(p))
+
+top_func <- frequent_funcs %>% .[1,]
+
+overview_table(
+  r("top func name", top_func$func),
+  r("top func calls", top_func$n),
+  r("top func percent", percent(top_func$p))
+) -> TBL
+```
+
+`r TBL`
 
 
 ```{r include=FALSE}
