@@ -481,13 +481,28 @@ in the R implementation. Instead, we extended the dynamic analysis tool to
 attach synthetic source code references to all \eval call sites by traversing
 AST. The tracer is implemented as an R package in 3.2K C++ and 1.3K of R code.
 For performance reason, most of the tracing is done in C++. While in theory the
-implementation is rather straightforward, what makes it hard in practice is that
-(1) some of the core R functionality such as package loading is implemented
-using \eval which then leaks to the tracer in unexpected places, (2) lazy
-evaluation makes it harder to analyze function arguments while tracing as
-prematurely forcing a promise might have consequences, and finally (3) running
-large amount of real-world code triggers exercises a lot of corner cases of
-highly underspecified R behavior.
+implementation is rather straightforward, it is not so in practice:
+%
+\begin{compactitem}[---]
+
+\item The lazy evaluation makes it difficult to analyze function arguments
+  while tracing as prematurely forcing a promise might have dangerous
+  consequences.
+
+\item While the R interpreter is implemented in C, a lot of the core
+  functionality is done in R. For example, package loading is implemented in R
+  using \eval or the S4 and R6 object systems. This makes it hard in the tracer
+  to separate the \eval that are essential to user programs from the
+  accidental ones that are products of the way R implements its basic
+  operations. This is even more so for the side-effects analysis. 
+
+\item In the dynamic analysis, we run all the \emph{runnable} code we obtained
+  from CRAN and Kaggle---\ie real code written by a people with highly varying
+  expertise in R and programming in general. This exercise a lot of the corner
+  cases of the highly underspecified R behavior.
+
+\end{compactitem}
+
 
 \mypara{Limitations.} The analysis has some limitation. Even with the extension
 described above, there are still \PkgUndefinedRnd \eval calls without source
