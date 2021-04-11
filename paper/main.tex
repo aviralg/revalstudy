@@ -770,7 +770,7 @@ expression $e$ that is normalized to the particular form.
 \c{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedmedianoperationsbRnd & \packageMinimizedpercentenvirnonparentb & \c{gbov( mean(x), a-1)}\\\hline
 \c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedmedianoperationscRnd &\packageMinimizedpercentenvirnonparentc& \c{c(42,21,0)}\\\hline
 \c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedmedianoperationsdRnd & \packageMinimizedpercentenvirnonparentd & \c{seq\_len(iters)} \\\hline
-\c{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedmedianoperationseRnd & \packageMinimizedpercentenvirnonparente & \c{model.frame(formula = Z ~ U)} \\\hline
+\c{model.frame} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedmedianoperationseRnd & \packageMinimizedpercentenvirnonparente & \c{model.frame(formula = Z  $\sim$  U)} \\\hline
 \c{F()}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedmedianoperationsfRnd & \packageMinimizedpercentenvirnonparentf & \c{rgamma(3, 2, n = 10L)} \\\hline
 \c{\$}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedmedianoperationsgRnd & \packageMinimizedpercentenvirnonparentg & \c{DF\$B} \\\hline
 \c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentenvirnonparenth & \c{function(x, y) x + 3 * y} \\\hline
@@ -898,8 +898,9 @@ environment of a stack frame at the requested offset.
 
 
 The top-level environment in R is called the global environment. New
-environments can be created using \c{new.env}, or \c{list2env}. They can be provided a parent
-environment which becomes the enclosing scope of the new environment.
+environments can be created using \c{new.env}, or \c{list2env}. They can be
+provided a parent environment which becomes the enclosing scope of the new
+environment.
 % as.environment also can be used sometimes for that
 % list2env creates an environment only if its argument envir is not provided
 
@@ -919,20 +920,16 @@ implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
 
 
 
-
-
 Most of the time, \ie in \packageEnvirEnvSitePercent of the sites, \eval is
 passed an actual environment.
 
 \c{NULL}, a \c{list} or a data frame, or an integer: \eval copies the fields of the
 list or data frame and creates bindings for them in a new environment.
 
-
 \subsubsection{Bits of text, possibly reusable}
 
 This pattern is used to evaluate formulas which can directly refer to the fields
 of the data.
-
 
 We looked at the environments passed to all the \eval calls in our corpus.
 Table~\ref{tab:environments} summarizes the results. A numeric environment class
