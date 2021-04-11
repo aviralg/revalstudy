@@ -494,7 +494,7 @@ implementation is rather straightforward, it is not so in practice:
   using \eval or the S4 and R6 object systems. This makes it hard in the tracer
   to separate the \eval that are essential to user programs from the
   accidental ones that are products of the way R implements its basic
-  operations. This is even more so for the side-effects analysis. 
+  operations. This is even more so for the side-effects analysis.
 
 \item In the dynamic analysis, we run all the \emph{runnable} code we obtained
   from CRAN and Kaggle---\ie real code written by a people with highly varying
@@ -759,24 +759,22 @@ Table~\ref{tab:minimizedexpressions} gives the 10 most frequent forms; \#sites
 and \%sites are, respectively, the number and ratio of sites receiving arguments
 of that form; \#packages is the number of packages with that form; \#operations
 is the median number of instructions performed by the interpreter; and \%envir
-is the percentage of sites for which the \c{envir} argument is explicitly passed
-to \eval and is not \c{parent.frame()}. The example column shows one sample
+is the percentage of sites for which the \c{envir} argument is current frame or one of the parent frames. The example column shows one sample
 expression $e$ that is normalized to the particular form.
 
 \begin{table}[h]\small
 \begin{tabular}{|c|r|r|r|r|r|c|}\hline
   $min(e)$& \#sites & \%sites & \#packages & \#operations & \%envir & example\\\hline
-  % macros are properly rounded and show the percentage sign now
-\c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedmedianoperationsaRnd &\packageMinimizedpercentenvirnonparenta & \c{y+1}\\\hline
-\c{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedmedianoperationsbRnd & \packageMinimizedpercentenvirnonparentb & \c{gbov( mean(x), a-1)}\\\hline
-\c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedmedianoperationscRnd &\packageMinimizedpercentenvirnonparentc& \c{c(42,21,0)}\\\hline
-\c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedmedianoperationsdRnd & \packageMinimizedpercentenvirnonparentd & \c{seq\_len(iters)} \\\hline
-\c{\$} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedmedianoperationseRnd & \packageMinimizedpercentenvirnonparente & \c{model.frame(formula = Z ~ U)} \\\hline
-\c{model.frame}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedmedianoperationsfRnd & \packageMinimizedpercentenvirnonparentf & \c{rgamma(3, 2, n = 10L)} \\\hline
-\c{F()}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedmedianoperationsgRnd & \packageMinimizedpercentenvirnonparentg & \c{DF\$B} \\\hline
-\c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentenvirnonparenth & \c{function(x, y) x + 3 * y} \\\hline
-\c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedmedianoperationsiRnd & \packageMinimizedpercentenvirnonparenti & \c{x[1, 2:3, 2:3] <- value}\\\hline
-\c{\{\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentenvirnonparentj & \c{\{ write.csv(iris, tf) ; file.size(tf) \}} \\\hline
+\c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedmedianoperationsaRnd &\packageMinimizedpercentparentframesa & \c{y+1}\\\hline
+\c{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedmedianoperationsbRnd & \packageMinimizedpercentparentframesb & \c{gbov( mean(x), a-1)}\\\hline
+\c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedmedianoperationscRnd &\packageMinimizedpercentparentframesc& \c{c(42,21,0)}\\\hline
+\c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedmedianoperationsdRnd & \packageMinimizedpercentparentframesd & \c{seq\_len(iters)} \\\hline
+\c{\$} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedmedianoperationseRnd & \packageMinimizedpercentparentframese & \c{DF\$B}\\\hline
+\c{model.frame}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedmedianoperationsfRnd & \packageMinimizedpercentparentframesf &  \c{model.frame(formula = Z $\sim$ U)}   \\\hline
+\c{F()}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedmedianoperationsgRnd & \packageMinimizedpercentparentframesg & \c{rgamma(3, 2, n = 10L)} \\\hline
+\c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentparentframesh & \c{function(x, y) x + 3 * y} \\\hline
+\c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedmedianoperationsiRnd & \packageMinimizedpercentparentframesi & \c{x[1, 2:3, 2:3] <- value}\\\hline
+\c{\{\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentparentframesj & \c{\{ write.csv(iris, tf) ; file.size(tf) \}} \\\hline
 \end{tabular}
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
@@ -790,12 +788,12 @@ We detail these forms and discuss their implication for the behavior of \eval.
 
 \newcommand{\EE}[1]{{{\emph{\framebox{#1}}}}\\[1mm]}
 
-\medskip\noindent\EE{$min(e)=\c{V}$} Expression that represent values are
-frequently passed to \eval -- they represent 17\% of the calls. The majority of
-those, \packageValOneNodePercent, are inline constants (integers or doubles).
-The rest trivially evaluate to a value, \eg~\c{1+1}.\footnote{True as long as
-base functions such as \c{+} are not redefined. They typically aren't, but this
-is a limitation of this categorization.} In our corpus,
+\medskip\noindent\EE{$min(e)=\c{V}$} Expressions that represent values are
+frequently passed to \eval -- they occur in 17\% of sites. The majority of
+those, \packageValOneNodePercent, are inline constants (integer or double
+vectors). The rest trivially evaluate to a value, \eg~\c{1+1}.\footnote{True as
+long as base functions such as \c{+} are not redefined. They typically aren't,
+but this is a limitation of this categorization.} In our corpus,
 \packageNbCallSitesUniqueActualValue call sites only ever see a simple value.
 Manual inspection reveals cases such as the following
 \begin{lstlisting}
@@ -805,7 +803,9 @@ where the argument to \eval is a string which \eval simply returns. From twenty
 randomly selected \evals, \packageUsefulValueEvalPercent of them do not need
 \eval. For the other cases, either we are dealing with a value that needs to be
 constructed dynamically or the value is a default case that sometimes is
-replaced by a more interesting expression.
+replaced by a more interesting expression. This form is usually evaluated in few
+interpreter steps, in fact the median is only
+\packageMinimizedmedianoperationscRnd.
 
 \medskip\noindent\EE{$min(e)=\c{X}$} Variables lookups are the most common form,
 they are found in 28\% of the sites. This form includes simple variable reads,
@@ -814,19 +814,23 @@ subsumes \c{V}, so it includes a mixture of arithmetic expressions,
 \eg~\c{x+y+1}. The operations allowed are limited to built-in arithmetics. It is
 noteworthy that, while most \c{X}\!s evaluate in a single step, the variable can
 be bound to a promise, and accessing it may trigger evaluation of that promise,
-thus resulting in an arbitrary amount of computation.
+thus resulting in an arbitrary amount of computation. The median number of
+interpreted operations is \packageMinimizedmedianoperationsaRnd, suggesting that
+it is not the common case.
 
 \newpage
 \medskip\noindent\EE{$min(e)=\c{\$}$} This form extends \c X to include lookup
 with the dollar operator, \eg~\c{x\$f}, and vector indexing, \eg~\c{x[42]} or
 \c{x[[24]]}. As with \c X we allow arithmetics and values in this form. Lookup
-occurs in 6\% of the sites. Arbitrary computations can occur if one of the
-variables is bound to a promise.
+occurs in 6\% of the sites. The interpreter evaluates
+\packageMinimizedmedianoperationsgRnd operations on average; the minimum is 3
+operations.
 
 \medskip\noindent\EE{$min(e)=$~\c{<-}} This form includes both assignments
 operator, the direct assignment {\tt <-}, and assignment to the parent
 environment {\tt <\,\!<-}, and the \c{\$} form. Assignments occur in 4\% of the
-sites. They represent the most obvious source of side-effects.
+sites. They represent the most obvious source of side-effects. The median number
+of operations is \packageMinimizedmedianoperationsiRnd; the minimum is 3.
 
 \medskip\noindent\EE{$min(e)=\c{F()}$} This form captures simple function calls,
 \eg~\c{f(2)}, with neither variables or assignments. Or, more specifically it
@@ -836,31 +840,32 @@ if the function is returned by a promise or if the function name is shadowed by
 a promise containing a value, then computation will occur. This form occurs in
 6\% of sites.
 
-\medskip\noindent\EE{$min(e)=\c{F(X)}$} This form allows for a simple function
-call whose arguments may include variable references. Assignments are excluded
-from this form. It occurs in 14\% of the sites in the corpus.
+\medskip\noindent\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$} These
+forms allow for function calls whose arguments may include variable references.
+The latter allows nested calls.Assignments are excluded from this form. They
+occurs in, respectively, 14\% and 20\% of the sites in the corpus. Together they
+are the most frequent forms. The median numbers of interpreter steps are,
+respectively, \packageMinimizedmedianoperationsdRnd and
+\packageMinimizedmedianoperationsbRnd.
 
-\medskip\noindent\EE{$min(e)=\c{F(F(X))}$} This form extends the previous one
-with nested function calls. It is the second most common argument to \eval,
-occurring in 20\% of the sites.
+\medskip\noindent\EE{$min(e)=\c{FUN}$} This form captures expressions define
+functions, \eg~\c{function(x)x+1}, and do nothing else. \c{FUN} occurs in
+\packageFunctionDefinitionSitesPercent of sites. Evaluating a function
+definition is done in 2 interpreter step; the data does not record the work
+performed by the interpreter when the generated functions are eventually run. In
+addition to \c{FUN}, \packageGeneralizedFunctionDefinitionSitesPercent of sites
+have function definitions nested in other expressions, this gives an idea of the
+use of higher-order functions.
 
-\medskip\noindent\EE{$min(e)=\c{FUN}$} This form captures expressions that are
-function definitions, \eg~\c{function(x)x+1}. \c{FUN} occurs in
-\packageFunctionDefinitionSitesPercent of sites. One data point we have not
-recorded is the side effects that are performed when the generated functions are
-eventually run. In addition to \c{FUN} there
-\packageGeneralizedFunctionDefinitionSitesPercent of sites create functions
-nested in other expressions, this gives an idea of the use of higher-order
-functions.
+\medskip\noindent\EE{$min(e)=\c{BLOCK}$} This form captures multi-statements
+code blocks, which occur in only 4\% of sites. These are larger expressions, we
+do not inspect contents of the blocks. The median number of executed operations
+is \packageMinimizedmedianoperationsjRnd.
 
-\medskip\noindent\EE{$min(e)=\c{BLOCK}$} This form captures blocks of code with
-multiple statements. These are larger expressions, we do not inspect contents of
-the blocks. They occur in 4\% of the sites.
-
-\medskip\noindent\EE{$min(e)=\c{model.frame}$} This is a very specific form
-intended to capture the construction of calls to the \c{model.frame} function.
-This function creates statistical models. This subsumes \c{F(F(X))}, \c{FUN} and
-assignments. This particular form occurs in 7\% of the sites.
+\medskip\noindent\EE{$min(e)=\c{model.frame}$} The \c{model.frame} function
+returns a dataframe that is the result of fitting the model described in a given
+formula. This form subsumes \c{F(F(X))}, \c{FUN} and assignments. It is the
+single most popular function invoked from \eval, it occurs in 7\% of the sites.
 
 \paragraph{Consistency} It is interesting to consider how many different
 forms any given site sees. The more forms, the harder it will be to characterize
@@ -892,8 +897,9 @@ environment of a stack frame at the requested offset.
 
 
 The top-level environment in R is called the global environment. New
-environments can be created using \c{new.env}, or \c{list2env}. They can be provided a parent
-environment which becomes the enclosing scope of the new environment.
+environments can be created using \c{new.env}, or \c{list2env}. They can be
+provided a parent environment which becomes the enclosing scope of the new
+environment.
 % as.environment also can be used sometimes for that
 % list2env creates an environment only if its argument envir is not provided
 
@@ -913,20 +919,16 @@ implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
 
 
 
-
-
 Most of the time, \ie in \packageEnvirEnvSitePercent of the sites, \eval is
 passed an actual environment.
 
 \c{NULL}, a \c{list} or a data frame, or an integer: \eval copies the fields of the
 list or data frame and creates bindings for them in a new environment.
 
-
 \subsubsection{Bits of text, possibly reusable}
 
 This pattern is used to evaluate formulas which can directly refer to the fields
 of the data.
-
 
 We looked at the environments passed to all the \eval calls in our corpus.
 Table~\ref{tab:environments} summarizes the results. A numeric environment class

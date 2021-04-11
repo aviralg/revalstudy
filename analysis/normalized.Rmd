@@ -138,7 +138,8 @@ if(params$force_rebuild || rebuild) {
     n_op = interp_eval,
     envir = envir_expression,
     caller_srcref,
-    caller_expression
+    caller_expression,
+    environment_class
   ) -> E
   
   E_cano <- E %>% left_join(N, by = "hash") # Common column is the hash of the full resolved expression
@@ -194,6 +195,7 @@ widespread_minimized <- E_cano %>%
             percent_envir = ratio(n_distinct(cur_data()$src_ref[!is.na(cur_data()$envir)]),  n_call_sites), 
             percent_envir_calls = ratio(sum(!is.na(envir)), n()), 
             env_diversity = n_distinct(envir), 
+            percent_envir_parent_frames = ratio(n_distinct(cur_data()$src_ref[str_starts(cur_data()$environment_class, fixed("caller-"))]),  n_call_sites),
             percent_envir_non_parentframe = ratio(n_distinct(cur_data()$src_ref[!is.na(cur_data()$envir) & cur_data()$envir != "parent.frame()"]),  n_call_sites)) %>% 
   arrange(desc(n_call_sites))
 
@@ -211,6 +213,7 @@ r_vec("MinimizedMedianOperations", nrows, pull(widespread_minimized, med_operati
 r_vec("MinimizedPercentEnvir", nrows, pull(widespread_minimized, percent_envir), digits=0)
 r_vec("MinimizedPercentCallsEnvir", nrows, pull(widespread_minimized, percent_envir_calls), digits=0)
 r_vec("MinimizedPercentEnvirNonParent", nrows, pull(widespread_minimized, percent_envir_non_parentframe), digits=0)
+r_vec("MinimizedPercentParentFrames", nrows, pull(widespread_minimized, percent_envir_parent_frames), digits=0)
 ```
 
 `n_operations` is the average of R interpreter eval loop per minimized expression. `prop_envir` shows how much often an *explicit* environment is passed to `eval`. Looking up to a variable and applying a function to a variable, are the two non-trivial categories that most of the time explicitly use the `envir` argument of `eval`.
