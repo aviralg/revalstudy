@@ -922,18 +922,14 @@ implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
 Most of the time, \ie in \packageEnvirEnvSitePercent of the sites, \eval is
 passed an actual environment.
 
-\c{NULL}, a \c{list} or a data frame, or an integer: \eval copies the fields of the
+It can also be \c{NULL}, a \c{list} or a data frame, or an integer: \eval copies the fields of the
 list or data frame and creates bindings for them in a new environment.
 
-\subsubsection{Bits of text, possibly reusable}
-
-This pattern is used to evaluate formulas which can directly refer to the fields
-of the data.
 
 We looked at the environments passed to all the \eval calls in our corpus.
 Table~\ref{tab:environments} summarizes the results. A numeric environment class
 \c{n} denotes the environment of the $n$-th call stack frame from the current
-function. \c{global} denotes the top-level environment and \c{list} denotes a
+function: \c{0} is the stack of the current function, \c{1} is the parent frame. \c{global} denotes the top-level environment and \c{list} denotes a
 list passed for evaluation of formulas. Environment classes of the form $n+$
 denote the $n$-th environment extended with a new environment. The new
 environment provides a limited form of sandboxing. All assignments using the
@@ -941,20 +937,38 @@ $\leftarrow$ function occur inside it and prevent the extended environment from
 mutation. However, it is still possible to mutate the extended environment using
 the $\leftarrow$ or \c{assign} functions; but, that happens rarely.
 
-
-% This table is old and incorrect
-% Working on updating it
+% Updated with the last run
+% I made some changes and we need another run to get the right results
+% The difference should be that there will much more package environments
+% the loop category should disappear from the top results also.
 \begin{table}[htbp]{ \centering
-\begin{tabular}{|c|c|}\hline
- Environment Class & Eval Calls\\\hline
- \PackagesEnvClassA &  \PackagesProportionA\\
- \PackagesEnvClassB &  \PackagesProportionB\\
- \PackagesEnvClassC &  \PackagesProportionC\\
- \PackagesEnvClassD &  \PackagesProportionD\\
-\PackagesEnvClassE &  \PackagesProportionE\\\hline
-\end{tabular}} \label{tab:environments}
-\caption{Environments in terms of \eval calls}
+        \begin{tabular}{|c|c|}\hline
+            Environment Class & Sites\\\hline
+            \packageEnvClassNamesa &  \packageEnvClassSitePercenta\\
+            \packageEnvClassNamesb &  \packageEnvClassSitePercentb\\
+            \packageEnvClassNamesc &  \packageEnvClassSitePercentc\\
+            \packageEnvClassNamesd &  \packageEnvClassSitePercentd\\
+            \packageEnvClassNamese &  \packageEnvClassSitePercente\\
+            \packageEnvClassNamesf &  \packageEnvClassSitePercentf\\
+            \packageEnvClassNamesg &  \packageEnvClassSitePercentg\\
+            \packageEnvClassNamesh &  \packageEnvClassSitePercenth\\
+            \hline
+    \end{tabular}} \label{tab:environments}
+    \caption{Environments in terms of sites. One site can be passed different kinds of environments.}
 \end{table}
+
+
+Most of the calls happen in the environment surrounding \eval. This corresponds mostly to the default \c{envir} argument of \eval; indeed, \packageDefautEnvirSitesPercent of the sites have that default argument. A lot of sites also use \c{parent.frame()} to access their parent frame. It corresponds to environment class \c{1} but also to \c{global} when the function is called at the top level. Explicitly and directly referring to the global environment using \c{globalenv()} or \c{.GlobalEnv} is rare, as it happens only in \packageNbExplicitGlobalSites sites.
+
+
+
+\subsubsection{Bits of text, possibly reusable}
+
+This pattern is used to evaluate formulas which can directly refer to the fields
+of the data.
+
+
+
 
 We observe that a disproportionately high number of core R \eval calls access
 the caller's environment. This is because many R functions call functions that
@@ -997,6 +1011,7 @@ of \c{h} and the arguments of \c{h2}.
 % of them have environment \c{envir}. In that case, \eval ignores \c{enclos} anyway
 
 
+\todo{That should be moved to the side effect section and updated with the last data.}
 Categorize side-effects between env passed to eval and other envs:
 \begin{itemize}
 \item ephemeral -- read to envs that are created during \eval  XXX033

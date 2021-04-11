@@ -164,8 +164,8 @@ nb_explicit_sites <- nb_eval_call_sites(eval_calls_explicit)
 overview_table(
   r("default envir sites", nb_default_sites),
   r("defaut envir sites percent", ratio(nb_default_sites, nb_call_sites)),
-  r("non default envir sites", nb_explicit),
-  r("non defaut envir sites percent", ratio(nb_explicit, nb_call_sites))
+  r("non default envir sites", nb_explicit_sites),
+  r("non defaut envir sites percent", ratio(nb_explicit_sites, nb_call_sites))
 )
 ```
 
@@ -315,7 +315,7 @@ In the current dataset, there are no examples of sandbox usage but we should see
 ## `envir` absolutely computed
 
 ```{r envir_absolute}
-eval_calls_absolute <- eval_calls_explicit %>% filter(envir_type == "environment")
+eval_calls_absolute <- eval_calls_explicit %>% filter(envir_type %in% c("environment", "S4"))
 
 nb_absolute <- count(eval_calls_absolute, wt = duplicates)
 nb_absolute_sites <- nb_eval_call_sites(eval_calls_absolute)
@@ -352,12 +352,11 @@ Now, we can further decompose the environment class to get more insights. It has
 # new+new+new+new+caller-2-global
 # str_match("caller-2-", "((?:new\\+)*)caller-([[:digit:]]+)-(.*)")
 
-# TODO: handle scientific notation for caller-1e+00-
-
-env_calls <- eval_calls_absolute %>% ungroup() %>%
+env_calls <- E_envir %>% filter(envir_type %in% c("environment", "S4")) %>%
   extract(environment_class, regex = "((?:new\\+)*)caller-([[:digit:]]+)-(.*)", into = c("new_env", "hierarchy", "specific_env"), remove = FALSE, convert = TRUE) %>%
   mutate(new_env = na_if(new_env, ""), specific_env = na_if(specific_env, ""), new_env = str_count(new_env, fixed("new+"))) %>%
-  mutate(specific_env = if_else(specific_env == "emptyR_EmptyEnv", "empty", specific_env))
+  mutate(specific_env = if_else(specific_env == "emptyR_EmptyEnv", "empty", specific_env)) %>% 
+  mutate(hierarchy = hierarchy - 1) # Fix. Remove with the next run
 ```
 
 ```{r}
@@ -392,6 +391,19 @@ overview_table(
   r("nb empty env site percent", ratio(nb_empty_env_sites, nb_call_sites)),
   r("nb base env sites", nb_base_env_sites),
   r("nb base env site percent", ratio(nb_base_env_sites, nb_call_sites))
+)
+```
+
+Glabal can happen by chance, because `parent.frame()`goes up too much and reaches the global environment. SO when is it explicitly passed?
+
+```{r}
+explicit_global <- E_envir %>% filter(envir %in% c("globalenv()", ".GlobalEnv"))
+
+nb_explicit_global_sites <- explicit_global %>% pull(src_ref) %>% n_distinct()
+
+overview_table(
+  r("nb explicit global sites", nb_explicit_global_sites),
+  r("nb explicit global site percent", ratio(nb_explicit_global_sites, nb_call_sites))
 )
 ```
 
@@ -502,22 +514,42 @@ overview_table(
 
 # Better-looking env class
 
-`caller-n` wins over any specific env. We add `+` if there are any `new`.
+A specific env wins over `caller-n`. We add `+` if there are any `new`.
 
 
-TODO: if there is both new , a caller-n, a specific class, rather ignore the caller-n
+
 ```{r}
 env_classes <- env_calls %>%
-  mutate(env_class = if_else(environment_class == "loop", "loop", paste0(if_else(is.na(hierarchy), specific_env, as.character(hierarchy)), if_else(is.na(new_env), "", "+"))))
+  mutate(env_class = if_else(environment_class == "loop", "loop", paste0(if_else(is.na(specific_env), as.character(hierarchy), specific_env), if_else(is.na(new_env), "", "+"))))
 
-env_classes %>% count(env_class, wt = duplicates, sort = TRUE) %>%
-  mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) %>%
-  datatable()
+not_env_calls <- E_envir %>% anti_join(env_classes) %>% 
+  mutate(env_class = case_when(
+    envir_type == "list" ~ "list",
+    envir_type == "integer" ~ "int",
+    envir_type == "NULL" ~ "NULL",
+    TRUE ~ "other"
+  ))
 
-env_classes %>% group_by(env_class) %>% summarise(n = n_distinct(src_ref)) %>%
+env_classes <- bind_rows(env_classes, not_env_calls)
+
+env_classes_calls <- env_classes %>% count(env_class, wt = duplicates, sort = TRUE) %>%
+  mutate(pc = ratio(n, nb_eval_calls), cpc = cumsum(pc)) 
+
+env_classes_sites <- env_classes %>% group_by(env_class) %>% summarise(n = n_distinct(src_ref)) %>%
   arrange(desc(n)) %>%
-  mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) %>%
-  datatable()
+  mutate(pc = ratio(n, nb_call_sites), cpc = cumsum(pc)) 
+```
+
+
+```{r}
+env_classes_calls %>% datatable()
+
+env_classes_sites %>% datatable()
+
+nrows <- 8
+r_vec("env class names", nrows, env_classes_sites$env_class)
+r_vec("env class sites", nrows, env_classes_sites$n)
+r_vec("env class site percent", nrows, env_classes_sites$pc)
 ```
 
 
