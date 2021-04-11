@@ -367,6 +367,31 @@ env_calls %>% group_by(hierarchy) %>% summarize(n = n_distinct(src_ref), percent
 
 ```
 
+# Caller environments
+
+```{r}
+caller_envs <- env_calls %>% filter(!is.na(hierarchy), is.na(specific_env))
+nb_caller_env_sites <- caller_envs %>% pull(src_ref) %>% n_distinct()
+
+overview_table(
+  r("nb caller env sites", nb_caller_env_sites),
+  r("caller env site percent", ratio(nb_caller_env_sites, nb_call_sites))
+)
+```
+
+
+# New environments
+
+```{r}
+new_envs <- env_calls %>% filter(!is.na(new_env))
+nb_new_env_sites <- new_envs %>% pull(src_ref) %>% n_distinct()
+
+overview_table(
+  r("nb new env sites", nb_new_env_sites),
+  r("new env site percent", ratio(nb_new_env_sites, nb_call_sites))
+)
+```
+
 
 # Specific environments
 
@@ -475,7 +500,7 @@ nb_null_sites <- nb_eval_call_sites(eval_calls_null)
 overview_table(
   r("nb null envir", nb_null),
   r("nb null envir sites", nb_null_sites),
-  r("nb null envir site percent", ratio(nb_null_sites, nb_eval_calls))
+  r("nb null envir site percent", ratio(nb_null_sites, nb_call_sites))
 )
 ```
 

@@ -960,6 +960,36 @@ the $\leftarrow$ or \c{assign} functions; but, that happens rarely.
 
 Most of the calls happen in the environment surrounding \eval. This corresponds mostly to the default \c{envir} argument of \eval; indeed, \packageDefautEnvirSitesPercent of the sites have that default argument. A lot of sites also use \c{parent.frame()} to access their parent frame. It corresponds to environment class \c{1} but also to \c{global} when the function is called at the top level. Explicitly and directly referring to the global environment using \c{globalenv()} or \c{.GlobalEnv} is rare, as it happens only in \packageNbExplicitGlobalSites sites.
 
+A more high-level classification: Table~\ref{tab:highlevelenvironments}
+
+\begin{table}
+    \centering
+\begin{tabular}{|c|c|c|}
+    \hline
+    Environment & \#sites & \%sites \\
+    \hline
+    Parent frames &  \packageNbCallerEnvSites &  \packageCallerEnvSitePercent\\
+    \hline
+    Global &  \packageNbGlobalEnvSites & \packageNbGlobalEnvSitePercent \\
+    \hline
+    New & \packageNbNewEnvSites & \packageNewEnvSitePercent \\
+    \hline
+    Base &  \packageNbBaseEnvSites & \packageNbBaseEnvSitePercent \\
+    \hline
+    % Should be many more (next run)
+    Package/namespace & \packageNbPackageEnvSites & \packagePackageEnvSitePercent \\
+    \hline
+    List &  \packageNbEnvListSites & \packageNbEnvListSitePercent \\
+    \hline
+    Integer & \packageNbIntegerEnvirSites  & \packageNbIntegerEnvirSitePercent \\
+    \hline
+    Null &  \packageNbNullEnvirSites & \packageNbNullEnvirSitePercent \\
+    \hline
+    Empty & \packageNbEmptyEnvSites & \packageNbEmptyEnvSitePercent \\
+    \hline
+\end{tabular} \label{tab:highlevelenvironments}
+\caption{Classification of environments per site.}
+\end{table}
 
 
 \subsubsection{Bits of text, possibly reusable}
