@@ -167,7 +167,11 @@ overview_table(
   r("Evalqs", evalq_calls),
   r("Eparents", eval.parent_calls),
   r("Locals", local_calls),
-  r("Triggeredpkgs", length(unique(E$ev_package)))
+  r("Triggeredpkgs", length(unique(E$ev_package))),
+  r("EvalsRatio", ratio(eval_calls, nb_calls)),
+  r("EvalqsRatio", ratio(evalq_calls, nb_calls)),
+  r("EparentsRatio", ratio(eval.parent_calls, nb_calls)),
+  r("LocalsRatio", ratio(local_calls, nb_calls)),
 ) -> TBL
 ``` 
 

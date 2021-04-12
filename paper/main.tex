@@ -380,7 +380,7 @@ scripts from \emph{Kaggle}.
 \mypara{Base.} The dataset contains \BasePackages libraries performing basic
 arithmetics, statistics, and operating system functionalities. These libraries
 are bundled with R and executed pervasively. Together they contain
-\BaseEvalCallSites calls to \eval in \BaseFunsWithEvals functions. Some of these
+\BaseEvalCallSites call sites to \eval in \BaseFunsWithEvals functions. Some of these
 functions provide basic functionalities such as package loading and thus there
 is hardly any code which does not invoke one of these.
 
@@ -606,6 +606,7 @@ used at all. The difference between sites and exercised sites underscores the
 limitations due to code coverage.
 
 \begin{wrapfigure}{4}{5.8cm}
+  \vspace*{-2mm}
 \centering
   \begin{tabular}{|r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r|} \hline
 \multicolumn{3}{|c}{\small\#calls} &\small\#sites &
@@ -618,6 +619,7 @@ limitations due to code coverage.
 
   \medskip  (a) All  \medskip  \medskip
 
+  \vspace*{-1mm}
   \includegraphics[width=5.6cm, trim=5.5cm 0 5cm 0, clip]{calls_per_run_per_call_site}
 
   (b) Small
@@ -628,6 +630,7 @@ limitations due to code coverage.
 \medskip
 
 \begin{tabular}{c}
+  \vspace*{-1mm}
   {\hspace{-3cm}\includegraphics[width=0.8\textwidth]{size_loaded_distribution}}
 \end{tabular}
  \caption{Loaded code} \label{fig:sizedistribution}
@@ -645,13 +648,15 @@ twice; after that the frequency quickly drops.
 
 \Eval takes any value, but if its argument is not an expression, \eval returns
 it unchanged. Expressions account for \packageCodepercent of arguments in our
-corpus. More specifically, \packageSymbolpercent are \c{symbol}s (single
-variables such as \c{x}), \packageLanguagepercent are \c{language} object (a
-single expression, such as \c{x+1}), and \packageExpressionpercent are
-\c{expression} objects (multiple statements). Further inspection reveals that
-most symbols, \packageGgplotsymbolpercent to be exact, come from a single call
-in the \c{ggplot2} package and have have the value \c{\_inherit}. Even if we
-remove this outlier, the majority of \evals are simple expressions.
+corpus. More specifically, \packageSymbolpercent are \texttt{symbol}s (single
+variables such as \c{x}), \packageLanguagepercent are \c{language} objects
+(function calls such as \c{f(x)} or \c{x+1}), and \packageExpressionpercent are
+\c{expression} objects (lists of expressions such as function calls or
+symbols). Further inspection reveals that most symbols,
+\packageGgplotsymbolpercent to be exact, come from a single site in the
+\c{ggplot2} package and have the value \c{\_inherit}.\footnote{This models
+inheritance in \c{ggproto}, one of the many object-oriented systems in
+R that is used exclusively in the \c{ggplot2} graphics library.}
 
 To estimate how much executable code is injected through \eval, we measure the
 the number of nodes in the expressions; for example, \c{x+1} counts as 3. We
@@ -689,18 +694,30 @@ instructions.
 \end{figure}
 
 \subsection{Base}
-We recorded \baseAllcalls \eval calls in the base libraries with fewer than 4\%
-of those being to any variants (this was done on a small subset of the whole
-corpus). Unlike CRAN, Base calls \c{evalq} (\baseEvalqs). Out of \baseStaticeval
-call sites, \baseTriggeredevalpct are exercised. Most arguments,
-\baseCodepercent, are expressions. However, unlike CRAN, \baseLanguagepercent of
-the arguments are language objects. The median argument size is
-\baseMedianszeval, which is more than for CRAN. The maximum size is
-\baseMaxszeval. Small instruction counts, less than 50, amount for
-\baseSmalleventspct of calls. The challenge dealing with Base is that every
-program uses it and it can thus generate extreme amounts of data but the data is
-quite predictable. For the rest of the paper, we only mention base when there
-are surprising observations.
+
+We recorded \baseAllcalls \eval calls in the \BasePackages base libraries. This
+comes from running 10\% randomly selected programs from the
+\CranRunnableScriptsRnd extracted programs from CRAN packages, covering
+\baseTriggeredevalpct of the \BaseEvalCallSites sites. Most of the calls
+(\baseEvalsratio) are to the \c{eval} function and most arguments
+(\baseCodepercent) are expressions. However, unlike CRAN, the majority
+(\baseLanguagepercent) of the arguments are language objects. The median
+argument size is \baseMedianszeval, which is more than for CRAN and the maximum
+size is \baseMaxszeval, less than for CRAN. Small instruction counts ($<50$),
+amount for \baseSmalleventspct of calls. A single site in the \c{match.arg}
+function is responsible for \baseTopFuncPercent of all recorded calls. This
+function provides a convenient way for argument verification using partial
+matching. It is heavily relied on in R functions that use string arguments to
+parameterize function behavior, a popular API mechanism in R. For example, in a
+body of \c{center <- function(x, type = c("mean", "median", "trimmed"))} one
+can get the value of \c{type} parameter using \c{type <- match.arg(type)}. A
+call \c{center(x, "trim")} will match \c{type} to \c{"trimmed"}.
+
+The challenge dealing with Base is that every program uses it and it can thus
+generate extreme amounts of data but the data is quite predictable. For the
+rest of the paper, we only mention base when there are surprising
+observations.
+
 
 
 \medskip
