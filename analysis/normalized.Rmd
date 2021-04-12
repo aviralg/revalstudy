@@ -119,6 +119,9 @@ if(params$force_rebuild || rebuild) {
     hash = col_character()
   )) -> N
   
+  # We currently merge minimized expressions F(F(X)) and F(F())
+  N <- N %>% mutate(minimized = if_else(minimized == "F(F())", "F(F(X))", minimized))
+  
   E_raw %>% select(
     run_package = package, #      The package which was run to trigger the eval
     ev_variant = eval_function, # Which eval variant was called
@@ -141,6 +144,7 @@ if(params$force_rebuild || rebuild) {
     caller_expression,
     environment_class
   ) -> E
+  
   
   E_cano <- E %>% left_join(N, by = "hash") # Common column is the hash of the full resolved expression
   
