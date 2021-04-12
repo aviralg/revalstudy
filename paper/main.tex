@@ -759,8 +759,8 @@ Table~\ref{tab:minimizedexpressions} gives the 10 most frequent forms; \#sites
 and \%sites are, respectively, the number and ratio of sites receiving arguments
 of that form; \#packages is the number of packages with that form; \#operations
 is the median number of instructions performed by the interpreter; and \%envir
-is the percentage of sites for which the \c{envir} argument is current frame or one of the parent frames. The example column shows one sample
-expression $e$ that is normalized to the particular form.
+is the ratio of sites for that evaluate in a function environment. The example
+column shows one sample expression $e$ that normalizes to the particular form.
 
 \begin{table}[h]\small
 \begin{tabular}{|c|r|r|r|r|r|c|}\hline
@@ -774,7 +774,7 @@ expression $e$ that is normalized to the particular form.
 \c{F()}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedmedianoperationsgRnd & \packageMinimizedpercentparentframesg & \c{rgamma(3, 2, n = 10L)} \\\hline
 \c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentparentframesh & \c{function(x, y) x + 3 * y} \\\hline
 \c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedmedianoperationsiRnd & \packageMinimizedpercentparentframesi & \c{x[1, 2:3, 2:3] <- value}\\\hline
-\c{\{\}} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentparentframesj & \c{\{ write.csv(iris, tf) ; file.size(tf) \}} \\\hline
+\c{BLOCK} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentparentframesj & \c{\{ write.csv(iris, tf) ; file.size(tf) \}} \\\hline
 \end{tabular}
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
@@ -805,7 +805,9 @@ randomly selected \evals, \packageUsefulValueEvalPercent of them do not need
 constructed dynamically or the value is a default case that sometimes is
 replaced by a more interesting expression. This form is usually evaluated in few
 interpreter steps, in fact the median is only
-\packageMinimizedmedianoperationscRnd.
+\packageMinimizedmedianoperationscRnd. The environment in which they evaluate is
+mostly irrelevant (unless it redefines a built-in operator).
+%% Why then this variety of environments??
 
 \medskip\noindent\EE{$min(e)=\c{X}$} Variables lookups are the most common form,
 they are found in 28\% of the sites. This form includes simple variable reads,
