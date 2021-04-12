@@ -962,29 +962,21 @@ Most of the calls happen in the environment surrounding \eval. This corresponds 
 
 A more high-level classification: Table~\ref{tab:highlevelenvironments}
 
-\begin{table}
+\begin{table}[h]
     \centering
 \begin{tabular}{|c|c|c|}
     \hline
     Environment & \#sites & \%sites \\
     \hline
     Parent frames &  \packageNbCallerEnvSites &  \packageCallerEnvSitePercent\\
-    \hline
     Global &  \packageNbGlobalEnvSites & \packageNbGlobalEnvSitePercent \\
-    \hline
     New & \packageNbNewEnvSites & \packageNewEnvSitePercent \\
-    \hline
     Base &  \packageNbBaseEnvSites & \packageNbBaseEnvSitePercent \\
-    \hline
-    % Should be many more (next run)
-    Package/namespace & \packageNbPackageEnvSites & \packagePackageEnvSitePercent \\
-    \hline
+    Package & \packageNbPackageEnvSites & \packagePackageEnvSitePercent \\
+    Namespace & \packageNbNamespaceEnvSites & \packageNbNamespaceEnvSitePercent \\
     List &  \packageNbEnvListSites & \packageNbEnvListSitePercent \\
-    \hline
     Integer & \packageNbIntegerEnvirSites  & \packageNbIntegerEnvirSitePercent \\
-    \hline
     Null &  \packageNbNullEnvirSites & \packageNbNullEnvirSitePercent \\
-    \hline
     Empty & \packageNbEmptyEnvSites & \packageNbEmptyEnvSitePercent \\
     \hline
 \end{tabular} \label{tab:highlevelenvironments}

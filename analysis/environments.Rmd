@@ -212,7 +212,7 @@ ggsave_prefix("envir_expressions.pdf")
 Let's classify the expressions, between calls and variables:
 
 ```{r}
-envir_var <- frequent_envir %>% filter(is.na(envir), str_detect(envir, "^(?:\\.[:alpha]|[:alpha:])[[:alpha:][:digit:]_\\.]*$"))
+envir_var <- frequent_envir %>% filter(envir != "NA", str_detect(envir, "^(?:\\.[:alpha]|[:alpha:])[[:alpha:][:digit:]_\\.]*$"))
 
 nb_envir_var_sites <- nrow(envir_var)
 
@@ -255,7 +255,7 @@ E_envir %>% count(envir_type, sort = TRUE)  %>%
 We realize that there are some types that are passed to eval that are not admissible according to the documentation.
 
 ```{r}
-envir_env <- E_envir %>% filter(envir_type == "environment") 
+envir_env <- E_envir %>% filter(envir_type %in% c("environment", "S4")) 
 # S4 class: from pim package, uses an environment under the hood
 envir_unusual <- E_envir %>% filter(envir_type %in% c("list", "integer", "double", "NULL", "pairlist", "S4"))
 envir_incorrect <- E_envir %>% anti_join(envir_env) %>% anti_join(envir_unusual)
@@ -353,10 +353,9 @@ Now, we can further decompose the environment class to get more insights. It has
 # str_match("caller-2-", "((?:new\\+)*)caller-([[:digit:]]+)-(.*)")
 
 env_calls <- E_envir %>% filter(envir_type %in% c("environment", "S4")) %>%
-  extract(environment_class, regex = "((?:new\\+)*)caller-([[:digit:]]+)-(.*)", into = c("new_env", "hierarchy", "specific_env"), remove = FALSE, convert = TRUE) %>%
+  extract(environment_class, regex = "((?:new\\+)*)(?:caller-(-?[[:digit:]]+)-)?(.*)", into = c("new_env", "hierarchy", "specific_env"), remove = FALSE, convert = TRUE) %>%
   mutate(new_env = na_if(new_env, ""), specific_env = na_if(specific_env, ""), new_env = str_count(new_env, fixed("new+"))) %>%
-  mutate(specific_env = if_else(specific_env == "emptyR_EmptyEnv", "empty", specific_env)) %>% 
-  mutate(hierarchy = hierarchy - 1) # Fix. Remove with the next run
+  mutate(specific_env = if_else(specific_env == "emptyR_EmptyEnv", "empty", specific_env)) 
 ```
 
 ```{r}
@@ -419,7 +418,7 @@ overview_table(
 )
 ```
 
-Glabal can happen by chance, because `parent.frame()`goes up too much and reaches the global environment. SO when is it explicitly passed?
+Glabal can happen by chance, because `parent.frame()`goes up too much and reaches the global environment. So when is it explicitly passed?
 
 ```{r}
 explicit_global <- E_envir %>% filter(envir %in% c("globalenv()", ".GlobalEnv"))
@@ -432,6 +431,20 @@ overview_table(
 )
 ```
 
+And when is it passed through a variable?
+
+```{r}
+variable_global <- E_envir %>% filter(environment_class == "global") %>% semi_join(envir_var)
+
+nb_variable_global_sites <- variable_global %>% pull(src_ref) %>% n_distinct()
+
+overview_table(
+  r("nb variable global sites", nb_variable_global_sites),
+  r("nb variable global site percent", ratio(nb_variable_global_sites, nb_call_sites))
+)
+```
+
+So we can deduce an approximate (upper-bound) of the number of sites that touch eval not by chance!
 
 ## Package environments
 
@@ -472,6 +485,32 @@ They build the environment name with:
 env <- attach(NULL, pos, basename(directory))
 ```
 
+## Namespaces
+
+In R, namespaces are different from the package environment.
+
+```{r}
+namespace_envs <- E_envir %>% filter(!str_detect(environment_class, fixed("caller-")), !str_detect(environment_class, "global|empty|base|loop"), !str_detect(environment_class, fixed("package:")))
+
+nb_namespace_env_sites <- namespace_envs %>% pull(src_ref) %>% n_distinct()
+
+overview_table(
+  r("nb namespace env sites", nb_namespace_env_sites),
+  r("nb namespace env site percent", ratio(nb_namespace_env_sites, nb_call_sites))
+)
+```
+
+What are the most frequent namespaces?
+
+```{r}
+namespace_envs %>% count(environment_class, wt = duplicates, sort = TRUE) %>%
+  mutate(pc = ratio(n, sum(n)), cpc = cumsum(pc))
+
+namespace_envs %>% group_by(environment_class) %>% 
+  summarise(n = n_distinct(src_ref)) %>% 
+  arrange(desc(n)) %>% 
+   mutate(pc = ratio(n, sum(n)), cpc = cumsum(pc))
+```
 
 
 # `envir` is an integer
