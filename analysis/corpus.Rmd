@@ -377,7 +377,7 @@ eval_plot_df %>%
     labs(x="Eval call sites (log)", y="Traced eval call sites (log)", size="Package R code size") +
     theme(
       text = element_text(size=17),
-      legend.position = c(0.15, 0.8)
+      legend.position = c(0.2, 0.75)
     )
 ggsave(path(PLOT_DIR, "traced-eval-callsites.pdf"))
 ```
