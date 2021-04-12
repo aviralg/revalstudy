@@ -160,13 +160,16 @@ TRACE_LOG <- read_csv(PACKAGE_TRACE_LOG_FILE, col_types = cols(
 ))
 
 BASE_packages <- read_lines(BASE_CORPUS_FILE)
-BASE_evals_per_package <- read_csv(BASE_EVALS_STATIC_FILE, col_types = cols(
-  package = col_character(),
-  fun_name = col_character(),
-  srcref = col_character(),
-  call_fun_name = col_character(),
-  args = col_character()
-))
+BASE_evals_per_package <- read_csv(
+  BASE_EVALS_STATIC_FILE, 
+  col_types = cols(
+    package = col_character(),
+    fun_name = col_character(),
+    srcref = col_character(),
+    call_fun_name = col_character(),
+    args = col_character()
+  )
+)
 
 BASE_C <- 
   tibble(package=BASE_packages) %>%
@@ -291,24 +294,6 @@ overview_table(
 )
 ```
 
-
-### Matching evals
-
-```{r}
-matched_eval_callsites <-
-  left_join(
-    CRAN_eval_callsites, 
-    count(CRAN_eval_traces, eval_call_srcref), 
-    by=c("srcref"="eval_call_srcref")
-  ) %>%
-  mutate(
-    n=replace_na(n, 0)
-  ) %>%
-  rename(hit=n)
-```
-
-The dynamic analysis traced `r fmt(ratio(filter(matched_eval_callsites, hit>0), matched_eval_callsites))`
-
 ### Plot
 
 ```{r}
@@ -392,7 +377,7 @@ eval_plot_df %>%
     labs(x="Eval call sites (log)", y="Traced eval call sites (log)", size="Package R code size") +
     theme(
       text = element_text(size=17),
-      legend.position = c(0.15, 0.8)
+      legend.position = c(0.2, 0.75)
     )
 ggsave(path(PLOT_DIR, "traced-eval-callsites.pdf"))
 ```

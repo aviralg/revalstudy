@@ -1,0 +1,77 @@
+---
+title: "Side-effects"
+output:
+    html_document:
+        gallery: false
+        toc: true
+        toc_depth: 3
+        toc_float: true
+        df_print: paged
+date: "`r Sys.Date()`"
+editor_options: 
+  chunk_output_type: console
+params:
+  base_dir: Data
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(DT)
+library(digest)
+library(fs)
+library(fst)
+library(purrr)
+library(tidyverse)
+
+source("inc/latextags.R")
+source("inc/functions.R")
+source("inc/paths.R")
+
+create_tags(path(TAGS_DIR, "side-effects.tex"), prefix = "", default = TRUE)
+```
+
+```{r load data}
+SE <- read_fst(PACKAGE_SIDE_EFFECTS_FILE) %>% as_tibble
+```
+
+```{r fix withr::defer callsite}
+
+```
+
+```{r fix S3 methods}
+
+```
+
+```{r}
+cs_count(SE, eval_call_srcref, wt=N)
+cs_count(SE, variable, wt=N)
+```
+
+```{r}
+overview_table(
+  r("Number of side effects", sum(SE$N))
+)
+```
+
+## Unknwon srcref
+
+```{r}
+unknown_srcref <- filter(SE, eval_call_srcref=="???")
+```
+
+## Where does the side effects happen
+
+- in the caller - source is `call:fun` where `fun` is the `calle_function` 
+  - most of this should be class that do not specify any parameter to `envir`
+- in the supplied `envir` parameter -- `in_envir` is true
+  - in this case the details are in the `environment_class`
+- in a package - the source is `pkg:`
+- in the `.userHookEnv` - the source is `userHookEnv`
+- in another call
+- is S4, R6
+
+```{r}
+
+```
+

@@ -43,3 +43,7 @@ $(OUTPUT_DIR)/%.html: $(OUTPUT_DIR)/kaggle-%.html $(OUTPUT_DIR)/base-%.html $(OU
 
 .PHONY: usage
 usage: $(OUTPUT_DIR)/usage.html
+
+.PHONY: corpus
+corpus:
+	R -e 'rmarkdown::render("corpus.Rmd", output_file = "$(OUTPUT_DIR)/corpus.html", output_dir="$(OUTPUT_DIR)")'
