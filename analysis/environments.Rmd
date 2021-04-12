@@ -178,7 +178,7 @@ We show the most frequent environment expression per site. There is only one env
 
 ```{r envir_most_common}
 frequent_envir <- E_envir %>% group_by(src_ref) %>% 
-  summarize(n_envir = n_distinct(envir), envir = paste0(unique(envir), collapse = " ; "), envir_type = paste0(unique(envir_type), collapse = " ; "), n_types = n_distinct(envir_type)) 
+  summarize(n_envir = n_distinct(envir), envir = paste0(sort(unique(envir)), collapse = " ; "), envir_type = paste0(unique(envir_type), collapse = " ; "), n_types = n_distinct(envir_type)) 
 
 #stopifnot(frequent_envir$n_envir <= 1)
 # 2 sites have 2 envir...
@@ -366,30 +366,7 @@ env_calls %>% group_by(hierarchy) %>% summarize(n = n_distinct(src_ref), percent
 
 ```
 
-# Caller environments
 
-```{r}
-caller_envs <- env_calls %>% filter(!is.na(hierarchy), is.na(specific_env))
-nb_caller_env_sites <- caller_envs %>% pull(src_ref) %>% n_distinct()
-
-overview_table(
-  r("nb caller env sites", nb_caller_env_sites),
-  r("caller env site percent", ratio(nb_caller_env_sites, nb_call_sites))
-)
-```
-
-
-# New environments
-
-```{r}
-new_envs <- env_calls %>% filter(!is.na(new_env))
-nb_new_env_sites <- new_envs %>% pull(src_ref) %>% n_distinct()
-
-overview_table(
-  r("nb new env sites", nb_new_env_sites),
-  r("new env site percent", ratio(nb_new_env_sites, nb_call_sites))
-)
-```
 
 
 # Specific environments
@@ -615,6 +592,98 @@ r_vec("env class names", nrows, env_classes_sites$env_class)
 r_vec("env class sites", nrows, env_classes_sites$n)
 r_vec("env class site percent", nrows, env_classes_sites$pc)
 ```
+
+
+# Less fine-grained classification
+
+We categorize environments in:
+
+- function environments (parent frames and integer)
+- package/namespace environments
+- list/NULL environments
+- global environment
+- new environment
+- empty environment
+
+## Caller environments
+
+```{r}
+caller_envs <- env_calls %>% filter(!is.na(hierarchy), is.na(specific_env))
+nb_caller_env_sites <- caller_envs %>% pull(src_ref) %>% n_distinct()
+
+overview_table(
+  r("nb caller env sites", nb_caller_env_sites),
+  r("caller env site percent", ratio(nb_caller_env_sites, nb_call_sites))
+)
+```
+
+
+## New environments
+
+```{r}
+new_envs <- env_calls %>% filter(!is.na(new_env))
+nb_new_env_sites <- new_envs %>% pull(src_ref) %>% n_distinct()
+
+overview_table(
+  r("nb new env sites", nb_new_env_sites),
+  r("new env site percent", ratio(nb_new_env_sites, nb_call_sites))
+)
+```
+
+
+We classify the most specific environment or caller environment after it.
+```{r}
+env_classes %>% filter(!is.na(new_env)) %>% group_by(env_class) %>% 
+  summarise(n = n_distinct(src_ref)) %>% 
+  arrange(desc(n)) %>% 
+  mutate(pc = ratio(n, nb_call_sites), cpc = cumsum(pc))
+```
+
+
+And with the higher-level categories:
+
+```{r}
+high_level_new <- env_calls %>% filter(!is.na(new_env)) %>% 
+  mutate(category = case_when(
+    !is.na(hierarchy) ~ "function",
+    specific_env == "global" ~ "global",
+    specific_env == "empty" ~ "empty",
+    str_detect(specific_env, fixed("loop")) ~ "other",
+    !is.na(specific_env) ~ "package"
+  ))
+
+high_level_new_sites <- high_level_new %>%group_by(category) %>%
+  summarise(n = n_distinct(src_ref)) %>% 
+  arrange(desc(n)) %>% 
+  mutate(pc = ratio(n, nb_new_env_sites), cpc = cumsum(pc))
+
+
+nrows <- 5
+r_vec("new env category name", nrows, high_level_new_sites$category)
+r_vec("new env category sites", nrows, high_level_new_sites$n)
+r_vec("new env category site percent", nrows, high_level_new_sites$pc)
+```
+
+## The final high-lelve classification
+
+```{r}
+nb_dataframe_env_sites <- nb_env_list_sites + nb_null_sites
+
+nb_pack_sites <- nb_package_env_sites + nb_namespace_env_sites + nb_base_env_sites
+
+nb_function_env_sites <- nb_caller_env_sites + nb_integer_sites
+
+overview_table(
+  r("nb dataframe env sites", nb_dataframe_env_sites),
+  r("nb dataframe env site percent", ratio(nb_dataframe_env_sites, nb_call_sites)),
+  r("nb package namespace env sites", nb_pack_sites),
+  r("nb package namespace env site percent", ratio(nb_pack_sites, nb_call_sites)),
+  r("nb function env sites", nb_function_env_sites),
+  r("nb function env site percent", ratio(nb_function_env_sites, nb_call_sites))
+)
+```
+
+
 
 
 # Specific envir with their environment class
