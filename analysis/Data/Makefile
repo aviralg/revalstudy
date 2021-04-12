@@ -21,6 +21,7 @@ FILES := \
   package/trace-log.csv \
   package/run-log.csv \
   package/runnable-code.csv \
+  package/side-effects.fst \
   base/corpus.txt \
   base/evals-static.csv \
   base/normalized-expressions.csv \
@@ -43,9 +44,6 @@ clean:
 	-rm -f $(FILES)
 
 .PHONY: FORCE
-
-kaggle/kernel.csv: FORCE
-	$(call CURL,run/kaggle-kernels/kernel.csv,$@)
 
 package/%: FORCE
 	$(call CURL,run/preprocess/$@,$@)
