@@ -608,7 +608,7 @@ We categorize environments in:
 ## Caller environments
 
 ```{r}
-caller_envs <- env_calls %>% filter(!is.na(hierarchy), is.na(specific_env) || specific_env == "_callee", is.na(new_env))
+caller_envs <- env_calls %>% filter(!is.na(hierarchy), is.na(specific_env) | specific_env == "_callee", is.na(new_env))
 
 
 loop_envs <- env_calls %>% filter(is.na(new_env), str_detect(specific_env, fixed("loop")))
@@ -624,7 +624,22 @@ overview_table(
 ```
 
 ```{r}
-# TODO: high-level per caller frame number...
+caller_env_sites <- caller_envs %>% group_by(hierarchy) %>% 
+  summarise(n = n_distinct(src_ref)) %>% 
+  arrange(desc(n)) %>% 
+   mutate(pc = ratio(n, nb_caller_env_sites), cpc = cumsum(pc))
+
+nrows <- 5
+r_vec("caller env hierarchy name", nrows, caller_env_sites$hierarchy)
+r_vec("caller env hierarchy sites", nrows, caller_env_sites$n)
+r_vec("caller env hierarchy site percent", nrows, caller_env_sites$pc)
+
+nb_far_away_caller_sites <- caller_envs %>% filter(hierarchy > 3 | is.na(hierarchy)) %>% pull(src_ref) %>% n_distinct()
+
+overview_table(
+  r("nb far away caller sites", nb_far_away_caller_sites),
+  r("nb far away caller site percent", ratio(nb_far_away_caller_sites, nb_caller_env_sites))
+)
 ```
 
 

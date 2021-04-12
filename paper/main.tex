@@ -939,6 +939,7 @@ We classify environments to \eval as follows:
 	\item the global environment;
 	\item package and namespace environments;
 	\item the empty environment (created with \c{emptyenv()})
+    \item new environments, created with \c{new.env}, \c{list2env} or \c{as.environment}.
 \end{itemize}
 
 
@@ -962,15 +963,28 @@ As shown in Table~\ref{tab:highlevelenvironments}, most calls happen in a functi
 	\caption{Classification of environments per site.}
 \end{table}
 
-The calls happening in a function environment are mostly happening in the environment of the function calling \eval, as shown in Table%TODO
+Table~\ref{tab:framenumber} shows the function environments classified according to their position in the call stack: $0$ is the current function, $1$ the parent function and so on.
 
+The calls happening in a function environment are mostly happening in the environment of the function calling \eval. This corresponds mostly to the default \c{envir} argument of \eval; indeed, \packageDefautEnvirSitesPercent of the sites have that default argument. A lot of sites also use \c{parent.frame()} to access their parent frame. It corresponds to environment class \c{1} but also to \c{global} when the function is called at the top level. Explicitly and directly referring to the global environment using \c{globalenv()} or \c{.GlobalEnv} is rare, as it happens only in \packageNbExplicitGlobalSites sites. Accessing further-away frames happens much more seldom.
 
-%TODO: add here table of possible frame numbers
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|}
+        \hline
+        Frame number & \#sites & \%sites \\
+        \hline
+        \packageCallerEnvHierarchyNamea & \packageCallerEnvHierarchySitesaRnd & \packageCallerEnvHierarchySitePercenta \\
+        \packageCallerEnvHierarchyNameb& \packageCallerEnvHierarchySitesbRnd & \packageCallerEnvHierarchySitePercentb \\
+        \packageCallerEnvHierarchyNamec& \packageCallerEnvHierarchySitescRnd & \packageCallerEnvHierarchySitePercentc  \\
+        > 3& \packageNbFarAwayCallerSites &  \packageNbFarAwayCallerSitePercent \\
+        \hline
+    \end{tabular} \label{tab:framenumber}
+\caption{Frame number for the function environments. One site can possibly be passed different kinds of environments.}
+\end{table}
 
+A new environment creation, a parent environment must be specified. In Table~\ref{tab:newenvs}, we show what environments the new environment inherits from ultimately.\footnote{It means we directly show the first parent that is different from a new environment.} New environments mostly inherits from function environment: that is actually the default for \c{new.env}, with argument \c{parent = parent.frame()}. A large number of new environments are also wrapping package environment or namespaces. This is a widespread pattern to store variables to use at the package level. When a new environment wraps the empty environment, it can be handily used as a hash table.\footnote{\c{new.env} builds an environment that stores the variable name with a hash table by default. }
+% Speak also about new and global?
 
-Most of the calls happen in the environment surrounding \eval. This corresponds mostly to the default \c{envir} argument of \eval; indeed, \packageDefautEnvirSitesPercent of the sites have that default argument. A lot of sites also use \c{parent.frame()} to access their parent frame. It corresponds to environment class \c{1} but also to \c{global} when the function is called at the top level. Explicitly and directly referring to the global environment using \c{globalenv()} or \c{.GlobalEnv} is rare, as it happens only in \packageNbExplicitGlobalSites sites. Accessing further-away frames happens much more seldom.
-
-%TODO: add here table of possible environment categories wrapped in new
 
 \begin{table}[h]
     \centering 
@@ -979,19 +993,17 @@ Most of the calls happen in the environment surrounding \eval. This corresponds 
         Category & \#sites & \%sites \\
         \hline
         \packageNewEnvCategoryNamea & \packageNewEnvCategorySitesa & \packageNewEnvCategorySitePercenta \\
-        \hline
         \packageNewEnvCategoryNameb & \packageNewEnvCategorySitesb &  \packageNewEnvCategorySitePercentb\\
-        \hline
         \packageNewEnvCategoryNamec & \packageNewEnvCategorySitesc & \packageNewEnvCategorySitePercentc \\
-        \hline
         \packageNewEnvCategoryNamed & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\
         \hline
-    \end{tabular}
-\caption{Classification of environments wrapped by one of several \c{new}, in number of sites. Some sites can be passed more than one kind of environments. }
+    \end{tabular} \label{tab:newenvs}
+\caption{Classification of environments wrapped by one or several \c{new}, in number of sites. Some sites can be passed more than one kind of environments. }
 \end{table}
 
 
 % Up-to-date
+% Probably to remove
 \begin{table}[htbp]{ \centering
         \begin{tabular}{|c|c|}\hline
             Environment Class & Sites\\\hline
