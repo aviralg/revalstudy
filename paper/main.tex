@@ -940,7 +940,7 @@ We classify environments to \eval as follows:
 	\item package and namespace environments;
 	\item the empty environment (created with \c{emptyenv()})
 \end{itemize}
-We also consider an orthogonal category: environments built with \c{new.env}. They can have as parent an environment of any of the other categories or another environment built with \c{new.env}.
+
 
 As shown in Table~\ref{tab:highlevelenvironments}, most calls happen in a function environment, with \c{global} as a distant second. 
 
@@ -971,6 +971,24 @@ The calls happening in a function environment are mostly happening in the enviro
 Most of the calls happen in the environment surrounding \eval. This corresponds mostly to the default \c{envir} argument of \eval; indeed, \packageDefautEnvirSitesPercent of the sites have that default argument. A lot of sites also use \c{parent.frame()} to access their parent frame. It corresponds to environment class \c{1} but also to \c{global} when the function is called at the top level. Explicitly and directly referring to the global environment using \c{globalenv()} or \c{.GlobalEnv} is rare, as it happens only in \packageNbExplicitGlobalSites sites. Accessing further-away frames happens much more seldom.
 
 %TODO: add here table of possible environment categories wrapped in new
+
+\begin{table}[h]
+    \centering 
+    \begin{tabular}{|c|c|c|}
+        \hline
+        Category & \#sites & \%sites \\
+        \hline
+        \packageNewEnvCategoryNamea & \packageNewEnvCategorySitesa & \packageNewEnvCategorySitePercenta \\
+        \hline
+        \packageNewEnvCategoryNameb & \packageNewEnvCategorySitesb &  \packageNewEnvCategorySitePercentb\\
+        \hline
+        \packageNewEnvCategoryNamec & \packageNewEnvCategorySitesc & \packageNewEnvCategorySitePercentc \\
+        \hline
+        \packageNewEnvCategoryNamed & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\
+        \hline
+    \end{tabular}
+\caption{Classification of environments wrapped by one of several \c{new}, in number of sites. Some sites can be passed more than one kind of environments. }
+\end{table}
 
 
 % Up-to-date

@@ -608,13 +608,23 @@ We categorize environments in:
 ## Caller environments
 
 ```{r}
-caller_envs <- env_calls %>% filter(!is.na(hierarchy), is.na(specific_env))
+caller_envs <- env_calls %>% filter(!is.na(hierarchy), is.na(specific_env) || specific_env == "_callee", is.na(new_env))
+
+
+loop_envs <- env_calls %>% filter(is.na(new_env), str_detect(specific_env, fixed("loop")))
+
+caller_envs <- bind_rows(caller_envs, loop_envs)
+
 nb_caller_env_sites <- caller_envs %>% pull(src_ref) %>% n_distinct()
 
 overview_table(
   r("nb caller env sites", nb_caller_env_sites),
   r("caller env site percent", ratio(nb_caller_env_sites, nb_call_sites))
 )
+```
+
+```{r}
+# TODO: high-level per caller frame number...
 ```
 
 
@@ -645,10 +655,10 @@ And with the higher-level categories:
 ```{r}
 high_level_new <- env_calls %>% filter(!is.na(new_env)) %>% 
   mutate(category = case_when(
-    !is.na(hierarchy) ~ "function",
+    !is.na(hierarchy) ~ "function", # Will also include _callee
     specific_env == "global" ~ "global",
     specific_env == "empty" ~ "empty",
-    str_detect(specific_env, fixed("loop")) ~ "other",
+    str_detect(specific_env, fixed("loop")) ~ "function", #if it is loop, it means that we found the eval env in the frames,
     !is.na(specific_env) ~ "package"
   ))
 
@@ -658,13 +668,13 @@ high_level_new_sites <- high_level_new %>%group_by(category) %>%
   mutate(pc = ratio(n, nb_new_env_sites), cpc = cumsum(pc))
 
 
-nrows <- 5
+nrows <- 4
 r_vec("new env category name", nrows, high_level_new_sites$category)
 r_vec("new env category sites", nrows, high_level_new_sites$n)
 r_vec("new env category site percent", nrows, high_level_new_sites$pc)
 ```
 
-## The final high-lelve classification
+## The final high-level classification
 
 ```{r}
 nb_dataframe_env_sites <- nb_env_list_sites + nb_null_sites
