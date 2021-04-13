@@ -236,3 +236,34 @@ overview_table(
 )
 ```
 
+
+# Another classification 
+
+```{r}
+string_exprs <- E_prov %>% filter(!is.na(parsed))
+nb_string_expr_sites <- n_distinct(string_exprs$src_ref)
+
+constructed_exprs <- bind_rows(not_parsed_exprs, other_langs) %>% anti_join(match_call_exprs)
+nb_constructed_expr_sites <- n_distinct(constructed_exprs$src_ref)
+
+
+unknown_prov_exprs <- E_prov %>% anti_join(string_exprs) %>% anti_join(constructed_exprs) %>% anti_join(match_call_exprs)
+nb_unknown_prov_exprs_sites <- n_distinct(unknown_prov_exprs$src_ref)
+
+overview_table(
+  r("nb constructed sites", nb_constructed_expr_sites),
+  r("nb constructed site percent", ratio(nb_constructed_expr_sites, nb_call_sites)),
+  r("nb string sites", nb_string_expr_sites),
+  r("nb string site percent", ratio(nb_string_expr_sites, nb_call_sites)),
+  r("nb unknown sites", nb_unknown_prov_exprs_sites),
+  r("nb unknown site percent", ratio(nb_unknown_prov_exprs_sites, nb_call_sites)),
+) 
+# last category is match.call but we have it elsewhere
+```
+
+
+```{r}
+duration <- difftime(Sys.time(), now)
+```
+
+Notebook execution was `r duration` `r units(duration)`.
