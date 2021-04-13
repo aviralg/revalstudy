@@ -376,7 +376,7 @@ env_calls %>% group_by(hierarchy) %>% summarize(n = n_distinct(src_ref), percent
 specific_env <- env_calls %>% group_by(specific_env) %>% summarize(n = n_distinct(src_ref), n_packages = n_distinct(ev_package), percent = round(100 * n / nb_call_sites, 2), cum_percent = cumsum(percent)) %>% arrange(desc(n))
 
 nb_global_env_sites <- specific_env %>% filter(specific_env == "global") %>% .$n
-nb_callee_env_sites <- specific_env %>% filter(specific_env == "callee") %>% .$n # Seems it is actually for envir == "new.env()"
+nb_callee_env_sites <- specific_env %>% filter(specific_env == "callee") %>% .$n # local, default envir argument
 if(length(nb_callee_env_sites) == 0) nb_callee_env_sites <- 0
 nb_empty_env_sites <- specific_env %>% filter(specific_env == "empty") %>% .$n
 if(length(nb_empty_env_sites) == 0) nb_empty_env_sites <- 0
@@ -692,20 +692,51 @@ r_vec("new env category site percent", nrows, high_level_new_sites$pc)
 ## The final high-level classification
 
 ```{r}
-nb_dataframe_env_sites <- nb_env_list_sites + nb_null_sites
 
-nb_pack_sites <- nb_package_env_sites + nb_namespace_env_sites + nb_base_env_sites
+pack_envs <- env_classes %>% filter(is.na(new_env), is.na(hierarchy), specific_env != "global")
+nb_pack_sites <- n_distinct(pack_envs$src_ref)
 
 nb_function_env_sites <- nb_caller_env_sites + nb_integer_sites
 
+synthetic_envs <- env_classes %>% filter(envir_type %in% c("list", "NULL") | !is.na(new_env) | specific_env == "empty")
+nb_synthetic_sites <- n_distinct(synthetic_envs$src_ref)
+
+global_envs <- env_classes %>% filter(is.na(new_env), specific_env == "global")
+nb_strict_global_env_sites <- n_distinct(global_envs$src_ref)
+
 overview_table(
-  r("nb dataframe env sites", nb_dataframe_env_sites),
-  r("nb dataframe env site percent", ratio(nb_dataframe_env_sites, nb_call_sites)),
+  r("nb synthetic env sites", nb_synthetic_sites),
+  r("nb synthetic env site percent", ratio(nb_synthetic_sites, nb_call_sites)),
   r("nb package namespace env sites", nb_pack_sites),
   r("nb package namespace env site percent", ratio(nb_pack_sites, nb_call_sites)),
   r("nb function env sites", nb_function_env_sites),
-  r("nb function env site percent", ratio(nb_function_env_sites, nb_call_sites))
+  r("nb function env site percent", ratio(nb_function_env_sites, nb_call_sites)),
+  r("nb strict global env sites", nb_strict_global_env_sites),
+  r("nb strict global env site percent", ratio(nb_strict_global_env_sites, nb_call_sites))
 )
+```
+
+Polymorphism? How many sites have envir in several categories?
+
+```{r}
+pack_env_sites <- pack_envs %>% select(src_ref) %>% mutate(category = "package") 
+function_env_sites <- bind_rows(select(caller_envs, src_ref), select(eval_calls_integer, src_ref)) %>% mutate(category = "function")
+synthetic_env_sites <- synthetic_envs %>% select(src_ref) %>% mutate(category = "synthetic")
+global_env_sites <- global_envs %>% select(src_ref)%>% mutate(category = "global")
+
+category_per_site <- bind_rows(pack_env_sites, function_env_sites, synthetic_env_sites, global_env_sites) %>%
+  group_by(src_ref) %>% summarise(n_categories = n_distinct(category)) 
+
+poly_categories <- category_per_site %>% count(n_categories, sort = TRUE) %>%
+   mutate(pc = ratio(n, nb_call_sites), cpc = cumsum(pc)) 
+
+one_category <- poly_categories %>% filter(n_categories == 1)
+
+overview_table(
+  r("nb one category envir sites", one_category$n),
+  r("nb one category envir site percent", one_category$pc)
+)
+
 ```
 
 
