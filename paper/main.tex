@@ -933,7 +933,9 @@ sites evaluate a code in an environment that is three frame or above from the
 caller of \eval. This distance makes it more tricky to reason about the behavior
 of code, as the actions of \eval may happen at a distance.
 
-\begin{table}[h]\centering\small
+\begin{table}[h]
+\centering
+\small
 \begin{minipage}{4cm}
   \begin{tabular}{r|r|r}\hline
  Environment & \#sites & \%sites \\\hline
@@ -964,8 +966,12 @@ Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\hli
 \end{tabular} \label{tab:newenvs}
 \caption{Wrapper envs.}
 \end{minipage}
-\end{table}
+
+\vspace{-0.3cm} \begin{minipage}{\textwidth} \footnotesize
 One site could appear in several categories. However, most sites, \ie \packageNbOneCategoryEnvirSitePercent, have only kind of the above environments passed to them.
+\end{minipage}
+\end{table}
+
 
 
 The use of the global environment is likely split between intentional and
@@ -1018,13 +1024,10 @@ Where does the expression passed to \eval come from? There are various means of
 creating that expression, these are associated with particular use cases.
 
 \begin{compactitem}[---]
-\item {\it Promise:} Function arguments are passed as promises, suspended
-  computations, from a promise one can retrieve the source expression with a
-  call to the \c{substitute} function.
 \item {\it Reflection:} The \c{match.call} function reflectively captures
   the expression that called the current function.
 \item {\it Constructed:} Expressions can be constructed by invoking the
-  \c{quote}, \c{enquote} and \c{expression} functions.
+  \c{quote}, \c{enquote}, \c{expression} and \c{substitute} functions. Function arguments are passed as promises, suspended computations, and  \c{substitute} is sometimes used to retrieve the source expression associated to the promise.
 \item {\it String:} Finally, expressions can be created from strings by invoking
   one of \c{parse}, \c{str2expression} and \c{str2lang}.
 \end{compactitem}
