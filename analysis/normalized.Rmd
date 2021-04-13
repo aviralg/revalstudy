@@ -189,7 +189,7 @@ widespread_canonic %>%
 
 Minimized:
 ```{r}
-widespread_minimized <- E_cano %>%
+widespread_minimized <- E_cano %>% filter(type != "bytecode") %>% #Only two sites anyway
   group_by(minimized) %>%
   summarize(n_call_sites = n_distinct(src_ref), 
             proportion = ratio(n_call_sites, nb_call_sites), 

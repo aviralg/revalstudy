@@ -12,7 +12,7 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: Data/package/
+  base_dir: Data/kaggle/
   calls_path: summarized.fst
   corpus_path: corpus.txt
   static_path: evals-static.csv
@@ -569,7 +569,7 @@ overview_table(
 frequent_funcs <- E %>% count(func, wt = duplicates, sort = TRUE) %>% 
   mutate(p = n / nb_calls, cp = cumsum(p))
 
-top_func <- frequent_funcs %>% .[1,]
+top_func <- frequent_funcs %>% filter(!is.na(func)) %>% .[1,]
 
 overview_table(
   r("top func name", top_func$func),
