@@ -1011,64 +1011,46 @@ environments. Over half are functions, the second most frequent case is packages
 
 \subsection{The origins of \eval}
 
-There are various ways to obtain expressions that \eval will evaluate:
+Where does the expression passed to \eval come from? There are various means of
+creating that expression, these are associated with particular use cases.
+
 \begin{itemize}
-\item \c{substitute} synthesizes ASTs from expressions by replacing symbols
-    with their bindings in the specified environment.
-\item \c{match.call} captures a call and its arguments as expressions.
-\item \c{quote}, \c{enquote} returns its argument unevaluated, as an R expression.
-\item \c{expression} creates a vector of expression objects from text.
-\item \c{parse}, \c{str2expression} and \c{str2lang} turn strings into
-   expressions.
+\item {\it Promise:} Function arguments are passed as promises, suspended
+  computations, from a promise one can retrieve the source expression with a
+  call to the \c{substitute} function.
+\item {\it Reflection:} The \c{match.call} function reflectively captures
+  the expression that called the current function.
+\item {\it Constructed:} Expressions can be constructed by invoking the
+  \c{quote}, \c{enquote} and \c{expression} functions.
+\item {\it String:} Finally, expressions can be created from strings by invoking
+  one of \c{parse}, \c{str2expression} and \c{str2lang}.
 \end{itemize}
-We show the distribution of the different provenances in
-Table~\ref{tab:provenance}. Note that one site could be passed arguments from
-different provenances depending on the invokation. For some arguments, we could
-not determine their provenance or it was a value or a symbol, for which the
-provenance is less significant.
+
+
+Table~\ref{tab:provenance} summarizes the expression provenance in our corpus.
+This data is obtained by dynamically tainting values as they are produced by the
+various sources, due to technical reasons there is some imprecision in the
+results. Manual inspection of numerous examples suggest that ordering is correct.
 
 \begin{table}[h]\small
 \begin{tabular}{r|r|r} \hline
 Origin  & \#sites & \%sites \\\hline
-\c{substitute} & \packageNbOtherLangsSites & \packageOtherLangsSitePercent \\ \hline
-\c{parse} & \packageNbParseExprsSites & \packageParseExprsSitePercent \\ \hline
+Promise & \packageNbOtherLangsSites & \packageOtherLangsSitePercent \\ \hline
+Parse & ?& ?\\ \hline
 \c{match.call} &  \packageNbMatchCallExprsSites & \packageMatchCallExprsSitePercent  \\\hline
-\c{expression} & \packageNbNotParseExprsSites & \packageNotParseExprsSitePercent  \\\hline
-\c{str2lang} & \packageNbStrlangSites  & \packageStrlangSitePercent  \\\hline
-Other & \packageNbUnknownProvSites & \packageUnknownProvSitePercent \\\hline
+Constructed & ? &?  \\\hline
 \end{tabular}
 \caption{Provenance}\label{tab:provenance}
 \end{table}
 
-
-We taint the result of a call to \c{parse}, \c{str2lang} and \c{str2expression},
-by attaching an R attribute to it. R attributes are lost under copy or
-modification of their attaching object, so we underestimate the number of sites
-in that case. However, we observed that most of the time, the result of
-\c{parse} is not touched and directly passed to \eval.
-
-We taint the result of \c{match.call} by remembering the addresses of all the
-elements of the call list. As R GC is non-moving, it makes it possible to track
-them individually, as we observed that calls are modified and individual
-elements are sometimes evaluated. This is also an underestimation of the number
-of sites though, as we would lose an individual element of the call list that
-would be modified.
-
-% explain also how we get the numbers of the other categories?
-
-\c{eval(parse(...))} (and \c{str2expression}, and \c{str2lang}) can be used for
-dynamic code loading. This forms the core of \c{source} and \c{sys.source}
-functions in R that are commonly used for loading code in R files in interactive
-settings. We investigated the number of cases in which the output of \c{parse}
-and its variants is passed to \eval, directly or transitively by tainting their
-output. We observed that very few of the eval call (\packageNbParseFromFileSites
-in total) consume the result of calling \c{parse} on a file. Most of the eval
-calls consume the result of calling \c{parse} on a string. We also identified
-one function in core R, \c{invokeRestartInteractively} that prompts the user for
-input, parses it, and passes it to \eval.
-
-In Kaggle, most of the sites, \ie \kaggleParseExprsSitePercent, are passed an
-expressions that result from a call to \c{parse}.
+The string origin can sometimes be correlated with dynamic code loading. This is
+what the base functions \c{source} and \c{sys.source} do. We observed few calls
+(\packageNbParseFromFileSites in total) that consume the result of calling
+\c{parse} on a file. Most of the calls build strings programmatically. We also
+identified one function \c{invokeRestartInteractively} that prompts the user for
+input, parses it, and passes it to \eval.  The use of strings seems to correlate
+with less sophisticated programmers, as in our Kaggle corpus where
+\kaggleParseExprsSitePercent of site use strings.
 
 \subsection{Side effects in \eval}
 
