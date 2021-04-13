@@ -493,7 +493,8 @@ namespace_envs %>% group_by(environment_class) %>%
 # `envir` is an integer
 
 ```{r envir_integer}
-eval_calls_integer <- eval_calls_explicit %>% filter(envir_type == "integer")
+eval_calls_integer <- eval_calls_explicit %>% filter(envir_type %in% c("integer", "double")) 
+# we assume that the doubles are properly casted to integers here
 
 nb_integer <- count(eval_calls_integer, wt = duplicates)$n
 nb_integer_sites <- nb_eval_call_sites(eval_calls_integer)
@@ -608,7 +609,8 @@ We categorize environments in:
 ## Caller environments
 
 ```{r}
-caller_envs <- env_calls %>% filter(!is.na(hierarchy), is.na(specific_env) | specific_env == "_callee", is.na(new_env))
+caller_envs <- env_calls %>% filter(!is.na(hierarchy), is.na(new_env))
+# Will count also caller-n-specific env
 
 
 loop_envs <- env_calls %>% filter(is.na(new_env), str_detect(specific_env, fixed("loop")))
@@ -692,13 +694,13 @@ r_vec("new env category site percent", nrows, high_level_new_sites$pc)
 ## The final high-level classification
 
 ```{r}
-
-pack_envs <- env_classes %>% filter(is.na(new_env), is.na(hierarchy), specific_env != "global")
+# 4 srcrefs will be counted twice, in package environments, and in caller environments
+pack_envs <- env_classes %>% filter(is.na(new_env),  specific_env != "global")
 nb_pack_sites <- n_distinct(pack_envs$src_ref)
 
 nb_function_env_sites <- nb_caller_env_sites + nb_integer_sites
 
-synthetic_envs <- env_classes %>% filter(envir_type %in% c("list", "NULL") | !is.na(new_env) | specific_env == "empty")
+synthetic_envs <- env_classes %>% filter(envir_type %in% c("list", "NULL", "pairlist") | !is.na(new_env) | specific_env == "empty")
 nb_synthetic_sites <- n_distinct(synthetic_envs$src_ref)
 
 global_envs <- env_classes %>% filter(is.na(new_env), specific_env == "global")
@@ -719,12 +721,14 @@ overview_table(
 Polymorphism? How many sites have envir in several categories?
 
 ```{r}
-pack_env_sites <- pack_envs %>% select(src_ref) %>% mutate(category = "package") 
-function_env_sites <- bind_rows(select(caller_envs, src_ref), select(eval_calls_integer, src_ref)) %>% mutate(category = "function")
-synthetic_env_sites <- synthetic_envs %>% select(src_ref) %>% mutate(category = "synthetic")
-global_env_sites <- global_envs %>% select(src_ref)%>% mutate(category = "global")
+pack_env_sites <- pack_envs %>% select(src_ref, duplicates) %>% mutate(category = "package") 
+function_env_sites <- bind_rows(select(caller_envs, src_ref, duplicates), select(eval_calls_integer, src_ref, duplicates)) %>% mutate(category = "function")
+synthetic_env_sites <- synthetic_envs %>% select(src_ref, duplicates) %>% mutate(category = "synthetic")
+global_env_sites <- global_envs %>% select(src_ref,duplicates)%>% mutate(category = "global")
 
-category_per_site <- bind_rows(pack_env_sites, function_env_sites, synthetic_env_sites, global_env_sites) %>%
+env_categories <- bind_rows(pack_env_sites, function_env_sites, synthetic_env_sites, global_env_sites)
+
+category_per_site <- env_categories %>%
   group_by(src_ref) %>% summarise(n_categories = n_distinct(category)) 
 
 poly_categories <- category_per_site %>% count(n_categories, sort = TRUE) %>%
@@ -737,75 +741,17 @@ overview_table(
   r("nb one category envir site percent", one_category$pc)
 )
 
-```
-
-
-
-
-# Specific envir with their environment class
-
-For the default argument:
-
-```{r}
-eval_calls_default %>% count(environment_class, wt = duplicates, sort = TRUE) %>%
-  mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) 
-
-eval_calls_default %>% group_by(environment_class) %>% summarise(n = n_distinct(src_ref)) %>%
-  arrange(desc(n)) %>%
-   mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) 
-
-# caller-2- is eval.parent
-eval_calls_default %>% filter(environment_class == "caller-2-") %>% count(ev_variant)
-  
-```
-
-`eval` is not problematic:
-
-```{r}
-eval_calls_default %>% filter(ev_variant == "eval") %>% count(environment_class, wt = duplicates, sort = TRUE)
-```
-
-But `eval.parent` is:
-
-```{r}
-eval_calls_default %>% filter(ev_variant == "eval.parent") %>% count(environment_class, wt = duplicates, sort = TRUE)
-```
-
-It might be because `parent.frame` is equivalent to  `sys.frame(sys.parent(n))` and `sys.parent(n)` can get surprising result of it is called near the top level...
-
-For `parent.frame()` :
-
-```{r}
-E_envir %>% filter(envir == "parent.frame()") %>% count(environment_class, wt = duplicates, sort = TRUE) %>%
-  mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) 
-
-E_envir %>% filter(envir == "parent.frame()") %>% group_by(environment_class) %>%
-  summarise(n = n_distinct(src_ref)) %>%
-  arrange(desc(n)) %>%
-   mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) 
+#TODO: create tags for the poly categories df
 
 ```
 
-For `new.env()`:
 
+And what if we classify by using the most present category for site?
 ```{r}
-E_envir %>% filter(envir == "new.env()") %>% count(environment_class, wt = duplicates, sort = TRUE) %>%
-  mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) 
+majority_category <- env_categories %>% group_by(src_ref, category) %>% summarise(n_calls = sum(duplicates)) %>%
+  summarize(category = first(category, order_by = order(n_calls, decreasing = TRUE)), n = n(), prop_first = max(n_calls) / sum(n_calls))
 
-E_envir %>% filter(envir == "new.env()") %>% group_by(environment_class) %>%
-  summarise(n = n_distinct(src_ref)) %>%
-  arrange(desc(n)) %>%
-   mutate(pc = round(100 * n / sum(n), 2), cpc = cumsum(pc)) 
-
-```
-
-For each envir expression, what is the most common environment class? (in calls, in sites)
-
-```{r}
-env_class_envir <- E_envir %>% group_by(envir) %>%
-  group_by(environment_class, .add = TRUE) %>% summarise(n = n_distinct(src_ref)) %>%
-  summarise(env_class = first(environment_class, order_by = order(n, decreasing = TRUE)), n = sum(n)) %>% 
-  arrange(desc(n))
+majority_category %>% group_by(category) %>% summarise(n = n_distinct(src_ref)) %>% arrange(desc(n)) %>% mutate(pc = ratio(n, nb_call_sites), cpc = cumsum(pc))
 ```
 
 
