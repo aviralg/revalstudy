@@ -741,17 +741,22 @@ overview_table(
   r("nb one category envir site percent", one_category$pc)
 )
 
-#TODO: create tags for the poly categories df
-
+nrows <- 4
+r_vec("nb category envir", nrows, poly_categories$n_categories)
+r_vec("nb category envir sites", nrows, poly_categories$n)
+r_vec("nb category envir percent", nrows, poly_categories$pc)
+r_vec("nb category envir cumsum percent", nrows, poly_categories$cpc)
 ```
 
 
 And what if we classify by using the most present category for site?
 ```{r}
 majority_category <- env_categories %>% group_by(src_ref, category) %>% summarise(n_calls = sum(duplicates)) %>%
-  summarize(category = first(category, order_by = order(n_calls, decreasing = TRUE)), n = n(), prop_first = max(n_calls) / sum(n_calls))
+  summarize(categories = paste(sort(unique(category)), collapse = " ; "), category = first(category, order_by = order(n_calls, decreasing = TRUE)), n = n(), prop_first = max(n_calls) / sum(n_calls), )
 
 majority_category %>% group_by(category) %>% summarise(n = n_distinct(src_ref)) %>% arrange(desc(n)) %>% mutate(pc = ratio(n, nb_call_sites), cpc = cumsum(pc))
+
+majority_category %>% group_by(categories) %>% summarise(n = n_distinct(src_ref)) %>% arrange(desc(n)) %>% mutate(pc = ratio(n, nb_call_sites), cpc = cumsum(pc))
 ```
 
 

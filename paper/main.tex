@@ -933,6 +933,8 @@ sites evaluate a code in an environment that is three frame or above from the
 caller of \eval. This distance makes it more tricky to reason about the behavior
 of code, as the actions of \eval may happen at a distance.
 
+One site could appear in several categories. However, most sites, \ie \packageNbOneCategoryEnvirSitePercent, have only kind of the above environments passed to them, as shown in Table~\ref{tab:polyenvir}.
+
 \begin{table}[h]
 \centering
 \small
@@ -966,9 +968,18 @@ Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\hli
 \end{tabular} \label{tab:newenvs}
 \caption{Wrapper envs.}
 \end{minipage}
-
-\vspace{-0.3cm} \begin{minipage}{\textwidth} \footnotesize
-One site could appear in several categories. However, most sites, \ie \packageNbOneCategoryEnvirSitePercent, have only kind of the above environments passed to them.
+\begin{minipage}{\textwidth} 
+   \centering
+   \begin{tabular}{c|c|c}
+       \hline
+       \#categories & \#sites &  \%sites \\ \hline
+       \packageNbCategoryEnvira & \packageNbCategoryEnvirSitesaRnd &  \packageNbCategoryEnvirPercenta\\
+       \packageNbCategoryEnvirb &  \packageNbCategoryEnvirSitesbRnd & \packageNbCategoryEnvirPercentb \\
+       \packageNbCategoryEnvirc & \packageNbCategoryEnvirSitescRnd &  \packageNbCategoryEnvirPercentc\\
+       \packageNbCategoryEnvird & \packageNbCategoryEnvirSitesdRnd & \packageNbCategoryEnvirPercentd\\
+       \hline
+   \end{tabular} \label{tab:polyenvir}
+   \caption{Number of categories per site.}
 \end{minipage}
 \end{table}
 
