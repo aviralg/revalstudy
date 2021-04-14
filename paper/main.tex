@@ -1228,8 +1228,18 @@ by the fact that the expression is a call and the target environment is that of
 the parent.
 
 % We have quantitative data on that if needed...
-This pattern is very often (more than half of the cases) used in relation with statistical models, to build a new model. \c{model.frame} to build a new generic model, or a more specialized model like \c{glm} or, \c{lm}.
-% Show example
+This pattern is very often (more than half of the cases) used in relation with statistical models, to build a new model, \c{model.frame} to build a new generic model, or a more specialized model like \c{glm} or, \c{lm}. The R documentation of \c{match.call} explicitly describes this usage.
+
+In package \emph{survival}\footnote{It is a \emph{recommended package}, so recommended by the CRAN maintainers, thoroughly tested, and following R best practices.}, in function \c{coxph}, the surrounding call is first captured, then \c{model.frame} is injected as the function name in the call, and finally, the new call is evaluated in the parent frame.
+
+\begin{lstlisting}
+Call <- match.call()
+...
+tform <- Call[c(1,indx)]  # only keep the arguments we wanted
+tform[[1L]] <- quote(stats::model.frame)  # change the function called
+...
+mf <- eval(tform, parent.frame())
+\end{lstlisting}
 
 A related pattern is not to change the call but rather to evaluate the arguments in the parent frame. This could also be achieved with \c{substitute}, but \c{match.call} does it in bulk.
 In package \emph{MedDietCalc},  in function \c{computeMDS95}, \c{match.call} retrieves the argument expressions of the call, which are evaluated in a dataframe \c{data} which contains the numeric data. Each argument of function \c{computeMDS95} is also a column in dataframe \c{data}. The advantage of using \c{eval} here is to be able to express an argument as a combination of several columns in the dataframe.
@@ -1256,9 +1266,8 @@ In the R community, the call capturing pattern is often referred~\cite{hadley} a
  A call to \c{library(packageName)}, which loads libraries in R, for instance, will
 populate environment \c{package:packageName} using \eval. It is a \emph{base} function
 though, so we do not see it in the CRAN dataset. However, R still makes it
-possible to access any package environments and \packageNbPackageEnvSites call
-sites, \ie \packagePackageEnvSitePercent access a \emph{package} environment, from
-\packageNbPackageEnvPackages different packages. Those packages perform
+possible to access any package environments, which we see in
+\packageNbPackageEnvPackages different packages in our corpus. Those packages perform
 introspection, to represent and search any environment by name, in package
 \emph{envnames}, to containerize tests, as with \emph{testthat} and
 \emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to bypass the visibility of functions in \emph{USSCXenaTools}. It is also used to
