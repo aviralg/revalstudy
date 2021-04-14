@@ -1200,9 +1200,9 @@ representative examples of its usage.
 
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
 \begin{lstlisting}
- expr<-expression(beta\_1 + time*beta\_2+u)
+ expr<-expression(beta_1 + time*beta_2+u)
  ...
- mu = data.frame(beta\_1=0.5, beta\_2=1, time=3, u=2.3)
+ mu = data.frame(beta_1=0.5, beta_2=1, time=3, u=2.3)
  ...
  D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
 \end{lstlisting}
@@ -1231,8 +1231,23 @@ the parent.
 This pattern is very often (more than half of the cases) used in relation with statistical models, to build a new model. \c{model.frame} to build a new generic model, or a more specialized model like \c{glm} or, \c{lm}.
 % Show example
 
-A related pattern is not to change the call but rather to evaluate the arguments in the parent frame. This can also be achieved with \c{substitute}.
-% Example
+A related pattern is not to change the call but rather to evaluate the arguments in the parent frame. This could also be achieved with \c{substitute}, but \c{match.call} does it in bulk.
+In package \emph{MedDietCalc},  in function \c{computeMDS95}, \c{match.call} retrieves the argument expressions of the call, which are evaluated in a dataframe \c{data} which contains the numeric data. Each argument of function \c{computeMDS95} is also a column in dataframe \c{data}. The advantage of using \c{eval} here is to be able to express an argument as a combination of several columns in the dataframe.
+\begin{lstlisting}
+computeMDS95 <- function (data, Vegetables, Legumes, FruitAndNuts, Cereals,
+	 Potatoes = NULL, Meat, Dairy, 	Alcohol, Fats = NULL, MUFA = NULL,
+	  SFA = NULL, Sex, men = "male", women = "female", 	frequency = NULL,
+	  output = "percent", rm.na = FALSE) {
+	  	
+	arguments <- as.list( match.call())
+	Vegetables <- eval(arguments$Vegetables, data)
+	Legumes <- eval(arguments$Legumes, data)
+	FruitAndNuts <- eval(arguments$FruitAndNuts, data)
+	Cereals <- eval(arguments$Cereals, data)
+	Potatoes <- eval(arguments$Potatoes, data)
+	...
+\end{lstlisting}
+
 
 In the R community, the call capturing pattern is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}.
 
