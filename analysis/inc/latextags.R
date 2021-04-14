@@ -321,7 +321,7 @@ fmt <- function(x, prefix="", suffix="", ...) {
     else y
   })
 
-  prettyNum(x, big.mark=",", scientific=F)
+  formatC(x, big.mark=",", format="f", digits=digits)
 }
 
 .fmt.num_with_suffix <- function(x, floor=FALSE, ceiling=FALSE, digits=1) {
