@@ -914,8 +914,7 @@ function environment with the \c{global} kind as a distant second. This means
 that most variable lookups and most side effects either read/update existing
 local variables or introduce new ones. But for which function? From the point of
 view of the function that called \eval, Table~\ref{tab:funoffset} gives an
-offset on the call stack. Thus 0 is the direct caller and corresponds to local variables and to \emph{lexical scoping}; 1 is its parent, and
-so on, and correspond to \emph{dynamic scoping}. The data suggests that in 81\% of cases, \eval access its caller's environment -- this means, the variables of the function where \eval textually
+offset on the call stack. Thus 0 is the direct caller and corresponds to local variables; 1 is its parent, and so on. The data suggests that in 81\% of cases, \eval access its caller's environment -- this means, the variables of the function where \eval textually
 occurs are read and written to. It is interesting that some 1.5\% of sites
 evaluate a code in an environment that is three frame or above from \eval. This
 distance implies that, in general, modular reasoning is impossible, to
@@ -954,8 +953,8 @@ Function & \packageNewEnvCategorySitesa & \packageNewEnvCategorySitePercenta \\
 Package & \packageNewEnvCategorySitesb &  \packageNewEnvCategorySitePercentb\\
 Global & \packageNewEnvCategorySitesc & \packageNewEnvCategorySitePercentc \\
 Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\hline
-\end{tabular} \label{tab:newenvs}
-\caption{Wrapper envs.}
+\end{tabular} 
+\caption{Wrapper envs.} \label{tab:newenvs}
 \end{minipage}\hspace{-.2cm}
 \begin{minipage}{3.7cm}\centering
  \begin{tabular}{@{}c|c|c@{}} \hline
@@ -1002,7 +1001,7 @@ show up so frequently is likely an artifact of the way the code is run. ({\it
   Package}) There are only 92 sites that use a package environment in \eval,
 this is probably best as it is bad form to add bindings or modify functions
 of a loaded package. Many more sites rather wrap a package environment in a new 
-environment to add variables global the package.
+environment to create singletons in a package.
 
 %% The \c{imchange} function of package \c{imager} makes it possible to modify
 %% images using a dedicated formula syntax.\footnote{Inspired by {map} in
@@ -1197,7 +1196,19 @@ representative examples of its usage.
 
 \mypara{Variable lookup.} % predominant usage of eval in base
 
-\mypara{Symbolic differentiation.} % D and deriv
+\mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}. 
+
+In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
+\begin{lstlisting}
+ expr<-expression(beta\_1 + time*beta\_2+u)
+ ...
+ mu = data.frame(beta\_1=0.5, beta\_2=1, time=3, u=2.3)
+ ...
+ D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
+\end{lstlisting}
+% See https://github.com/cran/MCMCglmm/blob/cfac9e67ec73a3db2142826faae35e5d2318da31/man/evalDtensor.Rd
+
+
 
 \mypara{Capturing a call.}  A common use case for \eval is to be combined with \c{match.call}.
 \c{match.call} walks up the call stack, captures the code that invoked the
