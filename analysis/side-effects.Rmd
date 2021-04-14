@@ -344,18 +344,28 @@ left_join(
 ```
 
 ```{r}
-event_calls <- cs_count(SE, event, wt=N)
+event <- cs_count(SE, event, wt=N)
+event_calls <- cs_count(SE, event)
 event_site <- cs_count(SE, eval_call_srcref, event) %>% cs_count(event)
 
 left_join(
+  select(event, event, n_event=n, p_event=p),
   select(event_calls, event, n_call=n, p_call=p),
-  select(event_site, event, n_site=n, p_site=p),
   by="event"
 ) %>%
-  mutate_if(is.double, ~fmt(., digit=1)) %>%
+  left_join(
+    select(event_site, event, n_site=n, p_site=p),
+    by="event"
+  ) %>% 
+  mutate(event=case_when(
+    event=="def" ~ "definition",
+    event=="asn" ~ "update",
+    event=="rvl" ~ "removal"
+  )) %>%
+  mutate_if(is.double, ~fmt(., suffix="%", digit=1)) %>%
   mutate_if(is.integer, ~fmt(.)) %>%
   xtable(
-    align="llrrrr"
+    align="llrrrrrr"
   ) %>%
   print(
     file=file.path(TAGS_DIR, "table-se-types.tex"),
@@ -363,34 +373,16 @@ left_join(
     include.colnames=FALSE,
     include.rownames=FALSE,
     only.contents=TRUE,
-    sanitize.text.function=identity,
     timestamp=FALSE
   )
 ```
 
 ```{r}
-filter(SE, event=="rvl") %>% cs_count(class)
+event_rvl_class <- filter(SE, event=="rvl") %>% cs_count(class)
+
+overview_table(
+  r("event rem from synthetic", percent(filter(event_rvl_class, class=="Synthetic")$p/100)),
+  r("event rem from function", percent(filter(event_rvl_class, class=="Function")$p/100)),
+  r("event rem from local", percent(filter(event_rvl_class, class=="Local")$p/100))
+)
 ```
-
-
-## Unknwon srcref
-
-```{r}
-unknown_srcref <- filter(SE, eval_call_srcref=="???")
-```
-
-## Where does the side effects happen
-
-- in the caller - source is `call:fun` where `fun` is the `calle_function` 
-  - most of this should be class that do not specify any parameter to `envir`
-- in the supplied `envir` parameter -- `in_envir` is true
-  - in this case the details are in the `environment_class`
-- in a package - the source is `pkg:`
-- in the `.userHookEnv` - the source is `userHookEnv`
-- in another call
-- is S4, R6
-
-```{r}
-
-```
-
