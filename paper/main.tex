@@ -1354,6 +1354,10 @@ or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
 \todo{Aviral's story when he contacted a developer about his use of eval}
 
+\mypara{Discussion.} % more...
+
+\eval is a powerful tool and can be sometimes with functions with more specialized goals. For instance, variable lookup in any environment can be performed with \c{get}. Building a call and executing can be done with \c{do.call}. Nevertheless, \eval shines when expressions passed to it can be of many different types. % And it is shorter to type, and no need to remember all the specialized functions.
+
 \section{Conclusion}
 
 \bibliography{bib/bibliography,bib/jv}
