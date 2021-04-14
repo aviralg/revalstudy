@@ -1,5 +1,5 @@
-\documentclass[review,screen,acmsmall,anonymous=true]{acmart} 
-%\documentclass[noacm,review,screen,acmsmall,anonymous=true]{acmart} 
+\documentclass[review,screen,acmsmall,anonymous=true]{acmart}
+%\documentclass[noacm,review,screen,acmsmall,anonymous=true]{acmart}
 %Option noacm above messes with the line numbers in review mode
 \settopmatter{printfolios=true,printccs=true,printacmref=true}
 
@@ -934,7 +934,7 @@ site has a single kind.
   \packageCallerEnvHierarchyNamea & \packageCallerEnvHierarchySitesaRnd & \packageCallerEnvHierarchySitePercenta \\
   \packageCallerEnvHierarchyNameb& \packageCallerEnvHierarchySitesbRnd & \packageCallerEnvHierarchySitePercentb \\
   \packageCallerEnvHierarchyNamec& \packageCallerEnvHierarchySitescRnd & \packageCallerEnvHierarchySitePercentc  \\
-  \ge 3& \packageNbFarAwayCallerSites &  \packageNbFarAwayCallerSitePercent \\\hline
+$\ge 3$& \packageNbFarAwayCallerSites &  \packageNbFarAwayCallerSitePercent \\\hline
  \end{tabular}
 \caption{Function offset}\label{tab:funoffset}
 \end{minipage}\hspace{-.2cm}
@@ -945,7 +945,7 @@ Function & \packageNewEnvCategorySitesa & \packageNewEnvCategorySitePercenta \\
 Package & \packageNewEnvCategorySitesb &  \packageNewEnvCategorySitePercentb\\
 Global & \packageNewEnvCategorySitesc & \packageNewEnvCategorySitePercentc \\
 Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\hline
-\end{tabular} 
+\end{tabular}
 \caption{Wrapper envs.} \label{tab:newenvs}
 \end{minipage}\hspace{-.2cm}
 \begin{minipage}{3.7cm}\centering
@@ -992,7 +992,7 @@ structure as an environment. ({\it Global}) The fact that global environment
 show up so frequently is likely an artifact of the way the code is run. ({\it
   Package}) There are only 92 sites that use a package environment in \eval,
 this is probably best as it is bad form to add bindings or modify functions
-of a loaded package. Many more sites rather wrap a package environment in a new 
+of a loaded package. Many more sites rather wrap a package environment in a new
 environment to create singletons in a package.
 
 %% The \c{imchange} function of package \c{imager} makes it possible to modify
@@ -1187,7 +1187,7 @@ representative examples of its usage.
 
 \mypara{Variable lookup.} % predominant usage of eval in base
 
-\mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}. 
+\mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
 \begin{lstlisting}
@@ -1239,7 +1239,7 @@ computeMDS95 <- function (data, Vegetables, Legumes, FruitAndNuts, Cereals,
 	 Potatoes = NULL, Meat, Dairy, 	Alcohol, Fats = NULL, MUFA = NULL,
 	  SFA = NULL, Sex, men = "male", women = "female", 	frequency = NULL,
 	  output = "percent", rm.na = FALSE) {
-	  	
+
 	arguments <- as.list( match.call())
 	Vegetables <- eval(arguments$Vegetables, data)
 	Legumes <- eval(arguments$Legumes, data)
