@@ -94,7 +94,7 @@ will not affect the results of the analysis, may be unduly optimistic.
 
 \vspace{2mm}\noindent\emph{Is Past Prologue?} Previous work investigated how
 \eval is used in web programming, specifically in websites that use
-JavaScript~\cite{pldi10a}. In 2010, 17 of the largest website used the feature.
+JavaScript~\cite{pldi10a}. In 2010, 17 of the largest websites used the feature.
 In 2011, 82\% of the 10,000 most accessed sites used \eval~\cite{ecoop11}. Yet,
 the strings passed to \eval, and their behaviors when executed, are far from
 random; it was shown that when one can observe several calls to \eval, the
@@ -751,7 +751,7 @@ the relative paucity of data in Kaggle, we do not pursue the data set further.
 The previous section gave a quantitative view of \eval usage; we now try to
 elucidate \emph{what} it does.
 
-\subsection{The arguments of \eval}
+\subsection{The expression in \eval} \label{sec:minimized}
 
 The expressions passed to \eval vary widely. In order to categorize them, let us
 use a minimization function $min(e)$ which for a given expression $e$ returns a
@@ -765,7 +765,7 @@ Table~\ref{tab:minimizedexpressions} gives the 10 most frequent forms; \#sites
 and \%sites are, respectively, the number and ratio of sites receiving arguments
 of that form; \#packages is the number of packages with that form; \#operations
 is the median number of instructions performed by the interpreter; and \%envir
-is the ratio of sites for that evaluate in a function environment. The example
+is the ratio of sites that evaluate in a function environment. The example
 column shows one sample expression $e$ that normalizes to the particular form.
 
 \begin{table}[h]\small
@@ -1193,10 +1193,11 @@ evaluation, \c{substitute} and \c{eval} are the tools given to
 developers to this end. This API is slightly more complex than just
 passing a string, it is conceivable that this may discourage some
 casual users. \Eval is also being used to reduce boilerplate code and
-provide convenience features for programmers. We now give some
-representative examples of its usage.
+provide convenience features for programmers. We give examples for the minimized expressions of Section~\ref{sec:minimized} and then dig into high-level \eval design patterns.
 
-\mypara{Variable lookup.} % predominant usage of eval in base
+\mypara{Variable lookup and values.} 
+This corresponds to minimized expressions \c{X}, \c{V}. We also include here lookup to slots in a list, \ie minimized expression \c{\$}.
+It is the predominant usage of \eval in Base, through function \c{match.args}. In CRAN, it correlates with more exotic environments passed to \eval. 
 
 \mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}. 
 
@@ -1210,6 +1211,7 @@ In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a 
 \end{lstlisting}
 % See https://github.com/cran/MCMCglmm/blob/cfac9e67ec73a3db2142826faae35e5d2318da31/man/evalDtensor.Rd
 
+Package \c{tidyselect} is the backend of several \c{dplyr} and \c{tidyr} functions to select columns. It offers a DSL that makes it possible to select a set of columns, over a range of columns, a complement, an intersection, an union, with a regular expression and so on. \eval is used to traverse selectors stored as slots of a dataframe.
 
 
 \mypara{Capturing a call.}  A common use case for \eval is to be combined with \c{match.call}.
