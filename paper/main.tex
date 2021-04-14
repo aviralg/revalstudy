@@ -1206,8 +1206,13 @@ provide convenience features for programmers. We give examples for the minimized
 This corresponds to minimized expressions \c{X}, \c{V}. We also include here lookup to slots in a list or data frame, \ie minimized expression \c{\$}.
 It is the predominant usage of \eval in Base, through function \c{match.args}. In CRAN, it correlates with more exotic environments passed to \eval. 
 
-\mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
+The dominant site in numbers of calls in CRAN, in the custom object system of \emph{ggplot2}, \c{ggproto}, also evaluates a variable \c{`\_inherit`} in the definition environment of the class. It leads to a large diversity of environments, many being package environment or package environments wrapped in \c{new}.
 
+Package \emph{statnet.common} handles formulas, R object that associates an expression of the form \c{x ~ expr} and a carry-on environment where to evaluate the formula. It evaluates the left-hand side of the formula, which is always a variable, in \c{eval\_lhs.formula}, as \c{eval(object[[2L]],envir=environment(object))} where \c{object} is the formula and \c{environment} returns the formula associated to the object.
+
+%TODO Add a simple example of a slot lookup (very common with match.call)
+
+\mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
 \begin{lstlisting}
  expr<-expression(beta_1 + time*beta_2+u)
