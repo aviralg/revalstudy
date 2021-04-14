@@ -80,9 +80,24 @@ CRAN <- read_fst(PACKAGE_CORPUS_FILE) %>% as_tibble
 PKG <- filter(CRAN, in_corpus) 
 ```
 
+TODO: fix the srcrefs and caller packages / functions
+
+```{r}
+SE <- mutate(
+  SE,
+  caller=str_replace(eval_call_srcref, "::(.*)::(.*)::.*", "\\1::\\2")
+)
+```
+
+
 ## Overview
 
 ```{r}
+S_call <- sum(S$nb_ev_calls)
+S_site <- count(S, eval_call_srcref)
+S_package <- count(S, eval_source)
+S_funs <- sum(PKG$funs_with_eval)
+  
 SE_all_N <- sum(SE_all$N)
 SE_all_sites <- count(SE_all, eval_call_srcref)
 SE_all_calls <- count(SE_all, cid)
@@ -96,6 +111,8 @@ SE_random_seed_sites <- count(SE_random_seed, eval_call_srcref)
 SE_N <- sum(SE$N)
 SE_calls <- count(SE, cid)
 SE_sites <- count(SE, eval_call_srcref)
+SE_funs <- count(SE, caller)
+SE_pkgs <- count(SE, caller_package)
 SE_missing_N <- sum(SE_missing_sites$N)
 
 overview_table(
@@ -125,7 +142,10 @@ overview_table(
   r("User calls ratio", ratio(SE_calls, SE_all_calls)),
   
   r("User sites", SE_sites),
-  r("User sites ratio", ratio(SE_sites, SE_all_sites))
+  r("User sites ratio", ratio(SE_sites, SE_all_sites)),
+  
+  r("User functions", count(SE, caller)),
+  r("User packages", count(SE, caller_package)),
 )
 ```
 
@@ -141,8 +161,7 @@ SE <- mutate(
     source == "pkg:global"                              ~ "Global",
     str_starts(source, fixed("pkg:"))                   ~ "Package",
     TRUE                                                ~ "Synthetic"
-  ),
-  caller=str_replace(eval_call_srcref, "::(.*)::(.*)::.*", "\\1::\\2")
+  )
 )
 ```
 
@@ -194,49 +213,10 @@ overview_table(
 ```
 
 ```{r}
-top_sites_classes <- cs_count(sites_classes, classes) %>% filter(cp<=91)
-```
-
-```{r}
-print(
-  xtable(
-    mutate(
-      top_sites_classes,
-      p=fmt(p, suffix="%", digit=1),
-      cp=fmt(cp, suffix="%", digit=1),
-    ), 
-    align="llrrr",
-  ),
-  file=file.path(TAGS_DIR, "table-top-sites-classes-se.tex"),
-  comment=FALSE, 
-  include.colnames=FALSE,
-  include.rownames=FALSE,
-  only.contents=TRUE,
-  timestamp=FALSE
-)
-```
-
-## Function classification
-
-```{r}
-single_class_funs <- 
-  left_join(
-    mutate(ES, fun=str_c(package, fun_name)), 
-    sites_classes, 
-    by="eval_call_srcref"
-  ) %>% 
-  group_by(fun) %>% 
-  filter(all(!is.na(n_class))) %>%
-  summarize(n_classes=n_distinct(classes), classes=str_c(unique(classes), collapse=";"))
-
-cs_count(single_class_funs, n_classes)
-cs_count(single_class_funs, classes)
-```
-
-```{r}
-single_class_funs %>%
+sum_sites_classes <- 
+  sites_classes %>%
   mutate(
-    classes=if_else(str_detect(classes, "[,;]"), "\\emph{multiple}", classes)
+    classes=if_else(str_detect(classes, "[,;]"), "multiple", classes)
   ) %>%
   cs_count(classes) %>%
   mutate(
@@ -244,7 +224,84 @@ single_class_funs %>%
     o=if_else(str_starts(classes, fixed("\\")), 0L, n)
   ) %>% 
   arrange(desc(o)) %>%
-  select(-cp, -o) %>%
+  select(-cp, -o)
+
+sum_sites_classes %>%
+  mutate(classes=if_else(classes=="multiple", "\\emph{multiple}", classes)) %>%
+  xtable(
+    align="llrr",
+  ) %>%
+  print(
+    file=file.path(TAGS_DIR, "table-top-sites-classes-se.tex"),
+    comment=FALSE, 
+    include.colnames=FALSE,
+    include.rownames=FALSE,
+    only.contents=TRUE,
+    sanitize.text.function=identity,
+    timestamp=FALSE
+  )
+```
+
+```{r}
+sites_class_n <- cs_count(sites_classes, n_class)
+
+overview_table(
+  r("Sites in one class", percent(filter(sites_class_n, n_class==1)$p/100))
+)
+```
+
+
+## Function classification
+
+```{r}
+funs_srcrefs <- 
+  left_join(
+    mutate(ES, fun=str_c(package, "::", fun_name)), 
+    transmute(count(S, eval_call_srcref), eval_call_srcref, hit=1), 
+    by="eval_call_srcref"
+  ) %>%
+  mutate(hit=replace_na(hit, 0)) %>%
+  select(-args, -call_fun_name) %>%
+  left_join(
+    select(sites_classes, eval_call_srcref, classes),
+    by="eval_call_srcref"
+  )
+
+funs_cov <-
+  funs_srcrefs %>% 
+  group_by(fun) %>%
+  summarize(cov=sum(hit)/n())
+
+funs_classes <- 
+#  semi_join(funs_srcrefs, filter(funs_cov, cov==1), by="fun") %>%
+  semi_join(funs_srcrefs, funs_cov, by="fun") %>%
+  group_by(fun) %>%
+  summarize(
+    cov=sum(hit)/n(),
+    classes=str_c(unique(classes[!is.na(classes)]), collapse=";")
+  )
+
+cs_count(funs_classes, cov)
+cs_count(funs_classes, classes)
+```
+
+```{r}
+sum_funs_classes <-
+funs_classes %>%
+  filter(cov==1, classes != "") %>%
+  mutate(
+    classes=if_else(str_detect(classes, "[,;]"), "multiple", classes)
+  ) %>%
+  cs_count(classes) %>%
+  mutate(
+    p=fmt(p, suffix="\\%", digit=1),
+    o=if_else(str_starts(classes, fixed("\\")), 0L, n)
+  ) %>% 
+  arrange(desc(o)) %>%
+  select(-cp, -o)
+
+sum_funs_classes %>%
+  mutate(classes=if_else(classes=="multiple", "\\emph{multiple}", classes)) %>%
   xtable(
     align="llrr",
   ) %>% 
@@ -259,17 +316,62 @@ single_class_funs %>%
   )
 ```
 
-
 ```{r}
-cs_count(SE, eval_call_srcref, wt=N)
-cs_count(SE, variable, wt=N)
+left_join(
+  rename(sum_sites_classes, site_n=n, site_p=p),
+  rename(sum_funs_classes, fun_n=n, fun_p=p)
+) %>%
+  mutate(
+    o=if_else(classes=="multiple", 0L, site_n),
+    classes=if_else(classes=="multiple", "\\emph{multiple}", classes),
+    fun_n=replace_na(fun_n, "0"),
+    fun_p=replace_na(fun_p, "0\\%"),
+  ) %>%
+  arrange(desc(o)) %>%
+  select(-o) %>%
+  xtable(
+    align="llrrrr"
+  ) %>%
+  print(
+    file=file.path(TAGS_DIR, "table-se-target-envs.tex"),
+    comment=FALSE, 
+    include.colnames=FALSE,
+    include.rownames=FALSE,
+    only.contents=TRUE,
+    sanitize.text.function=identity,
+    timestamp=FALSE
+  )
 ```
 
 ```{r}
-overview_table(
-  r("Number of side effects", sum(SE$N))
-)
+event_calls <- cs_count(SE, event, wt=N)
+event_site <- cs_count(SE, eval_call_srcref, event) %>% cs_count(event)
+
+left_join(
+  select(event_calls, event, n_call=n, p_call=p),
+  select(event_site, event, n_site=n, p_site=p),
+  by="event"
+) %>%
+  mutate_if(is.double, ~fmt(., digit=1)) %>%
+  mutate_if(is.integer, ~fmt(.)) %>%
+  xtable(
+    align="llrrrr"
+  ) %>%
+  print(
+    file=file.path(TAGS_DIR, "table-se-types.tex"),
+    comment=FALSE, 
+    include.colnames=FALSE,
+    include.rownames=FALSE,
+    only.contents=TRUE,
+    sanitize.text.function=identity,
+    timestamp=FALSE
+  )
 ```
+
+```{r}
+filter(SE, event=="rvl") %>% cs_count(class)
+```
+
 
 ## Unknwon srcref
 

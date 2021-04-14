@@ -1102,44 +1102,62 @@ implementation and are not related to the user code. For example, the
 generator is saved and restored from and to the global environment every time
 user calls one of the base routines for getting random numbers. Removing them
 leaves us with \SEUser side effects (\SEUserRatio) from \SEUserCalls \eval
-calls (\SEUserCallsRatio) in \SEUserSites sites (\SEUserSitesRatio). Half of
-the side-effects comes from three functions: \c{plyr::allocate\_column}
-(allocates space for a new data frame column), \c{withr::execute\_handlers}
-(executes deferred expressions) and \c{foreach::doSEQ} (executes an expression
-on each element in a collection, possibly in parallel). \SEFunsNighty functions
-are responsible for 90\% of side effects. The remaining is spread in \SEFunsTen
-functions.
+calls (\SEUserCallsRatio) in \SEUserSites sites (\SEUserSitesRatio). These
+sites are part of \SEUserFunctions in \SEUserPackages packages. \SEFunsNighty
+functions are responsible for 90\% of side effects. Half of the side-effects
+comes just from three functions: \c{plyr::allocate\_column} (allocates space
+for a new data frame column), \c{withr::execute\_handlers} (executes deferred
+expressions) and \c{foreach::doSEQ} (executes an expression on each element in
+a collection, possibly in parallel).
 
 Most of the \eval sites (\SESitesInEnvirRatio) do side effects in the
 environment specified by the \c{envir} parameter (\cf
-Section~\ref{sec:eval-in-r}). \SESitesNotInEnvirRatio modifies other
+Section~\ref{sec:eval-in-r}), \SESitesNotInEnvirRatio modifies other
 environment and finally \SESitesBothEnvirRatio does both.
-Table~\ref{tab:side-effects-targets} shows the class of the environments where
-\eval side effects happen. It follows the classification described in
-Section~\ref{sec:env} with two extra classes: \emph{Object} which represents a
-side-effect that happens in S4 or R6 object environment, and \emph{Local} that
-corresponds to a side effect in local variables of the \eval caller.
+Table~\ref{tab:se-env} shows the class of the environment where \eval side
+effects happen (\emph{target environment}). It follows the classification
+described in Section~\ref{sec:env} with two extra classes: \emph{Object} which
+represents a side-effect that happens in S4 or R6 object environment, and
+\emph{Local} that corresponds to a side effect in local variables of the \eval
+caller. The table shows data for both \eval sites and functions. For a function
+to have a given target environment class means that all of its \eval sites that
+do side effect must have the same target environment class. Majority of the
+\eval sites (\SESitesInOneClass) do all side effects consistently in one
+environment class. The same happens on the function level. Almost half of the
+sites and over a third of the functions do side effects in either \emph{Local}
+or \emph{Object} environments. This gives a ray of hope for the compiler. Even
+though it is possible to do anything anywhere, the data suggest that most
+side-effects are sane.
 
-\begin{table}[h]\centering\small
-  \begin{tabular}{l|r|r|r}\hline
-    Environments & \#sites & \%sites & cum. \%sites \\%
-    \expandableinput tag/table-top-sites-classes-se.tex
+\begin{table}[h]
+  \small
+  \centering
+  \begin{tabular}{l|r|r|r|r}\hline
+    Environments & \#sites & \%sites & \#funs. & \%funs. \\%
+    \expandableinput tag/table-se-target-envs.tex
   \end{tabular}
-  \caption{Target environments for \eval side-effects} \label{tab:side-effects-targets}
+  \caption{Most used target environments for \eval side-effects} \label{tab:se-env}
 \end{table}
 
-The good news is that that most \eval sites do all side effects consistently in
-the same environment and that almost half of the side effects happen in either
-\emph{Local} or \emph{Object} environments. These are the cases the compiler
-could possibly deal with.
-\todo{Finish text for Table~\ref{tab:se-funs}}
+Table~\ref{tab:se-types} shows the proportion of the different side effects
+that were recorded. In terms of calls we see mostly assignments and in terms of
+sites definitions. This is expected. A subsequent \eval call will turn a
+definition into an update. Variable removal, while rare, it does happen.
+However, the vast majority comes from the already mentioned
+\c{withr::execute\_handlers} function used to defer evaluation of an expression
+to after the function exit. In our dataset, it is used almost exclusively by
+the \c{tidyselect} package that uses it to remove the reference to current
+quosure environment while interpreting a data frame column
+selectors.\footnote{\cf \url{https://tidyselect.r-lib.org/}}
 
-\begin{table}[h]\centering\small
-  \begin{tabular}{l|r|r}\hline
-    Environment & \#functions & \%functions \\%
-    \expandableinput tag/table-top-sites-classes-funs.tex
+\begin{table}[h]
+  \small
+  \centering
+  \begin{tabular}{l|r|r|r|r|r|r}\hline
+    Side effect & \#events & \%events & \#calls & \%calls & \#sites & \%sites \\%
+    \expandableinput tag/table-se-types.tex
   \end{tabular}
-  \caption{Number of functions in which all \eval side effects happen in the same environment class} \label{tab:se-funs}
+  \caption{Types of \eval side-effects} \label{tab:se-types}
 \end{table}
 
 \mypara{Discussion}
