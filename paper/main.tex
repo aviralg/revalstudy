@@ -939,20 +939,19 @@ of code, as the actions of \eval may happen at a distance.
 One site could appear in several categories. However, most sites, \ie \packageNbOneCategoryEnvirSitePercent, have only kind of the above environments passed to them, as shown in Table~\ref{tab:polyenvir}.
 
 \begin{table}[h]
-\centering
-\small
-\begin{minipage}{4cm}
-  \begin{tabular}{r|r|r}\hline
- Environment & \#sites & \%sites \\\hline
+  \centering\small\hspace{-.5cm}
+\begin{minipage}{3.7cm}
+  \begin{tabular}{@{}r|r|r@{}}\hline
+ Kind & \#sites & \%sites \\\hline
  Function & \packageNbFunctionEnvSites &  \packageNbFunctionEnvSitePercent\\
  Synthetic & \packageNbSyntheticEnvSites & \packageNbSyntheticEnvSitePercent \\
  Global &  \packageNbStrictGlobalEnvSites & \packageNbStrictGlobalEnvSitePercent \\
  Package & \packageNbPackageNamespaceEnvSites & \packageNbPackageNamespaceEnvSitePercent \\\hline
 \end{tabular}
-\caption{Environments per site} \label{tab:highlevelenvironments}
-\end{minipage} \hspace{1cm}
+\caption{Kinds per site} \label{tab:highlevelenvironments}
+\end{minipage}\hspace{-.2cm}
 \begin{minipage}{3.7cm}\centering
-\begin{tabular}{r|r|r}\hline
+\begin{tabular}{@{}r|r|r@{}}\hline
  Offset & \#sites & \%sites \\\hline
   \packageCallerEnvHierarchyNamea & \packageCallerEnvHierarchySitesaRnd & \packageCallerEnvHierarchySitePercenta \\
   \packageCallerEnvHierarchyNameb& \packageCallerEnvHierarchySitesbRnd & \packageCallerEnvHierarchySitePercentb \\
@@ -960,9 +959,9 @@ One site could appear in several categories. However, most sites, \ie \packageNb
   > 3& \packageNbFarAwayCallerSites &  \packageNbFarAwayCallerSitePercent \\\hline
  \end{tabular}
 \caption{Function offset}\label{tab:funoffset}
-\end{minipage}\hspace{1cm}
-\begin{minipage}{3.8cm}
-\begin{tabular}{r|r|r} \hline
+\end{minipage}\hspace{-.2cm}
+\begin{minipage}{3.7cm}
+\begin{tabular}{@{}r|r|r@{}} \hline
 Parent & \#sites & \%sites \\\hline
 Function & \packageNewEnvCategorySitesa & \packageNewEnvCategorySitePercenta \\
 Package & \packageNewEnvCategorySitesb &  \packageNewEnvCategorySitePercentb\\
@@ -970,20 +969,18 @@ Global & \packageNewEnvCategorySitesc & \packageNewEnvCategorySitePercentc \\
 Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\hline
 \end{tabular} \label{tab:newenvs}
 \caption{Wrapper envs.}
-\end{minipage}
-\begin{minipage}{\textwidth}
-   \centering
-   \begin{tabular}{c|c|c}
-       \hline
-       \#categories & \#sites &  \%sites \\ \hline
+\end{minipage}\hspace{-.2cm}
+\begin{minipage}{3.7cm}\centering
+   \begin{tabular}{@{}c|c|c@{}} \hline
+       \#kinds & \#sites &  \%sites \\ \hline
        \packageNbCategoryEnvira & \packageNbCategoryEnvirSitesaRnd &  \packageNbCategoryEnvirPercenta\\
        \packageNbCategoryEnvirb &  \packageNbCategoryEnvirSitesbRnd & \packageNbCategoryEnvirPercentb \\
        \packageNbCategoryEnvirc & \packageNbCategoryEnvirSitescRnd &  \packageNbCategoryEnvirPercentc\\
        \packageNbCategoryEnvird & \packageNbCategoryEnvirSitesdRnd & \packageNbCategoryEnvirPercentd\\
        \hline
    \end{tabular} \label{tab:polyenvir}
-   \caption{Number of categories per site.}
-\end{minipage}
+   \caption{Multiplicities}
+\end{minipage}\hspace{-1cm}
 \end{table}
 
 
@@ -1115,7 +1112,7 @@ Table~\ref{tab:side-effects-targets} shows the class of the environments where
 \eval side effects happen. It follows the classification described in
 Section~\ref{sec:env} with two extra classes: \emph{Object} which represents a
 side-effect that happens in S4 or R6 object environment, and \emph{Local} that
-corresponds to a side effect in local variables of the \eval caller. 
+corresponds to a side effect in local variables of the \eval caller.
 
 \begin{table}[h]\centering\small
   \begin{tabular}{l|r|r|r}\hline
