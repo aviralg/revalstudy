@@ -998,6 +998,23 @@ kinds of the parents of synthetic environments. Over half are functions, then
 come packages and global.
 
 
+\paragraph{Discussion}
+The data presented in this section is what one could expect. ({\it Function})
+The majority of \eval call sites access the environment of some function on the
+call stack. Usually, the current function, but sometimes frames arbitrarily far
+up the call stack. One thing the data does not say is how that environment was
+obtained. The expected case is that the environment was the one obtained from a
+promise; as promises combine code and the environment in which that code
+originates. Likely less frequent are cases where \eval is provided the results
+of programmatically selecting some call stack. ({\it Synthetic}) The relative
+high frequency of synthetic environments corresponds to cases when one wants to
+evaluate an expression in either a restricted environment or use a data
+structure as an environment. ({\it Global}) The fact that global environment
+show up so frequently is likely an artifact of the way the code is run. ({\it
+  Package}) There are only 92 sites that use a package environment in \eval,
+this is probably best as it is bad form to add bindings or modify functions
+of a loaded package.
+
 %% The \c{imchange} function of package \c{imager} makes it possible to modify
 %% images using a dedicated formula syntax.\footnote{Inspired by {map} in
 %% package \emph{purr}.} Here, \eval is evaluated in \c{newenv}, which creates a
@@ -1025,45 +1042,59 @@ come packages and global.
 %%  enclos = parent.frame(2))
 %% \end{lstlisting}
 
+\newpage
 \subsection{The origins of \eval}
 
 Where does the expression passed to \eval come from? There are various means of
-creating that expression, these are associated with particular use cases.
+creating that expression, these are associated with particular use cases, we
+classify them in three categories:
 
 \begin{compactitem}[---]
-\item {\it Reflection:} The \c{match.call} function reflectively captures
-  the expression that called the current function.
+\item {\it Reflection:} This group corresponds to uses of the \c{match.call}
+  function to reflectively capture the expression that invoked the current
+  function.
 \item {\it Constructed:} Expressions can be constructed by invoking the
-  \c{quote}, \c{enquote}, \c{expression} and \c{substitute} functions. Function arguments are passed as promises, suspended computations, and  \c{substitute} is sometimes used to retrieve the source expression associated to the promise.
+  \c{quote}, \c{enquote}, \c{expression}. Function arguments are passed as
+  promises and \c{substitute} is used to retrieve the source expression
+  associated to the promise.
 \item {\it String:} Finally, expressions can be created from strings by invoking
-  one of \c{parse}, \c{str2expression} and \c{str2lang}.
+   \c{parse}, \c{str2expression} or \c{str2lang}.
 \end{compactitem}
 
-
+\noindent
 Table~\ref{tab:provenance} summarizes the expression provenance in our corpus.
 This data is obtained by dynamically tainting values as they are produced by the
 various sources, due to technical reasons there is some imprecision in the
-results. Manual inspection of numerous examples suggest that ordering is correct.
+results. In particular, we are not able to classify all sites. Manual inspection
+of numerous examples suggest that the classified results are accurate.
 
-\begin{table}[h]\small
+\begin{wraptable}{r}{5cm}\small\centering
 \begin{tabular}{r|r|r} \hline
 Origin  & \#sites & \%sites \\\hline
-Constructed & \packageNbConstructedSites & \packageNbConstructedSitePercent \\ \hline
-String & \packageNbStringSites & \packageNbStringSitePercent \\ \hline
-Reflection &  \packageNbMatchCallExprsSites & \packageMatchCallExprsSitePercent  \\\hline
-Other & \packageNbUnknownSites & \packageNbUnknownSitePercent \\\hline
+Constructed & \packageNbConstructedSites & \packageNbConstructedSitePercent \\
+String & \packageNbStringSites & \packageNbStringSitePercent \\
+Reflection &  \packageNbMatchCallExprsSites & \packageMatchCallExprsSitePercent\\\hline
 \end{tabular}
 \caption{Provenance}\label{tab:provenance}
-\end{table}
+\end{wraptable}
 
-The string origin can sometimes be correlated with dynamic code loading. This is
-what the base functions \c{source} and \c{sys.source} do. We observed few calls
+Strings could correlate with dynamic code loading. This is what the base
+functions \c{source} and \c{sys.source} do. We observed few calls
 (\packageNbParseFromFileSites in total) that consume the result of calling
 \c{parse} on a file. Most of the calls build strings programmatically. We also
 identified one function \c{invokeRestartInteractively} that prompts the user for
-input, parses it, and passes it to \eval.  The use of strings seems to correlate
-with less sophisticated programmers, as in our Kaggle corpus where
+input, parses it, and passes it to \eval. The use of strings seems to correlate
+with less sophisticated programmers; in our Kaggle corpus
 \kaggleParseExprsSitePercent of site use strings.
+
+\paragraph{Discussion}
+The origin data suggests that constructing expressions from strings is a
+minority of the use cases, instead the constructed category shows that the
+majority of \evals comes code that was processed by the compiler, and may be
+slightly modified by the programmer before invoking \eval. Both constructed and
+reflection categories roughly correspond to meta-programming. Some of these use
+cases could likely be replaced by macros if the R designers could be convinced
+to overcome their distaste for those.
 
 \subsection{Side effects in \eval}
 
