@@ -914,16 +914,15 @@ function environment with the \c{global} kind as a distant second. This means
 that most variable lookups and most side effects either read/update existing
 local variables or introduce new ones. But for which function? From the point of
 view of the function that called \eval, Table~\ref{tab:funoffset} gives an
-offset on the call stack. Thus 0 is the direct caller and 1 is its parent, and
-so on. The data suggests that in 81\% of cases, \eval access its caller's
-environment -- this means, the variables of the function where \eval textually
+offset on the call stack. Thus 0 is the direct caller and corresponds to local variables and to \emph{lexical scoping}; 1 is its parent, and
+so on, and correspond to \emph{dynamic scoping}. The data suggests that in 81\% of cases, \eval access its caller's environment -- this means, the variables of the function where \eval textually
 occurs are read and written to. It is interesting that some 1.5\% of sites
 evaluate a code in an environment that is three frame or above from \eval. This
-distance implies that, in general, it is modular reasoning is impossible, to
+distance implies that, in general, modular reasoning is impossible, to
 understand the behavior of any piece of code entails fully understanding the
 behavior of all functions that the code may call as the actions of \eval may
 happen at a distance. Finally note that any particular site may have several
-kind of environments, but in \packageNbOneCategoryEnvirSitePercent of the case a
+kinds of environments, but in \packageNbOneCategoryEnvirSitePercent of the case a
 site has a single kind.
 
 \begin{table}[h]
@@ -944,7 +943,7 @@ site has a single kind.
   \packageCallerEnvHierarchyNamea & \packageCallerEnvHierarchySitesaRnd & \packageCallerEnvHierarchySitePercenta \\
   \packageCallerEnvHierarchyNameb& \packageCallerEnvHierarchySitesbRnd & \packageCallerEnvHierarchySitePercentb \\
   \packageCallerEnvHierarchyNamec& \packageCallerEnvHierarchySitescRnd & \packageCallerEnvHierarchySitePercentc  \\
-  > 3& \packageNbFarAwayCallerSites &  \packageNbFarAwayCallerSitePercent \\\hline
+  \ge 3& \packageNbFarAwayCallerSites &  \packageNbFarAwayCallerSitePercent \\\hline
  \end{tabular}
 \caption{Function offset}\label{tab:funoffset}
 \end{minipage}\hspace{-.2cm}
@@ -980,9 +979,8 @@ are loaded at the top level, thus that environment may often be the caller of
 global environment are visible to all functions and are not reclaimed by the
 garbage collector. So accidental uses may pollute that name space.
 
-Synthetic environments need a parent. For this, \eval uses its third argument
-(\c{enclos}). When a synthetic environment is created by \eval, it has
-\c{enclos} as a parent. The parent is used to lookup variables not found in its
+Synthetic environments need a parent. It is specified as an argument of the \c{new.env} function, or when \c{envir} is a list or a data frame, \eval uses its third argument
+(\c{enclos}) as the parent.  The parent is used to lookup variables not found in its
 child (side effects go to the child only). Table~\ref{tab:newenvs} shows the
 kinds of the parents of synthetic environments. Over half are functions, then
 come packages and global.
@@ -998,12 +996,13 @@ promise; as promises combine code and the environment in which that code
 originates. Likely less frequent are cases where \eval is provided the results
 of programmatically selecting some call stack. ({\it Synthetic}) The relative
 high frequency of synthetic environments corresponds to cases when one wants to
-evaluate an expression in either a restricted environment or use a data
+evaluate an expression in either a restricted environment, use a data
 structure as an environment. ({\it Global}) The fact that global environment
 show up so frequently is likely an artifact of the way the code is run. ({\it
   Package}) There are only 92 sites that use a package environment in \eval,
 this is probably best as it is bad form to add bindings or modify functions
-of a loaded package.
+of a loaded package. Many more sites rather wrap a package environment in a new 
+environment to add variables global the package.
 
 %% The \c{imchange} function of package \c{imager} makes it possible to modify
 %% images using a dedicated formula syntax.\footnote{Inspired by {map} in
@@ -1225,6 +1224,19 @@ A related pattern is not to change the call but rather to evaluate the arguments
 % Example
 
 In the R community, the call capturing pattern is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}.
+
+\paragraph{Injecting code in package environments.} R distinguishes two kinds of environments for packages: the \emph{package} environment itself, which contains every publicly accessible functions, and the \emph{namespace} environment, which contains all functions including private ones.
+
+ A call to \c{library(packageName)}, which loads libraries in R, for instance, will
+populate environment \c{package:packageName} using \eval. It is a \emph{base} function
+though, so we do not see it in the CRAN dataset. However, R still makes it
+possible to access any package environments and \packageNbPackageEnvSites call
+sites, \ie \packagePackageEnvSitePercent access a \emph{package} environment, from
+\packageNbPackageEnvPackages different packages. Those packages perform
+introspection, to represent and search any environment by name, in package
+\emph{envnames}, to containerize tests, as with \emph{testthat} and
+\emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to bypass the visibility of functions in \emph{USSCXenaTools}. It is also used to
+implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
 
 \mypara{Code Generation.} The more traditional use of \eval is to execute code
 that was assembled by the programmer into a string. Here we show the method
