@@ -905,9 +905,9 @@ by less powerful constructs.
 \subsection{The environments of \eval}
 
 The environment in which evaluation happens determines what is visible to the
-computation started by \eval, and the potential reach of its side-effects. The
-second argument to \eval is used to specify that environment. We propose the
-following high-level classification:
+computation started by \eval and the potential reach of its side-effects. The
+second argument to \eval specifies that environment. We propose the
+following high-level classification the environments of \eval:
 
 \begin{compactitem}[---]
 \item \emph{Function:} these environments correspond to some function active on
@@ -968,7 +968,7 @@ Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\hli
 \end{tabular} \label{tab:newenvs}
 \caption{Wrapper envs.}
 \end{minipage}
-\begin{minipage}{\textwidth} 
+\begin{minipage}{\textwidth}
    \centering
    \begin{tabular}{c|c|c}
        \hline
