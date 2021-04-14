@@ -398,7 +398,7 @@ E %>%
   ggplot(aes(x = ast_nodes, weight = duplicates)) +
   geom_histogram(binwidth = 1, color = "black", fill = "blue", alpha = 0.3) +
   scale_y_continuous(labels = comma) +
-  labs(x = "nodes") +
+  labs(x = "Nodes", y = "Count") +
   theme(text = element_text(size=17),  panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(), aspect.ratio = 4/3) 
 
@@ -494,6 +494,7 @@ triggered %>%
   filter(average < 50) %>%
   ggplot(aes(x = average)) +
   geom_histogram(binwidth = 1, fill = "blue", alpha = 0.3, colour = "black") +
+  labs(x = "Average", y = "Count") +
   theme(text = element_text(size=16), 
         axis.text = element_text(size=20), 
         aspect.ratio = 4/3)
