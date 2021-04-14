@@ -23,25 +23,242 @@ library(fs)
 library(fst)
 library(purrr)
 library(tidyverse)
+library(xtable)
 
 source("inc/latextags.R")
 source("inc/functions.R")
 source("inc/paths.R")
 
-create_tags(path(TAGS_DIR, "side-effects.tex"), prefix = "", default = TRUE)
+create_tags(path(TAGS_DIR, "side-effects.tex"), prefix = "SE", default = TRUE)
 ```
 
 ```{r load data}
-SE <- read_fst(PACKAGE_SIDE_EFFECTS_FILE) %>% as_tibble
+SE_all <- read_fst(PACKAGE_SIDE_EFFECTS_FILE) %>% 
+  as_tibble %>%
+  filter(transitive==0)
 ```
 
-```{r fix withr::defer callsite}
-
+```{r missing calls}
+SE_missing_eval_call <- filter(SE_all, is.na(eval_function))
+SE_all <- filter(SE_all, !is.na(eval_function))
 ```
 
-```{r fix S3 methods}
 
+```{r deal with empty srcrefs}
+SE <- mutate(SE_all, eval_call_srcref=case_when(
+  eval_call_srcref == "???" & expr_expression == "handler$expr" & envir_expression == "handler$envir" ~ "::withr::execute_handlers::1",
+  eval_call_srcref == "???" & expr_expression == "quote({\n    old.options <- options(dplyr.summarise.inform = FALSE)\n    o" ~ "::dplyr::tally::1",
+  eval_call_srcref == "???" & expr_expression == "quote({\n    na.action <- attr(mf, \"na.action\")\n    why_omit <- attr(na.a" ~ "::estimatr::cleam_mode_data::1",
+  TRUE ~ eval_call_srcref
+))
+
+SE_missing_sites <- filter(SE, eval_call_srcref=="???")
+SE <- filter(SE, eval_call_srcref!="???")
 ```
+
+
+```{r remove Random.seed}
+SE_random_seed <- filter(SE, variable == ".Random.seed", !str_detect(expr_resolved, "set.seed"))
+SE <- filter(SE, variable != ".Random.seed" | str_detect(expr_resolved, "set.seed"))
+```
+
+```{r remove internal}
+SE_internal <- filter(SE, str_starts(source, fixed("internal:")))
+SE <- filter(SE, !str_starts(source, fixed("internal:")))
+```
+
+```{r load static evals}
+ES <- read_csv(PACKAGE_EVALS_STATIC_FILE) %>% rename(eval_call_srcref=srcref)
+```
+
+```{r load summarize data}
+S <- read_fst(PACKAGE_SUM_CALLS_FILE) %>% as_tibble
+```
+
+```{r}
+CRAN <- read_fst(PACKAGE_CORPUS_FILE) %>% as_tibble
+PKG <- filter(CRAN, in_corpus) 
+```
+
+## Overview
+
+```{r}
+SE_all_N <- sum(SE_all$N)
+SE_all_sites <- count(SE_all, eval_call_srcref)
+SE_all_calls <- count(SE_all, cid)
+
+SE_internal_N <- sum(SE_internal$N)
+SE_internal_sites <- count(SE_internal, eval_call_srcref)
+
+SE_random_seed_N <- sum(SE_random_seed$N)
+SE_random_seed_sites <- count(SE_random_seed, eval_call_srcref)
+
+SE_N <- sum(SE$N)
+SE_calls <- count(SE, cid)
+SE_sites <- count(SE, eval_call_srcref)
+SE_missing_N <- sum(SE_missing_sites$N)
+
+overview_table(
+  r("All", SE_all_N),
+  r("All calls", SE_all_calls),
+  r("All sites", SE_all_sites),
+  
+  r("Internal", SE_internal_N),
+  r("Internal ratio", ratio(SE_internal_N, SE_all_N)),
+  
+  r("Internal sites", SE_internal_sites),
+  r("Internal sites ratio", ratio(SE_internal_sites, SE_all_sites)),
+  
+  r("Random seed", SE_random_seed_N),
+  r("Random seed ratio", ratio(SE_random_seed_N, SE_all_N)),
+  
+  r("Random seed sites", SE_random_seed_sites),
+  r("Random seed sites ratio", ratio(count(SE_random_seed, eval_call_srcref), SE_all_sites)),
+  
+  r("Missing SE sites", SE_missing_N),
+  r("Missing SE sites ratio", ratio(SE_missing_N, SE_N)),
+  
+  r("User", SE_N),
+  r("User ratio", ratio(SE_N, SE_all_N)),
+
+  r("User calls", SE_calls),
+  r("User calls ratio", ratio(SE_calls, SE_all_calls)),
+  
+  r("User sites", SE_sites),
+  r("User sites ratio", ratio(SE_sites, SE_all_sites))
+)
+```
+
+## Classification
+
+```{r functions}
+SE <- mutate(
+  SE, 
+  class=case_when(
+    source == str_c("call:", caller_function)           ~ "Local",
+    str_starts(source, fixed("call:"))                  ~ "Function",
+    str_detect(source, "^R6:.*R6.*") | source=="???S4"  ~ "Object",
+    source == "pkg:global"                              ~ "Global",
+    str_starts(source, fixed("pkg:"))                   ~ "Package",
+    TRUE                                                ~ "Synthetic"
+  ),
+  caller=str_replace(eval_call_srcref, "::(.*)::(.*)::.*", "\\1::\\2")
+)
+```
+
+```{r}
+sites_classes <- 
+  SE %>%
+  group_by(eval_call_srcref) %>%
+  summarise(n_class=n_distinct(class), classes=str_c(sort(unique(class)), collapse=", "))
+
+cs_count(sites_classes, n_class)
+cs_count(sites_classes, classes)
+cs_count(SE, class)
+```
+
+```{r}
+funs <- cs_count(SE, caller)
+```
+
+```{r}
+sites_envir <- 
+  SE %>%
+  group_by(eval_call_srcref) %>% 
+  summarize(
+    in_envir=case_when(
+      all(!in_envir) ~ 0,
+      all(in_envir)  ~ 1,
+      TRUE ~ 2
+    )
+  ) %>% 
+  ungroup()
+```
+
+
+```{r}
+sites_not_in_envir <- filter(sites_envir, in_envir==0)
+sites_in_envir <- filter(sites_envir, in_envir==1)
+sites_both_envir <- filter(sites_envir, in_envir==2)
+
+overview_table(
+  r("Funs nighty", filter(funs, cp <= 90)),
+  r("Funs ten", filter(funs, cp > 90)),
+  r("Sites not in envir", sites_not_in_envir),
+  r("Sites not in envir ratio", ratio(sites_not_in_envir, sites_envir)),
+  r("Sites in envir", sites_in_envir),
+  r("Sites in envir ratio", ratio(sites_in_envir, sites_envir)),
+  r("Sites both envir", sites_both_envir),
+  r("Sites both envir ratio", ratio(sites_both_envir, sites_envir))
+)
+```
+
+```{r}
+top_sites_classes <- cs_count(sites_classes, classes) %>% filter(cp<=91)
+```
+
+```{r}
+print(
+  xtable(
+    mutate(
+      top_sites_classes,
+      p=fmt(p, suffix="%", digit=1),
+      cp=fmt(cp, suffix="%", digit=1),
+    ), 
+    align="llrrr",
+  ),
+  file=file.path(TAGS_DIR, "table-top-sites-classes-se.tex"),
+  comment=FALSE, 
+  include.colnames=FALSE,
+  include.rownames=FALSE,
+  only.contents=TRUE,
+  timestamp=FALSE
+)
+```
+
+## Function classification
+
+```{r}
+single_class_funs <- 
+  left_join(
+    mutate(ES, fun=str_c(package, fun_name)), 
+    sites_classes, 
+    by="eval_call_srcref"
+  ) %>% 
+  group_by(fun) %>% 
+  filter(all(!is.na(n_class))) %>%
+  summarize(n_classes=n_distinct(classes), classes=str_c(unique(classes), collapse=";"))
+
+cs_count(single_class_funs, n_classes)
+cs_count(single_class_funs, classes)
+```
+
+```{r}
+single_class_funs %>%
+  mutate(
+    classes=if_else(str_detect(classes, "[,;]"), "\\emph{multiple}", classes)
+  ) %>%
+  cs_count(classes) %>%
+  mutate(
+    p=fmt(p, suffix="\\%", digit=1),
+    o=if_else(str_starts(classes, fixed("\\")), 0L, n)
+  ) %>% 
+  arrange(desc(o)) %>%
+  select(-cp, -o) %>%
+  xtable(
+    align="llrr",
+  ) %>% 
+  print(
+    file=file.path(TAGS_DIR, "table-top-sites-classes-funs.tex"),
+    comment=FALSE, 
+    include.colnames=FALSE,
+    include.rownames=FALSE,
+    only.contents=TRUE,
+    sanitize.text.function=identity,
+    timestamp=FALSE
+  )
+```
+
 
 ```{r}
 cs_count(SE, eval_call_srcref, wt=N)
