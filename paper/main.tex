@@ -909,34 +909,40 @@ by less powerful constructs.
 
 The environment in which evaluation happens determines what is visible to the
 computation started by \eval and the potential reach of its side-effects. The
-second argument to \eval specifies that environment. We propose the
-following high-level classification the environments of \eval:
+second argument to \eval specifies that environment. Environment of \eval can be
+classified into the following four kinds:
 
 \begin{compactitem}[---]
-\item \emph{Function:} these environments correspond to some function active on
-  the call stack and are obtained by functions such as \c{parent.frame()} or
+\item \emph{Function:} environment for the local variables of some function
+  currently active on the call stack. Obtained by calling \c{parent.frame()} or
   \c{sys.frame()}.
-\item \emph{Synthetic:} these are environments that built from data structures
-  such as lists, dataframes, etc., or constructed explicitly with \c{new.env},
-  \c{list2env} or \c{as.environment}. It also includes the empty environment.
+\item \emph{Synthetic:} environments built from data structures such as lists,
+  dataframes, or constructed explicitly with \c{new.env}, \c{list2env} or
+  \c{as.environment}. Also includes the empty environment.
 \item \emph{Global:} the environment in which scripts or interactive commands
   are evaluated.
-\item \emph{Package:} the environments of a loaded library.
+\item \emph{Package:} the environment of a loaded library.
 \end{compactitem}
 
-As shown in Table~\ref{tab:highlevelenvironments}, most calls happen in a
-function environment, with \c{global} as a distant second. This means that most
-variable lookups and most side effects will take place amongst the local
-variables of some function. But which function? Table~\ref{tab:funoffset} shows the offset from
-the function that directly called \eval, thus 0 is the direct caller and 1 is
-its parent. The data suggests that over 80\% of function environments are the
-direct caller -- this means, from a user's point of view -- the environment of
-the function where \eval occurs textually. It is interesting that some 1.5\% of
-sites evaluate a code in an environment that is three frame or above from the
-caller of \eval. This distance makes it more tricky to reason about the behavior
-of code, as the actions of \eval may happen at a distance.
+\noindent
+As shown by Table~\ref{tab:highlevelenvironments}, most calls evaluate in a
+function environment with the \c{global} kind as a distant second. This means
+that most variable lookups and most side effects either read/update existing
+local variables or introduce new ones. But for which function? From the point of
+view of the function that called \eval, Table~\ref{tab:funoffset} gives an
+offset on the call stack. Thus 0 is the direct caller and 1 is its parent, and
+so on. The data suggests that in 81\% of cases, \eval access its caller's
+environment -- this means, the variables of the function where \eval textually
+occurs are read and written to. It is interesting that some 1.5\% of sites
+evaluate a code in an environment that is three frame or above from \eval. This
+distance implies that, in general, it is modular reasoning is impossible, to
+understand the behavior of any piece of code entails fully understanding the
+behavior of all functions that the code may call as the actions of \eval may
+happen at a distance.
 
-One site could appear in several categories. However, most sites, \ie \packageNbOneCategoryEnvirSitePercent, have only kind of the above environments passed to them, as shown in Table~\ref{tab:polyenvir}.
+One site could appear in several categories. However, most sites, \ie
+\packageNbOneCategoryEnvirSitePercent, have only kind of the above environments
+passed to them, as shown in Table~\ref{tab:polyenvir}.
 
 \begin{table}[h]
   \centering\small\hspace{-.5cm}
@@ -971,15 +977,13 @@ Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\hli
 \caption{Wrapper envs.}
 \end{minipage}\hspace{-.2cm}
 \begin{minipage}{3.7cm}\centering
-   \begin{tabular}{@{}c|c|c@{}} \hline
-       \#kinds & \#sites &  \%sites \\ \hline
-       \packageNbCategoryEnvira & \packageNbCategoryEnvirSitesaRnd &  \packageNbCategoryEnvirPercenta\\
-       \packageNbCategoryEnvirb &  \packageNbCategoryEnvirSitesbRnd & \packageNbCategoryEnvirPercentb \\
-       \packageNbCategoryEnvirc & \packageNbCategoryEnvirSitescRnd &  \packageNbCategoryEnvirPercentc\\
-       \packageNbCategoryEnvird & \packageNbCategoryEnvirSitesdRnd & \packageNbCategoryEnvirPercentd\\
-       \hline
-   \end{tabular} \label{tab:polyenvir}
-   \caption{Multiplicities}
+ \begin{tabular}{@{}c|c|c@{}} \hline
+ \#kinds & \#sites &  \%sites \\ \hline
+ \packageNbCategoryEnvira & \packageNbCategoryEnvirSitesaRnd &  \packageNbCategoryEnvirPercenta\\
+ \packageNbCategoryEnvirb &  \packageNbCategoryEnvirSitesbRnd & \packageNbCategoryEnvirPercentb \\
+ \packageNbCategoryEnvirc & \packageNbCategoryEnvirSitescRnd &  \packageNbCategoryEnvirPercentc\\
+ \packageNbCategoryEnvird & \packageNbCategoryEnvirSitesdRnd & \packageNbCategoryEnvirPercentd\\\hline
+\end{tabular}\caption{Multiplicities}\label{tab:polyenvir}
 \end{minipage}\hspace{-1cm}
 \end{table}
 
