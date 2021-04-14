@@ -149,7 +149,6 @@ together, run once, and never revisited.
 results should go here.}
 
 
-\newpage
 \section{Background and Previous work}
 
 This section provides a short introduction to R and the reflective features of
@@ -350,7 +349,6 @@ function whose name or arguments are determined dynamically. For this purpose, R
 provides \c{do.call} and thus \eval is overkill.
 
 
-\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -503,8 +501,6 @@ alternate \c{rlang::tidy\_eval} function which uses native \eval internally.
 The \c{rlang} package introduces a new kind of promise called \c{quosure} which
 is evaluated by \c{tidy\_eval}. None of these limitations should invalidate our
 conclusions.
-
-\newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Usage Metrics}
@@ -666,8 +662,6 @@ instructions, it is dominated by trivial symbol look ups. Figure~\ref{ev}(b) has
 the work-intensive \evals which go all the way to \packageMaxeventsRnd
 instructions.
 
-\newpage
-
 \begin{figure}[tb!]
 \begin{tabular}{@{}c@{}c@{}}
 \begin{minipage}{7.5cm}
@@ -740,8 +734,6 @@ likely perform simpler tasks, and thus have lesser need for \eval, and its uses
 originate from strings as these are easier to manipulate for end-users. Due to
 the relative paucity of data in Kaggle, we do not pursue the data set further.
 
-\newpage
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{A Taxonomy of Eval}
@@ -887,8 +879,6 @@ simple forms dominate and there are many cases where \eval could be replaced
 by less powerful constructs.
 
 
-\newpage
-
 \subsection{The environments of \eval}\label{sec:env}
 
 The environment in which evaluation happens determines what is visible to the
@@ -1032,7 +1022,6 @@ of a loaded package.
 %%  enclos = parent.frame(2))
 %% \end{lstlisting}
 
-\newpage
 \subsection{The origins of \eval}
 
 Where does the expression passed to \eval come from? There are various means of
