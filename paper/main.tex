@@ -1,4 +1,4 @@
-\documentclass[screen,acmsmall]{acmart}
+\documentclass[review,nonacm,screen,acmsmall,anonymous=true]{acmart}
 \settopmatter{printfolios=true,printccs=true,printacmref=true}
 
 \bibliographystyle{ACM-Reference-Format}
@@ -34,23 +34,19 @@
 \affiliation{\institution{Institute} \country{Country}}
 
 \begin{abstract}
-  \noindent Most dynamic languages allow users to turn text into code
-  using various functions, often named \eval, with language-dependent
-  semantics. The widespread use of these reflective functions hinders
-  static analysis and prevents compilers from performing
-  optimizations. This paper aims to provide a better sense of why
-  programmers use \eval. Understanding why \eval is used in practice
-  is key to finding ways to mitigate its negative impact. We have
-  reasons to believe that reflective feature usage is language and
-  application domain specific; we focus on data science code written
-  in R, and compare our results to previous work that analyzed web
-  programming in JavaScript. Dynamic analysis of a corpus of
-  \CranPackages libraries and \KaggleCode end-user code confirms that
-  \eval is indeed in widespread use; R's \eval is more dangerous in
-  some ways, and safer in others, than what was previously reported
-  for JavaScript.
-  %% TODO ::: Add a sentence about summarizing why users resort to
-  %% eval -- Jan
+  \noindent Most dynamic languages allow users to turn text into code using
+  various functions, often named \eval, with language-dependent semantics. The
+  widespread use of these reflective functions hinders static analysis and
+  prevents compilers from performing optimizations. This paper aims to provide a
+  better sense of why programmers use \eval. Understanding why \eval is used in
+  practice is key to finding ways to mitigate its negative impact. We have
+  reasons to believe that reflective feature usage is language and application
+  domain specific; we focus on data science code written in R, and compare our
+  results to previous work that analyzed web programming in JavaScript. This
+  paper studied \CranRunnableScripts scripts extracted from \CranPackages R
+  packages, for a total of \packageAllcalls calls to \eval. We find that \eval
+  is indeed in widespread use; R's \eval is more pervasive and arguably
+  dangerous than what was previously reported for JavaScript.
 \end{abstract}
 
 \maketitle
@@ -128,22 +124,20 @@ scientific computing by data scientists and domain experts with, often, limited
 programming experience. One can distinguish between library implementers,
 developers with some programming experience and a working knowledge of R, and
 end-users, who are typically not expert programmers and often have only a
-cursory knowledge of the language.\footnote{Consider that R evaluates function
-argument lazily, just like Haskell. We informally surveyed end-users, including
-computer scientists, and did not find a single user aware of this fact. Library
-developers, on the other hand, know about laziness and program defensively
-around it.} Our goal is thus to highlight the differences in usage between
-JavaScript and R, and try to explain those differences in terms of language
-features, application domain and programmer experience. Hopefully some of our
-observations will generalize to other languages.
+cursory knowledge of the language.\footnote{Consider that R is lazy like
+Haskell. We informally surveyed end-users and did not find a single user aware
+of this fact. Library developers, on the other hand, know and program
+defensively around laziness.} Our goal is thus to highlight the differences in
+usage between JavaScript and R, and try to explain those differences in terms of
+language features, application domain and programmer experience. Hopefully some
+of our observations will generalize to other languages.
 
 \vspace{2mm}\noindent\emph{The What and How.} One significant benefit of
 choosing R is that every package in the CRAN repository is curated and comes
 with examples of typical usage. This gives us a large code base that we can
 analyze dynamically. To observe \eval we built a two-level monitoring
 infrastructure:\footnote{Our infrastructure is open source and publicly
-available, our anonymized code is at {\tt http://url.com}, a more complete
-artifact will be submitted to the artifact evaluation committee. } we can
+available and  will be submitted to the artifact evaluation committee. } we can
 monitor R programs by instrumentation --- this gives us access to many
 user-visible properties of R programs --- but we can also monitor the
 inner-workings of the R interpreter --- this allows us to capture details not
