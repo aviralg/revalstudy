@@ -308,7 +308,7 @@ fmt <- function(x, prefix="", suffix="", ...) {
 
 # TODO: make this parameter a global option so it can be set globally
 # TODO: test c(0.0123, 1.123, -0.0123, -1.123)
-.fmt.double <- function(x, digits=1, floor=FALSE, ceiling=FALSE) {
+.fmt.double <- function(x, digits=if (x %% 1 == 0) 0 else 1, floor=FALSE, ceiling=FALSE) {
   if (floor) x <- floor(x)
   if (ceiling) x <- ceiling(x)
 
@@ -324,7 +324,7 @@ fmt <- function(x, prefix="", suffix="", ...) {
   formatC(x, big.mark=",", format="f", digits=digits)
 }
 
-.fmt.num_with_suffix <- function(x, floor=FALSE, ceiling=FALSE, digits=1) {
+.fmt.num_with_suffix <- function(x, floor=FALSE, ceiling=FALSE, digits=if (x %% 1 == 0) 0 else 1) {
   suffix <- attr(x, "suffix")
   fmt(as.double(x), suffix=suffix, floor=floor, ceiling=ceiling, digits=digits)
 }
