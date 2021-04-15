@@ -1090,53 +1090,52 @@ The code executed by \eval can do side effects. From the compiler perspective,
 we care about the observable side effects in environments---\ie variable
 definitions, updates, and removals that are visible after a call to \eval
 finishes. Knowing where---\ie in which environments do these side-effects
-happen, can help us to determine how much of the compiler knowledge about the
+happen, can help us determine how much of the compiler knowledge about the
 program will be potentially invalidated.
 
 The \rdyntrace contains low-level hooks capturing the life-cycle of an
-environment and variables defined in it. In the tracer, we register callbacks
-that record each environment creation and removal together with updates to its
-bindings. From the recorded data, we ignore side effects
-coming from \eval sites from unit testing frameworks.\footnote{In the corpus we
-have \c{RUnit, testthat, tinytest} and \c{unitizer} unit testing frameworks.}
-They run the testing code via \eval and thus the results would be biased
-because of the high number of code run in these tests
-(\CranRunnableCodeTestsRnd lines).
+environment and variables defined in it. We register callbacks in the tracer
+that records each environment creation and removal with updates to its
+bindings. From the recorded data, we ignore side effects coming from \eval
+sites from unit testing frameworks.\footnote{In the corpus we have \c{RUnit,
+testthat, tinytest} and \c{unitizer} unit testing frameworks.} They run the
+testing code via \eval, and thus the results would be biassed because of the
+high number of code in these tests (\CranRunnableCodeTestsRnd lines).
 
 From the \packageNbrunsRnd programs we capture \SEAll side effects from
-\SEAllCalls \eval calls in \SEAllSites sites. The challenge is again to remove
-the accidental side-effects that are caused by the R virtual machine
-implementation and are not related to the user code. For example, the
-\c{.Random.seed} variable, which contains the state of the random number
-generator is saved and restored from and to the global environment every time
-user calls one of the base routines for getting random numbers. Removing them
-leaves us with \SEUser side effects (\SEUserRatio) from \SEUserCalls \eval
-calls (\SEUserCallsRatio) in \SEUserSites sites (\SEUserSitesRatio). These
-sites are part of \SEUserFunctions in \SEUserPackages packages. \SEFunsNighty
-functions are responsible for 90\% of side effects. Half of the side-effects
-comes just from three functions: \c{plyr::allocate\_column} (allocates space
-for a new data frame column), \c{withr::execute\_handlers} (executes deferred
-expressions) and \c{foreach::doSEQ} (executes an expression on each element in
-a collection, possibly in parallel).
+\SEAllCalls \eval calls in \SEAllSites sites. Again, the challenge is to remove
+the accidental side-effects caused by the R virtual machine implementation and
+are not related to the user code. For example, the \c{.Random.seed} variable,
+which contains the state of the random number generator is saved and restored
+from and to the global environment every time the user calls one of the base
+routines that use random numbers. Removing them leaves us with \SEUser side
+effects (\SEUserRatio) from \SEUserCalls \eval calls (\SEUserCallsRatio) in
+\SEUserSites sites (\SEUserSitesRatio). These sites are part of
+\SEUserFunctions in \SEUserPackages packages. \SEFunsNighty functions are
+responsible for 90\% of side effects. Half of the side-effects come just from
+three functions: \c{plyr::allocate\_column} (allocates space for a new data
+frame column), \c{withr::execute\_handlers} (executes deferred expressions), and
+\c{foreach::doSEQ} (executes an expression on each element in a collection,
+possibly in parallel).
 
 Most of the \eval sites (\SESitesInEnvirRatio) do side effects in the
 environment specified by the \c{envir} parameter (\cf
 Section~\ref{sec:eval-in-r}), \SESitesNotInEnvirRatio modifies other
-environment and finally \SESitesBothEnvirRatio does both.
+environments, and finally \SESitesBothEnvirRatio does both.
 Table~\ref{tab:se-env} shows the class of the environment where \eval side
 effects happen (\emph{target environment}). It follows the classification
-described in Section~\ref{sec:env} with two extra classes: \emph{Object} which
+described in Section~\ref{sec:env} with two extra classes: \emph{Object}, which
 represents a side-effect that happens in S4 or R6 object environment, and
 \emph{Local} that corresponds to a side effect in local variables of the \eval
 caller. The table shows data for both \eval sites and functions. For a function
-to have a given target environment class means that all of its \eval sites that
-do side effect must have the same target environment class. Majority of the
-\eval sites (\SESitesInOneClass) do all side effects consistently in one
-environment class. The same happens on the function level. Almost half of the
-sites and over a third of the functions do side effects in either \emph{Local}
-or \emph{Object} environments. This gives a ray of hope for the compiler. Even
-though it is possible to do anything anywhere, the data suggest that most
-side-effects are sane.
+to have a given target environment class, all of its \eval sites that do side
+effects must have the same target environment class The majority of the \eval
+sites (\SESitesInOneClass) do all side effects consistently in one environment
+class. The same happens on the function level. Almost half of the sites (over a
+third of the functions) do side effects in either \emph{Local} or \emph{Object}
+environments. This gives a ray of hope for the compiler. Even though it is
+possible to do anything anywhere, the data suggest that most side-effects are
+sane.
 
 \begin{table}[h]
   \small
@@ -1149,15 +1148,20 @@ side-effects are sane.
 \end{table}
 
 Table~\ref{tab:se-types} shows the proportion of the different side effects
-that were recorded. In terms of calls we see mostly assignments and in terms of
-sites definitions. This is expected. A subsequent \eval call will turn a
-definition into an update. Variable removal, while rare, it does happen.
-However, the vast majority comes from the already mentioned
-\c{withr::execute\_handlers} function used to defer evaluation of an expression
-to after the function exit. In our dataset, it is used almost exclusively by
-the \c{tidyselect} package that uses it to remove the reference to current
-quosure environment while interpreting a data frame column
+that were recorded. In terms of calls, we see primarily assignments and in
+terms of site definitions. This is expected. A subsequent \eval call will turn
+a definition into an update. The most dangerous side effect is variable removal
+as it means that after a call to \eval some binding in some environments will
+disappear. While rare, this happens, but the vast majority comes from a single
+site called by the already mentioned \c{withr::execute\_handlers} function.
+This makes sense as it is used to defer evaluation of an expression to after
+the function exit and thus used for clean up. In the corpus, it is used almost
+exclusively by the \c{tidyselect} package for removing the reference to the
+current quosure environment while interpreting a data frame column
 selectors.\footnote{\cf \url{https://tidyselect.r-lib.org/}}
+
+% TODO type of variables
+% TODO do assignments change types?
 
 \begin{table}[h]
   \small
