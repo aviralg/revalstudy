@@ -1417,6 +1417,31 @@ or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
 \section{Conclusion}
 
+In this paper we provide large-scale study of the use of the \eval function in
+the R programming language. It is based primarily on a corpus of
+\CranRunnableScripts scripts extracted from \CranPackages R packages. As
+expected, \eval is used mainly in libraries and therefore we have found just a
+few \eval call sites in scripts coming from Kaggle that we included to
+represent code written by R practitioners. We used an instrumented version of
+the R virtual machine, \rdyntrace, to capture all \eval calls traces
+including the relevant side effects that happen within these calls. There is a
+number of insights that can be learnt from the data.
+%
+\eval is widely used in the R core packages that come bundled with the
+language. Because of that there is hardly any R code that would not use it.
+\eval is used to implement some basic functionality such as package loading.
+Putting the core packages aside, in CRAN, \eval is used by \PkgPackagesRatio
+of the available \CranPackages packages.
+%
+The code executed by R \eval has unusual expressive power. It can essentially
+modify anything anywhere which is wary for both R developers as well as R
+compiler.
+% TODO expressions passed to eval
+% TODO side effects
+
+% how much can we say about the threat model?
+
+
 \bibliography{bib/bibliography,bib/jv}
 
 \end{document}
