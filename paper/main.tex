@@ -1211,14 +1211,18 @@ passing a string, it is conceivable that this may discourage some
 casual users. \Eval is also being used to reduce boilerplate code and
 provide convenience features for programmers. We give examples for the minimized expressions of Section~\ref{sec:minimized} and then dig into high-level \eval design patterns.
 
+\subsection{Minimized expressions}
+
 \mypara{Variable lookup and values.}
 This corresponds to minimized expressions \c{X}, \c{V}. We also include here lookup to slots in a list or data frame, \ie minimized expression \c{\$}.
-It is the predominant usage of \eval in Base, through function \c{match.args}. In CRAN, it correlates with more exotic environments passed to \eval.
-The dominant site in numbers of calls in CRAN, in the custom object system of \emph{ggplot2}, \c{ggproto}, also evaluates a variable \c{`\_inherit`} in the definition environment of the class. It leads to a large diversity of environments, many being package environment or package environments wrapped in \c{new}.
+It is the predominant usage of \eval in Base, through function \c{match.args}. In CRAN, it correlates with more exotic environments passed to \eval. \todo{THis is with a V in practice.}
+The dominant site in numbers of calls in CRAN, in the custom object system of \emph{ggplot2}, \c{ggproto}, also evaluates a variable \c{`\_inherit`} in the definition environment of the class. It leads to a large diversity of environments, many being package environments or package environments wrapped in \c{new}.
+\todo{Explain why they use eval and not get... because of \c{::}}
 
-Package \emph{statnet.common} handles formulas, R object that associates an expression of the form \c{x ~ expr} and a carry-on environment where to evaluate the formula. It evaluates the left-hand side of the formula, which is always a variable, in \c{eval\_lhs.formula}, as \c{eval(object[[2L]],envir=environment(object))} where \c{object} is the formula and \c{environment} returns the formula associated to the object.
+Package \emph{statnet.common} handles formulas, R object that associates an expression of the form \c{x~\textasciitilde~expr} and a carry-on environment where to evaluate the formula. It evaluates the left-hand side of the formula, which is always a variable, in \c{eval\_lhs.formula}, as \c{eval(object[[2L]],envir=environment(object))} where \c{object} is the formula and \c{environment} returns the formula associated to the object.
 
 
+\todo{Show an actual example with \$}
 Slot lookup happens very often to evaluate some of the elements of a call list returned by \c{match.call}.
 For instance in the \emph{pwrFDR} package:
 \begin{lstlisting}
@@ -1258,6 +1262,8 @@ if (length(slot(family, "first")))
 	eval(slot(family, "first"))
 \end{lstlisting}
 
+\todo{Add testthat or withr::defer\_handler (fancy on.exit)}
+
 \mypara{Simple function calls.} This corresponds to minimized expression \c{F()}, \ie calls without nested functions and without variables (but possibly named arguments). For instance, package \emph{foreach} provides \c{foreach}-like loops. It makes it possible to initialize the iterator variables, with code \c{init}, which is equal \c{quote(list())} by default. \c{init} is then used to initialize the \c{foreach} accumulator \c{state\$accum <- eval(combineInfo\$init, envir=extra, enclos=obj\$evalenv)}.
 
 A peculiar use of \eval is to bypass some checks performed to accept code submitted to CRAN. For example, bindings can be \emph{locked} in an environment, \ie forbidding its value to be modified. The binding can be unlocked though by calling \c{unlockBinding} but packages in CRAN are forbidden to use that function.  Package \emph{data.table} bypasses this restriction by building a call piece by piece, to unlock binding \c{.N}. The call is then evaluated. Now that \c{.N} is unlocked, it can be assigned to. Instead of using \eval to assign in the parent frame, they rather use the more specialized \c{assign} function.
@@ -1279,7 +1285,7 @@ left_border.huxtable <- xxx_border_huxtable("lr_borders",
 i = quote(seq_len(nrow(ht))), j = quote(-last_col))
 \end{lstlisting}
 
-
+\subsection{High-level patterns.}
 
 \mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
@@ -1329,20 +1335,12 @@ mf <- eval(tform, parent.frame())
 A related pattern is not to change the call but rather to evaluate the arguments in the parent frame. This could also be achieved with \c{substitute}, but \c{match.call} does it in bulk.
 In package \emph{MedDietCalc},  in function \c{computeMDS95}, \c{match.call} retrieves the argument expressions of the call, which are evaluated in a dataframe \c{data} which contains the numeric data. Each argument of function \c{computeMDS95} is also a column in dataframe \c{data}. The advantage of using \c{eval} here is to be able to express an argument as a combination of several columns in the dataframe.
 \begin{lstlisting}
-computeMDS95 <- function (data, Vegetables, Legumes, FruitAndNuts, Cereals,
-	 Potatoes = NULL, Meat, Dairy, 	Alcohol, Fats = NULL, MUFA = NULL,
-	  SFA = NULL, Sex, men = "male", women = "female", 	frequency = NULL,
-	  output = "percent", rm.na = FALSE) {
-
+computeMDS95 <- function (data, Vegetables, ...) {
 	arguments <- as.list( match.call())
-	Vegetables <- eval(arguments$Vegetables, data)
-	Legumes <- eval(arguments$Legumes, data)
-	FruitAndNuts <- eval(arguments$FruitAndNuts, data)
-	Cereals <- eval(arguments$Cereals, data)
-	Potatoes <- eval(arguments$Potatoes, data)
-	...
+	Vegetables <- eval(arguments$Vegetables, data) 
 \end{lstlisting}
 
+\todo{Put a simpler example.}
 
 In the R community, the call capturing pattern with evaluation in a non-local environment is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}.
 
@@ -1378,7 +1376,7 @@ opt,"",paste(",xlab=\"",var,"\"",sep="")), ifelse("type" %in%
   a string into an expression.
 
 
-\mypara{Debloating.} \todo{Wouldn't reducing boilerplate be a better name?} \Eval is often used as a means to reduce boilerplate code;
+ Code generation is often used as a means to reduce boilerplate code;
 simple and repetitive code can easily be replaced with judicious use of \eval.
 For example, the \c{data.table} package uses \eval to calls the \c{options}
 function with named arguments taken from a vector of strings. While the benefits
@@ -1391,13 +1389,6 @@ are limited in this example, it is an attractive tool for programmers.
 This pattern is a special case of code generation, recognizable by the
 fact that \eval is executed in a loop.
 
-\mypara{Trivial.} When values are passed to \eval, they are returned
-unchanged. They are an example of trivial uses of \eval. Another
-trivial use is the empty expression, often found in JavaScript, but
-rare in R. \todo{Given that we do not have any data I would get rid of it}
-\todo{We have the normalized expressions V and the small study I did on values passed to eval. And I did not find any eval() (empty) in the dataset. }
-
-% Creating macros?
 
 \mypara{Unnecessary use of \eval}
 
