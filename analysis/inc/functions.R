@@ -12,9 +12,9 @@ show_url <- Vectorize(function(path, name=basename(path), base_url=params$http_b
 
 read_parallel_task_result <- function(path) {
   file <- if (dir.exists(path)) file.path(path, "parallel.csv") else path
-  
-  read_csv(file) %>% 
-    select(-Seq, -Send, -Receive, -Signal, -Stdout, -Stderr) %>% 
+
+  read_csv(file) %>%
+    select(-Seq, -Send, -Receive, -Signal, -Stdout, -Stderr) %>%
     rename_all(tolower) %>%
     rename(hostname=host) %>%
     mutate(
@@ -49,3 +49,16 @@ cs_print <- function(df, cp=90) {
   .N <- cp
   print(filter(df, cp<=.N), n=Inf)
 }
+
+gen_provenance_class <- function(dataset) {
+  dataset %>%
+    mutate(provenance_class = case_when(
+      !is.na(expr_parsed_expression) ~ "string",
+      !is.na(expr_match_call) ~ "reflection",
+      expr_resolved_type_tag == "language" ~ "constructed",
+      expr_resolved_type_tag == "expression" ~ "constructed",
+      TRUE ~ NA_character_
+    ))
+}
+
+
