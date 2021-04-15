@@ -1245,6 +1245,14 @@ RunMcmc <- function... {
 	 eval(expr_q, envir=env)
 \end{lstlisting}
 
+\mypara{Function definition.} This corresponds to minimized expression \c{FUN}. Package \emph{Rcpp} is used to easily interface C++ and R and it uses \eval to bind C++ functions and classes to R objects.
+For instance, \c{.makeCppMethods} create a R function for each C++ method named \c{what} of a given class.
+\begin{lstlisting}
+methods[[what]] <- eval(substitute(
+	function(...) .CppObject$WHAT(...), list(WHAT = as.name(what))),
+	env)
+\end{lstlisting}
+
 \mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
 \begin{lstlisting}
