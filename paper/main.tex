@@ -1327,8 +1327,6 @@ computeMDS95 <- function (data, Vegetables, ...) {
 	Vegetables <- eval(arguments$Vegetables, data) 
 \end{lstlisting}
 
-\todo{Show also an example with \c{substitute}}
-
 \c{substitute} can be used to capture only a part of the call, \ie one of the arguments. For instance, in package \emph{xyplot}, the expression for argument \c{subset} is captured with \c{substitute} and then evaluated in a dataframe \c{data} and in the definition environment of \c{x}.
 \begin{lstlisting}
  xyplot.formula <-  function(x,    data = NULL, ..., subset = TRUE)
@@ -1386,7 +1384,7 @@ fact that \eval is executed in a loop.
 
 Using \c{parse}, \ie converting strings to R expressions, opens to a more flexible code generation, as the building blocks which are going to be concatenated together, do not need to be valid R expressions. On the contrary, combining expression created with \c{substitute} or \c{quote} requires more discipline. In Kaggle, which features less experienced programmers,  code generation for plots is widespread, and uses \c{parse}.
 
-\todo{There is an example in package comprenhr that does code generation with substitute to create list comprehensions, but it is quite difficult to grasp.}
+\todo{There is an example in package comprenhr that does code generation with substitute to create list comprehensions, but it is quite difficult to grasp. But at the same type, we lack here an example of code generation using quite, enquote or substitute.}
 
 
 \mypara{Unnecessary use of \eval}
