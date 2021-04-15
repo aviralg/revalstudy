@@ -1260,12 +1260,26 @@ if (length(slot(family, "first")))
 
 \mypara{Simple function calls.} This corresponds to minimized expression \c{F()}, \ie calls without nested functions and without variables (but possibly named arguments). For instance, package \emph{foreach} provides \c{foreach}-like loops. It makes it possible to initialize the iterator variables, with code \c{init}, which is equal \c{quote(list())} by default. \c{init} is then used to initialize the \c{foreach} accumulator \c{state\$accum <- eval(combineInfo\$init, envir=extra, enclos=obj\$evalenv)}.
 
-A peculiar use of \eval is to bypass some checks performed to accept code submitted to CRAN. For example, bindings can be \emph{locked} in an environment, \ie forbidding its value to be modified. The binding can be unlocked though by calling \c{unlockBinding} but packages in CRAN are forbidden to use that function.  Package \emph{data.table} bypasses this restriction by building a call piece by piece, to unlock binding \c{.N}. The call is then evaluated. Now that \c{.N} is unlocked, it can be assigned to. Instead of using \eval to assign in the parent frame, they rather use the more specialized function \c{assign}.
+A peculiar use of \eval is to bypass some checks performed to accept code submitted to CRAN. For example, bindings can be \emph{locked} in an environment, \ie forbidding its value to be modified. The binding can be unlocked though by calling \c{unlockBinding} but packages in CRAN are forbidden to use that function.  Package \emph{data.table} bypasses this restriction by building a call piece by piece, to unlock binding \c{.N}. The call is then evaluated. Now that \c{.N} is unlocked, it can be assigned to. Instead of using \eval to assign in the parent frame, they rather use the more specialized \c{assign} function.
 
 \begin{lstlisting}
-if (locked.N) eval(call("unlockBinding", ".N", parent.frame()))  
-assign(".N", nrow(x), envir=parent.frame(), inherits=FALSE)
+	if (locked.N) eval(call("unlockBinding", ".N", parent.frame()))  
+	assign(".N", nrow(x), envir=parent.frame(), inherits=FALSE)
 \end{lstlisting}
+
+\mypara{Complex function calls.} It corresponds to minimized expressions \c{F(X)} and \c{F(F(X))}, \ie function calls with variables, possibly with nested function calls. Package \emph{huxtable} is used to create custom tables and export them to various formats. To create functions to customize each of the borders of the table, it injects the indices \c{i} and \c{j} of the cells at the border and then evaluate them:
+\begin{lstlisting}
+xxx_border_huxtable <- function(lr_tb, i, j, border_prop) {
+	function (ht) {
+		hickness <- mlist$thickness[eval(i), eval(j), drop = FALSE]
+		...
+	}
+}
+left_border.huxtable <- xxx_border_huxtable("lr_borders",
+i = quote(seq_len(nrow(ht))), j = quote(-last_col))
+\end{lstlisting}
+
+
 
 \mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
