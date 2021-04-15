@@ -1213,8 +1213,8 @@ provide convenience features for programmers. We give examples for the minimized
 
 \subsection{Shapes of \eval}
 
-\mypara{Variable lookup and values.}
-This corresponds to minimized expressions \c{X}, \c{V}. We also include here lookup to slots in a list or data frame, \ie minimized expression \c{\$}. Variable lookup leads to a large diversity of environments, many being package environments or package environments wrapped in \c{new}.
+\mypara{Variable lookup and values.}  We also include here lookup to slots in a list or data frame.
+This corresponds to minimized expressions \c{X}, \c{V}, and  \c{\$}. Variable lookup leads to a large diversity of environments, many being package environments or package environments wrapped in \c{new}.
 
 It is the predominant usage of \eval in Base, through function \c{match.args} (with \eval on minimized expression \c{V}). In CRAN, it correlates with more exotic environments passed to \eval. 
 The dominant site in numbers of calls in CRAN, is located in \c{ggproto} in the custom object system of \emph{ggplot2}. It evaluates a variable \c{`\_inherit`}, which represents the parent of the class, in the definition environment of the class. \eval is used here to account for parents scoped in a namespace with \c{::}, which is actually a function call in R.  
@@ -1223,8 +1223,6 @@ The dominant site in numbers of calls in CRAN, is located in \c{ggproto} in the 
 
 Package \emph{statnet.common} handles formulas, R object that associates an expression of the form \c{x~\textasciitilde~expr} and a carry-on environment where to evaluate the formula. It evaluates the left-hand side of the formula, which is always a variable, in \c{eval\_lhs.formula}, as \c{eval(object[[2L]],envir=environment(object))} where \c{object} is the formula and \c{environment} returns the formula associated to the object.
 
-
-\todo{Show an actual example with \$}
 
 
 \mypara{Assigments.} It corresponds to minimized expression \c{<-} and groups together \c{<-}, \c{<<-} and \c{assign}. Package \emph{plyr} has a function combine data frames by row, filling in missing columns. During the allocation of the missing columns, an assignment call is built with \c{assignment <- quote(column[rows] <<- what)} and later evaluated on demand in a setter function, with \c{eval(assigmment)}. Package \emph{overture} is used to run Markov Chain Monte Carlo. It runs an R expression repeatedly and saves any assignments that happen, as samples of the Markov chains. 
@@ -1352,8 +1350,14 @@ explanatory purposes.   \c{paste} is used to dispatch to a specialized plot func
 \begin{lstlisting}
 eval(parse(text=paste('plot',gpmap$nloci,'_orig(gpmap)',sep="")))
 \end{lstlisting} 
-  
- \todo{Add an example of a plot with parse from Kaggle}
+
+In Kaggle, plots are often built with \eval, \c{paste} and \c{ggplot}. In this kernel for the \emph{digit-recognizer} challenge, \c{paste0} is used to generate \c{ggplot} commands featuring unique y labels to build 9 different graphs.
+
+\begin{lstlisting}
+p <- lapply(paste0('PC', 1:9), function(pc){
+	eval(parse(text=paste0('ggplot(ld, aes(x=label, y=',pc,')) + geom_boxplot()')))
+})
+\end{lstlisting}
 
 The \parse and \eval combination is
 used by the \source function in the base library to load R code from a file
