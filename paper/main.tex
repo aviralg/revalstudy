@@ -1211,7 +1211,7 @@ passing a string, it is conceivable that this may discourage some
 casual users. \Eval is also being used to reduce boilerplate code and
 provide convenience features for programmers. We give examples for the minimized expressions of Section~\ref{sec:minimized} and then dig into high-level \eval design patterns.
 
-\subsection{Minimized expressions}
+\subsection{Shapes of \eval}
 
 \mypara{Variable lookup and values.}
 This corresponds to minimized expressions \c{X}, \c{V}. We also include here lookup to slots in a list or data frame, \ie minimized expression \c{\$}. Variable lookup leads to a large diversity of environments, many being package environments or package environments wrapped in \c{new}.
@@ -1299,23 +1299,15 @@ Package \c{tidyselect} is the backend of several \c{dplyr} and \c{tidyr} functio
 \c{match.call} walks up the call stack, captures the code that invoked the
 currently executing function, and returns it as an unevaluated expression that includes the call function and its unevaluated arguments. The
 pattern is to transform a call to some function \c{f} into a call to \c{g} with
-some arguments retained and others modified.  \todo{or change the target
-function. Both are described as "patterns" in the R documentation.} As an
-illustration, consider the \c{vcpart} package's function \c{tvcglm} that is
-translated to a call to \c{tvcm} with two modifications to the argument list:
-argument \c{control} can't be missing and \c{fit} is set \c{"glm"}. The
-function ends with a call to \c{eval.parent} to ensure that the rewritten call
-is evaluated in the same environment the original call was.  \begin{lstlisting}
-tvcglm <- function(formula, data, family, ...) { k <- match.call() k[[1]] <-
-as.name("tvcm") if ("fit" %in% names(list(...))) warning("'fit' ignored.")
-k$fit <- "glm" eval.parent(k) } \end{lstlisting} This pattern is recognizable
+some arguments retained and others modified. This pattern is recognizable
 by the fact that the expression is a call and the target environment is that of
-the parent. \todo{Remove that example}
+the parent.
 
 % We have quantitative data on that if needed...
 This pattern is very often (more than half of the cases) used in relation with statistical models, to build a new model, \c{model.frame} to build a new generic model, or a more specialized model like \c{glm} or, \c{lm}. The R documentation of \c{match.call} explicitly describes this usage.
 
-In package \emph{survival}\footnote{It is a \emph{recommended package}, so recommended by the CRAN maintainers, thoroughly tested, and following R best practices.}, in function \c{coxph}, the surrounding call is first captured, then \c{model.frame} is injected as the function name in the call, and finally, the new call is evaluated in the parent frame.
+In package \emph{survival}\footnote{It is a \emph{recommended package}, so recommended by the CRAN maintainers, thoroughly tested, and following R best practices.}, in function \c{coxph}, the surrounding call is first captured, then \c{model.frame} is injected as the function name in the call, and finally, the new call is evaluated in the parent frame, to ensure that the rewritten call
+is evaluated in the same environment the original call was.
 
 \begin{lstlisting}
 Call <- match.call()
@@ -1336,6 +1328,8 @@ computeMDS95 <- function (data, Vegetables, ...) {
 
 \todo{Show also an example with \c{substitute}}
 
+\c{substitute} can be used to capture only a part of the call, \ie one of the arguments.
+
 
 In the R community, the call capturing pattern with evaluation in a non-local environment is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}.
 
@@ -1353,25 +1347,17 @@ implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
 
 \mypara{Code Generation.} The more traditional use of \eval is to execute code
 that was assembled by the programmer into a string. Here we show the method
-\c{plot} for class \c{sback} in package \c{wsbackfit}, simplified for
-explanatory purposes. The function takes a long argument list, the names of
-which are captured in the list \c{opt}. The string \c{stub} is composed of a
-subset of the arguments passed to this function; the variable is used to
-construct a call to \c{base::plot} which will draw a plot. \NOTE{This example
-  is a bit messed up. What is var? Does the use of ... in the eval grab the
-arguments of this call? If yes does it not end up with xlab twice? HELP}
-\todo{Does this comment still applies?} The \parse and \eval combination is
-used by the the \source function in the base library to load R code from a file
-in the current workspace.  \begin{lstlisting} plot.sback <- function(x,...) {
-opt <- names(list(...)) stub <- paste( ifelse("xlab" %in%
-opt,"",paste(",xlab=\"",var,"\"",sep="")), ifelse("type" %in%
-  opt,"",",type=\"l\""), sep="") plot <-
-  paste("plot(x.data,",stub,",...)",sep="") eval(parse(text=plot))
-  \end{lstlisting} This pattern is recognizable by its use of \c{parse} to turn
-  a string into an expression.
+\c{plot} for class \c{gmap} in package \c{gpmaps}, simplified for
+explanatory purposes.   \c{paste} is used to dispatch to a specialized plot function, among \c{plot2\_orig},  \c{plot3\_orig}, \c{plot3\_dec} and so on.
+\begin{lstlisting}
+eval(parse(text=paste('plot',gpmap$nloci,'_orig(gpmap)',sep="")))
+\end{lstlisting} 
   
-  \todo{Put a simpler example, again with building a plot}
+ \todo{Add an example of a plot with parse from Kaggle}
 
+The \parse and \eval combination is
+used by the \source function in the base library to load R code from a file
+in the current workspace. 
 
  Code generation is often used as a means to reduce boilerplate code;
 simple and repetitive code can easily be replaced with judicious use of \eval.
@@ -1387,6 +1373,8 @@ This pattern is a special case of code generation, recognizable by the
 fact that \eval is executed in a loop. 
 
 Using \c{parse}, \ie converting strings to R expressions, opens to a more flexible code generation, as the building blocks which are going to be concatenated together, do not need to be valid R expressions. On the contrary, combining expression created with \c{substitute} or \c{quote} requires more discipline. In Kaggle, which features less experienced programmers,  code generation for plots is widespread, and uses \c{parse}.
+
+\todo{There is an example in package comprenhr that does code generation with substitute to create list comprehensions, but it is quite difficult to grasp.}
 
 
 \mypara{Unnecessary use of \eval}
