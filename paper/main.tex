@@ -1257,7 +1257,7 @@ if (length(slot(family, "first")))
 	eval(slot(family, "first"))
 \end{lstlisting}
 
-\todo{Add testthat or withr::defer\_handler (fancy on.exit)}
+Package \emph{withr} provides facilities to encapsulate side-effecting functions. The function \c{defer} is used to attach an expression to be evaluated when exiting any frame in the stack. It can be passed arbitrary code, and so blocks. 
 
 \mypara{Simple function calls.} This corresponds to minimized expression \c{F()}, \ie calls without nested functions and without variables (but possibly named arguments). For instance, package \emph{foreach} provides \c{foreach}-like loops. It makes it possible to initialize the iterator variables, with code \c{init}, which is equal \c{quote(list())} by default. \c{init} is then used to initialize the \c{foreach} accumulator \c{state\$accum <- eval(combineInfo\$init, envir=extra, enclos=obj\$evalenv)}.
 
