@@ -1329,7 +1329,12 @@ computeMDS95 <- function (data, Vegetables, ...) {
 
 \todo{Show also an example with \c{substitute}}
 
-\c{substitute} can be used to capture only a part of the call, \ie one of the arguments.
+\c{substitute} can be used to capture only a part of the call, \ie one of the arguments. For instance, in package \emph{xyplot}, the expression for argument \c{subset} is captured with \c{substitute} and then evaluated in a dataframe \c{data} and in the definition environment of \c{x}.
+\begin{lstlisting}
+ xyplot.formula <-  function(x,    data = NULL, ..., subset = TRUE)
+ ...
+subset <- eval(substitute(subset), data, environment(x))
+\end{lstlisting}
 
 
 In the R community, the call capturing pattern with evaluation in a non-local environment is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}.
