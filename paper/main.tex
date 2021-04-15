@@ -1219,14 +1219,16 @@ The dominant site in numbers of calls in CRAN, in the custom object system of \e
 
 Package \emph{statnet.common} handles formulas, R object that associates an expression of the form \c{x ~ expr} and a carry-on environment where to evaluate the formula. It evaluates the left-hand side of the formula, which is always a variable, in \c{eval\_lhs.formula}, as \c{eval(object[[2L]],envir=environment(object))} where \c{object} is the formula and \c{environment} returns the formula associated to the object.
 
-%TODO Add a simple example of a slot lookup (very common with match.call)
+
 Slot lookup happens very often to evaluate some of the elements of a call list returned by \c{match.call}.
-For instance in the \emph{blme} package:
+For instance in the \emph{pwrFDR} package:
 \begin{lstlisting}
-matchedCall <- match.call()
+m <- match.call()
 ...
-df <- eval(matchedCall$df)
+average.power <- m$average.power <- eval(m$average.power, sys.parent())
 \end{lstlisting}
+
+Here, \c{m\$average.power}, depending on the shape of the arguments to the surrounding function,  can be resolved to a variable, a more complex expression, or a number, leading to several possible minimized expressions, including \c{X} and \c{V}.
 
 \mypara{Assigment \c{<-}.}
 
