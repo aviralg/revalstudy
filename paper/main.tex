@@ -1220,6 +1220,15 @@ The dominant site in numbers of calls in CRAN, in the custom object system of \e
 Package \emph{statnet.common} handles formulas, R object that associates an expression of the form \c{x ~ expr} and a carry-on environment where to evaluate the formula. It evaluates the left-hand side of the formula, which is always a variable, in \c{eval\_lhs.formula}, as \c{eval(object[[2L]],envir=environment(object))} where \c{object} is the formula and \c{environment} returns the formula associated to the object.
 
 %TODO Add a simple example of a slot lookup (very common with match.call)
+Slot lookup happens very often to evaluate some of the elements of a call list returned by \c{match.call}.
+For instance in the \emph{blme} package:
+\begin{lstlisting}
+matchedCall <- match.call()
+...
+df <- eval(matchedCall$df)
+\end{lstlisting}
+
+\mypara{Assigment \c{<-}.}
 
 \mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
@@ -1286,7 +1295,7 @@ computeMDS95 <- function (data, Vegetables, Legumes, FruitAndNuts, Cereals,
 
 In the R community, the call capturing pattern is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}.
 
-\paragraph{Injecting code in package environments.} R distinguishes two kinds of environments for packages: the \emph{package} environment itself, which contains every publicly accessible functions, and the \emph{namespace} environment, which contains all functions including private ones.
+\mypara{Injecting code in package environments.} R distinguishes two kinds of environments for packages: the \emph{package} environment itself, which contains every publicly accessible functions, and the \emph{namespace} environment, which contains all functions including private ones.
 
  A call to \c{library(packageName)}, which loads libraries in R, for instance, will
 populate environment \c{package:packageName} using \eval. It is a \emph{base} function
