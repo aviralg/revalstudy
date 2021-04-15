@@ -1,7 +1,9 @@
 \documentclass[review,screen,acmsmall,anonymous=true]{acmart}
-%\documentclass[noacm,review,screen,acmsmall,anonymous=true]{acmart}
-%Option noacm above messes with the line numbers in review mode
-\settopmatter{printfolios=true,printccs=true,printacmref=true}
+\settopmatter{printfolios=false,printccs=false,printacmref=false}
+\setcopyright{none}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\pagestyle{plain}
+
 
 \bibliographystyle{ACM-Reference-Format}
 \citestyle{acmauthoryear}   %% For author/year citations
@@ -151,6 +153,7 @@ together, run once, and never revisited.
 results should go here.}
 
 
+\newpage
 \section{Background and Previous work}
 
 This section provides a short introduction to R and the reflective features of
@@ -246,7 +249,7 @@ relevant to this paper, the interested reader should consult \citet{hadley}.
 The most general is \eval. Parameter \c e is the \c{expression} to evaluate,
 \c{envir} is the evaluation environment, and \c{encl} is used to look up
 variables not found in \c{envir}. The default value of the latter is either the
-caller's environment or the base environment.\footnote{It contains all the standard operators and functions in R.} \Eval can take several types for \c e, for
+caller's environment or the base environment \Eval can take several types for \c e, for
 our purposes on the \c{expression}. These can be thought of as the abstract
 syntax trees returned by the parser. An \c{expression} can be obtained by
 calling \c{quote} or \c{parse} with a string:
@@ -1208,9 +1211,9 @@ passing a string, it is conceivable that this may discourage some
 casual users. \Eval is also being used to reduce boilerplate code and
 provide convenience features for programmers. We give examples for the minimized expressions of Section~\ref{sec:minimized} and then dig into high-level \eval design patterns.
 
-\mypara{Variable lookup and values.} 
+\mypara{Variable lookup and values.}
 This corresponds to minimized expressions \c{X}, \c{V}. We also include here lookup to slots in a list or data frame, \ie minimized expression \c{\$}.
-It is the predominant usage of \eval in Base, through function \c{match.args}. In CRAN, it correlates with more exotic environments passed to \eval. 
+It is the predominant usage of \eval in Base, through function \c{match.args}. In CRAN, it correlates with more exotic environments passed to \eval.
 
 The dominant site in numbers of calls in CRAN, in the custom object system of \emph{ggplot2}, \c{ggproto}, also evaluates a variable \c{`\_inherit`} in the definition environment of the class. It leads to a large diversity of environments, many being package environment or package environments wrapped in \c{new}.
 
