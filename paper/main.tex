@@ -1214,7 +1214,6 @@ provide convenience features for programmers. We give examples for the minimized
 \mypara{Variable lookup and values.}
 This corresponds to minimized expressions \c{X}, \c{V}. We also include here lookup to slots in a list or data frame, \ie minimized expression \c{\$}.
 It is the predominant usage of \eval in Base, through function \c{match.args}. In CRAN, it correlates with more exotic environments passed to \eval.
-
 The dominant site in numbers of calls in CRAN, in the custom object system of \emph{ggplot2}, \c{ggproto}, also evaluates a variable \c{`\_inherit`} in the definition environment of the class. It leads to a large diversity of environments, many being package environment or package environments wrapped in \c{new}.
 
 Package \emph{statnet.common} handles formulas, R object that associates an expression of the form \c{x ~ expr} and a carry-on environment where to evaluate the formula. It evaluates the left-hand side of the formula, which is always a variable, in \c{eval\_lhs.formula}, as \c{eval(object[[2L]],envir=environment(object))} where \c{object} is the formula and \c{environment} returns the formula associated to the object.
@@ -1261,10 +1260,11 @@ if (length(slot(family, "first")))
 
 \mypara{Simple function calls.} This corresponds to minimized expression \c{F()}, \ie calls without nested functions and without variables (but possibly named arguments). For instance, package \emph{foreach} provides \c{foreach}-like loops. It makes it possible to initialize the iterator variables, with code \c{init}, which is equal \c{quote(list())} by default. \c{init} is then used to initialize the \c{foreach} accumulator \c{state\$accum <- eval(combineInfo\$init, envir=extra, enclos=obj\$evalenv)}.
 
-A peculiar use of \eval is to bypass some checks performed to accept code submitted to CRAN. For example, bindings can be \emph{locked} in an environment, \ie forbidding its value to be modified. The binding can be unlocked though by calling \c{unlockBinding} but packages in CRAN are forbidden to use that function.  Package \emph{data.table} bypasses this restriction by building a call piece by piece, to unlock binding \c{.N}. The call is then evaluated.
+A peculiar use of \eval is to bypass some checks performed to accept code submitted to CRAN. For example, bindings can be \emph{locked} in an environment, \ie forbidding its value to be modified. The binding can be unlocked though by calling \c{unlockBinding} but packages in CRAN are forbidden to use that function.  Package \emph{data.table} bypasses this restriction by building a call piece by piece, to unlock binding \c{.N}. The call is then evaluated. Now that \c{.N} is unlocked, it can be assigned to. Instead of using \eval to assign in the parent frame, they rather use the more specialized function \c{assign}.
 
 \begin{lstlisting}
 if (locked.N) eval(call("unlockBinding", ".N", parent.frame()))  
+assign(".N", nrow(x), envir=parent.frame(), inherits=FALSE)
 \end{lstlisting}
 
 \mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
