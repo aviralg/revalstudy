@@ -1230,7 +1230,20 @@ average.power <- m$average.power <- eval(m$average.power, sys.parent())
 
 Here, \c{m\$average.power}, depending on the shape of the arguments to the surrounding function,  can be resolved to a variable, a more complex expression, or a number, leading to several possible minimized expressions, including \c{X} and \c{V}.
 
-\mypara{Assigment \c{<-}.}
+\mypara{Assigments.} It corresponds to minimized expression \c{<-} and groups together \c{<-}, \c{<<-} and \c{assign}. Package \emph{plyr} has a function combine data frames by row, filling in missing columns. During the allocation of the missing columns, an assignment call is built with \c{assignment <- quote(column[rows] <<- what)} and later evaluated on demand in a setter function, with \c{eval(assigmment)}. Package \emph{overture} is used to run Markov Chain Monte Carlo. It runs an R expression repeatedly and saves any assignments that happen, as samples of the Markov chains. 
+The expression is captured with \c{substitute} and a new environment \c{env} wrapping the parent of the caller is created, in which all assignments will happen. Regularly, the content of \c{env} is inspected to sample the assigned variables.
+\begin{lstlisting}
+function(expr, overwrite=over.write) {
+	expr_q <- substitute(expr)
+	env <- new.env(parent=parent.frame(1))
+	samps <- list()
+	RunMcmc(samps, 1, expr_q, env, n.save, backing.path, thin, exclude, overwrite)
+}
+
+RunMcmc <- function... {
+	 ...
+	 eval(expr_q, envir=env)
+\end{lstlisting}
 
 \mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
@@ -1376,7 +1389,7 @@ or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
 \mypara{Discussion.} % more...
 
-\eval is a powerful tool and can be sometimes with functions with more specialized goals. For instance, variable lookup in any environment can be performed with \c{get}. Building a call and executing can be done with \c{do.call}. Nevertheless, \eval shines when expressions passed to it can be of many different types. % And it is shorter to type, and no need to remember all the specialized functions.
+\eval is a powerful tool and can be sometimes with functions with more specialized goals. For instance, variable lookup in any environment can be performed with \c{get}, and assignment in any environment, with \c{assign}. Building a call and executing can be done with \c{do.call}. Nevertheless, \eval shines when expressions passed to it can be of many different types. % And it is shorter to type, and no need to remember all the specialized functions.
 
 \section{Conclusion}
 
