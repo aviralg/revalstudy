@@ -803,8 +803,8 @@ Manual inspection reveals cases such as the following
  f1 <- eval(paste("A~",paste(paste(names(X[,-1])),collapse="+")))
 \end{lstlisting}
 where the argument to \eval is a string which \eval simply returns. From twenty
-randomly selected \evals, \packageUsefulValueEvalPercent of them do not need
-\eval. For the other cases, either we are dealing with a value that needs to be
+randomly selected \evals, \packageUsefulValueEvalPercent of them  need % There are a majority which needs eval
+\eval for some inputs. Either we are dealing with a value that needs to be
 constructed dynamically or the value is a default case that sometimes is
 replaced by a more interesting expression. This form is usually evaluated in few
 interpreter steps, in fact the median is only
@@ -1246,12 +1246,14 @@ RunMcmc <- function... {
 \end{lstlisting}
 
 \mypara{Function definition.} This corresponds to minimized expression \c{FUN}. Package \emph{Rcpp} is used to easily interface C++ and R and it uses \eval to bind C++ functions and classes to R objects.
-For instance, \c{.makeCppMethods} create a R function for each C++ method named \c{what} of a given class.
+For instance, \c{.makeCppMethods} create a R function for each C++ method named \c{what} of a given class. The use of \substitute to inject the name of the method in a language expression entails the use of \eval.
 \begin{lstlisting}
 methods[[what]] <- eval(substitute(
 	function(...) .CppObject$WHAT(...), list(WHAT = as.name(what))),
 	env)
 \end{lstlisting}
+
+\mypara{Block.} %injecting pre nad post processing
 
 \mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
@@ -1316,7 +1318,7 @@ computeMDS95 <- function (data, Vegetables, Legumes, FruitAndNuts, Cereals,
 \end{lstlisting}
 
 
-In the R community, the call capturing pattern is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}.
+In the R community, the call capturing pattern with evaluation in a non-local environment is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}.
 
 \mypara{Injecting code in package environments.} R distinguishes two kinds of environments for packages: the \emph{package} environment itself, which contains every publicly accessible functions, and the \emph{namespace} environment, which contains all functions including private ones.
 
