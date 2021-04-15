@@ -62,3 +62,25 @@ gen_provenance_class <- function(dataset) {
 }
 
 
+gen_env_class <- function(dataset) {
+  dataset %>%
+    mutate(envir_expression = if_else(envir_type == "NULL" & is.na(envir_expression), "NULL", envir_expression)) %>%
+    mutate(envir_expression = na_if(envir_expression, "NA")) %>%
+    extract(environment_class, regex = "((?:new\\+)*)(?:caller-(-?[[:digit:]]+)-)?(.*)", into = c("new_env", "hierarchy", "specific_env"), remove = FALSE, convert = TRUE) %>%
+    mutate(new_env = na_if(new_env, ""), specific_env = na_if(specific_env, ""), new_env = str_count(new_env, fixed("new+"))) %>%
+    mutate(env_class = case_when(
+      envir_type %in% c("list", "pairlist", "NULL") ~ "synthetic",
+      specific_env == "empty" ~ "synthetic",
+      envir_type %in% c("integer", "double") ~ "function",
+      # You can separate further into local and function here
+      # Local would be hierarchy == 0
+      !is.na(hierarchy) & is.na(new_env) & is.na(specific_env) ~ "function", # package subsumes function
+      is.na(new_env) & str_detect(specific_env, fixed("loop")) ~ "function",
+      !is.na(new_env) ~ "synthetic",
+      is.na(new_env) & specific_env == "global" ~ "global",
+      is.na(new_env) & !is.na(specific_env) ~ "package",
+      TRUE ~ "invalid"
+      # That would be closures or logical, that are not valid to be passed to envir
+    ))
+}
+
