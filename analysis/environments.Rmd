@@ -107,6 +107,7 @@ if(params$force_rebuild || rebuild) {
     ev_call = eval_call_expression,
     ev_expr = expr_expression,
     n_op = interp_eval,
+    hash = expr_resolved_hash,
     envir = envir_expression,
     envir_type,
     caller_expression,
@@ -694,10 +695,12 @@ r_vec("new env category site percent", nrows, high_level_new_sites$pc)
 ## The final high-level classification
 
 ```{r}
-# 4 srcrefs will be counted twice, in package environments, and in caller environments
-pack_envs <- env_classes %>% filter(is.na(new_env),  specific_env != "global")
+# in environment-class such as caller-n-packagename,
+# package category wins
+pack_envs <- env_classes %>% filter(is.na(new_env),  !specific_env %in% c("global", "empty"), !str_detect(specific_env, fixed("loop")))
 nb_pack_sites <- n_distinct(pack_envs$src_ref)
 
+# That might overestimate a bit...
 nb_function_env_sites <- nb_caller_env_sites + nb_integer_sites
 
 synthetic_envs <- env_classes %>% filter(envir_type %in% c("list", "NULL", "pairlist") | !is.na(new_env) | specific_env == "empty")
