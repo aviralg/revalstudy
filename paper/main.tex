@@ -811,7 +811,7 @@ interpreter steps, in fact the median is only
 \packageMinimizedmedianoperationscRnd. The environment in which they evaluate is
 mostly irrelevant (unless a built-in operator is redefined).
 
-\medskip\noindent\EE{$min(e)=\c{X}$} Variables lookups are the most common form,
+\medskip\noindent\EE{$min(e)=\c{X}$} Variable lookups are the most common form,
 they are found in 28\% of the sites. This form includes simple variable reads,
 \eg~\c{x}, those are \packageNbSymbolVarSitePercent of \c X. The form also
 subsumes \c{V}, so it includes a mixture of arithmetic expressions,
@@ -832,14 +832,14 @@ occurs in 6\% of the sites. The interpreter evaluates
 operations. This is typically used in a function environment,
 \packageMinimizedpercentparentframese of the time to be precise.
 
-\medskip\noindent\EE{$min(e)=$~\c{<-}} This form includes both assignments
-operator, the direct assignment {\tt <-}, and assignment to the parent
-environment {\tt <\,\!<-}, and the \c{\$} form. Assignments occur in 4\% of the
+\medskip\noindent\EE{$min(e)=$~\c{<-}} This form includes both assignment
+operators, the direct assignment {\tt <-}, and assignment to the parent
+environment {\tt <\,\!<-}, the \c{assign} function and the \c{\$} form. Assignments occur in 5\% of the
 sites. They represent the most obvious source of side-effects. The median number
 of operations is \packageMinimizedmedianoperationsiRnd; the minimum is 3.
 
 \medskip\noindent\EE{$min(e)=\c{F()}$} This form captures simple function calls,
-\eg~\c{f(2)}, with neither variables or assignments. Or, more specifically it
+\eg~\c{f(2)}, with neither variables nor assignments. Or, more specifically it
 allows for variables in the function position but not in arguments. Usually,
 looking up function names does not trigger computation, but that is not a given
 if the function is returned by a promise or if the function name is shadowed by
@@ -848,15 +848,14 @@ a promise containing a value, then computation will occur. This form occurs in
 
 \medskip\noindent\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$} These
 forms allow for function calls whose arguments may include variable references.
-The latter allows nested calls.Assignments are excluded from this form. They
-occurs in, respectively, 14\% and 20\% of the sites in the corpus. Together they
+The latter allows nested calls. Assignments are excluded from this form. They
+occur in, respectively, 14\% and 20\% of the sites in the corpus. Together they
 are the most frequent forms. The median numbers of interpreter steps are,
 respectively, \packageMinimizedmedianoperationsdRnd and
 \packageMinimizedmedianoperationsbRnd. The \packageMinimizedpercentparentframesj
 of these expressions run in function environments.
 
-\medskip\noindent\EE{$min(e)=\c{FUN}$} This form captures expressions define
-functions, \eg~\c{function(x)x+1}, and do nothing else. \c{FUN} occurs in
+\medskip\noindent\EE{$min(e)=\c{FUN}$} This form captures expressions that define functions, \eg~\c{function(x) x+1}, and do nothing else. \c{FUN} occurs in
 \packageFunctionDefinitionSitesPercent of sites. Evaluating a function
 definition is done in 2 interpreter step; the data does not record the work
 performed by the interpreter when the generated functions are eventually run. In
@@ -864,7 +863,7 @@ addition to \c{FUN}, \packageGeneralizedFunctionDefinitionSitesPercent of sites
 have function definitions nested in other expressions, this gives an idea of the
 use of higher-order functions.
 
-\medskip\noindent\EE{$min(e)=\c{BLOCK}$} This form captures multi-statements
+\medskip\noindent\EE{$min(e)=\c{BLOCK}$} This form captures multi-statement
 code blocks, which occur in only 4\% of sites. These are larger expressions, we
 do not inspect contents of the blocks. The median number of executed operations
 is \packageMinimizedmedianoperationsjRnd. They typically run in function
@@ -894,30 +893,30 @@ by less powerful constructs.
 
 The environment in which evaluation happens determines what is visible to the
 computation started by \eval and the potential reach of its side-effects. The
-second argument to \eval specifies that environment. Environment of \eval can be
+second argument to \eval specifies that environment. Environments of \eval can be
 classified into the following four kinds:
 
 \begin{compactitem}[---]
-\item \emph{Function:} environment for the local variables of some function
+\item \emph{Function:} environments for the local variables of some function
   currently active on the call stack. Obtained by calling \c{parent.frame()} or
   \c{sys.frame()}.
 \item \emph{Synthetic:} environments built from data structures such as lists,
   dataframes, or constructed explicitly with \c{new.env}, \c{list2env} or
   \c{as.environment}. Also includes the empty environment.
-\item \emph{Global:} the environment in which scripts or interactive commands
+\item \emph{Global:}  environments in which scripts or interactive commands
   are evaluated.
-\item \emph{Package:} the environment of a loaded library.
+\item \emph{Package:}  environments of a loaded library.
 \end{compactitem}
 
 \noindent
-As shown by Table~\ref{tab:highlevelenvironments}, most calls evaluate in a
+As shown in Table~\ref{tab:highlevelenvironments}, most calls evaluate in a
 function environment with the \c{global} kind as a distant second. This means
 that most variable lookups and most side effects either read/update existing
 local variables or introduce new ones. But for which function? From the point of
 view of the function that called \eval, Table~\ref{tab:funoffset} gives an
-offset on the call stack. Thus 0 is the direct caller and corresponds to local variables; 1 is its parent, and so on. The data suggests that in 81\% of cases, \eval access its caller's environment -- this means, the variables of the function where \eval textually
+offset on the call stack. Thus 0 is the direct caller and corresponds to local variables; 1 is its parent, and so on. The data suggests that in 81\% of cases, \eval accesses its caller's environment -- this means, the variables of the function where \eval textually
 occurs are read and written to. It is interesting that some 1.5\% of sites
-evaluate a code in an environment that is three frame or above from \eval. This
+evaluate a code in an environment that is three frames or above from \eval. This
 distance implies that, in general, modular reasoning is impossible, to
 understand the behavior of any piece of code entails fully understanding the
 behavior of all functions that the code may call as the actions of \eval may
@@ -997,8 +996,8 @@ originates. Likely less frequent are cases where \eval is provided the results
 of programmatically selecting some call stack. ({\it Synthetic}) The relative
 high frequency of synthetic environments corresponds to cases when one wants to
 evaluate an expression in either a restricted environment, use a data
-structure as an environment. ({\it Global}) The fact that global environment
-show up so frequently is likely an artifact of the way the code is run. ({\it
+structure as an environment. ({\it Global}) The fact that the global environment
+shows up so frequently is likely an artifact of the way the code is run. ({\it
   Package}) There are only 92 sites that use a package environment in \eval,
 this is probably best as it is bad form to add bindings or modify functions
 of a loaded package. Many more sites rather wrap a package environment in a new
@@ -1044,7 +1043,7 @@ classify them in three categories:
 \item {\it Constructed:} Expressions can be constructed by invoking the
   \c{quote}, \c{enquote}, \c{expression}. Function arguments are passed as
   promises and \c{substitute} is used to retrieve the source expression
-  associated to the promise.
+  associated with the promise.
 \item {\it String:} Finally, expressions can be created from strings by invoking
    \c{parse}, \c{str2expression} or \c{str2lang}.
 \end{compactitem}
@@ -1052,7 +1051,7 @@ classify them in three categories:
 \noindent
 Table~\ref{tab:provenance} summarizes the expression provenance in our corpus.
 This data is obtained by dynamically tainting values as they are produced by the
-various sources, due to technical reasons there is some imprecision in the
+various sources, due to technical reasons, there is some imprecision in the
 results. In particular, we are not able to classify all sites. Manual inspection
 of numerous examples suggest that the classified results are accurate.
 
@@ -1078,7 +1077,7 @@ with less sophisticated programmers; in our Kaggle corpus
 \paragraph{Discussion}
 The origin data suggests that constructing expressions from strings is a
 minority of the use cases, instead the constructed category shows that the
-majority of \evals comes code that was processed by the compiler, and may be
+majority of \evals comes from code that was processed by the compiler, and may be
 slightly modified by the programmer before invoking \eval. Both constructed and
 reflection categories roughly correspond to meta-programming. Some of these use
 cases could likely be replaced by macros if the R designers could be convinced
