@@ -27,6 +27,7 @@ PACKAGE_SIDE_EFFECTS_FILE <- path(PACKAGE_DATA_DIR, "side-effects.fst")
 
 KAGGLE_KERNEL_FILE <- path(KAGGLE_DATA_DIR, "kernel.csv")
 KAGGLE_EVALS_STATIC_FILE <- path(KAGGLE_DATA_DIR, "evals-static.csv")
+KAGGLE_TRACE_LOG_FILE    <- path(KAGGLE_DATA_DIR, "trace-log.csv")
 
 #R_DIR      <- path(params$base_dir, "R-4.0.2")
 #R_LIBS_DIR <- path(params$base_dir, "library", "4.0")

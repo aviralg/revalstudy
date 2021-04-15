@@ -382,3 +382,17 @@ eval_plot_df %>%
 ggsave(path(PLOT_DIR, "traced-eval-callsites.pdf"))
 ```
 
+## Kaggle extra
+
+The following should be somewhere else
+
+```{r}
+kaggle_log <- read_csv(KAGGLE_TRACE_LOG_FILE)
+```
+
+```{r}
+overview_table(
+  r("Kaggle failed scripts", filter(kaggle_log, Exitval != 0))
+)
+```
+

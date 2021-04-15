@@ -701,23 +701,29 @@ generate extreme amounts of data but the data is quite predictable. For the
 rest of the paper, we only mention Base when there are surprising
 observations.
 
-
-
 \medskip
 
 \subsection{Kaggle}
-Only \kaggleNbruns scripts trigger \eval. In total, \kaggleAllcalls \eval were
-recorded; none are calls to variants. Out of \kaggleStaticeval call sites,
-\kaggleTriggeredeval were exercised. Most call sites are invoked only once. Only
-one site is called \kaggleMaxcalls times. Expressions amount for
-\kaggleCodepercent of arguments. Unlike CRAN corpus, there are very few symbols
-(\kaggleSymbolpercent). Most expressions result from calls to \c{parse}, thus
-most \evals start with strings. The median argument size is \kaggleMedianszeval,
-which makes sense, as few arguments are only symbols. The largest argument is
-\kaggleMaxszeval. The distribution of instructions per eval is similar to CRAN;
-\kaggleSmalleventspct of \evals execute fewer than 50 instructions. Manual
-inspection of \eval usage in Kaggle suggest that it is consistent with the data
-obtained for CRAN. We do not discuss it further.
+
+In total, \kaggleAllcalls \eval were recorded, all to \eval function. Out of
+\kaggleStaticeval sites from \KaggleWithEvals, only \kaggleTriggeredeval sites
+in \kaggleNbruns scripts were hit. \KaggleFailedScripts scripts failed to run
+and the other did not exercised the \eval sites. This is partially expected
+as Kaggle code does not need to abide to any checks. Upon a manual inspection,
+we observed that indeed the failing scripts were of a poor quality, often not
+finished, using misspelled package names, hard-coded file paths or accessing
+missing files.
+
+Most call sites are invoked only once. Only one site is called \kaggleMaxcalls times.
+Expressions amount for \kaggleCodepercent of arguments. Unlike CRAN corpus,
+there are very few symbols (\kaggleSymbolpercent). Most expressions result from
+calls to \c{parse}, thus most \evals start with strings. The median argument
+size is \kaggleMedianszeval, which makes sense, as few arguments are only
+symbols. The largest argument is \kaggleMaxszeval. The distribution of
+instructions per eval is similar to CRAN; \kaggleSmalleventspct of \evals
+execute fewer than 50 instructions. Manual inspection of \eval usage in Kaggle
+suggest that it is consistent with the data obtained for CRAN. We do not
+discuss it further.
 
 
 \medskip

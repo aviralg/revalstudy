@@ -34,7 +34,8 @@ FILES := \
   kaggle/normalized-expressions.csv \
   kaggle/summarized.fst \
   kaggle/summarized-externals.fst \
-  kaggle/undefined.fst
+  kaggle/undefined.fst \
+  kaggle/trace-log.csv
 
 .PHONY: all
 all: $(FILES)
