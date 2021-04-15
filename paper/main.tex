@@ -1259,6 +1259,14 @@ if (length(slot(family, "first")))
 	eval(slot(family, "first"))
 \end{lstlisting}
 
+\mypara{Simple function calls.} This corresponds to minimized expression \c{F()}, \ie calls without nested functions and without variables (but possibly named arguments). For instance, package \emph{foreach} provides \c{foreach}-like loops. It makes it possible to initialize the iterator variables, with code \c{init}, which is equal \c{quote(list())} by default. \c{init} is then used to initialize the \c{foreach} accumulator \c{state\$accum <- eval(combineInfo\$init, envir=extra, enclos=obj\$evalenv)}.
+
+A peculiar use of \eval is to bypass some checks performed to accept code submitted to CRAN. For example, bindings can be \emph{locked} in an environment, \ie forbidding its value to be modified. The binding can be unlocked though by calling \c{unlockBinding} but packages in CRAN are forbidden to use that function.  Package \emph{data.table} bypasses this restriction by building a call piece by piece, to unlock binding \c{.N}. The call is then evaluated.
+
+\begin{lstlisting}
+if (locked.N) eval(call("unlockBinding", ".N", parent.frame()))  
+\end{lstlisting}
+
 \mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
 \begin{lstlisting}
