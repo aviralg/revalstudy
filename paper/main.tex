@@ -1216,9 +1216,13 @@ passing a string, it is conceivable that this may discourage some
 casual users. \Eval is also being used to reduce boilerplate code and
 provide convenience features for programmers. We give examples for the minimized expressions of Section~\ref{sec:minimized} and then dig into high-level \eval design patterns.
 
+The examples are based on code from CRAN or Kaggle, simplified to fit the limited space of a scientific paper. We indicate the package and the function where the example is located.
+
 \subsection{Shapes of \eval}
 
-\mypara{Variable lookup and values.}  We also include here lookup to slots in a list or data frame.
+We group minimized expressions in larger categories.
+
+\subsubsection{Variable lookup and values.}  We also include here lookup to slots in a list or data frame.
 This corresponds to minimized expressions \c{X}, \c{V}, and  \c{\$}. Variable lookup leads to a large diversity of environments, many being package environments or package environments wrapped in \c{new}.
 
 It is the predominant usage of \eval in Base, through function \c{match.args} (with \eval on minimized expression \c{V}). In CRAN, it correlates with more exotic environments passed to \eval. 
@@ -1226,11 +1230,11 @@ The dominant site in numbers of calls in CRAN, is located in \c{ggproto} in the 
 
 
 
-Package \emph{statnet.common} handles formulas, R object that associates an expression of the form \c{x~\textasciitilde~expr} and a carry-on environment where to evaluate the formula. It evaluates the left-hand side of the formula, which is always a variable, in \c{eval\_lhs.formula}, as \c{eval(object[[2L]],envir=environment(object))} where \c{object} is the formula and \c{environment} returns the formula associated to the object.
+Package \emph{statnet.common} handles formulas, R object that associates an expression of the form \c{x~\textasciitilde~expr} and a carry-on environment where to evaluate the formula. It evaluates the left-hand side of the formula, which is always a variable, in function \c{eval\_lhs.formula}, as \c{eval(object[[2L]],envir=environment(object))} where \c{object} is the formula and \c{environment} returns the formula associated to the object.
 
 
 
-\mypara{Assigments.} It corresponds to minimized expression \c{<-} and groups together \c{<-}, \c{<<-} and \c{assign}. Package \emph{plyr} has a function combine data frames by row, filling in missing columns. During the allocation of the missing columns, an assignment call is built with \c{assignment <- quote(column[rows] <<- what)} and later evaluated on demand in a setter function, with \c{eval(assigmment)}. Package \emph{overture} is used to run Markov Chain Monte Carlo. It runs an R expression repeatedly and saves any assignments that happen, as samples of the Markov chains. 
+\subsubsection{Assigments.} It corresponds to minimized expression \c{<-} and groups together \c{<-}, \c{<<-} and \c{assign}. Package \emph{plyr} has a function combine data frames by row, filling in missing columns. During the allocation of the missing columns, an assignment call is built with \c{assignment <- quote(column[rows] <<- what)} and later evaluated on demand in a setter function, with \c{eval(assigmment)}. Package \emph{overture} is used to run Markov Chain Monte Carlo. It runs an R expression repeatedly and saves any assignments that happen, as samples of the Markov chains. 
 The expression is captured with \c{substitute} and a new environment \c{env} wrapping the parent of the caller is created, in which all assignments will happen. Regularly, the content of \c{env} is inspected to sample the assigned variables.
 \begin{lstlisting}
 function(expr, overwrite=over.write) {
@@ -1245,7 +1249,7 @@ RunMcmc <- function... {
 	 eval(expr_q, envir=env)
 \end{lstlisting}
 
-\mypara{Function definition.} This corresponds to minimized expression \c{FUN}. Package \emph{Rcpp} is used to easily interface C++ and R and it uses \eval to bind C++ functions and classes to R objects.
+\subsubsection{Function definition.} This corresponds to minimized expression \c{FUN}. Package \emph{Rcpp} is used to easily interface C++ and R and it uses \eval to bind C++ functions and classes to R objects.
 For instance, \c{.makeCppMethods} create a R function for each C++ method named \c{what} of a given class. The use of \substitute to inject the name of the method in a language expression entails the use of \eval.
 \begin{lstlisting}
 methods[[what]] <- eval(substitute(
@@ -1261,7 +1265,7 @@ if (length(slot(family, "first")))
 
 Package \emph{withr} provides facilities to encapsulate side-effecting functions. The function \c{defer} is used to attach an expression to be evaluated when exiting any frame in the stack. It can be passed arbitrary code, and so blocks. 
 
-\mypara{Simple function calls.} This corresponds to minimized expression \c{F()}, \ie calls without nested functions and without variables (but possibly named arguments). For instance, package \emph{foreach} provides \c{foreach}-like loops. It makes it possible to initialize the iterator variables, with code \c{init}, which is equal \c{quote(list())} by default. \c{init} is then used to initialize the \c{foreach} accumulator \c{state\$accum <- eval(combineInfo\$init, envir=extra, enclos=obj\$evalenv)}.
+\subsubsection{Simple function calls.} This corresponds to minimized expression \c{F()}, \ie calls without nested functions and without variables (but possibly named arguments). For instance, package \emph{foreach} provides \c{foreach}-like loops. It makes it possible to initialize the iterator variables, with code \c{init}, which is equal \c{quote(list())} by default. \c{init} is then used to initialize the \c{foreach} accumulator \c{state\$accum <- eval(combineInfo\$init, envir=extra, enclos=obj\$evalenv)}.
 
 A peculiar use of \eval is to bypass some checks performed to accept code submitted to CRAN. For example, bindings can be \emph{locked} in an environment, \ie forbidding its value to be modified. The binding can be unlocked though by calling \c{unlockBinding} but packages in CRAN are forbidden to use that function.  Package \emph{data.table} bypasses this restriction by building a call piece by piece, to unlock binding \c{.N}. The call is then evaluated. Now that \c{.N} is unlocked, it can be assigned to. Instead of using \eval to assign in the parent frame, they rather use the more specialized \c{assign} function.
 
@@ -1270,7 +1274,7 @@ A peculiar use of \eval is to bypass some checks performed to accept code submit
 	assign(".N", nrow(x), envir=parent.frame(), inherits=FALSE)
 \end{lstlisting}
 
-\mypara{Complex function calls.} It corresponds to minimized expressions \c{F(X)} and \c{F(F(X))}, \ie function calls with variables, possibly with nested function calls. Package \emph{huxtable} is used to create custom tables and export them to various formats. To create functions to customize each of the borders of the table, it injects the indices \c{i} and \c{j} of the cells at the border and then evaluate them:
+\subsubsection{Complex function calls.} It corresponds to minimized expressions \c{F(X)} and \c{F(F(X))}, \ie function calls with variables, possibly with nested function calls. Package \emph{huxtable} is used to create custom tables and export them to various formats. To create functions to customize each of the borders of the table, it injects the indices \c{i} and \c{j} of the cells at the border and then evaluate them:
 \begin{lstlisting}
 xxx_border_huxtable <- function(lr_tb, i, j, border_prop) {
 	function (ht) {
@@ -1284,7 +1288,9 @@ i = quote(seq_len(nrow(ht))), j = quote(-last_col))
 
 \subsection{High-level patterns.}
 
-\mypara{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
+We present here high-level patterns that we identified after manual inspections of hundred of \eval sites. Some of the patterns were also described in the R documentation.
+
+\subsubsection{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
 \begin{lstlisting}
  expr<-expression(beta_1 + time*beta_2+u)
@@ -1298,11 +1304,9 @@ In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a 
 Package \c{tidyselect} is the backend of several \c{dplyr} and \c{tidyr} functions to select columns. It offers a DSL that makes it possible to select a set of columns, over a range of columns, a complement, an intersection, an union, with a regular expression and so on. \eval is used to traverse selectors stored as slots of a dataframe.
 
 
-\mypara{Capturing a call.}  A common use case for \eval is to be combined with \c{match.call}.
+\subsubsection{Capturing a call.}  A common use case for \eval is to be combined with \c{match.call}.
 \c{match.call} walks up the call stack, captures the code that invoked the
-currently executing function, and returns it as an unevaluated expression that includes the call function and its unevaluated arguments. The
-pattern is to transform a call to some function \c{f} into a call to \c{g} with
-some arguments retained and others modified. This pattern is recognizable
+currently executing function, and returns it as an unevaluated expression that includes the call function and its unevaluated arguments. The pattern is to transform a call to some function \c{f} into a call to \c{g} with some arguments retained and others modified. This pattern is recognizable
 by the fact that the expression is a call and the target environment is that of
 the parent.
 
@@ -1314,10 +1318,8 @@ is evaluated in the same environment the original call was.
 
 \begin{lstlisting}
 Call <- match.call()
-...
 tform <- Call[c(1,indx)]  # only keep the arguments we wanted
 tform[[1L]] <- quote(stats::model.frame)  # change the function called
-...
 mf <- eval(tform, parent.frame())
 \end{lstlisting}
 
@@ -1332,14 +1334,13 @@ computeMDS95 <- function (data, Vegetables, ...) {
 \c{substitute} can be used to capture only a part of the call, \ie one of the arguments. For instance, in package \emph{xyplot}, the expression for argument \c{subset} is captured with \c{substitute} and then evaluated in a dataframe \c{data} and in the definition environment of \c{x}.
 \begin{lstlisting}
  xyplot.formula <-  function(x,    data = NULL, ..., subset = TRUE)
- ...
 subset <- eval(substitute(subset), data, environment(x))
 \end{lstlisting}
 
 
-In the R community, the call capturing pattern with evaluation in a non-local environment is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}.
+In the R community, the call capturing pattern with evaluation in a non-local environment is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}. This pattern in relation with \c{model.frame} is also described explicitly in the R documentation of \c{match.call}.
 
-\mypara{Injecting code in package environments.} R distinguishes two kinds of environments for packages: the \emph{package} environment itself, which contains every publicly accessible functions, and the \emph{namespace} environment, which contains all functions including private ones.
+\subsubsection{Injecting code in package environments.} R distinguishes two kinds of environments for packages: the \emph{package} environment itself, which contains every publicly accessible functions, and the \emph{namespace} environment, which contains all functions including private ones.
 
  A call to \c{library(packageName)}, which loads libraries in R, for instance, will
 populate environment \c{package:packageName} using \eval. It is a \emph{base} function
@@ -1351,7 +1352,7 @@ introspection, to represent and search any environment by name, in package
 \emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to bypass the visibility of functions in \emph{USSCXenaTools}. It is also used to
 implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
 
-\mypara{Code Generation.} The more traditional use of \eval is to execute code
+\subsubsection{Code Generation.} The more traditional use of \eval is to execute code
 that was assembled by the programmer into a string. Here we show the method
 \c{plot} for class \c{gmap} in package \c{gpmaps}, simplified for
 explanatory purposes.   \c{paste} is used to dispatch to a specialized plot function, among \c{plot2\_orig},  \c{plot3\_orig}, \c{plot3\_dec} and so on.
@@ -1389,7 +1390,7 @@ Using \c{parse}, \ie converting strings to R expressions, opens to a more flexib
 \todo{There is an example in package comprenhr that does code generation with substitute to create list comprehensions, but it is quite difficult to grasp. But at the same type, we lack here an example of code generation using quite, enquote or substitute.}
 
 
-\mypara{Unnecessary use of \eval}
+\subsubsection{Unnecessary use of \eval}
 
 Similarly to JavaScript, there are also unnecessary uses of \eval. For example,
 the \c{PerformanceAnalytics} package contains a function \c{chart.QQPlot} that
