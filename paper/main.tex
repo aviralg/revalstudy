@@ -1102,12 +1102,13 @@ testthat, tinytest} and \c{unitizer} unit testing frameworks.} They run the
 testing code via \eval, and thus the results would be biassed because of the
 high number of code in these tests (\CranRunnableCodeTestsRnd lines).
 
-From the \packageNbrunsRnd programs we capture \SEAll side effects from
-\SEAllCalls \eval calls in \SEAllSites sites. Again, the challenge is to remove
-the accidental side-effects caused by the R virtual machine implementation and
-are not related to the user code. For example, the \c{.Random.seed} variable,
-which contains the state of the random number generator is saved and restored
-from and to the global environment every time the user calls one of the base
+From the \packageNbrunsRnd programs we capture \SEAllRnd side effects from
+\SEAllCallsRnd \eval calls (\SEUserCallsToAllRatio) in \SEAllSites sites
+(\SEUserSitesToAllRatio). Again, the challenge is to remove the accidental
+side-effects caused by the R virtual machine implementation and are not
+related to the user code. For example, the \c{.Random.seed} variable, which
+contains the state of the random number generator is saved and restored from
+and to the global environment every time the user calls one of the base
 routines that use random numbers.
 %
 % \begin{wrapfigure}{r}{5cm} \hspace*{-20mm} \centering
@@ -1115,11 +1116,12 @@ routines that use random numbers.
 % in target environments for side effects.} \label{fig:se-types}
 % \end{wrapfigure}
 %
-Removing them leaves us with \SEUser side effects (\SEUserRatio) from
-\SEUserCalls \eval calls (\SEUserCallsRatio) in \SEUserSites sites
-(\SEUserSitesRatio). These sites are part of \SEUserFunctions in
-\SEUserPackages packages. \SEFunsNighty functions are responsible for 90\% of
-side effects. Half of the side-effects come just from three functions:
+Removing them leaves us with \SEUserRnd side effects (\SEUserRatio) from
+\SEUserCallsRnd \eval calls (\SEUserCallsRatio) in \SEUserSites sites
+(\SEUserSitesRatio). These sites are part of \SEUserFunctions R functions
+(\SEUserFunctionsToAllRatio of all functions doing \eval) in \SEUserPackages
+packages. From these function, \SEFunsNighty are responsible for 90\% of side
+effects. Half of the side-effects come just from three functions:
 \c{plyr::allocate\_column} (allocates space for a new data frame column),
 \c{withr::execute\_handlers} (executes deferred expressions), and
 \c{foreach::doSEQ} (executes an expression on each element in a collection,
@@ -1129,18 +1131,18 @@ Section~\ref{sec:eval-in-r}), \SESitesNotInEnvirRatio modifies other
 environments, and finally \SESitesBothEnvirRatio does both.
 Table~\ref{tab:se-env} shows the class of the environment where \eval side
 effects happen (\emph{target environment}). It follows the classification
-described in Section~\ref{sec:env} with two extra classes: \emph{Object}, which
-represents a side-effect that happens in S4 or R6 object environment, and
+described in Section~\ref{sec:env} with two extra classes: \emph{Object},
+which represents a side-effect that happens in S4 or R6 object environment, and
 \emph{Local} that corresponds to a side effect in local variables of the \eval
-caller. The table shows data for both \eval sites and functions. For a function
-to have a given target environment class, all of its \eval sites that do side
-effects must have the same target environment class The majority of the \eval
-sites (\SESitesInOneClass) do all side effects consistently in one environment
-class. The same happens on the function level. Almost half of the sites (over a
-third of the functions) do side effects in either \emph{Local} or \emph{Object}
-environments. This gives a ray of hope for the compiler. Even though it is
-possible to do anything anywhere, the data suggest that most side-effects are
-sane.
+caller. The table shows data for both \eval sites and functions. For a
+function to have a given target environment class, all of its \eval sites that
+do side effects must have the same target environment class The majority of the
+\eval sites (\SESitesInOneClass) do all side effects consistently in one
+environment class. The same happens on the function level. Almost half of the
+sites (over a third of the functions) do side effects in either \emph{Local} or
+\emph{Object} environments. This gives a ray of hope for the compiler. Even
+though it is possible to do anything anywhere, the data suggest that most
+side-effects are sane.
 
 \begin{wraptable}{r}{7cm}\small\centering
   \small
@@ -1188,9 +1190,10 @@ did not find a common use case.
 
 \mypara{Discussion} In JavaScript assignments in \eval can happen in either
 local scope or less often, when called through an alias, in the global scope.
-In R, given the support for first-class environments, it can happen anywhere.
-The data however suggest that most of side effects from \eval happen in a
-predictable environment.
+In R, given the support for first-class environments, it can happen anywhere
+making it \eval more dangerous than it already is. The data however suggest
+that first, side-effects from \eval is not as wide spread as in the case of
+JavaScript and that over half of them happen in a predictable environment.
 
 \section{Usage of \eval}
 
