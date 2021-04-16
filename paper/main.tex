@@ -775,9 +775,7 @@ column shows one sample expression $e$ that normalizes to the particular form.
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
 
-\medskip
-
- We detail these forms and discuss their implication for the behavior of \eval.
+\medskip\noindent  We detail these forms and discuss their implication for the behavior of \eval.
 
 \newcommand{\EE}[1]{{{\emph{\framebox{#1}}}}\\[1mm]}
 
@@ -810,13 +808,13 @@ be bound to a promise, and accessing it may trigger evaluation of that promise,
 thus resulting in an arbitrary amount of computation. The median number of
 interpreted operations is \packageMinimizedmedianoperationsaRnd, suggesting that
 it is not the common case. Lookups are often evaluated in constructed
-environments; as few as \packageMinimizedpercentparentframesc of these
+environments; as few as \packageMinimizedpercentparentframesa of these
 expressions are evaluated in a function environment.
 
 \medskip\noindent\EE{$min(e)=\c{\$}$} This form extends \c X to include lookup
 with the dollar operator, \eg~\c{x\$f}, and vector indexing, \eg~\c{x[42]} or
 \c{x[[24]]}. As with \c X, we allow arithmetics and values in this form. Lookup
-occurs in 6\% of the sites. The interpreter evaluates
+occurs in 10\% of the sites. The interpreter evaluates
 \packageMinimizedmedianoperationsgRnd operations on average; the minimum is 3
 operations. This is typically used in a function environment,
 \packageMinimizedpercentparentframese of the time to be precise.
@@ -827,6 +825,7 @@ environment {\tt <\,\!<-}, the \c{assign} function and the \c{\$} form. Assignme
 sites. They represent the most obvious source of side effects. The median number
 of operations is \packageMinimizedmedianoperationsiRnd; the minimum is 3.
 
+\ \\[5mm] % To push the box on the next page
 \medskip\noindent\EE{$min(e)=\c{F()}$} This form captures simple function calls,
 \eg~\c{f(2)}, with neither variables nor assignments. More specifically, it
 allows for variables in the function position but not in arguments. Usually,
