@@ -1245,26 +1245,18 @@ Here we illustrate them on concrete instances.
     uses \eval to generate R function for C++ methods:\\
     \lstinline|eval(substitute(function(...) .CppObj$M(...), list(M=...)), env)|.
 
+  \item \emph{Function calls \c{(F(), F(X), F(F(X)))}} 
+
+
   \item \emph{Block \c{(BLOCK)}} can appear anywhere, but it is almost always
     the case that the block is only passed to \eval rather than being directly
-    part of in as in \c{eval({...})}. Essentially, the block denotes a fragment
+    part of in as in \lstinline|eval({...})|. Essentially, the block denotes a fragment
     of a program to be evaluated in a special way. There is a number of use
     cases: unit testing frameworks (\eg \c{testthat}, \c{testit}), code
     benchmarking (\eg \c{rbenchmark}, \c{microbenchmark}), running code in
     parallel (\eg \c{foreach}, \c{doParallel}), or deferring code execution
     (\eg \c{withr}). 
 
-  \item \emph{Simple function calls \c{(F())}}
-
-    A peculiar use of \eval is to bypass some checks performed by the \c{R CMD
-      CHECK} tool allowing one to submit a package to CRAN that would otherwise
-      be refused. For example, the tool checks that packages do not call
-      \c{unlockBinding} function.\footnote{It allows one to open and modify
-      loaded package name space.} Packages such as \c{data.table} circumvent
-      such restrictions by using \eval as the check is only performed
-      statically.
-
-  \item \emph{Complex function calls \c{(F(X), F(F(X)))}}
 
 \end{compactitem}
 
@@ -1394,6 +1386,14 @@ function (R, d="norm", dp, ...) {
 or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
 % \todo{Aviral's story when he contacted a developer about his use of eval}
+
+    A peculiar use of \eval is to bypass some checks performed by the \c{R CMD
+      CHECK} tool allowing one to submit a package to CRAN that would otherwise
+      be refused. For example, the tool checks that packages do not call
+      \c{unlockBinding} function.\footnote{It allows one to open and modify
+      loaded package name space.} Packages such as \c{data.table} circumvent
+      such restrictions by using \eval as the check is only performed
+      statically.
 
 \mypara{Discussion.} \Eval in R is mostly used for meta-programming purposes and to access environments other than the local one. In Javascript, patterns are ad-hoc, such as json loading and parsing, and can often be rewritten without \eval, such as function or method call, or assignment to a local variable or an object property. Compared to Javascript, \eval patterns in R we observed are much more legitimate, although this is biased by the fact that our main corpus CRAN features more experienced developers than  websites found at large on the web. \todo{can we really claim that? SHould we talk about Kaggle there?}
 
