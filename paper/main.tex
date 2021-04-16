@@ -879,9 +879,7 @@ Each call does quite a lot of work with a 2K instructions median.
 \paragraph{Consistency} It is interesting to consider how many different
 forms any given site sees. The more forms, the harder it will be to characterize
 the behavior of the program at that site. Luckily, \packageNbOneMinimizedPercent
-of sites only see a single form. There are few sites that are highly polymorphic
-(8 or more different forms), these include the pipe operator of the \c{magrittr}
-package which is used to compose functions.
+of sites only see a single form.  In other words, a JIT compiler could correctly predict the \emph{shape} of an expression by looking just at the first call in \packageNbOneMinimizedPercent of the sites.  There are few sites that are highly polymorphic (8 or more different forms), these include the pipe operator of the \c{magrittr} package which is used to compose functions.
 
 \paragraph{Discussion} The variety of uses of \eval is evidenced by the number
 of different forms observed in CRAN. In comparison, JavaScript \eval usage was
@@ -923,7 +921,7 @@ understand the behavior of any piece of code entails fully understanding the
 behavior of all functions that the code may call as the actions of \eval may
 happen at a distance. Finally note that any particular site may have several
 kinds of environments, but in \packageNbOneCategoryEnvirSitePercent of the case a
-site has a single kind. It means that we can predict the \emph{shape} of the expression passed to \eval in \packageNbOneCategoryEnvirSitePercent of the sites.
+site has a single kind. It means that we can predict the \emph{kind} of the expression passed to \eval in \packageNbOneCategoryEnvirSitePercent of the sites.
 
 \begin{table}[h]
   \centering\small\hspace{-.5cm}
@@ -1455,25 +1453,24 @@ Putting the core packages aside, in CRAN, \eval is used by \PkgPackagesRatio of
 the available \CranPackages packages.
 %
 The code executed by R \eval has unusual expressive power. It can essentially
-modify anything anywhere which is wary for both R developers and R compiler.
-% TODO expressions passed to eval
-Even more so in the case of side effects that can quite literally happen
-anywhere. The data however suggest that this is not the case. The majority of
-eval sites do not do any observable side effects and when they do, it happens
-in a predictable environment.
+modify anything anywhere which is wary for both R developers and R compiler. The shapes of expressions passed to \eval are extremely diverse, ranging from simple variable lookups to complex blocks or creation of new functions. Luckily, most site only see a single shape. \eval unlashes its power and shows up its singularity compared to \eval in other languages with the diversity of environments in which it can evaluate its expressions. While most of the time, the \eval environment is the local environment, it is also often the global environment, a synthetic environment, or even a package environment. Luckily, as for the expressions passed to \eval, the environment passed to \eval for one given site is easily predictable with the first call to the site.
+
+The expressive power of \eval shines even more  so in the case of side effects that can quite literally happen anywhere. The data however suggest that this is not the case. The majority of eval sites do not do any observable side effects and when they do, it happens in a predictable environment.
+
+The origins of the expression passed to \eval, either constructed from language expressions, or stemming from reflection, or built by parsing strings. Reflection and constructed expressions dominate, which suggest the main use of \eval is meta-programming. % macros...
 
 % how much can we say about the threat model?
 Similarly to \citep{ecoop11}, we started looking into \evals in R with the
 ambition to replace them by other feature that are more amenable to static
 analysis. The data unfortunately suggests that replacing \eval is going to be
-lengthly journey. Even if we disregard core packages as they are part of the
+a lengthy journey. Even if we disregard core packages as they are part of the
 language and the \eval use is stable, in CRAN \eval is used widely and in more
 sophisticated way than was the case in JavaScript. There the vast majority of
 sites fitted an extremely simple categorization based on simple regular
 expressions. Not so in R. While some usage, especially the one which calls
 \eval with an expression parsed from string, can be categorized and often
 replaced by equivalent yet more disciplined and safer code, the case of \eval
-coming from reflection is much harder.
+coming from reflection is much harder. 
 
 \bibliography{bib/bibliography,bib/jv}
 
