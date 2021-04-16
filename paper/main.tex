@@ -1196,9 +1196,7 @@ JavaScript and that over half of them happen in a predictable environment.
 \section{Usage of \eval}
 
 
-% \section{\eval expressivity and macros}
 
-% The Thomas Lumley's article, Programmer's Niche: Macros in R, (https://www.r-project.org/doc/Rnews/Rnews_2001-3.pdf) describes how to write a `defmacro` function that would like as a macro creator, using `substitute` and `eval`.  There are no local macro variables in this implementation though.
 
 The R language was intended to be extensible. The combination of lazy
 evaluation, \c{substitute} and \c{eval} are the tools given to
@@ -1436,7 +1434,7 @@ The origins of the expression passed to \eval, either constructed from language 
 
 % how much can we say about the threat model?
 Similarly to \citep{ecoop11}, we started looking into \evals in R with the
-ambition to replace them by other feature that are more amenable to static
+ambition to replace them by other features that are more amenable to static
 analysis. The data unfortunately suggests that replacing \eval is going to be
 a lengthy journey. Even if we disregard core packages as they are part of the
 language and the \eval use is stable, in CRAN \eval is used widely and in more
@@ -1446,6 +1444,12 @@ expressions. Not so in R. While some usage, especially the one which calls
 \eval with an expression parsed from string, can be categorized and often
 replaced by equivalent yet more disciplined and safer code, the case of \eval
 coming from reflection is much harder. 
+
+Even though we reckon that \eval has more expressive power than macros, as it can access runtime information such as its call stack, adding a macro system to R to replace \eval for all meta-programming purposes would help static analysis as macros can be expanded at analysis-time.
+
+% It's dubious whether R programmers would develop with macros though.
+% Macros and R
+% The Thomas Lumley's article, Programmer's Niche: Macros in R, (https://www.r-project.org/doc/Rnews/Rnews_2001-3.pdf) describes how to write a `defmacro` function that would like as a macro creator, using `substitute` and `eval`.  There are no local macro variables in this implementation though.  
 
 \bibliography{bib/bibliography,bib/jv}
 
