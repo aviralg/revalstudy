@@ -1108,18 +1108,23 @@ the accidental side-effects caused by the R virtual machine implementation and
 are not related to the user code. For example, the \c{.Random.seed} variable,
 which contains the state of the random number generator is saved and restored
 from and to the global environment every time the user calls one of the base
-routines that use random numbers. Removing them leaves us with \SEUser side
-effects (\SEUserRatio) from \SEUserCalls \eval calls (\SEUserCallsRatio) in
-\SEUserSites sites (\SEUserSitesRatio). These sites are part of
-\SEUserFunctions in \SEUserPackages packages. \SEFunsNighty functions are
-responsible for 90\% of side effects. Half of the side-effects come just from
-three functions: \c{plyr::allocate\_column} (allocates space for a new data
-frame column), \c{withr::execute\_handlers} (executes deferred expressions), and
+routines that use random numbers.
+%
+% \begin{wrapfigure}{r}{5cm} \hspace*{-20mm} \centering
+% \includegraphics[width=90mm]{se-types.pdf} \caption{Distribution of R types
+% in target environments for side effects.} \label{fig:se-types}
+% \end{wrapfigure}
+%
+Removing them leaves us with \SEUser side effects (\SEUserRatio) from
+\SEUserCalls \eval calls (\SEUserCallsRatio) in \SEUserSites sites
+(\SEUserSitesRatio). These sites are part of \SEUserFunctions in
+\SEUserPackages packages. \SEFunsNighty functions are responsible for 90\% of
+side effects. Half of the side-effects come just from three functions:
+\c{plyr::allocate\_column} (allocates space for a new data frame column),
+\c{withr::execute\_handlers} (executes deferred expressions), and
 \c{foreach::doSEQ} (executes an expression on each element in a collection,
-possibly in parallel).
-
-Most of the \eval sites (\SESitesInEnvirRatio) do side effects in the
-environment specified by the \c{envir} parameter (\cf
+possibly in parallel). Most of the \eval sites (\SESitesInEnvirRatio) do side
+effects in the environment specified by the \c{envir} parameter (\cf
 Section~\ref{sec:eval-in-r}), \SESitesNotInEnvirRatio modifies other
 environments, and finally \SESitesBothEnvirRatio does both.
 Table~\ref{tab:se-env} shows the class of the environment where \eval side
@@ -1160,7 +1165,15 @@ exclusively by the \c{tidyselect} package for removing the reference to the
 current quosure environment while interpreting a data frame column
 selectors.\footnote{\cf \url{https://tidyselect.r-lib.org/}}
 
-% TODO type of variables
+Looking closely at the value types in variable updates, we observe that the
+majority of \eval sites involve basic R vectors (\SEBasicTypeRatio) and lists
+(\SEListTypeRatio). From the compiler perspective, we would like to know how
+many sites changes function bindings. In the corpus, this happens in only
+\SEClosureType sites, \SEClosureTypeLocal of them do that in the local
+environment. We have manually inspected a few of these sites, but except for
+manual injection of parameters into a \c{model.frame} execution environment, we
+did not find a common use case.
+
 % TODO do assignments change types?
 
 \begin{table}[h]
@@ -1419,30 +1432,42 @@ or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
 \section{Conclusion}
 
-In this paper we provide large-scale study of the use of the \eval function in
-the R programming language. It is based primarily on a corpus of
+In this paper, we provide a large-scale study of the use of the \eval function
+in the R programming language. It is based primarily on a corpus of
 \CranRunnableScripts scripts extracted from \CranPackages R packages. As
-expected, \eval is used mainly in libraries and therefore we have found just a
-few \eval call sites in scripts coming from Kaggle that we included to
+expected, \eval is used mainly in libraries and therefore we have found just
+a few \eval call sites in scripts coming from Kaggle that we included to
 represent code written by R practitioners. We used an instrumented version of
-the R virtual machine, \rdyntrace, to capture all \eval calls traces
-including the relevant side effects that happen within these calls. There is a
-number of insights that can be learnt from the data.
+the R virtual machine, \rdyntrace, to capture all \eval calls traces including
+the relevant side effects that happen within these calls. Several insights can
+be learnt from the data.
 %
-\eval is widely used in the R core packages that come bundled with the
-language. Because of that there is hardly any R code that would not use it.
+First, \eval is widely used in the R core packages that come bundled with the
+language. Because of that, there is hardly any R code that would not use it.
 \eval is used to implement some basic functionality such as package loading.
-Putting the core packages aside, in CRAN, \eval is used by \PkgPackagesRatio
-of the available \CranPackages packages.
+Putting the core packages aside, in CRAN, \eval is used by \PkgPackagesRatio of
+the available \CranPackages packages.
 %
 The code executed by R \eval has unusual expressive power. It can essentially
-modify anything anywhere which is wary for both R developers as well as R
-compiler.
+modify anything anywhere which is wary for both R developers and R compiler.
 % TODO expressions passed to eval
-% TODO side effects
+Even more so in the case of side effects that can quite literally happen
+anywhere. The data however suggest that this is not the case. The majority of
+eval sites do not do any observable side effects and when they do, it happens
+in a predictable environment.
 
 % how much can we say about the threat model?
-
+Similarly to \citep{ecoop11}, we started looking into \evals in R with the
+ambition to replace them by other feature that are more amenable to static
+analysis. The data unfortunately suggests that replacing \eval is going to be
+lengthly journey. Even if we disregard core packages as they are part of the
+language and the \eval use is stable, in CRAN \eval is used widely and in more
+sophisticated way than was the case in JavaScript. There the vast majority of
+sites fitted an extremely simple categorization based on simple regular
+expressions. Not so in R. While some usage, especially the one which calls
+\eval with an expression parsed from string, can be categorized and often
+replaced by equivalent yet more disciplined and safer code, the case of \eval
+coming from reflection is much harder.
 
 \bibliography{bib/bibliography,bib/jv}
 
