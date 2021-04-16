@@ -874,7 +874,7 @@ of different forms observed in CRAN. In comparison, JavaScript \eval usage was m
 
 \subsection{The environments of \eval}\label{sec:env}
 
-Contrary to the Javasscript \eval, which does not precise the scope in which to evaluate,the second argument of \eval in R, \c{envir}, specifically is dedicated ot that. 
+Contrary to the Javascript \eval, which does not precise the scope in which to evaluate,the second argument of \eval in R, \c{envir}, specifically is dedicated to that. 
 The environment in which evaluation happens determines what is visible to the
 computation started by \eval and the potential reach of its side-effects. The
 second argument to \eval specifies that environment. Environments of \eval can be
@@ -1018,7 +1018,7 @@ classify them into three categories:
 
 \begin{compactitem}[---]
 \item {\it Constructed:} Expressions can be constructed by invoking the
-  \c{quote}, \c{enquote}, \c{expression}. Function arguments are passed as
+  \c{quote}, \c{enquote}, \c{expression} functions. Function arguments are passed as
   promises, and \c{substitute} is used to retrieve the source expression
   associated with the promise.
   \item {\it Reflection:} This group corresponds to uses of the \c{match.call}
@@ -1084,10 +1084,10 @@ testthat, tinytest} and \c{unitizer} unit testing frameworks.} They run the
 testing code via \eval, and thus the results would be biased because of the
 high number of code in these tests (\CranRunnableCodeTestsRnd lines).
 
-From the \packageNbrunsRnd programs we capture \SEAllRnd side effects from
+From the \packageNbrunsRnd programs, we capture \SEAllRnd side effects from
 \SEAllCallsRnd \eval calls (\SEUserCallsToAllRatio) in \SEAllSites sites
 (\SEUserSitesToAllRatio). Again, the challenge is to remove the accidental
-side effects caused by the R virtual machine implementation and are not
+side effects caused by the R virtual machine implementation that are not
 related to the user code. For example, the \c{.Random.seed} variable, which
 contains the state of the random number generator, is saved and restored from
 and to the global environment every time the user calls one of the base
@@ -1114,13 +1114,13 @@ environments, and finally, \SESitesBothEnvirRatio does both.
 Table~\ref{tab:se-env} shows the class of the environment where \eval side
 effects happen (\emph{target environment}). It follows the classification
 described in Section~\ref{sec:env} with two extra classes: \emph{Object},
-which represents a side-effect that happens in S4 or R6 object environment, and
+which represents a side-effect that happens in S4 or R6 object environments, and
 \emph{Local} that corresponds to a side effect in local variables of the \eval
-caller. The table shows data for both \eval sites and functions. For a
+caller (offset 0 in Section~\ref{sec:env}).  The table shows data for both \eval sites and functions. For a
 function to have a given target environment class, all of its \eval sites that
 do side effects must have the same target environment class The majority of the
 \eval sites (\SESitesInOneClass) do all side effects consistently in one
-environment class. The same happens on the function level. Almost half of the
+environment class. The same happens at the function level. Almost half of the
 sites (over a third of the functions) do side effects in either \emph{Local} or
 \emph{Object} environments. This gives a ray of hope for the compiler. Even
 though it is possible to do anything anywhere, the data suggest that most
