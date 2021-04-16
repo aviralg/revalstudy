@@ -894,8 +894,8 @@ classified into the following four kinds:
   currently active on the call stack. Obtained by calling \c{parent.frame()} or
   \c{sys.frame()}.
 \item \emph{Synthetic:} environments built from data structures such as lists,
-  dataframes, or constructed explicitly with \c{new.env}, \c{list2env} or
-  \c{as.environment}. Also includes the empty environment.
+  dataframes, or constructed explicitly with \c{new.env}, \c{list2env}, or
+  \c{as.environment}. It also includes the empty environment.
 \item \emph{Global:}  environments in which scripts or interactive commands
   are evaluated.
 \item \emph{Package:}  environments of a loaded library.
@@ -907,15 +907,13 @@ function environment with the \c{global} kind as a distant second. This means
 that most variable lookups and most side effects either read/update existing
 local variables or introduce new ones. But for which function? From the point of
 view of the function that called \eval, Table~\ref{tab:funoffset} gives an
-offset on the call stack. Thus 0 is the direct caller and corresponds to local variables; 1 is its parent, and so on. The data suggests that in 81\% of cases, \eval accesses its caller's environment -- this means, the variables of the function where \eval textually
+offset on the call stack. Thus 0 is the direct caller and corresponds to local variables; 1 is its parent, and so on. The data suggests that in 81\% of cases, \eval accesses its caller's environment -- this means  the variables of the function where \eval textually
 occurs are read and written to. It is interesting that some 1.5\% of sites
 evaluate a code in an environment that is three frames or above from \eval. This
-distance implies that, in general, modular reasoning is impossible, to
-understand the behavior of any piece of code entails fully understanding the
+distance implies that, in general, modular reasoning is impossible. Understanding the behavior of any piece of code entails fully understanding the
 behavior of all functions that the code may call as the actions of \eval may
-happen at a distance. Finally note that any particular site may have several
-kinds of environments, but in \packageNbOneCategoryEnvirSitePercent of the case a
-site has a single kind. It means that we can predict the \emph{kind} of the expression passed to \eval in \packageNbOneCategoryEnvirSitePercent of the sites.
+happen at a distance. Finally, note that any particular site may have several
+kinds of environments, but in \packageNbOneCategoryEnvirSitePercent of the cases,  a site has a single kind. It means that a JIT compiler can predict the \emph{kind} of  expression passed to \eval in \packageNbOneCategoryEnvirSitePercent of the sites by just examining at the first invocation of a site.
 
 \begin{table}[h]
   \centering\small\hspace{-.5cm}
@@ -963,13 +961,12 @@ Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\hli
 \noindent
 Sites that evaluate in the global environment are likely split between
 intentional and accidental use. Direct references to the top-level, using
-\c{globalenv()} or \c{.GlobalEnv}, are rare, they occur in only
+\c{globalenv()} or \c{.GlobalEnv}, are rare; they occur in only
 \packageNbExplicitGlobalSites sites. We suspect that the majority of uses of the
-global environment come from the fact that our corpus consists of scripts that
-are loaded at the top level, thus that environment may often be the caller of
+global environment come from the fact that our corpus consists of scripts loaded at the top level. Thus, that environment may often be the caller of
 \eval or close to it. The reason we make this point is that values stored in the
 global environment are visible to all functions and are not reclaimed by the
-garbage collector. So accidental uses may pollute that name space.
+garbage collector. So accidental uses may pollute that namespace.
 
 Synthetic environments need a parent. It is specified as an argument of the \c{new.env} function, or when \c{envir} is a list or a data frame, \eval uses its third argument
 (\c{enclos}) as the parent.  The parent is used to lookup variables not found in its
@@ -984,16 +981,15 @@ The majority of \eval call sites access the environment of some function on the
 call stack. Usually, the current function, but sometimes frames arbitrarily far
 up the call stack. One thing the data does not say is how that environment was
 obtained. The expected case is that the environment was the one obtained from a
-promise; as promises combine code and the environment in which that code
+promise, as promises combine code and the environment in which that code
 originates. Likely less frequent are cases where \eval is provided the results
-of programmatically selecting some call stack. ({\it Synthetic}) The relative
+of programmatically selecting some call stack. ({\it Synthetic}) The relatively
 high frequency of synthetic environments corresponds to cases when one wants to
 evaluate an expression in either a restricted environment, use a data
 structure as an environment. ({\it Global}) The fact that the global environment
-shows up so frequently is likely an artifact of the way the code is run. ({\it
-  Package}) There are only 92 sites that use a package environment in \eval,
-this is probably best as it is bad form to add bindings or modify functions
-of a loaded package. Many more sites rather wrap a package environment in a new
+shows up so frequently is likely an artifact of how the code is run. ({\it
+  Package}) There are only \packageNbPackageNamespaceEnvSites sites that use a %77 sites
+ package environment in \eval. This is probably best as it is an improper form of adding bindings or modifying functions of a loaded package. Many more sites instead wrap a package environment in a new
 environment to create singletons in a package.
 
 %% The \c{imchange} function of package \c{imager} makes it possible to modify
