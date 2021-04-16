@@ -1038,13 +1038,13 @@ creating that expression, these are associated with particular use cases, we
 classify them in three categories:
 
 \begin{compactitem}[---]
-\item {\it Reflection:} This group corresponds to uses of the \c{match.call}
-  function to reflectively capture the expression that invoked the current
-  function.
 \item {\it Constructed:} Expressions can be constructed by invoking the
   \c{quote}, \c{enquote}, \c{expression}. Function arguments are passed as
   promises and \c{substitute} is used to retrieve the source expression
   associated with the promise.
+  \item {\it Reflection:} This group corresponds to uses of the \c{match.call}
+  function to reflectively capture the expression that invoked the current
+  function.
 \item {\it String:} Finally, expressions can be created from strings by invoking
    \c{parse}, \c{str2expression} or \c{str2lang}.
 \end{compactitem}
@@ -1060,8 +1060,8 @@ of numerous examples suggest that the classified results are accurate.
 \begin{tabular}{r|r|r} \hline
 Origin  & \#sites & \%sites \\\hline
 Constructed & \packageNbConstructedSites & \packageNbConstructedSitePercent \\
-String & \packageNbStringSites & \packageNbStringSitePercent \\
-Reflection &  \packageNbMatchCallExprsSites & \packageMatchCallExprsSitePercent\\\hline
+Reflection &  \packageNbMatchCallExprsSites & \packageMatchCallExprsSitePercent\\
+String & \packageNbStringSites & \packageNbStringSitePercent \\\hline
 \end{tabular}
 \caption{Provenance}\label{tab:provenance}
 \end{wraptable}
