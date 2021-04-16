@@ -1438,12 +1438,12 @@ or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 In this paper, we provide a large-scale study of the use of the \eval function
 in the R programming language. It is based primarily on a corpus of
 \CranRunnableScripts scripts extracted from \CranPackages R packages. As
-expected, \eval is used mainly in libraries and therefore we have found just
-a few \eval call sites in scripts coming from Kaggle that we included to
-represent code written by R practitioners. We used an instrumented version of
-the R virtual machine, \rdyntrace, to capture all \eval calls traces including
-the relevant side effects that happen within these calls. Several insights can
-be learnt from the data.
+expected, \eval is used mainly in libraries. We have found just a few \eval
+call sites in scripts coming from large corpus of Kaggle that represents code
+written by R practitioners. We used an instrumented version of the R virtual
+machine, \rdyntrace, to capture all \eval calls traces including the relevant
+side effects that happen within these calls. Several insights can be learnt
+from the data.
 %
 First, \eval is widely used in the R core packages that come bundled with the
 language. Because of that, there is hardly any R code that would not use it.
