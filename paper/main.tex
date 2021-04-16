@@ -360,16 +360,15 @@ reported results.
 
 \subsection{Corpus}
 
-Our corpus is assembled from three sources: the \emph{Base} libraries that are
-bundled with the language implementation, packages hosted on \emph{CRAN} and
-scripts from \emph{Kaggle}.
+Our corpus is assembled from three sources: the \emph{Base} libraries 
+bundled with the language implementation, packages hosted on \emph{CRAN}, and scripts from \emph{Kaggle}.
 
 \mypara{Base.} The dataset contains \BasePackages libraries performing basic
 arithmetics, statistics, and operating system functionalities. These libraries
 are bundled with R and executed pervasively. Together they contain
 \BaseEvalCallSites call sites to \eval in \BaseFunsWithEvals functions. Some of these
-functions provide basic functionalities such as package loading and thus there
-is hardly any code which does not invoke one of these.
+functions provide basic functionalities such as package loading, and thus, there
+is hardly any code that does not invoke one of these.
 
 \mypara{CRAN.} The Comprehensive R Archive Network
 ({\small \url{cran.r-project.org}}) is the largest curated repository of R
@@ -377,7 +376,7 @@ packages. It hosts \CranAvailablePackagesRnd packages with 6 new ones submitted
 daily~\cite{Ligges2017}. Packages are authored by experienced developers and
 abide by well-formedness rules automatically checked on each commit.
 Each package comes with sample data. There are three sources of
-runnable code in a package: \emph{tests, examples} and \emph{vignettes} --
+runnable code in a package: \emph{tests, examples}, and \emph{vignettes} --
 respectively, unit tests, code snippets from the documentation, and long-form
 use-cases written in RMarkdown. Examples and vignettes can be turned into
 scripts by extracting the relevant code. From \CranPackages packages we
@@ -399,11 +398,9 @@ They contain \KaggleCode lines of R code. Only \KaggleWithEvals kernels call
 \subsection{Pipeline}
 
 The analysis presented in this has been automated by a pipeline that acquires
-packages, extract scripts, executes them, traces their behavior and summarizes
-observations. Figure~\ref{fig:pipeline} shows the main steps along with their
-running time, data size, and number of elements manipulated. Timings are from a
-cluster of three 2.3GHz Intel Xeon 6140 servers, with 72 cores and 256GB of RAM,
-and shared OCFS network storage. The pipeline steps are:
+packages, extracts scripts, executes them, traces their behavior, and summarizes observations. Figure~\ref{fig:pipeline} shows the main steps along
+ with their running time, data size, and  number of elements manipulated.
+  Timings are from a cluster of three 2.3GHz Intel Xeon 6140 servers, with 72 cores and 256GB of RAM, and shared OCFS network storage. The pipeline steps are:
 
 
 \begin{figure}[!h]\hspace{-5mm}
@@ -414,31 +411,30 @@ and shared OCFS network storage. The pipeline steps are:
 \medskip
 \begin{compactenum}
 \item \emph{Download.} Packages are downloaded from CRAN. For scripts, a web
-  crawler retrieves code and the Kaggle command line tool gets data.
-  Installation is complicated by native dependencies which are not properly
-  documented and thus hard to automatically resolve.
+  crawler retrieves code, and the Kaggle command-line tool gets data.
+  Installation is complicated by native dependencies, which are not adequately
+  documented and thus hard to resolve automatically.
 \item \emph{Extract.} Given installed packages and scripts, the next step is to
   create runnable programs. The \genthat tool helpfully extracts all runnable
   code snippets from a package and turns each of these into a self-standing
-  program~\cite{issta18}. Some Kaggle kernels are already scripts, for those
-  nothing more needs be done. Others kernels are packages as notebooks, either
-  as Rmarkdown or Jupyter, for those we use \c{knitr} to extract runnable code.
+  program~\cite{issta18}. Some Kaggle kernels are already scripts. For those,
+  nothing more needs to be done. Others kernels are packages as notebooks, either   as Rmarkdown or Jupyter. For those, we use \c{knitr} to extract
+   runnable code.
   The body of each extracted program is instrumented with calls to our dynamic
   analyzer to ensure that we only record calls to \eval from the code of
   interest and not from bootstrapping or execution harness operations.
-\item \emph{Trace.} Each program is executing using our dynamic analysis tool
-  which is a heavily instrumented interpreter that captures calls to \eval and
+\item \emph{Trace.} Each program executes using our dynamic analysis tool, a heavily instrumented interpreter that captures calls to \eval and
   many other fine-grained runtime events. Packages are run twice, once to
-  capture \eval calls originating from package code, and a second time to
+  capture \eval calls originating from package code and a second time to
   capture calls coming from the base libraries. To avoid any interference, each
   program is run in its own process.
   As the GNU R bytecode compiler is written in R, we turn it off
   to avoid recording \eval in its code, and fallback on the interpreter.
-\item \emph{Analyze.} Finally, analysis output is merged, cleaned and summarized
+\item \emph{Analyze.} Finally, the analysis output is merged, cleaned, and summarized
   in a post-processing phase driven by series of R scripts. The summarized data
   is then analyzed in RMarkdown notebooks to gather insights. All figures and
   numbers appearing in the paper are generated automatically. Figures are
-  produced in PDF by \c{ggplot2}, numbers are exported as \LaTeX macros.
+  produced in PDF by \c{ggplot2}; numbers are exported as \LaTeX macros.
 \end{compactenum}
 
 \medskip\noindent The code extraction and tracing steps of the pipeline are run
@@ -452,12 +448,12 @@ based on GNU R 4.0.2 that exposes low-level callbacks for a variety of runtime
 events~\cite{oopsla19b}.
 
 The tracer registers callbacks to all \eval functions as well as a few other
-ones that allow us to better identify where the expressions come from. For
-example, we taint the results of calls to \c{parse} (turns string into
-expression) and \c{match.call} (reflects on current call). We also capture calls
-to R API for dynamic code loading (\eg\xspace \c{library}, \c{require} and
+ones that allow us to identify better where the expressions come from. For
+example, we taint the results of calls to \c{parse} (turns strings into
+expressions) and \c{match.call} (reflects on current call). We also capture calls
+to R API for dynamic code loading (\eg\xspace \c{library}, \c{require}, and
 \c{source}). Next, we subscribe to the events related to a variable definition
-and assignment allowing us to record side effects that happen in environments
+and assignment, allowing us to record side effects that happen in environments
 while evaluating code in \eval. One challenge we encountered during the analysis
 was that essentially R only provides source references for top-level calls in a
 function body or in the block surrounded by braces. That is to say, a method
@@ -467,12 +463,12 @@ have a line number and source reference. This is unfortunately not easily fixed
 in the R implementation. Instead, we extended the dynamic analysis tool to
 attach synthetic source code references to all \eval call sites by traversing
 ASTs. The tracer is implemented as an R package in 3.2K C++ and 1.3K of R code.
-For performance reason, most of the tracing is done in C++. While in theory the
-implementation is rather straightforward, it is not so in practice:
+For performance reasons, most of the tracing is done in C++. While in theory, the
+implementation is relatively straightforward, it is not so in practice:
 %
 \begin{compactitem}[---]
 
-\item The lazy evaluation makes it difficult to analyze function arguments
+\item The lazy evaluation makes it challenging to analyze function arguments
   while tracing as prematurely forcing a promise might have dangerous
   consequences.
 
@@ -484,21 +480,21 @@ implementation is rather straightforward, it is not so in practice:
   operations. This is even more so for the side-effects analysis.
 
 \item In the dynamic analysis, we run all the \emph{runnable} code we obtained
-  from CRAN and Kaggle---\ie real code written by people with highly varying
+  from CRAN and Kaggle---\ie actual code written by people with highly varying
   expertise in R and programming in general. This exercises a lot of the corner
   cases of the highly underspecified R behavior.
 
 \end{compactitem}
 
 
-\mypara{Limitations.} The analysis has some limitation. Even with the extension
+\mypara{Limitations.} The analysis has some limitations. Even with the extension
 described above, there are still \PkgUndefinedRnd \eval calls without source
-references. This occurs when a reference to the \eval function is passed as
-argument to a higher-order functions or when the \eval call originates from
+references. This occurs when a reference to the \eval function is passed as an 
+argument to a higher-order function or when the \eval call originates from
 native code. However, these missing source references account for a meager
 \PkgUndefinedRatio of all calls; they are unlikely to affect our results. Other
 limitations are that we ignore calls to the native \eval function and to the
-alternate \c{rlang::tidy\_eval} function which uses native \eval internally.
+alternate \c{rlang::tidy\_eval} function, which uses native \eval internally.
 The \c{rlang} package introduces a new kind of promise called \c{quosure} which
 is evaluated by \c{tidy\_eval}. None of these limitations should invalidate our
 conclusions.
