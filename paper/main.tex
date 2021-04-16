@@ -1142,15 +1142,15 @@ environments. This gives a ray of hope for the compiler. Even though it is
 possible to do anything anywhere, the data suggest that most side-effects are
 sane.
 
-\begin{table}[h]
+\begin{wraptable}{r}{7cm}\small\centering
   \small
   \centering
   \begin{tabular}{l|r|r|r|r}\hline
     Environments & \#sites & \%sites & \#funs. & \%funs. \\%
     \expandableinput tag/table-se-target-envs.tex
   \end{tabular}
-  \caption{Most used target environments for \eval side-effects} \label{tab:se-env}
-\end{table}
+  \caption{Target environments for \eval side-effects} \label{tab:se-env}
+\end{wraptable}
 
 Table~\ref{tab:se-types} shows the proportion of the different side effects
 that were recorded. In terms of calls, we see primarily assignments and in
@@ -1186,8 +1186,11 @@ did not find a common use case.
   \caption{Types of \eval side-effects} \label{tab:se-types}
 \end{table}
 
-\mypara{Discussion}
-\todo{Is there any comparison with JS?}
+\mypara{Discussion} In JavaScript assignments in \eval can happen in either
+local scope or less often, when called through an alias, in the global scope.
+In R, given the support for first-class environments, it can happen anywhere.
+The data however suggest that most of side effects from \eval happen in a
+predictable environment.
 
 \section{Usage of \eval}
 
