@@ -1152,7 +1152,7 @@ selectors.\footnote{\cf \url{https://tidyselect.r-lib.org/}}
 Looking closely at the value types in variable updates, we observe that the
 majority of \eval sites involve basic R vectors (\SEBasicTypeRatio) and lists
 (\SEListTypeRatio). From the compiler perspective, we would like to know how
-many sites changes function bindings. In the corpus, this happens in only
+many sites change function bindings. In the corpus, this happens in only
 \SEClosureType sites; \SEClosureTypeLocal of them do that in the local
 environment. We have manually inspected a few of these sites, but except for
 manual injection of parameters into a \c{model.frame} execution environment, we
@@ -1175,7 +1175,7 @@ local scope or less often, when called through an alias, in the global scope.
 In R, given the support for first-class environments, it can happen anywhere, 
 making it \eval more dangerous than it already is. However, the data  suggest
 that first, side-effects from \eval are not as widespread as in the case of
-JavaScript, \footnote{\citep{ecoop11} shows that in the \emph{Interactive} scenario, \eval in Javascript performs, store events can reach up to 40\% of the events, and 7\% to 8\% of the \eval do side effects in the global scope. } and that over half of them happen in a predictable environment.
+JavaScript,\footnote{\citep{ecoop11} shows that in the \emph{Interactive} scenario, \eval in Javascript performs, store events can reach up to 40\% of the events, and 7\% to 8\% of the \eval do side effects in the global scope. } and that over half of them happen in a predictable environment.
 
 \section{Usage of \eval}
 
@@ -1186,8 +1186,8 @@ this end.
 %conceivable that this may discourage some casual users. \Eval is also being
 %used to reduce boilerplate code and provide convenience features for
 %programmers. 
-In this section we focus on the \emph{why}, giving real-world examples of the
-\eval usage in the wild. All of the examples are based on code from our corpus
+In this section, we focus on the \emph{why}, giving real-world examples of the
+\eval usage in the wild. All the examples are based on code from our corpus,
 often simplified to fit the space and increase clarity. For each example, we
 indicate the package and the function where it is located.
 
@@ -1196,13 +1196,13 @@ indicate the package and the function where it is located.
 % We start the discussion with the examples for the minimized expressions from
 % Section~\ref{sec:minimized}.
 In Table~\ref{tab:minimizedexpressions} we have shown the most common shapes of
-expressions passed to \eval. Here we illustrate them on concrete instances.
+expressions passed to \eval. Here, we illustrate them on concrete instances.
 
 \begin{compactitem}[---] 
 
-  \item \emph{Variable lookup and values and indexing \c{(X, V, \$)}}
+  \item \emph{Variable lookup and values, and indexing \c{(X, V, \$)}}
     constitute one of the most common use case for \eval. Let's consider the
-    \c{subset} function from R base library which allows, among others, to
+    \c{subset} function from the R base library, which allows, among others, to
     select variables in a data frame. For example, given a data frame \c{df}
     with three columns \c{A,B,C}, \c{subset(df, sel=A)} returns a subset of
     \c{df} with just the \c{A} column. The same would happen with \c{subset(df,
@@ -1211,48 +1211,47 @@ expressions passed to \eval. Here we illustrate them on concrete instances.
     \c{B} and whatever index the variable \c{x} holds. It is implemented using:
     \lstinline|eval(substitute(sel), nl, parent.frame())| The first argument
     returns the expression passed to \c{sel}, the second is the data frame in
-    which this expression will be evaluated and finally the last indicates
+    which this expression will be evaluated, and the last indicates
     which environment should be used to look up bindings not found in \c{nl}.
 
     Another example is the most often called \eval site in CRAN:
     \lstinline|eval(`_inherit`, env)| defined in the \c{find\_super} function
-    in \c{ggproto} object system. It looks up the variable \c{`\_inherit`} to
-    find the parent class. In the vast majority of cases the variable is symbol
+    in the \c{ggproto} object system. It looks up the variable \c{`\_inherit`} to
+    find the parent class. In the vast majority of cases, the variable is a symbol
     and so the \eval seems superfluous. The \eval is however necessary so one
-    can specify parent classes using \c{pkg\_name::class\_name} as the \c{::}
+    can specify parent classes using \c{pkg\_name::class\_name}, as the \c{::}
     operator is a function call in R.
 
-  \item \emph{Assignments \c{(<-)}} appears in the cases where a developer wants
-    to create or update a biding in a specific environment where either the
-    name of the value come from some expression. Most cases come from trivial
+  \item \emph{Assignments \c{(<-)}} appear in the cases where a developer wants
+    to create or update a binding in a specific environment where either the
+    name or the value come from some expression. Most cases originate from trivial
     code generation where the assign expression is assembled using \c{parse} or
     \c{substitute}, often in a loop: \lstinline|eval(parse(text=paste(capture.output(default_args[[i]]), "<-", i)))|. 
 
     There are also more sophisticated cases. The \c{plyr::allocate\_column}
     function uses \eval for a deferred assignment to fill missing values in a
-    column. Package \c{overture} repeatedly evaluates R expressions saving any
-    assignments that happen in it, as samples of Markov chains.
+    column. Package \c{overture} repeatedly evaluates R expressions capturing any  assignments that happen in it, as samples of Markov chains.
     
   \item \emph{Function definition \c{(FUN)}} is mostly used in conjunction with
     code generation where new functions are synthesized using either \c{parse}
     or \c{substitute}. Some FFI frameworks use this to automatically generate R
     binding to native code. For example, \c{Rcpp}, which bridges R with C++,
-    uses \eval to generate R function for C++ methods:\\
+    uses \eval to generate R functions for C++ methods:\\
     \lstinline|eval(substitute(function(...) .CppObj$M(...), list(M=...)), env)|.
 
-  \item \emph{Function calls \c{(F(), F(X), F(F(X)))}} represents two very
+  \item \emph{Function calls \c{(F(), F(X), F(F(X)))}} represent two very
     frequent patterns: \emph{code generation} and \emph{call reflection}. There are numerous
-    cases for code generation. One occurring usage is generating ad-hoc calls
+    cases for code generation. One occurring usage is to generate ad-hoc calls
     to libraries such as \c{ggplot2} when one needs to parameterize data or
     aesthetics selection from a variable. For example \lstinline|ggplot(df, aes(x=A, y=B))|
     maps X and Y axes in the plot to \c{A} and \c{B} columns in
     \c{df}. It might not be immediately clear\footnote{\cf
-    \url{https://stackoverflow.com/questions/22309285/how-to-use-a-variable-to-specify-column-name-in-ggplot}}
-    how modify the call so it will pick the actual mapping from \c{A} and \c{B}
+    \url{https://stackoverflow.com/questions/22309285/how-to-use-a-variable-to-specify-column-name-in-ggplot}}  for a ggplot2 user 
+    how to modify the call to pick the actual mapping from \c{A} and \c{B}
     variables. Another case is the traditional use of \eval as a means to
     reduce boilerplate code; simple and repetitive code can easily be replaced
     with judicious use of \eval. For example, the \c{data.table} package uses
-    \eval to calls the \c{options} function with named arguments taken from a
+    \eval to call the \c{options} function with named arguments taken from a
     vector of strings. While the benefits are limited in this example, it is an
     attractive tool for programmers.
     %
@@ -1261,10 +1260,10 @@ expressions passed to \eval. Here we illustrate them on concrete instances.
     for (i in names(opts)) eval(parse(text=paste0("options(",i,"=",opts[i],")"))) 
     \end{lstlisting}
 
-    Call reflection refers to the combination of \eval with \c{match.call},
-    function that returns the current call with all its arguments captures as
+    Call reflection refers to the combination of \eval with \c{match.call}, a
+    function that returns the current call with all its arguments captured as
     expressions. This is used mostly in the following circumstances: (1) to
-    record a call for a later use in possibly different environment, (2) pass
+    record a call for a later use in a possibly different environment, (2) pass
     most of the captured call arguments to another function or (3) evaluate
     arguments of the function in different environments. This is widely used in
     relation with statistical modeling in combination with a model fitting
@@ -1279,6 +1278,8 @@ expressions passed to \eval. Here we illustrate them on concrete instances.
     mf <- eval(tform, parent.frame())
     \end{lstlisting}
 
+    \todo{Add that this pattern is advised by the R documentation of match.call}
+
   \item \emph{Block \c{(BLOCK)}} can appear anywhere, but it is almost always
     the case that the block is only passed to \eval rather than being directly
     part of in as in \lstinline|eval({...})|. Essentially, the block denotes a
@@ -1291,6 +1292,8 @@ expressions passed to \eval. Here we illustrate them on concrete instances.
     code execution (\eg \c{withr}). 
     
 \end{compactitem}
+
+\todo{Say somewhere that the R community commonly calls call/argument capturing (with substitute or match.call), Non-Standard Evaluation.}
 
 \subsection{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
