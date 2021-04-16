@@ -675,7 +675,7 @@ instructions.
  \caption{Instructions per call} \label{ev}
 \end{figure}
 
-\subsection{Base}
+\subsection{Base}\label{sec:usage-base}
 
 We recorded \baseAllcalls \eval calls in the \BasePackages base libraries. This
 comes from running 10\% randomly selected programs from the
@@ -1184,86 +1184,89 @@ JavaScript, \footnote{\citep{ecoop11} shows that in the \emph{Interactive} scena
 
 \section{Usage of \eval}
 
-
-
-
 The R language was intended to be extensible. The combination of lazy
-evaluation, \c{substitute}, and \c{eval} are the tools given to
-developers to this end. This API is slightly more complex than just
-passing a string, it is conceivable that this may discourage some
-casual users. \Eval is also being used to reduce boilerplate code and
-provide convenience features for programmers. We give examples for the minimized expressions of Section~\ref{sec:minimized} and then dig into high-level \eval design patterns.
-
-The examples are based on code from CRAN or Kaggle, simplified to fit the limited space of a scientific paper. For each example, we indicate the package and the function where it is located.
+evaluation, \c{substitute} and \c{eval} are the tools given to developers to
+this end.
+%This API is slightly more complex than just passing a string, it is
+%conceivable that this may discourage some casual users. \Eval is also being
+%used to reduce boilerplate code and provide convenience features for
+%programmers. 
+In this section we focus on the \emph{why}, giving real-world examples of the
+\eval usage in the wild. We start the discussion with the examples for the
+minimized expressions from Section~\ref{sec:minimized}. They we look into
+high-level \eval design patterns. All of the examples are based on code from
+our corpus often simplified to fit the space and increase clarity. For each
+example, we indicate the package and the function where it is located.
 
 \subsection{Shapes of \eval}
 
-We illustrate the minimized expressions of Section~\ref{sec:minimized} on representative examples. 
+In Table~\ref{tab:minimizedexpressions} we have shown the most common shapes of expressions passed to \eval.
+Here we illustrate them on concrete instances.
 
-% model.frame is in the next subsection, in the high-level patterns
+\begin{compactitem}[---] 
 
-\subsubsection{Variable lookup and values.}  We also include here lookup to slots in a list or data frame.
-This corresponds to minimized expressions \c{X}, \c{V}, and  \c{\$}. Variable lookup leads to a large diversity of environments, many being package environments or package environments wrapped in \c{new}.
+  \item \emph{Variable lookup and values and indexing \c{(X, V, \$)}}
+    constitute one of the most common use case for \eval. Let's consider the
+    \c{subset} function from R base library which allows, among others, to
+    select variables in a data frame. For example, given a data frame \c{df}
+    with three columns \c{A,B,C}, \c{subset(df, sel=A)} returns a subset of
+    \c{df} with just the \c{A} column. The same would happen with \c{subset(df,
+    sel=1)}. However, thanks to \eval it can also be also called with
+    \c{subset(df, sel=c(1,B,x))} returning a subset of the first column, column
+    \c{B} and whatever index the variable \c{x} holds. It is implemented using:
+    \lstinline|eval(substitute(sel), nl, parent.frame())| The first argument
+    returns the expression passed to \c{sel}, the second is the data frame in
+    which this expression will be evaluated and finally the last indicates
+    which environment should be used to look up bindings not found in \c{nl}.
 
-It is the predominant usage of \eval in Base, through function \c{match.args} (with evaluates on  minimized expression \c{V}). In CRAN, it correlates with more exotic environments passed to \eval. 
-The dominant site in numbers of calls in CRAN, is located in \c{ggproto} in the custom object system of \emph{ggplot2}. It evaluates a variable \c{`\_inherit`}, which represents the parent of the class, in the definition environment of the class. \eval is used here to account for parents scoped in a namespace with \c{::}, which is actually a function call in R.  
+    Another example is the most often called \eval site in CRAN:
+    \lstinline|eval(`_inherit`, env)| defined in the \c{find\_super} function
+    in \c{ggproto} object system. It looks up the variable \c{`\_inherit`} to
+    find the parent class. In the vast majority of cases the variable is symbol
+    and so the \eval seems superfluous. The \eval is however necessary so one
+    can specify parent classes using \c{pkg\_name::class\_name} as the \c{::}
+    operator is a function call in R.
 
+  \item \emph{Assignments \c{(<-)}} appears in the cases where a developer wants
+    to create or update a biding in a specific environment where either the
+    name of the value come from some expression. Most cases come from trivial
+    code generation where the assign expression is assembled using \c{parse} or
+    \c{substitute}, often in a loop: \lstinline|eval(parse(text=paste(capture.output(default_args[[i]]), "<-", i)))|. 
 
-Package \emph{statnet.common} handles formulas, R object that associates an expression of the form \c{x~\textasciitilde~expr} and a carry-on environment where to evaluate the formula. It evaluates the left-hand side of the formula, which is always a variable, in function \c{eval\_lhs.formula}, where \c{object} is the formula and \c{environment} returns the formula associated to the object:
+    There are also more sophisticated cases. The \c{plyr::allocate\_column}
+    function uses \eval for a deferred assignment to fill missing values in a
+    column. Package \c{overture} repeatedly evaluates R expressions saving any
+    assignments that happen in it, as samples of Markov chains.
+    
+  \item \emph{Function definition \c{(FUN)}} is mostly used in conjunction with
+    code generation where new functions are synthesized using either \c{parse}
+    or \c{substitute}. Some FFI frameworks use this to automatically generate R
+    binding to native code. For example, \c{Rcpp}, which bridges R with C++,
+    uses \eval to generate R function for C++ methods:\\
+    \lstinline|eval(substitute(function(...) .CppObj$M(...), list(M=...)), env)|.
 
-\begin{lstlisting}
-eval(object[[2L]],envir=environment(object))
-\end{lstlisting}
+  \item \emph{Block \c{(BLOCK)}} can appear anywhere, but it is almost always
+    the case that the block is only passed to \eval rather than being directly
+    part of in as in \c{eval({...})}. Essentially, the block denotes a fragment
+    of a program to be evaluated in a special way. There is a number of use
+    cases: unit testing frameworks (\eg \c{testthat}, \c{testit}), code
+    benchmarking (\eg \c{rbenchmark}, \c{microbenchmark}), running code in
+    parallel (\eg \c{foreach}, \c{doParallel}), or deferring code execution
+    (\eg \c{withr}). 
 
-\subsubsection{Assigments.} It corresponds to minimized expression \c{<-} and groups together \c{<-}, \c{<<-} and \c{assign}. Package \emph{plyr} has a function combine data frames by row, filling in missing columns. During the allocation of the missing columns, an assignment call is built with \c{assignment <- quote(column[rows] <<- what)} and later evaluated on demand in a setter function, with \c{eval(assigmment)}. Package \emph{overture} is used to run Markov Chain Monte Carlo. It runs an R expression repeatedly and saves any assignments that happen, as samples of the Markov chains. 
-The expression is captured with \c{substitute} and a new environment \c{env} wrapping the parent of the caller is created, in which all assignments will happen. Regularly, the content of \c{env} is inspected to sample the assigned variables.
-\begin{lstlisting}
-function(expr, overwrite=over.write) {
-	expr_q <- substitute(expr)
-	env <- new.env(parent=parent.frame(1))
-	samps <- list()
-	RunMcmc(samps, 1, expr_q, env, n.save, backing.path, thin, exclude, overwrite)
-}
+  \item \emph{Simple function calls \c{(F())}}
 
-RunMcmc <- function... {
-	 eval(expr_q, envir=env)
-\end{lstlisting}
+    A peculiar use of \eval is to bypass some checks performed by the \c{R CMD
+      CHECK} tool allowing one to submit a package to CRAN that would otherwise
+      be refused. For example, the tool checks that packages do not call
+      \c{unlockBinding} function.\footnote{It allows one to open and modify
+      loaded package name space.} Packages such as \c{data.table} circumvent
+      such restrictions by using \eval as the check is only performed
+      statically.
 
-\subsubsection{Function definition.} This corresponds to minimized expression \c{FUN}. Package \emph{Rcpp} is used to easily interface C++ and R and it uses \eval to bind C++ functions and classes to R objects.
-For instance, \c{.makeCppMethods} create a R function for each C++ method named \c{what} of a given class. The use of \substitute to inject the name of the method in a language expression entails the use of \eval.
-\begin{lstlisting}
-methods[[what]] <- eval(substitute(
-	function(...) .CppObject$WHAT(...), list(WHAT = as.name(what))),
-	env)
-\end{lstlisting}
+  \item \emph{Complex function calls \c{(F(X), F(F(X)))}}
 
-\mypara{Block.} In package \emph{vglm}, \eval is used to inject a pre-processing code at the beginning of a function implementing a statistical model: 
-\begin{lstlisting}
-if (length(slot(family, "first"))) 
-	eval(slot(family, "first"))
-\end{lstlisting}
-
-Package \emph{withr} provides facilities to encapsulate side-effecting functions. The function \c{defer} is used to attach an expression to be evaluated when exiting any frame in the stack. It can be passed arbitrary code, and so blocks. 
-
-\subsubsection{Simple function calls.} This corresponds to minimized expression \c{F()}, \ie calls without nested functions and without variables (but possibly named arguments). For instance, package \emph{foreach} provides \c{foreach}-like loops. It makes it possible to initialize the iterator variables, with code \c{init}, which is equal \c{quote(list())} by default. \c{init} is then used to initialize the \c{foreach} accumulator \c{state\$accum <- eval(combineInfo\$init, envir=extra, enclos=obj\$evalenv)}.
-
-A peculiar use of \eval is to bypass some checks performed to accept code submitted to CRAN. For example, bindings can be \emph{locked} in an environment, \ie forbidding its value to be modified. The binding can be unlocked though by calling \c{unlockBinding} but packages in CRAN are forbidden to use that function.  Package \emph{data.table} bypasses this restriction by building a call piece by piece, to unlock binding \c{.N}. The call is then evaluated. Now that \c{.N} is unlocked, it can be assigned to. Instead of using \eval to assign in the parent frame, they rather use the more specialized \c{assign} function.
-
-\begin{lstlisting}
-	if (locked.N) eval(call("unlockBinding", ".N", parent.frame()))  
-	assign(".N", nrow(x), envir=parent.frame(), inherits=FALSE)
-\end{lstlisting}
-
-\subsubsection{Complex function calls.} It corresponds to minimized expressions \c{F(X)} and \c{F(F(X))}, \ie function calls with variables, possibly with nested function calls. Package \emph{huxtable} is used to create custom tables and export them to various formats. To create functions to customize each of the borders of the table, it injects the indices \c{i} and \c{j} of the cells at the border and then evaluate them:
-\begin{lstlisting}
-xxx_border_huxtable <- function(lr_tb, i, j, border_prop) {
-	function (ht) {
-		hickness <- mlist$thickness[eval(i), eval(j), drop = FALSE]
-	}
-}
-left_border.huxtable <- xxx_border_huxtable("lr_borders",
-i = quote(seq_len(nrow(ht))), j = quote(-last_col))
-\end{lstlisting}
+\end{compactitem}
 
 \subsection{High-level patterns.}
 
