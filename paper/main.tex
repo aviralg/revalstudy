@@ -262,7 +262,7 @@ function called with \c{x = a+b}, then \c f returns an expression object.
 \begin{lstlisting}
  > f <- function(x) substitute(x)
  > f(a+b)
- # expression(a+b)
+ # a+b
  > substitute(a+b,list(a=1,b=2))
  # 1+2
 \end{lstlisting}
@@ -286,7 +286,7 @@ environment:
   not found, \c{v} is created in \c{envir}.
 \end{itemize}
 \noindent Environments are used as hash maps as they have reference semantics
-and a built-in string look up. Functions \c{parent.frame} and \c{sys.frame}
+and a built-in string lookup. Functions \c{parent.frame} and \c{sys.frame}
 return environments further up the call stack.
  \begin{lstlisting}
   evalq <- function(e,envir,encl) eval(quote(e),envir,encl)
@@ -533,7 +533,7 @@ functions (\CranFunsWithEvalRatio of all functions in CRAN).
   \begin{tabular}{|r@{\,}r@{\,}l@{}r|r@{\,}r@{\,}l@{}r|} \hline
     \multicolumn{3}{|c}{\small\#calls} &\small \#pck
 &     \multicolumn{3}{c}{\small\#calls} &\small\#pck \\\hline
-\tt 1 &--& \tt 10      & \packageBina  & \tt 1K &--&\tt 100K  & \packageBine\\
+\tt 1 &--& \tt 10      & \packageBina  & \tt 10K &--&\tt 100K  & \packageBine\\
 \tt 11 &--& \tt 100    & \packageBinb  & \tt 100K &--&\tt 1M  & \packageBinf\\
 \tt 101 &--& \tt 1K    & \packageBinc  & \tt 1M &--&\tt 10M   & \packageBing\\
 \tt 1K &--& \tt 10K    & \packageBind  & \tt 10M &--& \tt 100M & \packageBinh\\\hline
@@ -543,7 +543,7 @@ functions (\CranFunsWithEvalRatio of all functions in CRAN).
 &
 \begin{minipage}{7cm}
 \begin{tabular}{|@{\,}r|rrrr|}\hline
-  &\eval & \c{evalq} & \c{eval} & \c{local}\\[-2mm]
+  &\eval & \c{evalq} & \c{eval} & \c{local}\\[-1.5mm]
            & & & \c{.parent} &\\\hline
 \small Static sites &\packageStaticeval&\packageStaticevalq&\packageStaticevalparent&\packageStaticlocal \\
 \small Exercised sites&\packageTriggeredeval&\packageTriggeredevalq&\packageTriggeredevalparent&\packageTriggeredlocal\\
