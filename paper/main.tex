@@ -874,7 +874,7 @@ the program's behavior at that site. Luckily, \packageNbOneMinimizedPercent
 of sites only see a single form.  In other words, a JIT compiler could correctly predict the \emph{shape} of an expression by looking just at the first call in \packageNbOneMinimizedPercent of the sites.  Few sites are highly polymorphic (8 or more different forms). These include the pipe operator of the \c{magrittr} package, which is used to compose functions.
 
 \paragraph{Discussion} The variety of uses of \eval is evidenced by the number
-of different forms observed in CRAN. In comparison, JavaScript \eval usage was more straightforward and more predictable as reported by \citet{oopsla12b}. Nevertheless, simple forms dominate, and there are many cases where \eval could be replaced by less powerful constructs.
+of different forms observed in CRAN. In comparison, JavaScript \eval usage was more straightforward and more predictable as reported by \citet{oopsla12b}, with 98.6\% of the sites with only one form. Nevertheless, simple forms dominate in R also, and there are many cases where \eval could be replaced by less powerful constructs.
 
 
 \subsection{The environments of \eval}\label{sec:env}
