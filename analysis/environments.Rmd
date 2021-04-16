@@ -112,7 +112,9 @@ if(params$force_rebuild || rebuild) {
     envir_type,
     caller_expression,
     environment_class,
-    enclos = enclos_expression
+    enclos = enclos_expression,
+    enclosure_class,
+    enclos_type
   ) -> E_envir
   
   
@@ -279,7 +281,7 @@ overview_table(
 ##  `envir` as a list or data frame
 
 ```{r envir_list}
-eval_calls_env_list <- eval_calls_explicit %>% filter(envir_type == "list")
+eval_calls_env_list <- eval_calls_explicit %>% filter(envir_type %in% c("list", "pairlist"))
 
 nb_env_list <- count(eval_calls_env_list, wt = duplicates)
 nb_env_list_sites <- nb_eval_call_sites(eval_calls_env_list)
@@ -667,15 +669,30 @@ env_classes %>% filter(!is.na(new_env)) %>% group_by(env_class) %>%
   mutate(pc = ratio(n, nb_call_sites), cpc = cumsum(pc))
 ```
 
+## Synthetic 
 
-And with the higher-level categories:
+
+This corresponds to `new` and to `list/NULL/pairlist`:
 
 ```{r}
-high_level_new <- env_calls %>% filter(!is.na(new_env)) %>% 
+list_like_envs <- E_envir %>% filter(envir_type %in% c("pairlist", "list", "NULL")) %>% 
+  extract(enclosure_class, regex = "((?:new\\+)*)(?:caller-(-?[[:digit:]]+)-)?(.*)", into = c("new_env", "hierarchy", "specific_env"), remove = FALSE, convert = TRUE) %>%
+    mutate(specific_env = na_if(specific_env, ""), new_env = str_count(new_env, fixed("new+"))) 
+  # We keep new.env not NA because it is used for the classification of new envs... 
+
+other_synth_envs <- env_classes %>% filter(!is.na(new_env) | specific_env == "empty")
+
+synthetic_envs <- bind_rows(list_like_envs, other_synth_envs)
+nb_synthetic_sites <- n_distinct(synthetic_envs$src_ref)
+```
+
+
+```{r}
+high_level_new <- synthetic_envs %>% 
   mutate(category = case_when(
     !is.na(hierarchy) ~ "function", # Will also include _callee
     specific_env == "global" ~ "global",
-    specific_env == "empty" ~ "empty",
+    specific_env == "empty" | enclos_type == "NULL" ~ "empty",
     str_detect(specific_env, fixed("loop")) ~ "function", #if it is loop, it means that we found the eval env in the frames,
     !is.na(specific_env) ~ "package"
   ))
@@ -683,7 +700,7 @@ high_level_new <- env_calls %>% filter(!is.na(new_env)) %>%
 high_level_new_sites <- high_level_new %>%group_by(category) %>%
   summarise(n = n_distinct(src_ref)) %>% 
   arrange(desc(n)) %>% 
-  mutate(pc = ratio(n, nb_new_env_sites), cpc = cumsum(pc))
+  mutate(pc = ratio(n, nb_synthetic_sites), cpc = cumsum(pc))
 
 
 nrows <- 4
@@ -703,8 +720,7 @@ nb_pack_sites <- n_distinct(pack_envs$src_ref)
 # That might overestimate a bit...
 nb_function_env_sites <- nb_caller_env_sites + nb_integer_sites
 
-synthetic_envs <- env_classes %>% filter(envir_type %in% c("list", "NULL", "pairlist") | !is.na(new_env) | specific_env == "empty")
-nb_synthetic_sites <- n_distinct(synthetic_envs$src_ref)
+
 
 global_envs <- env_classes %>% filter(is.na(new_env), specific_env == "global")
 nb_strict_global_env_sites <- n_distinct(global_envs$src_ref)

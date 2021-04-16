@@ -755,7 +755,6 @@ elucidate \emph{what} it does.
 
 \subsection{The expression in \eval} \label{sec:minimized}
 
-% Add a table with the distribution of types of expr_resolved?
 
 The expressions passed to \eval vary widely. In order to categorize them, let us
 use a minimization function $min(e)$ which for a given expression $e$ returns a
@@ -983,8 +982,8 @@ garbage collector. So accidental uses may pollute that name space.
 Synthetic environments need a parent. It is specified as an argument of the \c{new.env} function, or when \c{envir} is a list or a data frame, \eval uses its third argument
 (\c{enclos}) as the parent.  The parent is used to lookup variables not found in its
 child (side effects go to the child only). Table~\ref{tab:newenvs} shows the
-kinds of the parents of synthetic environments. Over half are functions, then
-come packages and global.
+kinds of the parents of synthetic environments. Most of them are functions, then
+come global and package. Wrapping global is more widespread than directly accessing global.
 
 
 \paragraph{Discussion}
