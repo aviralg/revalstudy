@@ -525,9 +525,9 @@ the \eval function.
 
 There are \PkgEvalCallSites \eval sites in \PkgPackages packages. The proportion
 of packages calling \eval is \PkgPackagesRatio. Over half of these packages
-have fewer than 3 sites, and with the exception \MaxEvalCallSitesPackage which
+have fewer than 3 sites, and with the exception \MaxEvalCallSitesPackage, which
 has \MaxEvalCallSitesCount sites, all packages contain fewer than
-\MaxEvalCallSitesRest sites (\cf Fig~\ref{fig:pkgs-eval-callsites-hist} which
+\MaxEvalCallSitesRest sites (\cf Fig~\ref{fig:pkgs-eval-callsites-hist}, which
 shows a histogram of sites per package). These sites appear in \PkgFunsWithEval
 functions (\CranFunsWithEvalRatio of all functions in CRAN).
 
@@ -572,22 +572,22 @@ left \packageNbruns runs from \packageCorpus packages. There were
 \packageAllcalls calls in \packageTriggeredpkgs packages originating from
 \PkgHitEvalCallSites unique sites. In terms of coverage, the data exercised
 \PkgHitEvalCallSitesAvgRatio of sites, a coverage similar to the code coverage
-metric for the packages which is \PkgCodeCoverage. The fact that not all sites
+metric for the packages, which is \PkgCodeCoverage. The fact that not all sites
 are exercised can be chalked down to incomplete tests and occasional analysis
 failures (\PkgFailedProgramsRatio of programs crashed or timed out).
 Fig~\ref{fig:traced-eval-callsites} shows the number of sites that were
 exercised; coverage is unequal. Figure~\ref{freq} summarizes the frequency of
-dynamic calls to \eval with the left column being the number of calls and the
+dynamic calls to \eval, with the left column being the number of calls and the
 right, the number of packages in that range. There are \packageFewcalls packages
-with low \eval frequency, fewer than 100 calls; and a smaller, but still
+with low \eval frequency, fewer than 100 calls, and a smaller, but still
 significant, number of packages, \packageManycalls to be precise, that use \eval
 more than 1,000 times. Package \packageMaxcallspack makes \packageMaxcalls calls
 and thus accounts for over half of the observations.
 Figure~\ref{tab:variantseval} summarizes the use of variants of \eval. For each
-of the four variants, the first rows shows the number of sites in the corpus
+of the four variants, the first row shows the number of sites in the corpus
 (\emph{static}), the second row is the number of sites that were encountered
 during analysis (\emph{exercised}), the last row is the number of calls
-(\emph{invocations}). The overwhelming majority of sites and calls, are to \eval
+(\emph{invocations}). The overwhelming majority of sites and calls are to \eval
 itself, \c{eval.parent} is rare, and both \c{evalq} and \c{local} are barely
 used at all. The difference between sites and exercised sites underscores the
 limitations due to code coverage.
@@ -625,14 +625,13 @@ limitations due to code coverage.
 \end{wrapfigure}
 
 Figure~\ref{cn}(a) shows normalized call counts per site; on the left are
-average number of calls from a given site and given run, on the right are counts
-of sites that fall in that range. For instance, \packageRunbinh sites are
+the average number of calls from a given site and given run, on the right are the counts of sites that fall in that range. For instance, \packageRunbinh sites are
 invoked 2,000+ times per run. Larger numbers suggest loops or recursive contexts
 -- this seems to be the exception as most \evals, \packageRunbina, are exercised
 50 times or less. Figure~\ref{cn}(b) zooms in on low frequency sites. The x-axis
-shows normalized calls and the y-axis is the number of sites for that value. Most
-low-frequency \evals are invoked only once, about half as many are invoked
-twice; after that the frequency quickly drops.
+shows normalized calls, and the y-axis is the number of sites for that value. Most
+low-frequency \evals are invoked only once; about half as many are invoked
+twice; after that, the frequency quickly drops.
 
 \Eval takes any value, but if its argument is not an expression, \eval returns
 it unchanged. Expressions account for \packageCodepercent of arguments in our
@@ -644,12 +643,12 @@ symbols). Further inspection reveals that most symbols,
 \packageGgplotsymbolpercent to be exact, come from a single site in the
 \c{ggplot2} package and have the value \c{\_inherit}.\footnote{This models
 inheritance in \c{ggproto}, one of the many object-oriented systems in
-R that is used exclusively in the \c{ggplot2} graphics library.}
+R, used exclusively in the \c{ggplot2} graphics library.}
 
 To estimate how much executable code is injected through \eval, we measure the number of nodes in the expressions; for example, \c{x+1} counts as 3. We
 also measured string lengths of unparsed expressions, but these measurements
 were dominated by the size of data objects which could range in the MBs. The
-median argument size is \packageMedianszeval (due to the symbols) and the
+median argument size is \packageMedianszeval (due to the symbols), and the
 average is \packageAvgszeval nodes. The largest \eval input observed is
 \packageMaxszeval\,-- a significant chunk of code.
 Figure~\ref{fig:sizedistribution} shows the distribution of sizes for arguments
@@ -659,11 +658,11 @@ rapidly, with few observations larger than 15 nodes. The long tail is omitted
 for legibility.
 
 To estimate the work performed in \evals, we count instructions executed by the
-interpreter. Most invocations perform relatively little work with
+interpreter. Most invocations perform relatively little work, with
 \packageSmalleventspct of \evals executing 50 or fewer instructions. The violin
 plot of Figure~\ref{ev}(a) corresponds to \evals executing $\leq$ 50
-instructions, it is dominated by trivial symbol look ups. Figure~\ref{ev}(b) has
-the work-intensive \evals which go all the way to \packageMaxeventsRnd
+instructions; it is dominated by trivial symbol lookups. Figure~\ref{ev}(b) has
+the work-intensive \evals, which go all the way to \packageMaxeventsRnd
 instructions.
 
 \begin{figure}[tb!]
@@ -684,12 +683,10 @@ We recorded \baseAllcalls \eval calls in the \BasePackages base libraries. This
 comes from running 10\% randomly selected programs from the
 \CranRunnableScriptsRnd extracted programs from CRAN packages, covering
 \baseTriggeredevalpct of the \BaseEvalCallSites sites. Most of the calls
-(\baseEvalsratio) are to the \c{eval} function and most arguments
+(\baseEvalsratio) are to the \c{eval} function, and most arguments
 (\baseCodepercent) are expressions. However, unlike CRAN, the majority
 (\baseLanguagepercent) of the arguments are language objects. The median
-argument size is \baseMedianszeval, which is more than for CRAN and the maximum
-size is \baseMaxszeval, less than for CRAN. Small instruction counts ($<50$),
-amount for \baseSmalleventspct of calls. A single site in the \c{match.arg}
+argument size is \baseMedianszeval, which is more than for CRAN and the maximum size is \baseMaxszeval, less than for CRAN. Small instruction counts ($<50$) amount to \baseSmalleventspct of calls. A single site in the \c{match.arg}
 function is responsible for \baseTopFuncPercent of all recorded calls. This
 function provides a convenient way for argument verification using partial
 matching. It is heavily relied on in R functions that use string arguments to
@@ -699,7 +696,7 @@ can get the value of \c{type} parameter using \c{type <- match.arg(type)}. A
 call \c{center(x, "trim")} will match \c{type} to \c{"trimmed"}.
 
 The challenge dealing with Base is that every program uses it. It can thus
-generate extreme amounts of data but the data is quite predictable. For the
+generate extreme amounts of data, but the data is quite predictable. For the
 rest of the paper, we only mention Base when there are surprising
 observations.
 
@@ -709,22 +706,22 @@ observations.
 
 In total, \kaggleAllcalls \eval were recorded, all to \eval function. Out of
 \kaggleStaticeval sites from \KaggleWithEvals, only \kaggleTriggeredeval sites
-in \kaggleNbruns scripts were hit. \KaggleFailedScripts scripts failed to run
-and the other did not exercised the \eval sites. This is partially expected
-as Kaggle code does not need to abide to any checks. Upon a manual inspection,
-we observed that indeed the failing scripts were of a poor quality, often not
-finished, using misspelled package names, hard-coded file paths or accessing
+in \kaggleNbruns scripts were hit; \KaggleFailedScripts scripts failed to run,
+and the other did not exercise the \eval sites. This is partially expected
+as Kaggle code does not need to abide by any checks. Upon a manual inspection,
+we observed that indeed the failing scripts were of poor quality, often not
+finished, using misspelled package names, hard-coded file paths, or accessing
 missing files.
 
 Most call sites are invoked only once. Only one site is called \kaggleMaxcalls times.
-Expressions amount for \kaggleCodepercent of arguments. Unlike CRAN corpus,
+Expressions amount for \kaggleCodepercent of arguments. Unlike the CRAN corpus,
 there are very few symbols (\kaggleSymbolpercent). Most expressions result from
-calls to \c{parse}, thus most \evals start with strings. The median argument
+calls to \c{parse}; thus, most \evals start with strings. The median argument
 size is \kaggleMedianszeval, which makes sense, as few arguments are only
 symbols. The largest argument is \kaggleMaxszeval. The distribution of
 instructions per eval is similar to CRAN; \kaggleSmalleventspct of \evals
 execute fewer than 50 instructions. Manual inspection of \eval usage in Kaggle
-suggest that it is consistent with the data obtained for CRAN. We do not
+suggests that it is consistent with the data obtained for CRAN. We do not
 discuss it further.
 
 
@@ -733,16 +730,14 @@ discuss it further.
 \subsection{Discussion}
 These results show that \eval is central to the language implementation as it is
 omnipresent in the relatively small Base library. The Base library is, in turn,
-used by every single package. To avoid having Base dominate the result we have
+used by every single package. To avoid having Base dominate the result, we have
 excluded calls occurring there from the data we report when analyzing packages.
 CRAN Packages, which are typically developed by experienced programmers, make
 regular and varied use of \eval. They represent our most interesting data set as
-these packages are the result of over 20 years of contributions by thousands of
+these packages result from over 20 years of contributions by thousands of
 authors. The code in packages is well maintained and relatively well tested.
-Finally, Kaggle scripts are often written by less sophisticated users, and
-likely perform simpler tasks, and thus have lesser need for \eval, and its uses
-originate from strings as these are easier to manipulate for end-users. Due to
-the relative paucity of data in Kaggle, we do not pursue the data set further.
+Finally, Kaggle scripts are often written by less sophisticated users and
+likely perform more straightforward tasks, thus having a lesser need for \eval, and its uses originate from strings as these are easier to manipulate for end-users. Due to the relative paucity of data in Kaggle, we do not pursue the data set further.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
