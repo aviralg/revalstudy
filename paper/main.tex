@@ -754,6 +754,8 @@ elucidate \emph{what} it does.
 
 \subsection{The expression in \eval} \label{sec:minimized}
 
+% Add a table with the distribution of types of expr_resolved?
+
 The expressions passed to \eval vary widely. In order to categorize them, let us
 use a minimization function $min(e)$ which for a given expression $e$ returns a
 normal form that abstracts incidental details allowing the reader to focus on
@@ -922,7 +924,7 @@ understand the behavior of any piece of code entails fully understanding the
 behavior of all functions that the code may call as the actions of \eval may
 happen at a distance. Finally note that any particular site may have several
 kinds of environments, but in \packageNbOneCategoryEnvirSitePercent of the case a
-site has a single kind.
+site has a single kind. It means that we can predict the \emph{shape} of the expression passed to \eval in \packageNbOneCategoryEnvirSitePercent of the sites.
 
 \begin{table}[h]
   \centering\small\hspace{-.5cm}
