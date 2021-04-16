@@ -1192,31 +1192,6 @@ predictable environment.
 
 \section{Usage of \eval}
 
-\todo{Illustrate things that we have discussed in Section 5 - examples}
-\todo{Things to discuss: model.frame, match.call, subset as example of NSE, substitute, parse, plots}
-
-
-% We present here the main uses of \eval we have witnessed in R. Sometimes, they are design patterns, sometimes, \eval could be replaced by more specific functions. For each use of \eval, we discuss whether it is necessary to use.
-
-% \subsection{Variable lookup}
-
-% \eval is used to look-up the value of a variable in a given environment, different from the current scope so the \c{envir} argument of \eval is explicitly specified.
-
-% \subsection{Metaprogramming}
-
-% \mypara{\c{substitute}}
-
-% \mypara{\c{match.call}}
-
-% \todo{Talk about model.frame}
-
-% \subsection{Logging}
-
-% \subsection{Code transform}
-
-% % Derivation of symbolic expressions
-
-% \subsection{Plotting}
 
 % \section{\eval expressivity and macros}
 
@@ -1294,7 +1269,6 @@ A peculiar use of \eval is to bypass some checks performed to accept code submit
 xxx_border_huxtable <- function(lr_tb, i, j, border_prop) {
 	function (ht) {
 		hickness <- mlist$thickness[eval(i), eval(j), drop = FALSE]
-		...
 	}
 }
 left_border.huxtable <- xxx_border_huxtable("lr_borders",
@@ -1309,9 +1283,7 @@ We present here high-level patterns that we identified after manual inspections 
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
 \begin{lstlisting}
  expr<-expression(beta_1 + time*beta_2+u)
- ...
  mu = data.frame(beta_1=0.5, beta_2=1, time=3, u=2.3)
- ...
  D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
 \end{lstlisting}
 % See https://github.com/cran/MCMCglmm/blob/cfac9e67ec73a3db2142826faae35e5d2318da31/man/evalDtensor.Rd
@@ -1348,7 +1320,7 @@ computeMDS95 <- function (data, Vegetables, ...) {
 
 \c{substitute} can be used to capture only a part of the call, \ie one of the arguments. For instance, in package \emph{xyplot}, the expression for argument \c{subset} is captured with \c{substitute} and then evaluated in a dataframe \c{data} and in the definition environment of \c{x}.
 \begin{lstlisting}
- xyplot.formula <-  function(x,    data = NULL, ..., subset = TRUE)
+xyplot.formula <-  function(x,    data = NULL, ..., subset = TRUE)
 subset <- eval(substitute(subset), data, environment(x))
 \end{lstlisting}
 
