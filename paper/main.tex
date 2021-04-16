@@ -164,11 +164,11 @@ choices; lastly, this work is put in context.
 They characterized it as a lazy, vectorized, functional language with a rich
 complement of dynamic features expressive enough to layer several object systems
 on top of the core language. Most data types are sequences of primitive values
-constructed by calling the combination function \c{c}, for instance
+constructed by calling the combination function \c{c}. For instance,
 \c{c("Ha","bye")} evaluates to a vector of two strings, constants such as \c{42}
 are vectors of length one. To enable equational reasoning, values accessible
 through multiple aliases are copied when written to. Furthermore, values can be
-tagged by attributes, these are key-value pairs. For instance, the attribute
+tagged by attributes; these are key-value pairs. For instance, the attribute
 \c{dim}-\c{c(2,2)} can be attached to the value at \c{x} by the call
 \c{attr(x,"dim")$\leftarrow$c(2,2)}. In this case, the addition of this
 attribute turns \c x into a matrix. The \c{class} attribute gives a 'class', in
@@ -179,9 +179,9 @@ assignments, and bracketing. All functions can be shadowed or redefined, making
 the language at the same time remarkably flexible and exceedingly challenging to
 compile statically as vividly detailed by~\citet{dls19}. R uses a relaxed
 call-by-need convention for passing arguments to functions. Each argument is a
-thunk composed of an expression, its environment, and a slot for the result,
+thunk composed of an expression, its environment, and a slot for the result;
 these are called \emph{promises}. To get the value of an argument, the
-corresponding promise must be forced, once forced the promise's result is cached
+corresponding promise must be forced. Once forced, the promise's result is cached
 for future use.
 
 
@@ -189,7 +189,7 @@ for future use.
 
 While a data-to-code facility is available in many languages, some design
 choices affect the expressive power of \eval. The key choices are the input
-format, the environment in which generated code is evaluated and the reflective
+format, the environment in which generated code is evaluated, and the reflective
 operations available to that code. Fig.~\ref{comp} summarizes designs.
 
 \begin{figure}[!h]\center\small\begin{tabular}{r@{~}l|l|l|l}\hline
@@ -206,28 +206,28 @@ arbitrary strings to be used. Both Julia and R are more restrictive as they
 require expressions (or abstract syntax trees). Finally, Java is the most
 restrictive as its classloader only accepts complete classes in bytecode form.
 
-The choice of the environment of \eval is important as it determines how much of
+The choice of the environment of \eval is essential as it determines how much of
 a program \eval can observe as well as the reach of potential side-effects
-performed by that operation. The most restrictive semantics is that of Java
+performed by that operation. The most restrictive semantics is that of Java, 
 where newly loaded code evaluates in the environment defined by the classes
-visible from the current classloader. Julia and JavaScript's strict mode, limit
+visible from the current classloader. Julia and JavaScript's strict mode limit
 \eval to the global environment. Finally, R is the most flexible as any
 accessible environment can be selected and passed to \eval.
 
 The last degree of freedom is the expressive power of the code executed by
 \eval. The main difference between languages lies in how much of the state of a
-program is accessible through reflective operations. Julia, Java and JavaScript
+program is accessible through reflective operations. Julia, Java and, JavaScript
 all allow some form of introspection on the data. R is more flexible as it is
-possible to inspect the program's call stack. Thus any environment in the
+possible to inspect the program's call stack. Thus, any environment in the
 program can be inspected and modified.
 
 Given the above, the claim that R is amongst the languages with the most
 powerful \eval seems plausible. The rationale for R's design seems to have been
 to expose as much of the language and its internals as possible in order to
-maximize expressivity. In R, \eval is a key tool to extend the language and
+maximize expressivity. In R; \eval is a key tool to extend the language and
 implement DSLs, it is also a replacement for macros. By contrast, the designers
 of Julia chose to limit \eval. In Julia, only global variables can be
-side-effected and environments cannot be readily manipulated. This is designed
+side-effected, and environments cannot be readily manipulated. This is designed
 to shield optimized code from some of the most pernicious uses of the
 facility~\cite{oopsla18a}. Furthermore, Julia provides a versioning
 mechanism, called world age, to ensure that any methods defined within an \eval
@@ -304,9 +304,9 @@ to avoid polluting the current one.
 \citet{ecoop11} provided the first large-scale study of the runtime behavior of
 \eval in JavaScript. They dynamically analyzed a corpus of the 10,000 most
 popular websites with an instrumented web browser to gather execution traces.
-They show that \eval is pervasive with 82\% of the most popular websites using
+They show that \eval is pervasive, with 82\% of the most popular websites using
 it. The reasons for its use include the desire to load code on demand,
-deserialization of JSON dataq and lightweight meta-programming to customize web
+deserialization of JSON data, and lightweight meta-programming to customize web
 pages. While many uses were legitimate, just as many were unnecessary and could
 be replaced with equivalent and safer code. They categorized inputs to \eval so
 as to cover the vast majority of input strings. Restricting themselves to \eval
@@ -314,42 +314,40 @@ in which all named variables refer to the global scope, many patterns could be
 replaced by more disciplined code~\cite{oopsla12b, moller12}. The work did not
 measure code coverage, so the numbers presented are a lower bound on possible
 behaviors. Furthermore, JavaScript usage in 2011 is likely different from today,
-e.g. Node.js was not covered. More details about dynamic analysis of JavaScript
+\eg Node.js was not covered. More details about dynamic analysis of JavaScript
 can be found in~\cite{liang}.
 
 \citet{wang} analyzed use of dynamic features in 18 Python programs to find if
 they affect file change-proneness. Files with dynamic features are significantly
-more likely to be the subject of changes, than other files. Chen et al. looked
+more likely to be the subject of changes than other files. Chen et al. looked
 at the correlation between code changes and dynamic features, including \eval,
 in 17 Python programs~\cite{chen}. They did not observe many uses of \eval.
 \citet{oscar} performed an empirical study of the usage of dynamic features in
 1,000 Smalltalk projects. While \eval itself is not present, Smalltalk has a
 rich reflective interface. The authors found that reflective methods are used in less
 than 2\% of methods. The most common reflective method is \c{perform:}; it send
-a message that is specified by a string. These features are mostly used in the
+a message that is specified by a string. These features are primarily used in the
 core libraries.
 
-\citet{bodden} looked at usage of reflection in the Java DaCapo benchmark suite.
+\citet{bodden} looked at the usage of reflection in the Java DaCapo benchmark suite.
 They found that dynamic loading was triggered by the benchmark harness. The
-harness then executes methods via reflection, this caused static analysis tools
+harness then executes methods via reflection. This caused static analysis tools
 to generate an incorrect call graph for the programs in DaCapo.
 
 \citet{Arceri21} study \eval in JavaScript from a software security point of
 view. The authors report that 53\% of the malware they studied used \eval as a
-means to obfuscate attack code or to mount attacks. They propose an abstract
+means to obfuscate attack code or mount attacks. They propose an abstract
 interpretation-based approach to analyzing dynamic languages. One must construct
 a static approximation of the argument to \eval and then analyze possible
 behaviors of the interpreter when evaluating the generated code.
 
 \citet{ecoop12} had a short section on the usage of \eval in R. They found the
-it widely used in R code with 8500 call sites in CRAN and 2.2 million dynamic
-calls. The 15 most frequent call sites account for 88\% of those. The
+that \eval  is widely used in R code with 8500 call sites in CRAN and 2.2 million dynamic calls. The 15 most frequent call sites account for 88\% of those. The
 \c{match.arg} function is the highest used one with 54\% of all calls. In the
-other call sites, they saw two uses cases. The most common is the evaluation of
-the source code of a promise retrieved by \c{substitute} in a new environment;
-e.g. as done in the \c{with} function. The other use case is the invocation of a
-function whose name or arguments are determined dynamically. For this purpose, R
-provides \c{do.call} and thus \eval is overkill.
+other call sites, they saw two use cases. The most common is the evaluation of
+the source code of a promise retrieved by \c{substitute} in a new environment,
+\eg as done in the \c{with} function. The other use case is the invocation of a
+function whose name or arguments are determined dynamically. For this purpose, R provides \c{do.call} and thus \eval is overkill.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -781,7 +779,9 @@ column shows one sample expression $e$ that normalizes to the particular form.
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
 
-We detail these forms and discuss their implication for the behavior of \eval.
+\medskip
+
+ We detail these forms and discuss their implication for the behavior of \eval.
 
 \newcommand{\EE}[1]{{{\emph{\framebox{#1}}}}\\[1mm]}
 
