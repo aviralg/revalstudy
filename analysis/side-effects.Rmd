@@ -23,6 +23,7 @@ library(fs)
 library(fst)
 library(purrr)
 library(tidyverse)
+library(viridis)
 library(xtable)
 
 source("inc/latextags.R")
@@ -399,9 +400,124 @@ overview_table(
 )
 ```
 
-## Side effects with norm
+## Types
 
 ```{r}
+SEXP_TYPES <- tribble(
+  ~type, ~type_name,
+  0, "NILSXP",
+  1, "SYMSXP",
+  2, "LISTSXP",
+  3, "CLOSXP",
+  4, "ENVSXP",
+  5, "PROMSXP",
+  6, "LANGSXP",
+  7, "SPECIALSXP",
+  8, "BUILTINSXP",
+  9, "CHARSXP",
+  10, "LGLSXP",
+  13, "INTSXP",
+  14, "REALSXP",
+  15, "CPLXSXP",
+  16, "STRSXP",
+  17, "DOTSXP",
+  18, "ANYSXP",
+  19, "VECSXP",
+  20, "EXPRSXP",
+  21, "BCODESXP",
+  22, "EXTPTRSXP",
+  23, "WEAKREFSXP",
+  24, "RAWSXP",
+  25, "S4SXP",
+  30, "NEWSXP",
+  31, "FREESXP",
+  99, "FUNSXP"
+) %>%
+  mutate(
+    type_name=str_replace(type_name, "SXP", "")
+  )
+```
+
+
+```{r}
+SE1 <- left_join(SE, SEXP_TYPES, by="type") %>%
+  select(-type) %>%
+  rename(type=type_name) %>%
+  filter(event != "rvl") %>%
+  mutate(
+    stype=case_when(
+      type == "CLO" ~ "Closure",
+      type %in% c("STR","INT","LGL","RAW","REAL", "CPLX") ~ "Basic",
+      type %in% c("ENV") ~ "Environment",
+      type %in% c("VEC") ~ "List",
+      type %in% c("SYM","LANG","EXPR") ~ "Expression",
+      type %in% c("NIL") ~ "NULL",
+      type %in% c("S4") ~ "S4",
+      TRUE ~ "Other"
+    )
+  )
+
+cs_count(SE1, stype)
+
+class_type <- 
+  SE1 %>%
+  filter(event=="asn") %>%
+  count(eval_call_srcref, stype, class, wt=N) %>% 
+  count(class, stype)
+
+cbp1 <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+          "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+#class_type %>%
+class_types_sites <-
+  SE1 %>%
+  filter(event=="asn") %>%
+  cs_count(eval_call_srcref, class, stype, wt=N) %>% cs_count(class, stype)
+
+class_types_sites %>%
+  ggplot(aes(x=class, y=n, fill=stype)) + 
+  geom_bar(stat="identity", position="fill", alpha=0.9) +
+  scale_y_continuous(labels=scales::percent) +
+#  scale_fill_viridis(discrete = TRUE, option="E") +
+  scale_fill_manual(values = cbp1) +
+  theme(text = element_text(size=19),
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = .5),
+        axis.title.y = element_blank(),
+        aspect.ratio = 4/3,
+        panel.grid.minor.x = element_blank(),
+        legend.position="top") +
+  labs(fill="")
+
+ggsave(path(PLOT_DIR, "se-types.pdf"))
+```
+
+```{r}
+types_sites <- 
+  SE1 %>%
+  filter(event=="asn") %>%
+  cs_count(eval_call_srcref, class, stype, wt=N) %>% cs_count(stype)
+  
+closure_sites <- 
+  SE1 %>%
+  filter(event=="asn") %>%
+  cs_count(eval_call_srcref, class, stype, wt=N) %>%
+  filter(stype=="Closure") %>% 
+  cs_count(class)
+
+overview_table(
+  r("Basic type ratio", percent(filter(types_sites, stype == "Basic")$p/100)),
+  r("List type ratio", percent(filter(types_sites, stype == "List")$p/100)),
+  r("Closure type ratio", percent(filter(types_sites, stype == "Closure")$p/100)),
+  r("Closure type", filter(types_sites, stype == "Closure")$n),
+  r("Closure type local", filter(closure_sites, class == "Local")$n)
+)
+```
+
+
+## Side effects with norm
+
+```{r eval=F}
 NE <- read_csv(
   PACKAGE_NORMALIZED_EXPRESSION_FILE,
   col_types = cols(
