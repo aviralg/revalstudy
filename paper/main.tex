@@ -1079,17 +1079,17 @@ The \rdyntrace contains low-level hooks capturing the life-cycle of an
 environment and variables defined in it. We register callbacks in the tracer
 that records each environment creation and removal with updates to its
 bindings. From the recorded data, we ignore side effects coming from \eval
-sites from unit testing frameworks.\footnote{In the corpus we have \c{RUnit,
+sites from unit testing frameworks.\footnote{In the corpus, we have \c{RUnit,
 testthat, tinytest} and \c{unitizer} unit testing frameworks.} They run the
-testing code via \eval, and thus the results would be biassed because of the
+testing code via \eval, and thus the results would be biased because of the
 high number of code in these tests (\CranRunnableCodeTestsRnd lines).
 
 From the \packageNbrunsRnd programs we capture \SEAllRnd side effects from
 \SEAllCallsRnd \eval calls (\SEUserCallsToAllRatio) in \SEAllSites sites
 (\SEUserSitesToAllRatio). Again, the challenge is to remove the accidental
-side-effects caused by the R virtual machine implementation and are not
+side effects caused by the R virtual machine implementation and are not
 related to the user code. For example, the \c{.Random.seed} variable, which
-contains the state of the random number generator is saved and restored from
+contains the state of the random number generator, is saved and restored from
 and to the global environment every time the user calls one of the base
 routines that use random numbers.
 %
@@ -1102,7 +1102,7 @@ Removing them leaves us with \SEUserRnd side effects (\SEUserRatio) from
 \SEUserCallsRnd \eval calls (\SEUserCallsRatio) in \SEUserSites sites
 (\SEUserSitesRatio). These sites are part of \SEUserFunctions R functions
 (\SEUserFunctionsToAllRatio of all functions doing \eval) in \SEUserPackages
-packages. From these function, \SEFunsNighty are responsible for 90\% of side
+packages. From these functions, \SEFunsNighty are responsible for 90\% of side
 effects. Half of the side-effects come just from three functions:
 \c{plyr::allocate\_column} (allocates space for a new data frame column),
 \c{withr::execute\_handlers} (executes deferred expressions), and
@@ -1110,7 +1110,7 @@ effects. Half of the side-effects come just from three functions:
 possibly in parallel). Most of the \eval sites (\SESitesInEnvirRatio) do side
 effects in the environment specified by the \c{envir} parameter (\cf
 Section~\ref{sec:eval-in-r}), \SESitesNotInEnvirRatio modifies other
-environments, and finally \SESitesBothEnvirRatio does both.
+environments, and finally, \SESitesBothEnvirRatio does both.
 Table~\ref{tab:se-env} shows the class of the environment where \eval side
 effects happen (\emph{target environment}). It follows the classification
 described in Section~\ref{sec:env} with two extra classes: \emph{Object},
@@ -1137,9 +1137,9 @@ side-effects are sane.
 \end{wraptable}
 
 Table~\ref{tab:se-types} shows the proportion of the different side effects
-that were recorded. In terms of calls, we see primarily assignments and in
+that were recorded. In terms of calls, we see assignments primarily and in
 terms of site definitions. This is expected. A subsequent \eval call will turn
-a definition into an update. The most dangerous side effect is variable removal
+a definition into an update. The most dangerous side effect is variable removal,
 as it means that after a call to \eval some binding in some environments will
 disappear. While rare, this happens, but the vast majority comes from a single
 site called by the already mentioned \c{withr::execute\_handlers} function.
@@ -1153,7 +1153,7 @@ Looking closely at the value types in variable updates, we observe that the
 majority of \eval sites involve basic R vectors (\SEBasicTypeRatio) and lists
 (\SEListTypeRatio). From the compiler perspective, we would like to know how
 many sites changes function bindings. In the corpus, this happens in only
-\SEClosureType sites, \SEClosureTypeLocal of them do that in the local
+\SEClosureType sites; \SEClosureTypeLocal of them do that in the local
 environment. We have manually inspected a few of these sites, but except for
 manual injection of parameters into a \c{model.frame} execution environment, we
 did not find a common use case.
@@ -1172,9 +1172,9 @@ did not find a common use case.
 
 \mypara{Discussion} In JavaScript assignments in \eval can happen in either
 local scope or less often, when called through an alias, in the global scope.
-In R, given the support for first-class environments, it can happen anywhere
-making it \eval more dangerous than it already is. The data however suggest
-that first, side-effects from \eval is not as wide spread as in the case of
+In R, given the support for first-class environments, it can happen anywhere, 
+making it \eval more dangerous than it already is. However, the data  suggest
+that first, side-effects from \eval are not as widespread as in the case of
 JavaScript and that over half of them happen in a predictable environment.
 
 \section{Usage of \eval}
@@ -1183,7 +1183,7 @@ JavaScript and that over half of them happen in a predictable environment.
 
 
 The R language was intended to be extensible. The combination of lazy
-evaluation, \c{substitute} and \c{eval} are the tools given to
+evaluation, \c{substitute}, and \c{eval} are the tools given to
 developers to this end. This API is slightly more complex than just
 passing a string, it is conceivable that this may discourage some
 casual users. \Eval is also being used to reduce boilerplate code and
