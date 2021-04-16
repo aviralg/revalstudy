@@ -1187,16 +1187,16 @@ this end.
 %used to reduce boilerplate code and provide convenience features for
 %programmers. 
 In this section we focus on the \emph{why}, giving real-world examples of the
-\eval usage in the wild. We start the discussion with the examples for the
-minimized expressions from Section~\ref{sec:minimized}. They we look into
-high-level \eval design patterns. All of the examples are based on code from
-our corpus often simplified to fit the space and increase clarity. For each
-example, we indicate the package and the function where it is located.
+\eval usage in the wild. All of the examples are based on code from our corpus
+often simplified to fit the space and increase clarity. For each example, we
+indicate the package and the function where it is located.
 
 \subsection{Shapes of \eval}
 
-In Table~\ref{tab:minimizedexpressions} we have shown the most common shapes of expressions passed to \eval.
-Here we illustrate them on concrete instances.
+% We start the discussion with the examples for the minimized expressions from
+% Section~\ref{sec:minimized}.
+In Table~\ref{tab:minimizedexpressions} we have shown the most common shapes of
+expressions passed to \eval. Here we illustrate them on concrete instances.
 
 \begin{compactitem}[---] 
 
@@ -1240,26 +1240,59 @@ Here we illustrate them on concrete instances.
     uses \eval to generate R function for C++ methods:\\
     \lstinline|eval(substitute(function(...) .CppObj$M(...), list(M=...)), env)|.
 
-  \item \emph{Function calls \c{(F(), F(X), F(F(X)))}} 
+  \item \emph{Function calls \c{(F(), F(X), F(F(X)))}} represents two very
+    frequent patterns: \emph{code generation} and \emph{call reflection}. There are numerous
+    cases for code generation. One occurring usage is generating ad-hoc calls
+    to libraries such as \c{ggplot2} when one needs to parameterize data or
+    aesthetics selection from a variable. For example \lstinline|ggplot(df, aes(x=A, y=B))|
+    maps X and Y axes in the plot to \c{A} and \c{B} columns in
+    \c{df}. It might not be immediately clear\footnote{\cf
+    \url{https://stackoverflow.com/questions/22309285/how-to-use-a-variable-to-specify-column-name-in-ggplot}}
+    how modify the call so it will pick the actual mapping from \c{A} and \c{B}
+    variables. Another case is the traditional use of \eval as a means to
+    reduce boilerplate code; simple and repetitive code can easily be replaced
+    with judicious use of \eval. For example, the \c{data.table} package uses
+    \eval to calls the \c{options} function with named arguments taken from a
+    vector of strings. While the benefits are limited in this example, it is an
+    attractive tool for programmers.
+    %
+    \begin{lstlisting} 
+    opts = c("datatable.verbose"="FALSE", # ...many others
+    for (i in names(opts)) eval(parse(text=paste0("options(",i,"=",opts[i],")"))) 
+    \end{lstlisting}
 
+    Call reflection refers to the combination of \eval with \c{match.call},
+    function that returns the current call with all its arguments captures as
+    expressions. This is used mostly in the following circumstances: (1) to
+    record a call for a later use in possibly different environment, (2) pass
+    most of the captured call arguments to another function or (3) evaluate
+    arguments of the function in different environments. This is widely used in
+    relation with statistical modeling in combination with a model fitting
+    function or with \c{model.frame} and related functions. For example the
+    \c{survival::coxph} function\footnote{Function fitting a Cox proportional hazards
+    regression model.} contains:
+    %
+    \begin{lstlisting}
+    Call <- match.call()
+    tform <- Call[c(1,indx)]  # only keep the arguments we wanted
+    tform[[1L]] <- quote(stats::model.frame)  # change the function called
+    mf <- eval(tform, parent.frame())
+    \end{lstlisting}
 
   \item \emph{Block \c{(BLOCK)}} can appear anywhere, but it is almost always
     the case that the block is only passed to \eval rather than being directly
-    part of in as in \lstinline|eval({...})|. Essentially, the block denotes a fragment
-    of a program to be evaluated in a special way. There is a number of use
-    cases: unit testing frameworks (\eg \c{testthat}, \c{testit}), code
-    benchmarking (\eg \c{rbenchmark}, \c{microbenchmark}), running code in
-    parallel (\eg \c{foreach}, \c{doParallel}), or deferring code execution
-    (\eg \c{withr}). 
+    part of in as in \lstinline|eval({...})|. Essentially, the block denotes a
+    fragment of a program to be evaluated in a special way and in a special
+    environment. The latter is what makes it different from 0-argument closure.
 
-
+    There is a number of use cases: unit testing frameworks (\eg \c{testthat},
+    \c{testit}), code benchmarking (\eg \c{rbenchmark}, \c{microbenchmark}),
+    running code in parallel (\eg \c{foreach}, \c{doParallel}), or deferring
+    code execution (\eg \c{withr}). 
+    
 \end{compactitem}
 
-\subsection{High-level patterns.}
-
-We present here high-level patterns that we identified after manual inspections of hundred of \eval sites. Some of the patterns are also described in the R documentation.
-
-\subsubsection{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
+\subsection{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
 \begin{lstlisting}
  expr<-expression(beta_1 + time*beta_2+u)
@@ -1270,129 +1303,140 @@ In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a 
 
 Package \c{tidyselect} is the backend of several \c{dplyr} and \c{tidyr} functions to select columns. It offers a DSL that makes it possible to select a set of columns, over a range of columns, a complement, an intersection, an union, with a regular expression and so on. \eval is used to traverse selectors stored as slots of a dataframe.
 
+% \subsubsection{Capturing a call.}  A common use case for \eval is to be combined with \c{match.call}.
+% \c{match.call} walks up the call stack, captures the code that invoked the
+% currently executing function, and returns it as an unevaluated expression that includes the call function and its unevaluated arguments. The pattern is to transform a call to some function \c{f} into a call to \c{g} with some arguments retained and others modified. This pattern is recognizable
+% by the fact that the expression is a call and the target environment is that of
+% the parent.
 
-\subsubsection{Capturing a call.}  A common use case for \eval is to be combined with \c{match.call}.
-\c{match.call} walks up the call stack, captures the code that invoked the
-currently executing function, and returns it as an unevaluated expression that includes the call function and its unevaluated arguments. The pattern is to transform a call to some function \c{f} into a call to \c{g} with some arguments retained and others modified. This pattern is recognizable
-by the fact that the expression is a call and the target environment is that of
-the parent.
+% % We have quantitative data on that if needed...
+% This pattern is very often (more than half of the cases) used in relation with statistical models, to build a new model, \c{model.frame} to build a new generic model, or a more specialized model like \c{glm} or, \c{lm}. The R documentation of \c{match.call} explicitly describes this usage.
 
-% We have quantitative data on that if needed...
-This pattern is very often (more than half of the cases) used in relation with statistical models, to build a new model, \c{model.frame} to build a new generic model, or a more specialized model like \c{glm} or, \c{lm}. The R documentation of \c{match.call} explicitly describes this usage.
+% In package \emph{survival}\footnote{It is a \emph{recommended package}, so recommended by the CRAN maintainers, thoroughly tested, and following R best practices.}, in function \c{coxph}, the surrounding call is first captured, then \c{model.frame} is injected as the function name in the call, and finally, the new call is evaluated in the parent frame, to ensure that the rewritten call
+% is evaluated in the same environment the original call was.
 
-In package \emph{survival}\footnote{It is a \emph{recommended package}, so recommended by the CRAN maintainers, thoroughly tested, and following R best practices.}, in function \c{coxph}, the surrounding call is first captured, then \c{model.frame} is injected as the function name in the call, and finally, the new call is evaluated in the parent frame, to ensure that the rewritten call
-is evaluated in the same environment the original call was.
+% \begin{lstlisting}
+% Call <- match.call()
+% tform <- Call[c(1,indx)]  # only keep the arguments we wanted
+% tform[[1L]] <- quote(stats::model.frame)  # change the function called
+% mf <- eval(tform, parent.frame())
+% \end{lstlisting}
 
-\begin{lstlisting}
-Call <- match.call()
-tform <- Call[c(1,indx)]  # only keep the arguments we wanted
-tform[[1L]] <- quote(stats::model.frame)  # change the function called
-mf <- eval(tform, parent.frame())
-\end{lstlisting}
+% A related pattern is not to change the call but rather to evaluate the arguments in the parent frame. This could also be achieved with \c{substitute}, but \c{match.call} does it in bulk.
+% In package \emph{MedDietCalc},  in function \c{computeMDS95}, \c{match.call} retrieves the argument expressions of the call, which are evaluated in a dataframe \c{data} which contains the numeric data. Each argument of function \c{computeMDS95} is also a column in dataframe \c{data}. The advantage of using \c{eval} here is to be able to express an argument as a combination of several columns in the dataframe.
+% \begin{lstlisting}
+% computeMDS95 <- function (data, Vegetables, ...) {
+% 	arguments <- as.list( match.call())
+% 	Vegetables <- eval(arguments$Vegetables, data) 
+% \end{lstlisting}
 
-A related pattern is not to change the call but rather to evaluate the arguments in the parent frame. This could also be achieved with \c{substitute}, but \c{match.call} does it in bulk.
-In package \emph{MedDietCalc},  in function \c{computeMDS95}, \c{match.call} retrieves the argument expressions of the call, which are evaluated in a dataframe \c{data} which contains the numeric data. Each argument of function \c{computeMDS95} is also a column in dataframe \c{data}. The advantage of using \c{eval} here is to be able to express an argument as a combination of several columns in the dataframe.
-\begin{lstlisting}
-computeMDS95 <- function (data, Vegetables, ...) {
-	arguments <- as.list( match.call())
-	Vegetables <- eval(arguments$Vegetables, data) 
-\end{lstlisting}
-
-\c{substitute} can be used to capture only a part of the call, \ie one of the arguments. For instance, in package \emph{xyplot}, the expression for argument \c{subset} is captured with \c{substitute} and then evaluated in a dataframe \c{data} and in the definition environment of \c{x}.
-\begin{lstlisting}
-xyplot.formula <-  function(x,    data = NULL, ..., subset = TRUE)
-subset <- eval(substitute(subset), data, environment(x))
-\end{lstlisting}
+% \c{substitute} can be used to capture only a part of the call, \ie one of the arguments. For instance, in package \emph{xyplot}, the expression for argument \c{subset} is captured with \c{substitute} and then evaluated in a dataframe \c{data} and in the definition environment of \c{x}.
+% \begin{lstlisting}
+% xyplot.formula <-  function(x,    data = NULL, ..., subset = TRUE)
+% subset <- eval(substitute(subset), data, environment(x))
+% \end{lstlisting}
 
 
-In the R community, the call capturing pattern with evaluation in a non-local environment is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}. This pattern in relation with \c{model.frame} is also described explicitly in the R documentation of \c{match.call}.
+% In the R community, the call capturing pattern with evaluation in a non-local environment is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}. This pattern in relation with \c{model.frame} is also described explicitly in the R documentation of \c{match.call}.
 
-\subsubsection{Injecting code in package environments.} R distinguishes two kinds of environments for packages: the \emph{package} environment itself, which contains every publicly accessible functions, and the \emph{namespace} environment, which contains all functions including private ones.
+% \subsubsection{Injecting code in package environments.} R distinguishes two kinds of environments for packages: the \emph{package} environment itself, which contains every publicly accessible functions, and the \emph{namespace} environment, which contains all functions including private ones.
 
- A call to \c{library(packageName)}, which loads libraries in R, for instance, will
-populate environment \c{package:packageName} using \eval. It is a \emph{base} function
-though, so we do not see it in the CRAN dataset. However, R still makes it
-possible to access any package environments, which we see in
-\packageNbPackageEnvPackages different packages in our corpus. Those packages perform
-introspection, to represent and search any environment by name, in package
-\emph{envnames}, to containerize tests, as with \emph{testthat} and
-\emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to bypass the visibility of functions in \emph{USSCXenaTools}. It is also used to
-implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
+%  A call to \c{library(packageName)}, which loads libraries in R, for instance, will
+% populate environment \c{package:packageName} using \eval. It is a \emph{base} function
+% though, so we do not see it in the CRAN dataset. However, R still makes it
+% possible to access any package environments, which we see in
+% \packageNbPackageEnvPackages different packages in our corpus. Those packages perform
+% introspection, to represent and search any environment by name, in package
+% \emph{envnames}, to containerize tests, as with \emph{testthat} and
+% \emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to bypass the visibility of functions in \emph{USSCXenaTools}. It is also used to
+% implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
 
-\subsubsection{Code Generation.} The more traditional use of \eval is to execute code
-that was assembled by the programmer into a string. Here we show the method
-\c{plot} for class \c{gmap} in package \c{gpmaps}, simplified for
-explanatory purposes.   \c{paste} is used to dispatch to a specialized plot function, among \c{plot2\_orig},  \c{plot3\_orig}, \c{plot3\_dec} and so on.
-\begin{lstlisting}
-eval(parse(text=paste('plot',gpmap$nloci,'_orig(gpmap)',sep="")))
-\end{lstlisting} 
+% \subsubsection{Code Generation.} The more traditional use of \eval is to execute code
+% that was assembled by the programmer into a string. Here we show the method
+% \c{plot} for class \c{gmap} in package \c{gpmaps}, simplified for
+% explanatory purposes.   \c{paste} is used to dispatch to a specialized plot function, among \c{plot2\_orig},  \c{plot3\_orig}, \c{plot3\_dec} and so on.
+% \begin{lstlisting}
+% eval(parse(text=paste('plot',gpmap$nloci,'_orig(gpmap)',sep="")))
+% \end{lstlisting} 
 
-In Kaggle, plots are often built with \eval, \c{paste} and \c{ggplot}. In this kernel for the \emph{digit-recognizer} challenge, \c{paste0} is used to generate \c{ggplot} commands featuring unique y labels to build 9 different graphs.
+% In Kaggle, plots are often built with \eval, \c{paste} and \c{ggplot}. In this kernel for the \emph{digit-recognizer} challenge, \c{paste0} is used to generate \c{ggplot} commands featuring unique y labels to build 9 different graphs.
 
-\begin{lstlisting}
-p <- lapply(paste0('PC', 1:9), function(pc){
-	eval(parse(text=paste0('ggplot(ld, aes(x=label, y=',pc,')) + geom_boxplot()')))
-})
-\end{lstlisting}
+% \begin{lstlisting}
+% p <- lapply(paste0('PC', 1:9), function(pc){
+% 	eval(parse(text=paste0('ggplot(ld, aes(x=label, y=',pc,')) + geom_boxplot()')))
+% })
+% \end{lstlisting}
 
-The \parse and \eval combination is
-used by the \source function in the base library to load R code from a file
-in the current workspace. 
+% The \parse and \eval combination is
+% used by the \source function in the base library to load R code from a file
+% in the current workspace. 
 
- Code generation is often used as a means to reduce boilerplate code;
-simple and repetitive code can easily be replaced with judicious use of \eval.
-For example, the \c{data.table} package uses \eval to calls the \c{options}
-function with named arguments taken from a vector of strings. While the benefits
-are limited in this example, it is an attractive tool for programmers.
-\begin{lstlisting}
-  opts = c("datatable.verbose"="FALSE", # ...many others
-  for (i in names(opts))
-    eval(parse(text=paste0("options(",i,"=",opts[i],")")))
-\end{lstlisting}
-This pattern is a special case of code generation, recognizable by the
-fact that \eval is executed in a loop. 
+%  Code generation is often used as a means to reduce boilerplate code;
+% simple and repetitive code can easily be replaced with judicious use of \eval.
+% For example, the \c{data.table} package uses \eval to calls the \c{options}
+% function with named arguments taken from a vector of strings. While the benefits
+% are limited in this example, it is an attractive tool for programmers.
+% \begin{lstlisting}
+%   opts = c("datatable.verbose"="FALSE", # ...many others
+%   for (i in names(opts))
+%     eval(parse(text=paste0("options(",i,"=",opts[i],")")))
+% \end{lstlisting}
+% This pattern is a special case of code generation, recognizable by the
+% fact that \eval is executed in a loop. 
 
-Using \c{parse}, \ie converting strings to R expressions, opens to a more flexible code generation, as the building blocks which are going to be concatenated together, do not need to be valid R expressions. On the contrary, combining expression created with \c{substitute} or \c{quote} requires more discipline. In Kaggle, which features less experienced programmers,  code generation for plots is widespread, and uses \c{parse} on strings with \eval.
+% Using \c{parse}, \ie converting strings to R expressions, opens to a more flexible code generation, as the building blocks which are going to be concatenated together, do not need to be valid R expressions. On the contrary, combining expression created with \c{substitute} or \c{quote} requires more discipline. In Kaggle, which features less experienced programmers,  code generation for plots is widespread, and uses \c{parse} on strings with \eval.
 
-\todo{There is an example in package comprenhr that does code generation with substitute to create list comprehensions, but it is quite difficult to grasp. But at the same type, we lack here an example of code generation using quite, enquote or substitute.}
+% \todo{There is an example in package comprenhr that does code generation with substitute to create list comprehensions, but it is quite difficult to grasp. But at the same type, we lack here an example of code generation using quite, enquote or substitute.}
 
-\todo{Add a pattern about Library Loading? \c{library(packageName)} in R uses \eval This is one of the patterns in Javascript...}
+% \todo{Add a pattern about Library Loading? \c{library(packageName)} in R uses \eval This is one of the patterns in Javascript...}
 
-\subsubsection{Unnecessary use of \eval}
+\subsection{Unnecessary use of \eval}
 
 Similarly to JavaScript, there are also unnecessary uses of \eval. For example,
 the \c{PerformanceAnalytics} package contains a function \c{chart.QQPlot} that
 uses \eval to resolve a string into function and another to call it and assign
 its results into a variable:
 \begin{lstlisting}
-function (R, d="norm", dp, ...) {
-	q.f <- eval(parse(text=paste("q",d,sep="")))
-	z <- NULL
-	eval(parse(text=paste("z<-q.f(",dp,",...)")))
-}
+  function (R, d="norm", dp, ...) {
+	  q.f <- eval(parse(text=paste("q",d,sep=""))); z <- NULL
+  	eval(parse(text=paste("z<-q.f(",dp,",...)")))
+  }
 \end{lstlisting}
-  In both cases, there is no need for \eval:
+  In both cases, there is no need for \eval and the function can be rewritten as
 \begin{lstlisting}
-function (R, d="norm", dp, ...) {
-	q.f <- get(paste0("q",d))
-	z <- q.f(dp, ...)
-}
+  function (R, d="norm", dp, ...) {
+	  q.f <- get(paste0("q",d)); z <- q.f(dp, ...)
+  }
 \end{lstlisting}
-or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
+or even to a one-liner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
-% \todo{Aviral's story when he contacted a developer about his use of eval}
 
-    A peculiar use of \eval is to bypass some checks performed by the \c{R CMD
-      CHECK} tool allowing one to submit a package to CRAN that would otherwise
-      be refused. For example, the tool checks that packages do not call
-      \c{unlockBinding} function.\footnote{It allows one to open and modify
-      loaded package name space.} Packages such as \c{data.table} circumvent
-      such restrictions by using \eval as the check is only performed
-      statically.
+\subsection{Discussion} 
 
-\mypara{Discussion.} \Eval in R is mostly used for meta-programming purposes and to access environments other than the local one. In Javascript, patterns are ad-hoc, such as json loading and parsing, and can often be rewritten without \eval, such as function or method call, or assignment to a local variable or an object property. Compared to Javascript, \eval patterns in R we observed are much more legitimate, although this is biased by the fact that our main corpus CRAN features more experienced developers than  websites found at large on the web. \todo{can we really claim that? SHould we talk about Kaggle there?}
+\Eval in R is mostly used for meta-programming purposes and to access
+environments other than the local one. In Javascript, patterns are ad-hoc, such
+as json loading and parsing, and can often be rewritten without \eval, such as
+function or method call, or assignment to a local variable or an object
+property. Compared to Javascript, \eval patterns in R we observed are much more
+legitimate, although this is biased by the fact that our main corpus CRAN
+features more experienced developers than  websites found at large on the web.
+\todo{can we really claim that? SHould we talk about Kaggle there?}
 
-\eval is a powerful tool and can be sometimes replaced with functions with more specialized goals. For instance, variable lookup in any environment can be performed with \c{get}, and assignment in any environment, with \c{assign}. Building a call and executing can be done with \c{do.call}. Nevertheless, \eval shines when expressions passed to it can be of many different types. % And it is shorter to type, and no need to remember all the specialized functions, so it is convenient.
+\eval is a powerful tool and can be sometimes replaced with functions with more
+specialized goals. For instance, variable lookup in any environment can be
+performed with \c{get}, and assignment in any environment, with \c{assign}.
+Building a call and executing can be done with \c{do.call}. Nevertheless, \eval
+shines when expressions passed to it can be of many different types. % And it
+is shorter to type, and no need to remember all the specialized functions, so
+it is convenient.
+
+Finally, let us mention an anecdotal use of \eval as a mean to bypass some
+checks performed by the \c{R CMD CHECK} tool allowing one to submit a package
+to CRAN that would otherwise be refused. For example, the tool checks that
+packages do not call \c{unlockBinding} function.\footnote{It allows one to open
+and modify loaded package name space.} Packages such as \c{data.table}
+circumvent such restrictions by using \eval as the check is only performed
+statically.
 
 \section{Conclusion}
 
