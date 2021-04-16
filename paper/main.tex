@@ -518,7 +518,7 @@ conclusions.
 %
 This section focuses on CRAN packages and reports statistics about the usage of
 \eval. We use the word \emph{site} to an occurrence of a call site to the \eval
-function in the source code, and \emph{call} to denote an observed invocation of
+function in the source code and \emph{call} to denote an observed invocation of
 the \eval function.
 
 \subsection{CRAN}
@@ -794,25 +794,24 @@ We detail these forms and discuss their implication for the behavior of \eval.
 frequently passed to \eval -- they occur in 17\% of sites. The majority of
 those, \packageValOneNodePercent, are inline constants (integer or double
 vectors). The rest trivially evaluate to a value, \eg~\c{1+1}.\footnote{True as
-long as base functions such as \c{+} are not redefined. They typically aren't,
+long as base functions such as \c{+} are not redefined. They typically are not,
 but this is a limitation of this categorization.} In our corpus,
 \packageNbCallSitesUniqueActualValue call sites only ever see a simple value.
 Manual inspection reveals cases such as the following
 \begin{lstlisting}
  f1 <- eval(paste("A~",paste(paste(names(X[,-1])),collapse="+")))
 \end{lstlisting}
-where the argument to \eval is a string which \eval simply returns. From twenty
+where the argument to \eval is a string which \eval simply returns. Of twenty
 randomly selected \evals, \packageUsefulValueEvalPercent of them  need % There are a majority which needs eval
 \eval for some inputs. Either we are dealing with a value that needs to be
-constructed dynamically or the value is a default case that sometimes is
+constructed dynamically, or the value is a default case that sometimes is
 replaced by a more interesting expression. This form is usually evaluated in few
-interpreter steps, in fact the median is only
+interpreter steps; in fact, the median is only
 \packageMinimizedmedianoperationscRnd. The environment in which they evaluate is
 mostly irrelevant (unless a built-in operator is redefined).
 
-\medskip\noindent\EE{$min(e)=\c{X}$} Variable lookups are the most common form,
-they are found in 28\% of the sites. This form includes simple variable reads,
-\eg~\c{x}, those are \packageNbSymbolVarSitePercent of \c X. The form also
+\medskip\noindent\EE{$min(e)=\c{X}$} Variable lookups are the most common form; they are found in 28\% of the sites. This form includes simple variable reads,
+\eg~\c{x}, which are \packageNbSymbolVarSitePercent of \c X. The form also
 subsumes \c{V}, so it includes a mixture of arithmetic expressions,
 \eg~\c{x+y+1}. The operations allowed are limited to built-in arithmetics. It is
 noteworthy that, while most \c{X}\!s evaluate in a single step, the variable can
@@ -820,12 +819,12 @@ be bound to a promise, and accessing it may trigger evaluation of that promise,
 thus resulting in an arbitrary amount of computation. The median number of
 interpreted operations is \packageMinimizedmedianoperationsaRnd, suggesting that
 it is not the common case. Lookups are often evaluated in constructed
-environments, as few as \packageMinimizedpercentparentframesc of these
+environments; as few as \packageMinimizedpercentparentframesc of these
 expressions are evaluated in a function environment.
 
 \medskip\noindent\EE{$min(e)=\c{\$}$} This form extends \c X to include lookup
 with the dollar operator, \eg~\c{x\$f}, and vector indexing, \eg~\c{x[42]} or
-\c{x[[24]]}. As with \c X we allow arithmetics and values in this form. Lookup
+\c{x[[24]]}. As with \c X, we allow arithmetics and values in this form. Lookup
 occurs in 6\% of the sites. The interpreter evaluates
 \packageMinimizedmedianoperationsgRnd operations on average; the minimum is 3
 operations. This is typically used in a function environment,
@@ -834,15 +833,15 @@ operations. This is typically used in a function environment,
 \medskip\noindent\EE{$min(e)=$~\c{<-}} This form includes both assignment
 operators, the direct assignment {\tt <-}, and assignment to the parent
 environment {\tt <\,\!<-}, the \c{assign} function and the \c{\$} form. Assignments occur in 5\% of the
-sites. They represent the most obvious source of side-effects. The median number
+sites. They represent the most obvious source of side effects. The median number
 of operations is \packageMinimizedmedianoperationsiRnd; the minimum is 3.
 
 \medskip\noindent\EE{$min(e)=\c{F()}$} This form captures simple function calls,
-\eg~\c{f(2)}, with neither variables nor assignments. Or, more specifically it
+\eg~\c{f(2)}, with neither variables nor assignments. More specifically, it
 allows for variables in the function position but not in arguments. Usually,
 looking up function names does not trigger computation, but that is not a given
 if the function is returned by a promise or if the function name is shadowed by
-a promise containing a value, then computation will occur. This form occurs in
+a promise containing a value, then the computation will occur. This form occurs in
 6\% of sites and typically does not perform much work in the interpreter.
 
 \medskip\noindent\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$} These
@@ -851,39 +850,36 @@ The latter allows nested calls. Assignments are excluded from this form. They
 occur in, respectively, 14\% and 20\% of the sites in the corpus. Together they
 are the most frequent forms. The median numbers of interpreter steps are,
 respectively, \packageMinimizedmedianoperationsdRnd and
-\packageMinimizedmedianoperationsbRnd. The \packageMinimizedpercentparentframesj
+\packageMinimizedmedianoperationsbRnd. Also,  \packageMinimizedpercentparentframesj
 of these expressions run in function environments.
 
 \medskip\noindent\EE{$min(e)=\c{FUN}$} This form captures expressions that define functions, \eg~\c{function(x) x+1}, and do nothing else. \c{FUN} occurs in
 \packageFunctionDefinitionSitesPercent of sites. Evaluating a function
-definition is done in 2 interpreter step; the data does not record the work
+definition is done in 2 interpreter steps; the data does not record the work
 performed by the interpreter when the generated functions are eventually run. In
 addition to \c{FUN}, \packageGeneralizedFunctionDefinitionSitesPercent of sites
-have function definitions nested in other expressions, this gives an idea of the
+have function definitions nested in other expressions. This gives an idea of the
 use of higher-order functions.
 
 \medskip\noindent\EE{$min(e)=\c{BLOCK}$} This form captures multi-statement
-code blocks, which occur in only 4\% of sites. These are larger expressions, we
-do not inspect contents of the blocks. The median number of executed operations
+code blocks, which occur in only 4\% of sites. These are huge expressions; we
+do not inspect the contents of the blocks. The median number of executed operations
 is \packageMinimizedmedianoperationsjRnd. They typically run in function
 environments.
 
 \medskip\noindent\EE{$min(e)=\c{model.frame}$} The \c{model.frame} function
-returns a dataframe that is the result of fitting the model described in a given
-formula. This form subsumes \c{F(F(X))}, \c{FUN} and assignments. It is the
-single most popular function invoked from \eval, it occurs in 7\% of the sites.
+returns a dataframe resulting from f fitting the model described in a given
+formula. This form subsumes \c{F(F(X))}, \c{FUN}, and assignments. It is the
+single most popular function invoked from \eval; it occurs in 7\% of the sites.
 Each call does quite a lot of work with a 2K instructions median.
 
 \paragraph{Consistency} It is interesting to consider how many different
 forms any given site sees. The more forms, the harder it will be to characterize
-the behavior of the program at that site. Luckily, \packageNbOneMinimizedPercent
-of sites only see a single form.  In other words, a JIT compiler could correctly predict the \emph{shape} of an expression by looking just at the first call in \packageNbOneMinimizedPercent of the sites.  There are few sites that are highly polymorphic (8 or more different forms), these include the pipe operator of the \c{magrittr} package which is used to compose functions.
+the program's behavior at that site. Luckily, \packageNbOneMinimizedPercent
+of sites only see a single form.  In other words, a JIT compiler could correctly predict the \emph{shape} of an expression by looking just at the first call in \packageNbOneMinimizedPercent of the sites.  Few sites are highly polymorphic (8 or more different forms). These include the pipe operator of the \c{magrittr} package, which is used to compose functions.
 
 \paragraph{Discussion} The variety of uses of \eval is evidenced by the number
-of different forms observed in CRAN. In comparison, JavaScript \eval usage was
-simpler and more predictable as reported by \citet{oopsla12b}. Nevertheless,
-simple forms dominate and there are many cases where \eval could be replaced
-by less powerful constructs.
+of different forms observed in CRAN. In comparison, JavaScript \eval usage was more straightforward and more predictable as reported by \citet{oopsla12b}. Nevertheless, simple forms dominate, and there are many cases where \eval could be replaced by less powerful constructs.
 
 
 \subsection{The environments of \eval}\label{sec:env}
