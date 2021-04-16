@@ -1022,27 +1022,27 @@ environment to create singletons in a package.
 \subsection{The origins of \eval}
 
 Where does the expression passed to \eval come from? There are various means of
-creating that expression, these are associated with particular use cases, we
-classify them in three categories:
+creating that expression, which are associated with particular use cases. We
+classify them into three categories:
 
 \begin{compactitem}[---]
 \item {\it Constructed:} Expressions can be constructed by invoking the
   \c{quote}, \c{enquote}, \c{expression}. Function arguments are passed as
-  promises and \c{substitute} is used to retrieve the source expression
+  promises, and \c{substitute} is used to retrieve the source expression
   associated with the promise.
   \item {\it Reflection:} This group corresponds to uses of the \c{match.call}
   function to reflectively capture the expression that invoked the current
   function.
 \item {\it String:} Finally, expressions can be created from strings by invoking
-   \c{parse}, \c{str2expression} or \c{str2lang}.
+   \c{parse}, \c{str2expression}, or \c{str2lang}.
 \end{compactitem}
 
 \noindent
 Table~\ref{tab:provenance} summarizes the expression provenance in our corpus.
 This data is obtained by dynamically tainting values as they are produced by the
-various sources, due to technical reasons, there is some imprecision in the
+various sources. Due to technical reasons, there is some imprecision in the
 results. In particular, we are not able to classify all sites. Manual inspection
-of numerous examples suggest that the classified results are accurate.
+of numerous examples suggests that the classified results are accurate.
 
 \begin{wraptable}{r}{5cm}\small\centering
 \begin{tabular}{r|r|r} \hline
@@ -1060,13 +1060,12 @@ functions \c{source} and \c{sys.source} do. We observed few calls
 \c{parse} on a file. Most of the calls build strings programmatically. We also
 identified one function \c{invokeRestartInteractively} that prompts the user for
 input, parses it, and passes it to \eval. The use of strings seems to correlate
-with less sophisticated programmers; in our Kaggle corpus
-\kaggleParseExprsSitePercent of site use strings.
+with less sophisticated programmers; in our Kaggle corpus,
+\kaggleParseExprsSitePercent of sites use strings.
 
 \paragraph{Discussion}
 The origin data suggests that constructing expressions from strings is a
-minority of the use cases, instead the constructed category shows that the
-majority of \evals comes from code that was processed by the compiler, and may be
+minority of the use cases. Instead, the constructed category shows that most \evals comes from code that was processed by the compiler, and may be
 slightly modified by the programmer before invoking \eval. Both constructed and
 reflection categories roughly correspond to meta-programming. Some of these use
 cases could likely be replaced by macros if the R designers could be convinced
