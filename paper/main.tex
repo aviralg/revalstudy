@@ -1215,23 +1215,26 @@ passing a string, it is conceivable that this may discourage some
 casual users. \Eval is also being used to reduce boilerplate code and
 provide convenience features for programmers. We give examples for the minimized expressions of Section~\ref{sec:minimized} and then dig into high-level \eval design patterns.
 
-The examples are based on code from CRAN or Kaggle, simplified to fit the limited space of a scientific paper. We indicate the package and the function where the example is located.
+The examples are based on code from CRAN or Kaggle, simplified to fit the limited space of a scientific paper. For each example, we indicate the package and the function where it is located.
 
 \subsection{Shapes of \eval}
 
-We group minimized expressions in larger categories.
+We illustrate the minimized expressions of Section~\ref{sec:minimized} on representative examples. 
+
+% model.frame is in the next subsection, in the high-level patterns
 
 \subsubsection{Variable lookup and values.}  We also include here lookup to slots in a list or data frame.
 This corresponds to minimized expressions \c{X}, \c{V}, and  \c{\$}. Variable lookup leads to a large diversity of environments, many being package environments or package environments wrapped in \c{new}.
 
-It is the predominant usage of \eval in Base, through function \c{match.args} (with \eval on minimized expression \c{V}). In CRAN, it correlates with more exotic environments passed to \eval. 
+It is the predominant usage of \eval in Base, through function \c{match.args} (with evaluates on  minimized expression \c{V}). In CRAN, it correlates with more exotic environments passed to \eval. 
 The dominant site in numbers of calls in CRAN, is located in \c{ggproto} in the custom object system of \emph{ggplot2}. It evaluates a variable \c{`\_inherit`}, which represents the parent of the class, in the definition environment of the class. \eval is used here to account for parents scoped in a namespace with \c{::}, which is actually a function call in R.  
 
 
+Package \emph{statnet.common} handles formulas, R object that associates an expression of the form \c{x~\textasciitilde~expr} and a carry-on environment where to evaluate the formula. It evaluates the left-hand side of the formula, which is always a variable, in function \c{eval\_lhs.formula}, where \c{object} is the formula and \c{environment} returns the formula associated to the object:
 
-Package \emph{statnet.common} handles formulas, R object that associates an expression of the form \c{x~\textasciitilde~expr} and a carry-on environment where to evaluate the formula. It evaluates the left-hand side of the formula, which is always a variable, in function \c{eval\_lhs.formula}, as \c{eval(object[[2L]],envir=environment(object))} where \c{object} is the formula and \c{environment} returns the formula associated to the object.
-
-
+\begin{lstlisting}
+eval(object[[2L]],envir=environment(object))
+\end{lstlisting}
 
 \subsubsection{Assigments.} It corresponds to minimized expression \c{<-} and groups together \c{<-}, \c{<<-} and \c{assign}. Package \emph{plyr} has a function combine data frames by row, filling in missing columns. During the allocation of the missing columns, an assignment call is built with \c{assignment <- quote(column[rows] <<- what)} and later evaluated on demand in a setter function, with \c{eval(assigmment)}. Package \emph{overture} is used to run Markov Chain Monte Carlo. It runs an R expression repeatedly and saves any assignments that happen, as samples of the Markov chains. 
 The expression is captured with \c{substitute} and a new environment \c{env} wrapping the parent of the caller is created, in which all assignments will happen. Regularly, the content of \c{env} is inspected to sample the assigned variables.
@@ -1244,7 +1247,6 @@ function(expr, overwrite=over.write) {
 }
 
 RunMcmc <- function... {
-	 ...
 	 eval(expr_q, envir=env)
 \end{lstlisting}
 
@@ -1287,7 +1289,7 @@ i = quote(seq_len(nrow(ht))), j = quote(-last_col))
 
 \subsection{High-level patterns.}
 
-We present here high-level patterns that we identified after manual inspections of hundred of \eval sites. Some of the patterns were also described in the R documentation.
+We present here high-level patterns that we identified after manual inspections of hundred of \eval sites. Some of the patterns are also described in the R documentation.
 
 \subsubsection{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
@@ -1384,10 +1386,11 @@ are limited in this example, it is an attractive tool for programmers.
 This pattern is a special case of code generation, recognizable by the
 fact that \eval is executed in a loop. 
 
-Using \c{parse}, \ie converting strings to R expressions, opens to a more flexible code generation, as the building blocks which are going to be concatenated together, do not need to be valid R expressions. On the contrary, combining expression created with \c{substitute} or \c{quote} requires more discipline. In Kaggle, which features less experienced programmers,  code generation for plots is widespread, and uses \c{parse}.
+Using \c{parse}, \ie converting strings to R expressions, opens to a more flexible code generation, as the building blocks which are going to be concatenated together, do not need to be valid R expressions. On the contrary, combining expression created with \c{substitute} or \c{quote} requires more discipline. In Kaggle, which features less experienced programmers,  code generation for plots is widespread, and uses \c{parse} on strings with \eval.
 
 \todo{There is an example in package comprenhr that does code generation with substitute to create list comprehensions, but it is quite difficult to grasp. But at the same type, we lack here an example of code generation using quite, enquote or substitute.}
 
+\todo{Add a pattern about Library Loading? \c{library(packageName)} in R uses \eval This is one of the patterns in Javascript...}
 
 \subsubsection{Unnecessary use of \eval}
 
@@ -1413,9 +1416,9 @@ or even to a oneliner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 
 \todo{Aviral's story when he contacted a developer about his use of eval}
 
-\mypara{Discussion.} % more...
+\mypara{Discussion.} \Eval in R is mostly used for meta-programming purposes and to access environments other than the local one. In Javascript, patterns are ad-hoc, such as json loading and parsing, and can often be rewritten without \eval, such as function or method call, or assignment to a local variable or an object property. Compared to Javascript, \eval patterns in R we observed are much more legitimate, although this is biased by the fact that our main corpus CRAN features more experienced developers than  websites found at large on the web. \todo{can we really claim that? SHould we talk about Kaggle there?}
 
-\eval is a powerful tool and can be sometimes replaced with functions with more specialized goals. For instance, variable lookup in any environment can be performed with \c{get}, and assignment in any environment, with \c{assign}. Building a call and executing can be done with \c{do.call}. Nevertheless, \eval shines when expressions passed to it can be of many different types. % And it is shorter to type, and no need to remember all the specialized functions.
+\eval is a powerful tool and can be sometimes replaced with functions with more specialized goals. For instance, variable lookup in any environment can be performed with \c{get}, and assignment in any environment, with \c{assign}. Building a call and executing can be done with \c{do.call}. Nevertheless, \eval shines when expressions passed to it can be of many different types. % And it is shorter to type, and no need to remember all the specialized functions, so it is convenient.
 
 \section{Conclusion}
 
