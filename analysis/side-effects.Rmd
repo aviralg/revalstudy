@@ -87,16 +87,22 @@ SE <- mutate(
   SE,
   caller=str_replace(eval_call_srcref, "::(.*)::(.*)::.*", "\\1::\\2")
 )
+
+S <- mutate(
+  S,
+  caller=str_replace(eval_call_srcref, "::(.*)::(.*)::.*", "\\1::\\2"),
+  caller_package=str_replace(eval_call_srcref, "::(.*)::.*::.*", "\\1")
+)
 ```
 
 
 ## Overview
 
 ```{r}
-S_call <- sum(S$nb_ev_calls)
-S_site <- count(S, eval_call_srcref)
-S_package <- count(S, eval_source)
-S_funs <- sum(PKG$funs_with_eval)
+S_calls <- sum(S$nb_ev_calls)
+S_sites <- count(S, eval_call_srcref)
+S_pkgs <- count(S, eval_source)
+S_funs <- count(S, caller)
   
 SE_all_N <- sum(SE_all$N)
 SE_all_sites <- count(SE_all, eval_call_srcref)
@@ -114,7 +120,9 @@ SE_sites <- count(SE, eval_call_srcref)
 SE_funs <- count(SE, caller)
 SE_pkgs <- count(SE, caller_package)
 SE_missing_N <- sum(SE_missing_sites$N)
+```
 
+```{r}
 overview_table(
   r("All", SE_all_N),
   r("All calls", SE_all_calls),
@@ -140,12 +148,16 @@ overview_table(
 
   r("User calls", SE_calls),
   r("User calls ratio", ratio(SE_calls, SE_all_calls)),
+  r("User calls to all ratio", ratio(SE_calls, S_calls)),
   
   r("User sites", SE_sites),
   r("User sites ratio", ratio(SE_sites, SE_all_sites)),
+  r("User sites to all ratio", ratio(SE_sites, S_sites)),
   
-  r("User functions", count(SE, caller)),
-  r("User packages", count(SE, caller_package)),
+  r("User functions", SE_funs),
+  r("User functions to all ratio", ratio(SE_funs, S_funs)),
+  r("User packages", SE_pkgs),
+  r("User packages to all ratio", ratio(SE_pkgs, S_pkgs))
 )
 ```
 
@@ -220,26 +232,26 @@ sum_sites_classes <-
   ) %>%
   cs_count(classes) %>%
   mutate(
-    p=fmt(p, suffix="\\%", digit=1),
+    p=fmt(p, suffix="\\%", digit=0),
     o=if_else(str_starts(classes, fixed("\\")), 0L, n)
   ) %>% 
   arrange(desc(o)) %>%
   select(-cp, -o)
 
-sum_sites_classes %>%
-  mutate(classes=if_else(classes=="multiple", "\\emph{multiple}", classes)) %>%
-  xtable(
-    align="llrr",
-  ) %>%
-  print(
-    file=file.path(TAGS_DIR, "table-top-sites-classes-se.tex"),
-    comment=FALSE, 
-    include.colnames=FALSE,
-    include.rownames=FALSE,
-    only.contents=TRUE,
-    sanitize.text.function=identity,
-    timestamp=FALSE
-  )
+# sum_sites_classes %>%
+#   mutate(classes=if_else(classes=="multiple", "\\emph{multiple}", classes)) %>%
+#   xtable(
+#     align="llrr",
+#   ) %>%
+#   print(
+#     file=file.path(TAGS_DIR, "table-top-sites-classes-se.tex"),
+#     comment=FALSE, 
+#     include.colnames=FALSE,
+#     include.rownames=FALSE,
+#     only.contents=TRUE,
+#     sanitize.text.function=identity,
+#     timestamp=FALSE
+#  )
 ```
 
 ```{r}
@@ -287,33 +299,33 @@ cs_count(funs_classes, classes)
 
 ```{r}
 sum_funs_classes <-
-funs_classes %>%
-  filter(cov==1, classes != "") %>%
-  mutate(
-    classes=if_else(str_detect(classes, "[,;]"), "multiple", classes)
-  ) %>%
-  cs_count(classes) %>%
-  mutate(
-    p=fmt(p, suffix="\\%", digit=1),
-    o=if_else(str_starts(classes, fixed("\\")), 0L, n)
-  ) %>% 
-  arrange(desc(o)) %>%
-  select(-cp, -o)
+  funs_classes %>%
+    filter(cov==1, classes != "") %>%
+    mutate(
+      classes=if_else(str_detect(classes, "[,;]"), "multiple", classes)
+    ) %>%
+    cs_count(classes) %>%
+    mutate(
+      p=fmt(p, suffix="\\%", digit=0),
+      o=if_else(str_starts(classes, fixed("\\")), 0L, n)
+    ) %>% 
+    arrange(desc(o)) %>%
+    select(-cp, -o)
 
-sum_funs_classes %>%
-  mutate(classes=if_else(classes=="multiple", "\\emph{multiple}", classes)) %>%
-  xtable(
-    align="llrr",
-  ) %>% 
-  print(
-    file=file.path(TAGS_DIR, "table-top-sites-classes-funs.tex"),
-    comment=FALSE, 
-    include.colnames=FALSE,
-    include.rownames=FALSE,
-    only.contents=TRUE,
-    sanitize.text.function=identity,
-    timestamp=FALSE
-  )
+# sum_funs_classes %>%
+#   mutate(classes=if_else(classes=="multiple", "\\emph{multiple}", classes)) %>%
+#   xtable(
+#     align="llrr",
+#   ) %>% 
+#   print(
+#     file=file.path(TAGS_DIR, "table-top-sites-classes-funs.tex"),
+#     comment=FALSE, 
+#     include.colnames=FALSE,
+#     include.rownames=FALSE,
+#     only.contents=TRUE,
+#     sanitize.text.function=identity,
+#     timestamp=FALSE
+#   )
 ```
 
 ```{r}
@@ -362,7 +374,7 @@ left_join(
     event=="asn" ~ "update",
     event=="rvl" ~ "removal"
   )) %>%
-  mutate_if(is.double, ~fmt(., suffix="%", digit=1)) %>%
+  mutate_if(is.double, ~fmt(., suffix="%", digit=0)) %>%
   mutate_if(is.integer, ~fmt(.)) %>%
   xtable(
     align="llrrrrrr"
@@ -386,3 +398,47 @@ overview_table(
   r("event rem from local", percent(filter(event_rvl_class, class=="Local")$p/100))
 )
 ```
+
+## Side effects with norm
+
+```{r}
+NE <- read_csv(
+  PACKAGE_NORMALIZED_EXPRESSION_FILE,
+  col_types = cols(
+    minimized = col_character(),
+    topcall = col_character(),
+    is_model = col_double(),
+    has_fundef = col_double(),
+    has_calls = col_double(),
+    has_assigns = col_double(),
+    has_var = col_double(),
+    has_bracket = col_double(),
+    is_assign = col_double(),
+    is_value = col_double(),
+    is_ignore = col_double(),
+    has_dollar = col_double(),
+    has_user_call = col_double(),
+    has_block = col_double(),
+    has_meta_op = col_double(),
+    normalized = col_character(),
+    trimmed = col_character(),
+    hash = col_character()
+  )
+) %>%
+  select(
+    minimized,
+    topcall,
+    normalized,
+    expr_resolved_hash=hash
+  )
+```
+
+```{r eval=F}
+C <- read_fst(path(PACKAGE_DATA_DIR, "calls-sub.fst")) %>% as_tibble
+CSE <- left_join(
+  C,
+  select(SE, cid, event, class, N),
+  by="cid"
+)
+```
+

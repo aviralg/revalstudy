@@ -24,6 +24,7 @@ PACKAGE_EVALS_STATIC_FILE <- path(PACKAGE_DATA_DIR, "evals-static.csv")
 PACKAGE_CODE_FILE         <- path(PACKAGE_DATA_DIR, "code.fst")
 PACKAGE_TRACE_LOG_FILE    <- path(PACKAGE_DATA_DIR, "trace-log.csv")
 PACKAGE_SIDE_EFFECTS_FILE <- path(PACKAGE_DATA_DIR, "side-effects.fst")
+PACKAGE_NORMALIZED_EXPRESSION_FILE <- path(PACKAGE_DATA_DIR, "normalized-expressions.csv")
 
 KAGGLE_KERNEL_FILE <- path(KAGGLE_DATA_DIR, "kernel.csv")
 KAGGLE_EVALS_STATIC_FILE <- path(KAGGLE_DATA_DIR, "evals-static.csv")

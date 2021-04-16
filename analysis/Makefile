@@ -47,3 +47,10 @@ usage: $(OUTPUT_DIR)/usage.html
 .PHONY: corpus
 corpus:
 	R -e 'rmarkdown::render("corpus.Rmd", output_file = "$(OUTPUT_DIR)/corpus.html", output_dir="$(OUTPUT_DIR)")'
+
+.PHONY: normalized
+normalized:
+	R -e 'rmarkdown::render("normalized.Rmd", output_file = "$(OUTPUT_DIR)/normalized.html", output_dir="$(OUTPUT_DIR)", params = list(base_dir = "Data/package/"))'
+
+.PHONY: all
+all: usage corpus normalized
