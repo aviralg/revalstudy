@@ -595,11 +595,12 @@ used at all. The difference between sites and exercised sites underscores the
 limitations due to code coverage.
 
 \begin{wrapfigure}{4}{5.8cm}
+  \small
   \vspace*{-2mm}
 \centering
   \begin{tabular}{|r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r|} \hline
-\multicolumn{3}{|c}{\small\#calls} &\small\#sites &
-\multicolumn{3}{c}{\small\#calls} &\small\#sites \\\hline
+\multicolumn{3}{|c}{\#calls} & \#sites &
+\multicolumn{3}{c}{\#calls} & \#sites \\\hline
 \tt 0 &--& \tt 50    & \packageRunbina & \tt 501 &--& \tt 1000   & \packageRunbine\\
 \tt 51 &--& \tt 100  & \packageRunbinb & \tt 1001 &--& \tt 1500  & \packageRunbinf\\
 \tt 101 &--& \tt 250 & \packageRunbinc & \tt 1501 &--& \tt 2000  & \packageRunbing\\
@@ -620,9 +621,9 @@ limitations due to code coverage.
 
 \begin{tabular}{c}
   \vspace*{-1mm}
-  {\hspace{-3cm}\includegraphics[width=0.8\textwidth]{package_size_loaded_distribution}}
+  {\hspace{-25mm}\includegraphics[width=0.7\textwidth]{package_size_loaded_distribution}}
 \end{tabular}
- \caption{Loaded code} \label{fig:sizedistribution}
+\caption{Loaded code} \label{fig:sizedistribution}
 \end{wrapfigure}
 
 Figure~\ref{cn}(a) shows normalized call counts per site; on the left are
@@ -788,7 +789,6 @@ column shows one sample expression $e$ that normalizes to the particular form.
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
 
-\noindent
 We detail these forms and discuss their implication for the behavior of \eval.
 
 \newcommand{\EE}[1]{{{\emph{\framebox{#1}}}}\\[1mm]}
