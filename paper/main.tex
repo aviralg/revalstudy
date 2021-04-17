@@ -1266,7 +1266,7 @@ extract the unevaluated expression from function arguments (\c{substitute()})
 and \eval with first class environment makes the R toolkit for building DSLs.
 There are numerous widely spread DSLs used in R. For example, \c{data.table}
 package defines a DSL for data frame manipulation using the subset operator
-\c{[}. This allowing one to write compact queries such as \c{flights[carrier ==
+\c{[}. This allows one to write compact queries such as \c{flights[carrier ==
   "AA", .N, by = origin]}\footnote{The \c{data.table} subset operation is
 defined as \c{DT[i, j, k]}, where \c{j} expression is used to calculate on a
 subset/reorder of rows from \c{i} grouped by \c{k}.} which will compute the
@@ -1282,17 +1282,103 @@ starts\_with("length") \& !(name:mass))} which returns all columns in \c{df}
 that starts with the string \c{length} and is not between \c{name} and
 \c{mass} columns.
 
-For instance, base R packages \emph{stats} provides two operators for
-\emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic
-operations and functions on real numbers such as \c{sin}. In \emph{MCMCglmm}
-(Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object
-is created, which contains expressions derived twice (with \c{DD}) and then
-typically in a list or a data frame.
+
+Another instance is the \emph{symbolic differentiation support} provided by base R package \emph{stats}, with two operators \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}, on expressions built with \c{expression()} or \c{parse}.
+In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created: it contains expressions that are derived twice (with \c{DD}). To get a concrete value, it is evaluated in  dataframe \c{mu} where symbolic variables are bound to actual numbers.
 \begin{lstlisting}
  expr<-expression(beta_1 + time*beta_2+u)
  mu = data.frame(beta_1=0.5, beta_2=1, time=3, u=2.3)
  D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
 \end{lstlisting}
+
+% See https://github.com/cran/MCMCglmm/blob/cfac9e67ec73a3db2142826faae35e5d2318da31/man/evalDtensor.Rd
+
+% \subsubsection{Capturing a call.}  A common use case for \eval is to be combined with \c{match.call}.
+% \c{match.call} walks up the call stack, captures the code that invoked the
+% currently executing function, and returns it as an unevaluated expression that includes the call function and its unevaluated arguments. The pattern is to transform a call to some function \c{f} into a call to \c{g} with some arguments retained and others modified. This pattern is recognizable
+% by the fact that the expression is a call and the target environment is that of
+% the parent.
+
+% % We have quantitative data on that if needed...
+% This pattern is very often (more than half of the cases) used in relation with statistical models, to build a new model, \c{model.frame} to build a new generic model, or a more specialized model like \c{glm} or, \c{lm}. The R documentation of \c{match.call} explicitly describes this usage.
+
+% In package \emph{survival}\footnote{It is a \emph{recommended package}, so recommended by the CRAN maintainers, thoroughly tested, and following R best practices.}, in function \c{coxph}, the surrounding call is first captured, then \c{model.frame} is injected as the function name in the call, and finally, the new call is evaluated in the parent frame, to ensure that the rewritten call
+% is evaluated in the same environment the original call was.
+
+% \begin{lstlisting}
+% Call <- match.call()
+% tform <- Call[c(1,indx)]  # only keep the arguments we wanted
+% tform[[1L]] <- quote(stats::model.frame)  # change the function called
+% mf <- eval(tform, parent.frame())
+% \end{lstlisting}
+
+% A related pattern is not to change the call but rather to evaluate the arguments in the parent frame. This could also be achieved with \c{substitute}, but \c{match.call} does it in bulk.
+% In package \emph{MedDietCalc},  in function \c{computeMDS95}, \c{match.call} retrieves the argument expressions of the call, which are evaluated in a dataframe \c{data} which contains the numeric data. Each argument of function \c{computeMDS95} is also a column in dataframe \c{data}. The advantage of using \c{eval} here is to be able to express an argument as a combination of several columns in the dataframe.
+% \begin{lstlisting}
+% computeMDS95 <- function (data, Vegetables, ...) {
+% 	arguments <- as.list( match.call())
+% 	Vegetables <- eval(arguments$Vegetables, data)
+% \end{lstlisting}
+
+% \c{substitute} can be used to capture only a part of the call, \ie one of the arguments. For instance, in package \emph{xyplot}, the expression for argument \c{subset} is captured with \c{substitute} and then evaluated in a dataframe \c{data} and in the definition environment of \c{x}.
+% \begin{lstlisting}
+% xyplot.formula <-  function(x,    data = NULL, ..., subset = TRUE)
+% subset <- eval(substitute(subset), data, environment(x))
+% \end{lstlisting}
+
+
+% In the R community, the call capturing pattern with evaluation in a non-local environment is often referred~\cite{hadley} as \emph{Non-Standard Evaluation}. This pattern in relation with \c{model.frame} is also described explicitly in the R documentation of \c{match.call}.
+
+% \subsubsection{Injecting code in package environments.} R distinguishes two kinds of environments for packages: the \emph{package} environment itself, which contains every publicly accessible functions, and the \emph{namespace} environment, which contains all functions including private ones.
+
+%  A call to \c{library(packageName)}, which loads libraries in R, for instance, will
+% populate environment \c{package:packageName} using \eval. It is a \emph{base} function
+% though, so we do not see it in the CRAN dataset. However, R still makes it
+% possible to access any package environments, which we see in
+% \packageNbPackageEnvPackages different packages in our corpus. Those packages perform
+% introspection, to represent and search any environment by name, in package
+% \emph{envnames}, to containerize tests, as with \emph{testthat} and
+% \emph{unitizer}, to create a custom OOP system with \emph{R.oo}, or to bypass the visibility of functions in \emph{USSCXenaTools}. It is also used to
+% implement a custom caching mechanism in packages \emph{g.data} and \emph{SOAR}.
+
+% \subsubsection{Code Generation.} The more traditional use of \eval is to execute code
+% that was assembled by the programmer into a string. Here we show the method
+% \c{plot} for class \c{gmap} in package \c{gpmaps}, simplified for
+% explanatory purposes.   \c{paste} is used to dispatch to a specialized plot function, among \c{plot2\_orig},  \c{plot3\_orig}, \c{plot3\_dec} and so on.
+% \begin{lstlisting}
+% eval(parse(text=paste('plot',gpmap$nloci,'_orig(gpmap)',sep="")))
+% \end{lstlisting}
+
+% In Kaggle, plots are often built with \eval, \c{paste} and \c{ggplot}. In this kernel for the \emph{digit-recognizer} challenge, \c{paste0} is used to generate \c{ggplot} commands featuring unique y labels to build 9 different graphs.
+
+% \begin{lstlisting}
+% p <- lapply(paste0('PC', 1:9), function(pc){
+% 	eval(parse(text=paste0('ggplot(ld, aes(x=label, y=',pc,')) + geom_boxplot()')))
+% })
+% \end{lstlisting}
+
+% The \parse and \eval combination is
+% used by the \source function in the base library to load R code from a file
+% in the current workspace.
+
+%  Code generation is often used as a means to reduce boilerplate code;
+% simple and repetitive code can easily be replaced with judicious use of \eval.
+% For example, the \c{data.table} package uses \eval to calls the \c{options}
+% function with named arguments taken from a vector of strings. While the benefits
+% are limited in this example, it is an attractive tool for programmers.
+% \begin{lstlisting}
+%   opts = c("datatable.verbose"="FALSE", # ...many others
+%   for (i in names(opts))
+%     eval(parse(text=paste0("options(",i,"=",opts[i],")")))
+% \end{lstlisting}
+% This pattern is a special case of code generation, recognizable by the
+% fact that \eval is executed in a loop.
+
+% Using \c{parse}, \ie converting strings to R expressions, opens to a more flexible code generation, as the building blocks which are going to be concatenated together, do not need to be valid R expressions. On the contrary, combining expression created with \c{substitute} or \c{quote} requires more discipline. In Kaggle, which features less experienced programmers,  code generation for plots is widespread, and uses \c{parse} on strings with \eval.
+
+% \todo{There is an example in package comprenhr that does code generation with substitute to create list comprehensions, but it is quite difficult to grasp. But at the same type, we lack here an example of code generation using quite, enquote or substitute.}
+
+% \todo{Add a pattern about Library Loading? \c{library(packageName)} in R uses \eval This is one of the patterns in Javascript...}
 
 \subsection{Unnecessary use of \eval}
 
