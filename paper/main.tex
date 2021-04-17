@@ -147,8 +147,15 @@ ecosystem with new libraries added each day, while end-user code is often thrown
 together, run once, and never revisited.
 
 
-\vspace{2mm}\noindent\emph{Why do we Eval?} {\bf A short summary of the
-results should go here.}
+\vspace{2mm}\noindent\emph{Why do we Eval?} The results of our study suggest
+that \eval is widely used for the implementation of the language, and in many
+libraries. End-user code makes less frequent and less sophisticated use of
+\eval. In many ways, \eval in R is as bad as it gets: it's varied, performs
+side-effects and reaches to many environments. By large, the motivations for
+\eval relate to various forms of language extensions and meta-programming. \Eval
+is used where other languages would provide macros. But, the expressive power of
+\eval is higher as it can reach arbitrarily far back in the call stack.
+
 
 
 \newpage
