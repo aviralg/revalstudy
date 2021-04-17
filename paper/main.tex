@@ -808,9 +808,9 @@ operations. This is typically used in a function environment,
 
 \medskip\noindent\EE{$min(e)=$~\c{<-}} This form includes both assignment
 operators, the direct assignment {\tt <-}, and assignment to the parent
-environment {\tt <\,\!<-}, the \c{assign} function and the \c{\$} form. Assignments occur in 5\% of the
-sites. They represent the most obvious source of side effects. The median number
-of operations is \packageMinimizedmedianoperationsiRnd; the minimum is 3.
+environment {\tt <\,\!<-}, the \c{assign} function and the \c{\$} form.
+Assignments occur in 5\% of the sites. They represent the most obvious source of
+side effects. The median count is \packageMinimizedmedianoperationsiRnd (min=3).
 
 \medskip\noindent\EE{$min(e)=\c{F()}$} This form captures simple function calls,
 \eg~\c{f(2)}, with neither variables nor assignments. More specifically, it
@@ -818,7 +818,7 @@ allows for variables in the function position but not in arguments. Usually,
 looking up function names does not trigger computation, but that is not a given
 if the function is returned by a promise or if the function name is shadowed by
 a promise containing a value, then the computation will occur. This form occurs in
-6\% of sites and typically does not perform much work in the interpreter.
+6\% of sites and typically does not perform much work.
 
 \medskip\noindent\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$} These
 forms allow for function calls whose arguments may include variable references.
@@ -826,11 +826,13 @@ The latter allows nested calls. Assignments are excluded from this form. They
 occur in, respectively, 14\% and 20\% of the sites in the corpus. Together they
 are the most frequent forms. The median numbers of interpreter steps are,
 respectively, \packageMinimizedmedianoperationsdRnd and
-\packageMinimizedmedianoperationsbRnd. Also,  \packageMinimizedpercentparentframesd and \packageMinimizedpercentparentframesb
+\packageMinimizedmedianoperationsbRnd. Also,
+\packageMinimizedpercentparentframesd and \packageMinimizedpercentparentframesb
 of these expressions run in function environments.
 
-\medskip\noindent\EE{$min(e)=\c{FUN}$} This form captures expressions that define functions, \eg~\c{function(x) x+1}, and do nothing else. \c{FUN} occurs in
-\packageFunctionDefinitionSitesPercent of sites. Evaluating a function
+\medskip\noindent\EE{$min(e)=\c{FUN}$} This form captures expressions that
+define functions, \eg~\c{function(x) x+1}, and do nothing else. \c{FUN} occurs
+in \packageFunctionDefinitionSitesPercent of sites. Evaluating a function
 definition is done in 2 interpreter steps; the data does not record the work
 performed by the interpreter when the generated functions are eventually run. In
 addition to \c{FUN}, \packageGeneralizedFunctionDefinitionSitesPercent of sites
@@ -849,13 +851,21 @@ formula. This form subsumes \c{F(F(X))}, \c{FUN}, and assignments. It is the
 single most popular function invoked from \eval; it occurs in 7\% of the sites.
 Each call does quite a lot of work with a 2K instructions median.
 
-\paragraph{Consistency} It is interesting to consider how many different
-forms any given site sees. The more forms, the harder it will be to characterize
-the program's behavior at that site. Luckily, \packageNbOneMinimizedPercent
-of sites only see a single form.  In other words, a JIT compiler could correctly predict the \emph{shape} of an expression by looking just at the first call in \packageNbOneMinimizedPercent of the sites.  Few sites are highly polymorphic (8 or more different forms). These include the pipe operator of the \c{magrittr} package, which is used to compose functions.
+\paragraph{Consistency} It is interesting how many different
+forms any given site sees. The more forms, the harder it is to characterize
+behavior at that site. Luckily, \packageNbOneMinimizedPercent of sites only see
+a single form. In other words, a compiler could correctly predict the
+\emph{shape} of an expression by looking just at the first call in
+\packageNbOneMinimizedPercent of the sites. Few sites are highly polymorphic (8
+or more different forms). These include the pipe operator of the \c{magrittr}
+package, used to compose functions.
 
 \paragraph{Discussion} The variety of uses of \eval is evidenced by the number
-of different forms observed in CRAN. In comparison, JavaScript \eval usage was more straightforward and more predictable as reported by \citet{oopsla12b}, with 98.7\% of the sites with only one form. Nevertheless, simple forms dominate in R also, and there are many cases where \eval could be replaced by less powerful constructs.
+of different forms. In comparison, JavaScript \eval usage was more
+straightforward and more predictable as reported by \citet{oopsla12b}, with
+98.7\% of the sites with only one form. Nevertheless, simple forms dominate in R
+also, and there are many cases where \eval could be replaced by less powerful
+constructs.
 
 
 \subsection{The environments of \eval}\label{sec:env}
@@ -1052,7 +1062,7 @@ reflection categories roughly correspond to meta-programming. Some of these use
 cases could likely be replaced by macros if the R designers could be convinced
 to overcome their distaste for those.
 
-\subsection{Side effects in \eval}
+\subsection{The effects of \eval}
 
 The code executed by \eval can do side effects. From the compiler perspective,
 we care about the observable side effects in environments---\ie variable
@@ -1097,20 +1107,6 @@ possibly in parallel). Most of the \eval sites (\SESitesInEnvirRatio) do side
 effects in the environment specified by the \c{envir} parameter (\cf
 Section~\ref{sec:eval-in-r}), \SESitesNotInEnvirRatio modifies other
 environments, and finally, \SESitesBothEnvirRatio does both.
-Table~\ref{tab:se-env} shows the class of the environment where \eval side
-effects happen (\emph{target environment}). It follows the classification
-described in Section~\ref{sec:env} with two extra classes: \emph{Object},
-which represents a side-effect that happens in S4 or R6 object environments, and
-\emph{Local} that corresponds to a side effect in local variables of the \eval
-caller (offset 0 in Section~\ref{sec:env}).  The table shows data for both \eval sites and functions. For a
-function to have a given target environment class, all of its \eval sites that
-do side effects must have the same target environment class The majority of the
-\eval sites (\SESitesInOneClass) do all side effects consistently in one
-environment class. The same happens at the function level. Almost half of the
-sites (over a third of the functions) do side effects in either \emph{Local} or
-\emph{Object} environments. This gives a ray of hope for the compiler. Even
-though it is possible to do anything anywhere, the data suggest that most
-side-effects are sane.
 
 \begin{wraptable}{r}{7cm}\small\centering
   \small
@@ -1121,6 +1117,22 @@ side-effects are sane.
   \end{tabular}
   \caption{Target environments for \eval side-effects} \label{tab:se-env}
 \end{wraptable}
+
+Table~\ref{tab:se-env} shows the class of the environment where \eval side
+effects happen (\emph{target environment}). It follows the classification
+described in Section~\ref{sec:env} with two extra classes: \emph{Object}, which
+represents a side-effect that happens in S4 or R6 object environments, and
+\emph{Local} that corresponds to a side effect in local variables of the \eval
+caller (offset 0 in Section~\ref{sec:env}). The table shows data for both \eval
+sites and functions. For a function to have a given target environment class,
+all of its \eval sites that do side effects must have the same target
+environment class The majority of the \eval sites (\SESitesInOneClass) do all
+side effects consistently in one environment class. The same happens at the
+function level. Almost half of the sites (over a third of the functions) do side
+effects in either \emph{Local} or \emph{Object} environments. This gives a ray
+of hope for the compiler. Even though it is possible to do anything anywhere,
+the data suggest that most side-effects are sane.
+
 
 Table~\ref{tab:se-types} shows the proportion of the different side effects
 that were recorded. In terms of calls, we see assignments primarily and in
