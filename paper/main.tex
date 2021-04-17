@@ -1414,15 +1414,14 @@ or even to a one-liner \c{do.call(paste0("q",d), as.list(dp, ...))}.
 environments other than the local one. In Javascript, patterns are ad-hoc, such
 as json loading and parsing, and can often be rewritten without \eval, such as
 function or method call, or assignment to a local variable or an object
-property. Compared to Javascript, \eval patterns in R we observed are much more
-legitimate, although this is biased by the fact that our main corpus CRAN
-features more experienced developers than websites found at large on the web.
-
-\eval is a powerful tool and can be sometimes replaced with functions with more
-specialized goals. For instance, variable lookup in any environment can be
-performed with \c{get}, and assignment in any environment, with \c{assign}.
-Building a call and executing can be done with \c{do.call}. Nevertheless, \eval
-shines when expressions passed to it can be of many different types.
+property. For R, the data suggests that in some cases, the use of \eval in the
+\c{X, V, \$, <-, FUN} and the function calls related to code generation could
+replaced by more specific functions. For instance, variable lookup in any
+environment can be performed with \c{get}, and assignment in any environment,
+with \c{assign}. Building a call and executing can be done with \c{do.call}.
+Nevertheless the many of the observed \eval usage in R, in particular the one
+related to statistical modeling and DSLs are more sophisticated than those
+reported for JavaScript.
 
 Finally, let us mention an anecdotal use of \eval as a mean to bypass some
 checks performed by the \c{R CMD CHECK} tool. This tool performs a numer of
