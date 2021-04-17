@@ -870,11 +870,11 @@ constructs.
 
 \subsection{The environments of \eval}\label{sec:env}
 
-Contrary to the Javascript \eval, which does not precise the scope in which to evaluate,the second argument of \eval in R, \c{envir}, specifically is dedicated to that.
-The environment in which evaluation happens determines what is visible to the
-computation started by \eval and the potential reach of its side-effects. The
-second argument to \eval specifies that environment. Environments of \eval can be
-classified into the following four kinds:
+Contrary to the Javascript \eval, which does not specify the environment in
+which to evaluate, the second argument of \eval in R, \c{envir}, is dedicated to
+that. This argument determines what is visible to the computation started by
+\eval and the potential reach of its side-effects. Environments used by \eval
+can be classified into the following four kinds:
 
 \begin{compactitem}[---]
 \item \emph{Function:} environments for the local variables of some function
@@ -889,18 +889,22 @@ classified into the following four kinds:
 \end{compactitem}
 
 \noindent
-As shown in Table~\ref{tab:highlevelenvironments}, most calls evaluate in a
-function environment with the \c{global} kind as a distant second. This means
-that most variable lookups and most side effects either read/update existing
-local variables or introduce new ones. But for which function? From the point of
-view of the function that called \eval, Table~\ref{tab:funoffset} gives an
-offset on the call stack. Thus 0 is the direct caller and corresponds to local variables; 1 is its parent, and so on. The data suggests that in 81\% of cases, \eval accesses its caller's environment -- this means  the variables of the function where \eval textually
-occurs are read and written to. It is interesting that some 1.5\% of sites
-evaluate a code in an environment that is three frames or above from \eval. This
-distance implies that, in general, modular reasoning is impossible. Understanding the behavior of any piece of code entails fully understanding the
-behavior of all functions that the code may call as the actions of \eval may
-happen at a distance. Finally, note that any particular site may have several
-kinds of environments, but in \packageNbOneCategoryEnvirSitePercent of the cases,  a site has a single kind. It means that a JIT compiler can predict the \emph{kind} of  expression passed to \eval in \packageNbOneCategoryEnvirSitePercent of the sites by just examining at the first invocation of a site.
+As shown in Table~\ref{tab:highlevelenvironments}, most calls evaluate in the
+scope of a function with global as a distant second. This means that most
+variable reads and most side-effects operate on local variables. But for which
+function? From the point of view of the caller of \eval,
+Table~\ref{tab:funoffset} identifies that function by its offset on the call
+stack. Thus 0 is the direct caller, 1 is its parent, and so on. The data
+suggests that in 81\% of cases, \eval accesses the caller -- this means the
+variables of the function where \eval textually occurs are read and written to.
+It is noteworthy that 1.5\% of sites evaluate three frames or above. This means
+that, in general, modular reasoning is impossible in R. To understand what any
+given code snippet may do requires fully understanding all the functions that
+may be called, transitively, from that snippet. The actions of \eval happen at a
+distance. Finally, note that any site may see several kinds, but in
+\packageNbOneCategoryEnvirSitePercent of the cases they have a single kind. It
+means that a compiler could predict the \emph{kind} of environment after the
+first invocation.
 
 \begin{table}[h]
   \centering\small\hspace{-.5cm}
@@ -946,65 +950,42 @@ Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\hli
 \end{table}
 
 \noindent
-Sites that evaluate in the global environment are likely split between
-intentional and accidental use. Direct references to the top-level, using
-\c{globalenv()} or \c{.GlobalEnv}, are rare; they occur in only
-\packageNbExplicitGlobalSites sites. We suspect that the majority of uses of the
-global environment come from the fact that our corpus consists of scripts loaded at the top level. Thus, that environment may often be the caller of
-\eval or close to it. The reason we make this point is that values stored in the
+Global \evals are likely split between intentional and accidental one. Direct
+references to the top-level, using \c{globalenv()} or \c{.GlobalEnv}, are rare;
+they occur in only \packageNbExplicitGlobalSites sites. Thus we suspect most
+uses of global are accidental. They arise from properties of our corpus, most
+scripts are top-level code snippets. Thus, global is often the caller of \eval
+or close to it. The reason we make this point is that values stored in the
 global environment are visible to all functions and are not reclaimed by the
 garbage collector. So accidental uses may pollute that namespace.
 
-Synthetic environments need a parent. It is specified as an argument of the \c{new.env} function, or when \c{envir} is a list or a data frame, \eval uses its third argument
-(\c{enclos}) as the parent.  The parent is used to lookup variables not found in its
-child (side effects go to the child only). Table~\ref{tab:newenvs} shows the
-kinds of the parents of synthetic environments. Most of them are functions, then
-come global and package.
+Each synthetic environment has parent that is specified when calling
+\c{new.env}. When \c{envir} is a list or a data frame, \eval uses its third
+argument (\c{enclos}). The parent is used to search for variables not found in
+its child (side-effects stay in the child). Table~\ref{tab:newenvs} shows parent
+kinds for synthetic environments. Most of them are functions, then come global
+and package.
 
 
 \paragraph{Discussion}
-The data presented in this section is what one could expect. ({\it Function})
-The majority of \eval call sites access the environment of some function on the
-call stack. Usually, the current function, but sometimes frames arbitrarily far
-up the call stack. One thing the data does not say is how that environment was
-obtained. The expected case is that the environment was the one obtained from a
-promise, as promises combine code and the environment in which that code
-originates. Likely less frequent are cases where \eval is provided the results
-of programmatically selecting some call stack. ({\it Synthetic}) The relatively
-high frequency of synthetic environments corresponds to cases when one wants to
-evaluate an expression in either a restricted environment, use a data
-structure as an environment. ({\it Global}) The fact that the global environment
-shows up so frequently is likely an artifact of how the code is run. ({\it
-  Package}) There are only \packageNbPackageNamespaceEnvSites sites that use a %77 sites
- package environment in \eval. This is probably best as it is an improper form of adding bindings or modifying functions of a loaded package. Many more sites instead wrap a package environment in a new
-environment to create singletons in a package.
-
-%% The \c{imchange} function of package \c{imager} makes it possible to modify
-%% images using a dedicated formula syntax.\footnote{Inspired by {map} in
-%% package \emph{purr}.} Here, \eval is evaluated in \c{newenv}, which creates a
-%% new environment that inherits from \c{parent.frame()} by default (classified
-%% as 1+).
-%% \begin{lstlisting}
-%%  newenv <- new.env()
-%%  ...
-%%  fo <- parse(text=as.character(fo)[2])
-%%  im[where] <- eval(fo,envir=newenv,enclos=env)
-%% \end{lstlisting}
-
-%% \c{adjCoef} in package \emph{actuar} find the root of an equation defined by
-%% a function \c{h} whose arguments must be named \c{x} and \c{y}. \c{h} is
-%% transformed into an auxiliary function \c{h2} that can be optimized. Here,
-%% the list used for \c{envir} ensures the correspondance between the textual
-%% arguments of \c{h} and the arguments of \c{h2}.
-%% \begin{lstlisting}
-%%  sh <- substitute(h)
-%%  fcall <- paste(sh, "(x, y)")
-%%  ...
-%%  h2 <- function(x, y)
-%%  eval(parse(text = fcall),
-%%  envir = list(x = x, y = y),
-%%  enclos = parent.frame(2))
-%% \end{lstlisting}
+The data presented in this section is what one could expect. For {\it
+  functions}, they represent the main user case for \eval. Thus \eval is really
+extending the behavior of that function by executing a dynamically selected
+piece of code in the function's scope. Typically, variables are read (mostly),
+written (less), but there are also some cases where new variables are injected
+or existing variables are deleted. Usually, this happens in the current
+function, but also in frames arbitrarily far up the call stack. One data point
+we lack is how the target environment was obtained. The expected case is that
+the body of a promise was modified and the resulting expression was evaluated in
+the same environment the promise originated from. Likely less frequent are cases
+where \eval is provided the results of programmatically selecting some call
+stack. For {\it synthetics}, their relatively high frequency correlates to use
+cases where one wants to evaluate an expression in either a restricted
+environment or to use a data structure as an environment. For {\it global}, its
+relatively high frequency is likely an artifact of how the code of our corpus is
+is run. For {\it packages}, only \packageNbPackageNamespaceEnvSites sites have
+this kind. This is probably for the best as mutating the bindings of
+a loaded package is improper and R tries to make it difficult.
 
 \subsection{The origins of \eval}
 
@@ -1014,22 +995,20 @@ classify them into three categories:
 
 \begin{compactitem}[---]
 \item {\it Constructed:} Expressions can be constructed by invoking the
-  \c{quote}, \c{enquote}, \c{expression} functions. Function arguments are passed as
-  promises, and \c{substitute} is used to retrieve the source expression
-  associated with the promise.
-  \item {\it Reflection:} This group corresponds to uses of the \c{match.call}
-  function to reflectively capture the expression that invoked the current
-  function.
-\item {\it String:} Finally, expressions can be created from strings by invoking
-   \c{parse}, \c{str2expression}, or \c{str2lang}.
+  \c{quote}, \c{enquote}, \c{expression} functions. Function arguments are
+  passed as promises, and \c{substitute} is used to retrieve the source
+  expression associated with the promise.
+\item {\it Reflection:} This group corresponds to uses of \c{match.call} to
+  reflectively capture the expression that invoked the current function.
+\item {\it String:} Expressions created from strings by invoking \c{parse},
+  \c{str2expression}, or \c{str2lang}.
 \end{compactitem}
 
-\noindent
-Table~\ref{tab:provenance} summarizes the expression provenance in our corpus.
-This data is obtained by dynamically tainting values as they are produced by the
-various sources. Due to technical reasons, there is some imprecision in the
-results. In particular, we are not able to classify all sites. Manual inspection
-of numerous examples suggests that the classified results are accurate.
+\vspace{1mm}\noindent Table~\ref{tab:provenance} summarizes the expression
+provenance in our corpus. This data is obtained by dynamically tainting values
+as they are produced by the various sources. Due to technical reasons, there is
+some imprecision in the results. In particular, we are not able to classify all
+sites. Manual inspection of numerous examples suggests that errors are rare.
 
 \begin{wraptable}{r}{5cm}\small\centering
 \begin{tabular}{r|r|r} \hline
@@ -1047,17 +1026,14 @@ functions \c{source} and \c{sys.source} do. We observed few calls
 \c{parse} on a file. Most of the calls build strings programmatically. We also
 identified one function \c{invokeRestartInteractively} that prompts the user for
 input, parses it, and passes it to \eval. The use of strings seems to correlate
-with less sophisticated programmers; in our Kaggle corpus,
+with less sophisticated programmers; in Kaggle,
 \kaggleParseExprsSitePercent of sites use strings.
 
 \paragraph{Discussion}
-
-% Compare to JS ? Everything comes from a string in JS anyway
-% Composite (concatenation of strings), DOM and constant are the most common
-% ...
 The origin data suggests that constructing expressions from strings is a
-minority of the use cases. Instead, the constructed category shows that most \evals comes from code that was processed by the compiler, and may be
-slightly modified by the programmer before invoking \eval. Both constructed and
+minority of the use cases. Instead, the constructed category shows that most
+\evals comes from code that was processed by the compiler, and may be slightly
+modified by the programmer before invoking \eval. Both constructed and
 reflection categories roughly correspond to meta-programming. Some of these use
 cases could likely be replaced by macros if the R designers could be convinced
 to overcome their distaste for those.
