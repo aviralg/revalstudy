@@ -1405,8 +1405,12 @@ its results into a variable:
 	  q.f <- get(paste0("q",d)); z <- q.f(dp, ...)
   }
 \end{lstlisting}
-or even to a one-liner \c{do.call(paste0("q",d), as.list(dp, ...))}.
+or even to a one-liner \c{do.call(paste0("q",d), c(dp, list(...)))}.
 
+The problem is that these cases are not easy to spot. Because of the
+limits of dynamic analysis we only have a partial coverage and cannot determine
+if for example \eval sites classified as \c{X, V} will not be eventually called
+with an expression in a \c{F(), F(X)} or \c{F(F(X))} category.
 
 \subsection{Discussion}
 
