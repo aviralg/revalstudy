@@ -1040,44 +1040,36 @@ to overcome their distaste for those.
 
 \subsection{The effects of \eval}
 
-The code executed by \eval can do side effects. From the compiler perspective,
-we care about the observable side effects in environments---\ie variable
-definitions, updates, and removals that are visible after a call to \eval
-finishes. Knowing where---\ie in which environments do these side-effects
-happen, can help us determine how much of the compiler knowledge about the
-program will be potentially invalidated.
+\Eval may peform side-effects. From a compiler's perspective, we care about
+effects that can be observed --- \ie variable definitions, updates, and removals
+that are visible after a call finishes. Knowing in which environments these
+side-effects happen, can help us determine how much of the compiler knowledge
+about the program will be invalidated. Our analysis records information about
+every environment. From the recorded data, we discard side-effects coming from
+unit testing frameworks.\footnote{In the corpus, we have \c{RUnit, testthat,
+  tinytest} and \c{unitizer} testing frameworks.} They run their tests via
+\eval, and thus everything becomes a side-effect.
 
-The \rdyntrace contains low-level hooks capturing the life-cycle of an
-environment and variables defined in it. We register callbacks in the tracer
-that records each environment creation and removal with updates to its
-bindings. From the recorded data, we ignore side effects coming from \eval
-sites from unit testing frameworks.\footnote{In the corpus, we have \c{RUnit,
-testthat, tinytest} and \c{unitizer} unit testing frameworks.} They run the
-testing code via \eval, and thus the results would be biased because of the
-high number of code in these tests (\CranRunnableCodeTestsRnd lines).
-
-From the \packageNbrunsRnd programs, we capture \SEAllRnd side effects from
+From our 98K
+%\packageNbrunsRnd
+programs, we capture
+14M
+%\SEAllRnd
+side-effects from
 \SEAllCallsRnd \eval calls (\SEUserCallsToAllRatio) in \SEAllSites sites
 (\SEUserSitesToAllRatio). Again, the challenge is to remove the accidental
-side effects caused by the R virtual machine implementation that are not
+side-effects caused by the R virtual machine implementation which are not
 related to the user code. For example, the \c{.Random.seed} variable, which
 contains the state of the random number generator, is saved and restored from
-and to the global environment every time the user calls one of the base
-routines that use random numbers.
+and to the global environment every time  a statistical routine is called.
 %
-% \begin{wrapfigure}{r}{5cm} \hspace*{-20mm} \centering
-% \includegraphics[width=90mm]{se-types.pdf} \caption{Distribution of R types
-% in target environments for side effects.} \label{fig:se-types}
-% \end{wrapfigure}
-%
-Removing them leaves us with \SEUserRnd side effects (\SEUserRatio) from
-\SEUserCallsRnd \eval calls (\SEUserCallsRatio) in \SEUserSites sites
-(\SEUserSitesRatio). These sites are part of \SEUserFunctions R functions
-(\SEUserFunctionsToAllRatio of all functions doing \eval) in \SEUserPackages
-packages. From these functions, \SEFunsNighty are responsible for 90\% of side
-effects. Half of the side-effects come just from three functions:
-\c{plyr::allocate\_column} (allocates space for a new data frame column),
-\c{withr::execute\_handlers} (executes deferred expressions), and
+Removing those leaves us with \SEUserRnd side effects from \SEUserCallsRnd \eval
+calls in \SEUserSites sites. These sites are part of \SEUserFunctions R
+functions (\SEUserFunctionsToAllRatio of all functions doing \eval) in
+\SEUserPackages packages. From these functions, \SEFunsNighty are responsible
+for 90\% of side effects. Half of the side-effects come just from three
+functions: \c{plyr::allocate\_column} (allocates space for a new data frame
+column), \c{withr::execute\_handlers} (executes deferred expressions), and
 \c{foreach::doSEQ} (executes an expression on each element in a collection,
 possibly in parallel). Most of the \eval sites (\SESitesInEnvirRatio) do side
 effects in the environment specified by the \c{envir} parameter (\cf
