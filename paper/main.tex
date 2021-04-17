@@ -1106,13 +1106,12 @@ terms of calls, we see assignments primarily and in terms of site definitions.
 This is expected. A subsequent \eval call will turn a definition into an update.
 The most dangerous side effect is variable removal, as it means that after a
 call to \eval some binding in some environments will disappear. While rare, this
-happens, but the vast majority comes from a single site called by the already
-mentioned \c{withr::execute\_handlers} function. This makes sense as it is used
-to defer evaluation of an expression to after the function exit and thus used
-for clean up. In the corpus, it is used almost exclusively by the \c{tidyselect}
-package for removing the reference to the current quosure environment while
-interpreting a data frame column selectors.\footnote{\cf
-\url{https://tidyselect.r-lib.org/}}
+happens, but the vast majority comes from a single site
+(\c{withr::execute\_handlers}). This makes sense as it is used to defer
+evaluation of an expression to after the function exit and thus used for clean
+up. It is used almost exclusively by the \c{tidyselect} package for removing the
+reference to the current quosure environment while interpreting a data frame
+column selectors.\footnote{\cf \url{https://tidyselect.r-lib.org/}}
 
 Looking closely at the value types in variable updates, we observe that the
 majority of \eval sites involve basic R vectors (\SEBasicTypeRatio) and lists
@@ -1257,8 +1256,8 @@ expressions passed to \eval. Here, we illustrate them on concrete instances.
 
 \end{compactitem}
 
-\todo{Say somewhere that the R community commonly calls call/argument capturing
-  (with substitute or match.call), Non-Standard Evaluation.}
+%\todo{Say somewhere that the R community commonly calls call/argument capturing
+%(with substitute or match.call), Non-Standard Evaluation.}
 
 \subsection{Domain Specific Language}
 
