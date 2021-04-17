@@ -1190,9 +1190,11 @@ expressions passed to \eval. Here, we illustrate them on concrete instances.
 
   \item \emph{Assignments \c{(<-)}} appear in the cases where a developer wants
     to create or update a binding in a specific environment where either the
-    name or the value come from some expression. Most cases originate from trivial
-    code generation where the assign expression is assembled using \c{parse} or
-    \c{substitute}, often in a loop: \lstinline|eval(parse(text=paste(capture.output(default_args[[i]]), "<-", i)))|.
+    name or the value come from some expression. Most cases originate from
+    trivial code generation where the assign expression is assembled using
+    \c{parse} or \c{substitute}, often in a loop. For example, the
+    \c{PopED::get\_rse} uses it to assign a number of variables in the current
+    scope: \lstinline|eval(parse(text=paste(default_args[[i]]), "<-", i))|. 
 
     There are also more sophisticated cases. The \c{plyr::allocate\_column}
     function uses \eval for a deferred assignment to fill missing values in a
@@ -1206,23 +1208,25 @@ expressions passed to \eval. Here, we illustrate them on concrete instances.
     \lstinline|eval(substitute(function(...) .CppObj$M(...), list(M=...)), env)|.
 
   \item \emph{Function calls \c{(F(), F(X), F(F(X)))}} represent two very
-    frequent patterns: \emph{code generation} and \emph{call reflection}. There are numerous
-    cases for code generation. One occurring usage is to generate ad-hoc calls
-    to libraries such as \c{ggplot2} when one needs to parameterize data or
-    aesthetics selection from a variable. For example \lstinline|ggplot(df, aes(x=A, y=B))|
-    maps X and Y axes in the plot to \c{A} and \c{B} columns in
-    \c{df}. It might not be immediately clear\footnote{\cf
-    \url{https://stackoverflow.com/questions/22309285/how-to-use-a-variable-to-specify-column-name-in-ggplot}}  for a ggplot2 user
-    how to modify the call to pick the actual mapping from \c{A} and \c{B}
-    variables. Another case is the traditional use of \eval as a means to
-    reduce boilerplate code; simple and repetitive code can easily be replaced
-    with judicious use of \eval. For example, the \c{data.table} package uses
-    \eval to call the \c{options} function with named arguments taken from a
-    vector of strings. While the benefits are limited in this example, it is an
-    attractive tool for programmers.
+    frequent patterns: \emph{code generation} and \emph{call reflection}. There
+    are numerous cases for code generation.
     %
-    \begin{lstlisting}
-    opts = c("datatable.verbose"="FALSE", # ...many others
+    One occurring usage (present also in the Kaggle scripts) is to generate
+    ad-hoc calls to libraries such as \c{ggplot2} when one needs to
+    parameterize data or aesthetics selection from a variable. For example
+    \lstinline|ggplot(df, aes(x=A, y=B))| maps X and Y axes in the plot to
+    \c{A} and \c{B} columns in \c{df}. It might not be immediately
+    clear\footnote{\cf
+    \url{https://stackoverflow.com/questions/22309285/how-to-use-a-variable-to-specify-column-name-in-ggplot}}
+    for a ggplot2 user how to modify the call to assign the axis columns from
+    variables. Another case is the traditional use of \eval as a mean to reduce
+    boilerplate code; simple and repetitive code can easily be replaced with
+    judicious use of \eval. For example, the \c{data.table} package uses \eval
+    to call the \c{options} function with named arguments taken from a vector
+    of strings:
+    
+    \begin{lstlisting}[gobble=2]
+    opts = c("datatable.verbose"="FALSE", ... )
     for (i in names(opts)) eval(parse(text=paste0("options(",i,"=",opts[i],")")))
     \end{lstlisting}
 
@@ -1237,14 +1241,12 @@ expressions passed to \eval. Here, we illustrate them on concrete instances.
     \c{survival::coxph} function\footnote{Function fitting a Cox proportional hazards
     regression model.} contains:
     %
-    \begin{lstlisting}
+    \begin{lstlisting}[gobble=2]
     Call <- match.call()
     tform <- Call[c(1,indx)]  # only keep the arguments we wanted
     tform[[1L]] <- quote(stats::model.frame)  # change the function called
     mf <- eval(tform, parent.frame())
     \end{lstlisting}
-
-    \todo{Add that this pattern is advised by the R documentation of match.call}
 
   \item \emph{Block \c{(BLOCK)}} can appear anywhere, but it is almost always
     the case that the block is only passed to \eval rather than being directly
@@ -1261,7 +1263,31 @@ expressions passed to \eval. Here, we illustrate them on concrete instances.
 
 \todo{Say somewhere that the R community commonly calls call/argument capturing (with substitute or match.call), Non-Standard Evaluation.}
 
-\subsection{Domain Specific Language.} R expressions are built and transformed symbolically and then evalled to a concrete value. For instance,   base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
+\subsection{Domain Specific Language} 
+
+The ability to capture current call as a language object (\c{match.call()}),
+extract the unevaluated expression from function arguments (\c{substitute()})
+and \eval with first class environment makes the R toolkit for building DSLs.
+There are numerous widely spread DSLs used in R. For example, \c{data.table}
+package defines a DSL for data frame manipulation using the subset operator
+\c{[}. This allowing one to write compact queries such as \c{flights[carrier ==
+  "AA", .N, by = origin]}\footnote{The \c{data.table} subset operation is
+defined as \c{DT[i, j, k]}, where \c{j} expression is used to calculate on a
+subset/reorder of rows from \c{i} grouped by \c{k}.} which will compute the
+number of flights done by American Airlines for each origin airport.
+Essentially, it uses \c{substitute} to capture the operand's expressions,
+transforms then appropriately and finally uses \eval to execute the query. 
+
+Another example is the \c{tidyselect} package that defines a DSL for selecting
+columns in a data frame powering number of data manipulation operation in the
+\c{data.table} main competitor, the \c{dply} package. It uses eval to build an
+interpreter for evaluating column selectors such as \c{select(df,
+starts\_with("length") \& !(name:mass))} which returns all columns in \c{df}
+that starts with the string \c{length} and is not between \c{name} and
+\c{mass} columns.
+
+% TODO Pierre
+For instance, base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
 \begin{lstlisting}
  expr<-expression(beta_1 + time*beta_2+u)
@@ -1269,8 +1295,6 @@ In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a 
  D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
 \end{lstlisting}
 % See https://github.com/cran/MCMCglmm/blob/cfac9e67ec73a3db2142826faae35e5d2318da31/man/evalDtensor.Rd
-
-Package \c{tidyselect} is the backend of several \c{dplyr} and \c{tidyr} functions to select columns. It offers a DSL that makes it possible to select a set of columns, over a range of columns, a complement, an intersection, an union, with a regular expression and so on. \eval is used to traverse selectors stored as slots of a dataframe.
 
 % \subsubsection{Capturing a call.}  A common use case for \eval is to be combined with \c{match.call}.
 % \c{match.call} walks up the call stack, captures the code that invoked the
