@@ -1333,12 +1333,14 @@ Building a call and executing can be done with \c{do.call}. Nevertheless, \eval
 shines when expressions passed to it can be of many different types.
 
 Finally, let us mention an anecdotal use of \eval as a mean to bypass some
-checks performed by the \c{R CMD CHECK} tool allowing one to submit a package
-to CRAN that would otherwise be refused. For example, the tool checks that
-packages do not call \c{unlockBinding} function.\footnote{It allows one to open
-and modify loaded package name space.} Packages such as \c{data.table}
-circumvent such restrictions by using \eval as the check is only performed
-statically.
+checks performed by the \c{R CMD CHECK} tool. This tool performs a numer of
+well-formedness rules before accepting a package to the CRAN repository. Many
+checks are performed statically, by looking at syntactic constructs in the R
+code. Using \eval allows one to bypass such checks and thus submit a package to
+CRAN that would otherwise be refused. For example, the it checks that packages
+do not call \c{unlockBinding} function.\footnote{It allows one to open and
+modify loaded package name space.} Packages such as \c{data.table} circumvent
+such restrictions by using \eval as the check is only performed statically.
 
 \section{Conclusion}
 
