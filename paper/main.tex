@@ -1077,43 +1077,42 @@ Section~\ref{sec:eval-in-r}), \SESitesNotInEnvirRatio modifies other
 environments, and finally, \SESitesBothEnvirRatio does both.
 
 \begin{wraptable}{r}{7cm}\small\centering
-  \small
-  \centering
   \begin{tabular}{l|r|r|r|r}\hline
     Environments & \#sites & \%sites & \#funs. & \%funs. \\%
     \expandableinput tag/table-se-target-envs.tex
   \end{tabular}
-  \caption{Target environments for \eval side-effects} \label{tab:se-env}
+  \caption{Target environments for side-effects} \label{tab:se-env}
 \end{wraptable}
 
-Table~\ref{tab:se-env} shows the class of the environment where \eval side
-effects happen (\emph{target environment}). It follows the classification
-described in Section~\ref{sec:env} with two extra classes: \emph{Object}, which
-represents a side-effect that happens in S4 or R6 object environments, and
-\emph{Local} that corresponds to a side effect in local variables of the \eval
-caller (offset 0 in Section~\ref{sec:env}). The table shows data for both \eval
-sites and functions. For a function to have a given target environment class,
-all of its \eval sites that do side effects must have the same target
-environment class The majority of the \eval sites (\SESitesInOneClass) do all
-side effects consistently in one environment class. The same happens at the
-function level. Almost half of the sites (over a third of the functions) do side
-effects in either \emph{Local} or \emph{Object} environments. This gives a ray
-of hope for the compiler. Even though it is possible to do anything anywhere,
-the data suggest that most side-effects are sane.
+Table~\ref{tab:se-env} shows environment kinds where side-effects happen.
+Function environments distinguish between \emph{local}, the caller environment
+(offset 0), and \emph{function} (offset >0). \emph{Synthetic} represents
+constructed environments. \emph{Object} is used to denote the environments
+attached to objects and classes in the S4 and R6 object systems. \emph{Multiple}
+denotes cases where side-effects to more than one kind originate from one site.
+The table gives the number of call sites of \eval (and the ratio) performing
+side-effect in a particular environment kind. The table also gives the number of
+functions in which these sites occur (and ratio).
 
+Most sites, \SESitesInOneClass, do all their side-effects consistently in one
+kind of environments. The same happens at the function level. Almost half of the
+sites (over a third of the functions) do side effects in either \emph{Local} or
+\emph{Object} environments. This gives a ray of hope for a hypothetical R
+compiler. Even though \eval can do anything anywhere, the data suggests most
+effects are sane.
 
-Table~\ref{tab:se-types} shows the proportion of the different side effects
-that were recorded. In terms of calls, we see assignments primarily and in
-terms of site definitions. This is expected. A subsequent \eval call will turn
-a definition into an update. The most dangerous side effect is variable removal,
-as it means that after a call to \eval some binding in some environments will
-disappear. While rare, this happens, but the vast majority comes from a single
-site called by the already mentioned \c{withr::execute\_handlers} function.
-This makes sense as it is used to defer evaluation of an expression to after
-the function exit and thus used for clean up. In the corpus, it is used almost
-exclusively by the \c{tidyselect} package for removing the reference to the
-current quosure environment while interpreting a data frame column
-selectors.\footnote{\cf \url{https://tidyselect.r-lib.org/}}
+Table~\ref{tab:se-types} shows recorded effects. There are over 5M updates. In
+terms of calls, we see assignments primarily and in terms of site definitions.
+This is expected. A subsequent \eval call will turn a definition into an update.
+The most dangerous side effect is variable removal, as it means that after a
+call to \eval some binding in some environments will disappear. While rare, this
+happens, but the vast majority comes from a single site called by the already
+mentioned \c{withr::execute\_handlers} function. This makes sense as it is used
+to defer evaluation of an expression to after the function exit and thus used
+for clean up. In the corpus, it is used almost exclusively by the \c{tidyselect}
+package for removing the reference to the current quosure environment while
+interpreting a data frame column selectors.\footnote{\cf
+\url{https://tidyselect.r-lib.org/}}
 
 Looking closely at the value types in variable updates, we observe that the
 majority of \eval sites involve basic R vectors (\SEBasicTypeRatio) and lists
@@ -1137,30 +1136,26 @@ did not find a common use case.
 \end{table}
 
 \mypara{Discussion} In JavaScript assignments in \eval can happen in either
-local scope or less often, when called through an alias, in the global scope.
-In R, given the support for first-class environments, it can happen anywhere,
-making it \eval more dangerous than it already is. However, the data  suggest
+local scope or less often, when called through an alias, in the global scope. In
+R, given the support for first-class environments, it can happen anywhere,
+making it \eval more dangerous than it already is. However, the data suggest
 that first, side-effects from \eval are not as widespread as in the case of
-JavaScript,\footnote{\citep{ecoop11} shows that in the \emph{Interactive} scenario, \eval in Javascript performs, store events can reach up to 40\% of the events, and 7\% to 8\% of the \eval do side effects in the global scope. } and that over half of them happen in a predictable environment.
+JavaScript,\footnote{\citep{ecoop11} shows that in the \emph{Interactive}
+scenario, \eval in Javascript performs, store events can reach up to 40\% of the
+events, and 7\% to 8\% of the \eval do side effects in the global scope. } and
+that over half of them happen in a predictable environment.
 
 \section{Usage of \eval}
 
 The R language was intended to be extensible. The combination of lazy
 evaluation, \c{substitute} and \c{eval} are the tools given to developers to
-this end.
-%This API is slightly more complex than just passing a string, it is
-%conceivable that this may discourage some casual users. \Eval is also being
-%used to reduce boilerplate code and provide convenience features for
-%programmers.
-In this section, we focus on the \emph{why}, giving real-world examples of the
-\eval usage in the wild. All the examples are based on code from our corpus,
-often simplified to fit the space and increase clarity. For each example, we
-indicate the package and the function where it is located.
+this end. In this section, we focus on the \emph{why}, giving real-world
+examples of the \eval usage in the wild. All the examples are based on code from
+our corpus, often simplified to fit the space and increase clarity. For each
+example, we indicate the package and the function where it is located.
 
-\subsection{Shapes of \eval}
+\subsection{Shapes redux}
 
-% We start the discussion with the examples for the minimized expressions from
-% Section~\ref{sec:minimized}.
 In Table~\ref{tab:minimizedexpressions} we have shown the most common shapes of
 expressions passed to \eval. Here, we illustrate them on concrete instances.
 
@@ -1172,21 +1167,21 @@ expressions passed to \eval. Here, we illustrate them on concrete instances.
     select variables in a data frame. For example, given a data frame \c{df}
     with three columns \c{A,B,C}, \c{subset(df, sel=A)} returns a subset of
     \c{df} with just the \c{A} column. The same would happen with \c{subset(df,
-    sel=1)}. However, thanks to \eval it can also be also called with
+      sel=1)}. However, thanks to \eval it can also be also called with
     \c{subset(df, sel=c(1,B,x))} returning a subset of the first column, column
     \c{B} and whatever index the variable \c{x} holds. It is implemented using:
     \lstinline|eval(substitute(sel), nl, parent.frame())| The first argument
     returns the expression passed to \c{sel}, the second is the data frame in
-    which this expression will be evaluated, and the last indicates
-    which environment should be used to look up bindings not found in \c{nl}.
+    which this expression will be evaluated, and the last indicates which
+    environment should be used to look up bindings not found in \c{nl}.
 
     Another example is the most often called \eval site in CRAN:
-    \lstinline|eval(`_inherit`, env)| defined in the \c{find\_super} function
-    in the \c{ggproto} object system. It looks up the variable \c{`\_inherit`} to
-    find the parent class. In the vast majority of cases, the variable is a symbol
-    and so the \eval seems superfluous. The \eval is however necessary so one
-    can specify parent classes using \c{pkg\_name::class\_name}, as the \c{::}
-    operator is a function call in R.
+    \lstinline|eval(`_inherit`, env)| defined in the \c{find\_super} function in
+    the \c{ggproto} object system. It looks up the variable \c{`\_inherit`} to
+    find the parent class. In the vast majority of cases, the variable is a
+    symbol and so the \eval seems superfluous. The \eval is however necessary so
+    one can specify parent classes using \c{pkg\_name::class\_name}, as the
+    \c{::} operator is a function call in R.
 
   \item \emph{Assignments \c{(<-)}} appear in the cases where a developer wants
     to create or update a binding in a specific environment where either the
@@ -1194,11 +1189,12 @@ expressions passed to \eval. Here, we illustrate them on concrete instances.
     trivial code generation where the assign expression is assembled using
     \c{parse} or \c{substitute}, often in a loop. For example, the
     \c{PopED::get\_rse} uses it to assign a number of variables in the current
-    scope: \lstinline|eval(parse(text=paste(default_args[[i]]), "<-", i))|. 
+    scope: \lstinline|eval(parse(text=paste(default_args[[i]]), "<-", i))|.
 
     There are also more sophisticated cases. The \c{plyr::allocate\_column}
     function uses \eval for a deferred assignment to fill missing values in a
-    column. Package \c{overture} repeatedly evaluates R expressions capturing any  assignments that happen in it, as samples of Markov chains.
+    column. Package \c{overture} repeatedly evaluates R expressions capturing
+    any assignments that happen in it, as samples of Markov chains.
 
   \item \emph{Function definition \c{(FUN)}} is mostly used in conjunction with
     code generation where new functions are synthesized using either \c{parse}
@@ -1224,7 +1220,7 @@ expressions passed to \eval. Here, we illustrate them on concrete instances.
     judicious use of \eval. For example, the \c{data.table} package uses \eval
     to call the \c{options} function with named arguments taken from a vector
     of strings:
-    
+
     \begin{lstlisting}[gobble=2]
     opts = c("datatable.verbose"="FALSE", ... )
     for (i in names(opts)) eval(parse(text=paste0("options(",i,"=",opts[i],")")))
@@ -1238,8 +1234,8 @@ expressions passed to \eval. Here, we illustrate them on concrete instances.
     arguments of the function in different environments. This is widely used in
     relation with statistical modeling in combination with a model fitting
     function or with \c{model.frame} and related functions. For example the
-    \c{survival::coxph} function\footnote{Function fitting a Cox proportional hazards
-    regression model.} contains:
+    \c{survival::coxph} function\footnote{Function fitting a Cox proportional
+    hazards regression model.} contains:
     %
     \begin{lstlisting}[gobble=2]
     Call <- match.call()
@@ -1261,9 +1257,10 @@ expressions passed to \eval. Here, we illustrate them on concrete instances.
 
 \end{compactitem}
 
-\todo{Say somewhere that the R community commonly calls call/argument capturing (with substitute or match.call), Non-Standard Evaluation.}
+\todo{Say somewhere that the R community commonly calls call/argument capturing
+  (with substitute or match.call), Non-Standard Evaluation.}
 
-\subsection{Domain Specific Language} 
+\subsection{Domain Specific Language}
 
 The ability to capture current call as a language object (\c{match.call()}),
 extract the unevaluated expression from function arguments (\c{substitute()})
@@ -1276,7 +1273,7 @@ defined as \c{DT[i, j, k]}, where \c{j} expression is used to calculate on a
 subset/reorder of rows from \c{i} grouped by \c{k}.} which will compute the
 number of flights done by American Airlines for each origin airport.
 Essentially, it uses \c{substitute} to capture the operand's expressions,
-transforms then appropriately and finally uses \eval to execute the query. 
+transforms then appropriately and finally uses \eval to execute the query.
 
 Another example is the \c{tidyselect} package that defines a DSL for selecting
 columns in a data frame powering number of data manipulation operation in the
@@ -1287,13 +1284,14 @@ that starts with the string \c{length} and is not between \c{name} and
 \c{mass} columns.
 
 
-Another instance, is the \emph{symbolic differentiation support} provided by base R package \emph{stats}, with two operators \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}, on expressions built with \c{expression()} or \c{parse}.
+Another instance is the \emph{symbolic differentiation support} provided by base R package \emph{stats}, with two operators \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}, on expressions built with \c{expression()} or \c{parse}.
 In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created: it contains expressions that are derived twice (with \c{DD}). To get a concrete value, it is evaluated in  dataframe \c{mu} where symbolic variables are bound to actual numbers.
 \begin{lstlisting}
  expr<-expression(beta_1 + time*beta_2+u)
  mu = data.frame(beta_1=0.5, beta_2=1, time=3, u=2.3)
  D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
 \end{lstlisting}
+<<<<<<< HEAD
 
 % See https://github.com/cran/MCMCglmm/blob/cfac9e67ec73a3db2142826faae35e5d2318da31/man/evalDtensor.Rd
 
@@ -1383,6 +1381,8 @@ In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a 
 % \todo{There is an example in package comprenhr that does code generation with substitute to create list comprehensions, but it is quite difficult to grasp. But at the same type, we lack here an example of code generation using quite, enquote or substitute.}
 
 % \todo{Add a pattern about Library Loading? \c{library(packageName)} in R uses \eval This is one of the patterns in Javascript...}
+=======
+>>>>>>> 9b2a73734ec8fb2478c8f237693541a19cdd2a7c
 
 \subsection{Unnecessary use of \eval}
 
@@ -1413,24 +1413,23 @@ as json loading and parsing, and can often be rewritten without \eval, such as
 function or method call, or assignment to a local variable or an object
 property. Compared to Javascript, \eval patterns in R we observed are much more
 legitimate, although this is biased by the fact that our main corpus CRAN
-features more experienced developers than  websites found at large on the web.
-\todo{can we really claim that? SHould we talk about Kaggle there?}
+features more experienced developers than websites found at large on the web.
 
 \eval is a powerful tool and can be sometimes replaced with functions with more
 specialized goals. For instance, variable lookup in any environment can be
 performed with \c{get}, and assignment in any environment, with \c{assign}.
 Building a call and executing can be done with \c{do.call}. Nevertheless, \eval
-shines when expressions passed to it can be of many different types. % And it
-is shorter to type, and no need to remember all the specialized functions, so
-it is convenient.
+shines when expressions passed to it can be of many different types.
 
 Finally, let us mention an anecdotal use of \eval as a mean to bypass some
-checks performed by the \c{R CMD CHECK} tool allowing one to submit a package
-to CRAN that would otherwise be refused. For example, the tool checks that
-packages do not call \c{unlockBinding} function.\footnote{It allows one to open
-and modify loaded package name space.} Packages such as \c{data.table}
-circumvent such restrictions by using \eval as the check is only performed
-statically.
+checks performed by the \c{R CMD CHECK} tool. This tool performs a numer of
+well-formedness rules before accepting a package to the CRAN repository. Many
+checks are performed statically, by looking at syntactic constructs in the R
+code. Using \eval allows one to bypass such checks and thus submit a package to
+CRAN that would otherwise be refused. For example, the it checks that packages
+do not call \c{unlockBinding} function.\footnote{It allows one to open and
+modify loaded package name space.} Packages such as \c{data.table} circumvent
+such restrictions by using \eval as the check is only performed statically.
 
 \section{Conclusion}
 
@@ -1451,13 +1450,27 @@ Putting the core packages aside, in CRAN, \eval is used by \PkgPackagesRatio of
 the available \CranPackages packages.
 %
 The code executed by R \eval has unusual expressive power. It can essentially
-modify anything anywhere, which is wary for both R developers and R compiler. The shapes of expressions passed to \eval are extremely diverse, ranging from simple variable lookups to complex blocks or the creation of new functions. Luckily, most sites only see a single shape. \eval unlashes its power and shows up its singularity compared to \eval in other languages with the diversity of environments in which it can evaluate its expressions. While most of the time, the \eval environment is the local environment, it is also often the global environment, a synthetic environment, or even a package environment. Luckily, as for the expressions passed to \eval, the environment passed to \eval for one given site is easily predictable with the first call to the site.
+modify anything anywhere, which is wary for both R developers and R compiler.
+The shapes of expressions passed to \eval are extremely diverse, ranging from
+simple variable lookups to complex blocks or the creation of new functions.
+Luckily, most sites only see a single shape. \eval unlashes its power and shows
+up its singularity compared to \eval in other languages with the diversity of
+environments in which it can evaluate its expressions. While most of the time,
+the \eval environment is the local environment, it is also often the global
+environment, a synthetic environment, or even a package environment. Luckily, as
+for the expressions passed to \eval, the environment passed to \eval for one
+given site is easily predictable with the first call to the site.
 
-The expressive power of \eval shines even more  so in the case of side effects that can quite literally happen anywhere. The data, however, suggest that this is not the case. The majority of eval sites do not do any observable side effects,  and when they do, it happens in a predictable environment.
+The expressive power of \eval shines even more so in the case of side effects
+that can quite literally happen anywhere. The data, however, suggest that this
+is not the case. The majority of eval sites do not do any observable side
+effects, and when they do, it happens in a predictable environment.
 
-The origins of the expression passed to \eval, either constructed from language expressions, or stemming from reflection, or built by parsing strings. Reflection and constructed expressions dominate, which suggests the primary   use of \eval is meta-programming. % macros...
+The origins of the expression passed to \eval, either constructed from language
+expressions, or stemming from reflection, or built by parsing strings.
+Reflection and constructed expressions dominate, which suggests the primary use
+of \eval is meta-programming.
 
-% how much can we say about the threat model?
 Similarly to \citep{ecoop11}, we started looking into \evals in R with the
 ambition to replace them with other features that are more amenable to static
 analysis. The data, unfortunately, suggests that replacing \eval is going to be
@@ -1465,12 +1478,15 @@ a lengthy journey. Even if we disregard core packages as they are part of the
 language and the \eval use is stable, in CRAN \eval is used widely and in more
 sophisticated ways than was the case in JavaScript. There the vast majority of
 sites fitted an extremely simple categorization based on simple regular
-expressions. Not so in R. While some usage, especially the one which calls
-\eval with an expression parsed from string, can be categorized and often
-replaced by equivalent yet more disciplined and safer code, the case of \eval
-coming from reflection is much harder.
+expressions. Not so in R. While some usage, especially the one which calls \eval
+with an expression parsed from string, can be categorized and often replaced by
+equivalent yet more disciplined and safer code, the case of \eval coming from
+reflection is much harder.
 
-Even though we reckon that \eval has more expressive power than macros, as it can access runtime information such as its call stack, adding a macro system to R to replace \eval for all meta-programming purposes would help static analysis as macros can be expanded at analysis-time.
+Even though we reckon that \eval has more expressive power than macros, as it
+can access runtime information such as its call stack, adding a macro system to
+R to replace \eval for all meta-programming purposes would help static analysis
+as macros can be expanded at analysis-time.
 
 % It's dubious whether R programmers would develop with macros though.
 % Macros and R
