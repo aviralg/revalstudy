@@ -1270,7 +1270,7 @@ extract the unevaluated expression from function arguments (\c{substitute()})
 and \eval with first class environment makes the R toolkit for building DSLs.
 There are numerous widely spread DSLs used in R. For example, \c{data.table}
 package defines a DSL for data frame manipulation using the subset operator
-\c{[}. This allowing one to write compact queries such as \c{flights[carrier ==
+\c{[}. This allows one to write compact queries such as \c{flights[carrier ==
   "AA", .N, by = origin]}\footnote{The \c{data.table} subset operation is
 defined as \c{DT[i, j, k]}, where \c{j} expression is used to calculate on a
 subset/reorder of rows from \c{i} grouped by \c{k}.} which will compute the
@@ -1286,14 +1286,15 @@ starts\_with("length") \& !(name:mass))} which returns all columns in \c{df}
 that starts with the string \c{length} and is not between \c{name} and
 \c{mass} columns.
 
-% TODO Pierre
-For instance, base R packages \emph{stats} provides two operators for \emph{symbolic differentiation}, \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}.
-In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created, which contains expressions derived twice (with \c{DD}) and then typically in a list or a data frame.
+
+Another instance, is the \emph{symbolic differentiation support} provided by base R package \emph{stats}, with two operators \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}, on expressions built with \c{expression()} or \c{parse}.
+In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created: it contains expressions that are derived twice (with \c{DD}). To get a concrete value, it is evaluated in  dataframe \c{mu} where symbolic variables are bound to actual numbers.
 \begin{lstlisting}
  expr<-expression(beta_1 + time*beta_2+u)
  mu = data.frame(beta_1=0.5, beta_2=1, time=3, u=2.3)
  D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
 \end{lstlisting}
+
 % See https://github.com/cran/MCMCglmm/blob/cfac9e67ec73a3db2142826faae35e5d2318da31/man/evalDtensor.Rd
 
 % \subsubsection{Capturing a call.}  A common use case for \eval is to be combined with \c{match.call}.
