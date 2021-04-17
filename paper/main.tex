@@ -1447,10 +1447,10 @@ In this paper, we provide a large-scale study of the use of the \eval function
 in the R programming language. It is based primarily on a corpus of
 \CranRunnableScripts scripts extracted from \CranPackages R packages. As
 expected, \eval is used mainly in libraries. We have found just a few \eval
-call sites in scripts coming from large corpus of Kaggle that represents code
+call sites in scripts coming from a large corpus of Kaggle representing code
 written by R practitioners. We used an instrumented version of the R virtual
-machine, \rdyntrace, to capture all \eval calls traces including the relevant
-side effects that happen within these calls. Several insights can be learnt
+machine, \rdyntrace, to capture all \eval calls traces, including the relevant
+side effects that happen within these calls. Several insights can be learned
 from the data.
 %
 First, \eval is widely used in the R core packages that come bundled with the
@@ -1460,19 +1460,19 @@ Putting the core packages aside, in CRAN, \eval is used by \PkgPackagesRatio of
 the available \CranPackages packages.
 %
 The code executed by R \eval has unusual expressive power. It can essentially
-modify anything anywhere which is wary for both R developers and R compiler. The shapes of expressions passed to \eval are extremely diverse, ranging from simple variable lookups to complex blocks or creation of new functions. Luckily, most site only see a single shape. \eval unlashes its power and shows up its singularity compared to \eval in other languages with the diversity of environments in which it can evaluate its expressions. While most of the time, the \eval environment is the local environment, it is also often the global environment, a synthetic environment, or even a package environment. Luckily, as for the expressions passed to \eval, the environment passed to \eval for one given site is easily predictable with the first call to the site.
+modify anything anywhere, which is wary for both R developers and R compiler. The shapes of expressions passed to \eval are extremely diverse, ranging from simple variable lookups to complex blocks or the creation of new functions. Luckily, most sites only see a single shape. \eval unlashes its power and shows up its singularity compared to \eval in other languages with the diversity of environments in which it can evaluate its expressions. While most of the time, the \eval environment is the local environment, it is also often the global environment, a synthetic environment, or even a package environment. Luckily, as for the expressions passed to \eval, the environment passed to \eval for one given site is easily predictable with the first call to the site.
 
-The expressive power of \eval shines even more  so in the case of side effects that can quite literally happen anywhere. The data however suggest that this is not the case. The majority of eval sites do not do any observable side effects and when they do, it happens in a predictable environment.
+The expressive power of \eval shines even more  so in the case of side effects that can quite literally happen anywhere. The data, however, suggest that this is not the case. The majority of eval sites do not do any observable side effects,  and when they do, it happens in a predictable environment.
 
-The origins of the expression passed to \eval, either constructed from language expressions, or stemming from reflection, or built by parsing strings. Reflection and constructed expressions dominate, which suggest the main use of \eval is meta-programming. % macros...
+The origins of the expression passed to \eval, either constructed from language expressions, or stemming from reflection, or built by parsing strings. Reflection and constructed expressions dominate, which suggests the primary   use of \eval is meta-programming. % macros...
 
 % how much can we say about the threat model?
 Similarly to \citep{ecoop11}, we started looking into \evals in R with the
-ambition to replace them by other features that are more amenable to static
-analysis. The data unfortunately suggests that replacing \eval is going to be
+ambition to replace them with other features that are more amenable to static
+analysis. The data, unfortunately, suggests that replacing \eval is going to be
 a lengthy journey. Even if we disregard core packages as they are part of the
 language and the \eval use is stable, in CRAN \eval is used widely and in more
-sophisticated way than was the case in JavaScript. There the vast majority of
+sophisticated ways than was the case in JavaScript. There the vast majority of
 sites fitted an extremely simple categorization based on simple regular
 expressions. Not so in R. While some usage, especially the one which calls
 \eval with an expression parsed from string, can be categorized and often
