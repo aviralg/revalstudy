@@ -1268,7 +1268,7 @@ expressions passed to \eval. Here, we illustrate them in concrete instances.
 
 \subsection{Domain Specific Language}
 
-The ability to capture current call as a language object (\c{match.call()}),
+The ability to capture the current call as a language object (\c{match.call()}),
 extract the unevaluated expression from function arguments (\c{substitute()})
 and \eval with first class environment makes the R toolkit for building DSLs.
 There are numerous widely spread DSLs used in R. For example, \c{data.table}
@@ -1328,8 +1328,8 @@ with an expression in a \c{F(), F(X)} or \c{F(F(X))} category.
 
 \Eval in R is used chiefly for meta-programming purposes and to access
 environments other than the local one. In Javascript, patterns are ad-hoc, such
-as json loading and parsing, and can often be rewritten without \eval, such as
-function or method call, or assignment to a local variable or an object
+as json loading and parsing, and can often be rewritten without \eval, such as a 
+function or method call, or an assignment to a local variable or an object
 property. For R, the data suggests that in some cases, the use of \eval in the
 \c{X, V, \$, <-, FUN} and the function calls related to code generation could
 replaced by more specific functions. For instance, variable lookup in any
@@ -1345,7 +1345,7 @@ well-formedness rules before accepting a package to the CRAN repository. Many
 checks are performed statically by looking at syntactic constructs in the R
 code. Using \eval allows one to bypass such checks and thus submit a package to
 CRAN that would otherwise be refused. For example,  it checks that packages
-do not call \c{unlockBinding} function.\footnote{It allows one to open and
+do not call the \c{unlockBinding} function.\footnote{It allows one to open and
 modify loaded package namespaces.} Packages such as \c{data.table} circumvent
 such restrictions by using \eval as the check is only performed statically.
 
@@ -1357,7 +1357,7 @@ in the R programming language. It is based primarily on a corpus of
 expected, \eval is used mainly in libraries. We have found just a few \eval
 call sites in scripts coming from a large corpus of Kaggle representing code
 written by R practitioners. We used an instrumented version of the R virtual
-machine, \rdyntrace, to capture all \eval calls traces, including the relevant
+machine, \rdyntrace, to capture all \eval calls, including the relevant
 side effects that happen within these calls. Several insights can be learned
 from the data.
 %
