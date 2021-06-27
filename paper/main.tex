@@ -55,7 +55,7 @@ origins in LISP, all the way back in 1956~\cite{lisp}. \Eval has been
 much maligned over the years. In computing lore, it is as close to a
 boogeyman as it gets. Yet, for McCarthy, \eval was simply the way to
 write down the definition of LISP; he was surprised that someone coded
-it up and offered it to end-users. Since then, reflective facilities
+it up and offered it to end users. Since then, reflective facilities
 have been used to parameterize programs over code patterns that can be
 provided after the program is written. The presence of such a feature
 in a language is a hallmark of dynamism; it is a form of delayed
@@ -116,9 +116,9 @@ while R is used for statistical computing on desktops. JavaScript is a general-p
 scientific computing by data scientists and domain experts with, often, limited
 programming experience. One can distinguish between library implementers,
 developers with some programming experience and a working knowledge of R, and
-end-users, who are typically not expert programmers and often have only a
+end users, who are typically not expert programmers and often have only a
 cursory knowledge of the language.\footnote{Consider that R is lazy like
-Haskell. We informally surveyed end-users and did not find a single user aware
+Haskell. We informally surveyed end users and did not find a single user aware
 of this fact. Library developers, on the other hand, know and program
 defensively around laziness.} Thus, our goal is to highlight the differences in
 usage between JavaScript and R and try to explain those differences in terms of
@@ -407,7 +407,7 @@ are unique solutions to \KaggleCompetitions competitions. They contain
 The analysis presented in this has been automated by a pipeline that acquires
 packages, extracts scripts, executes them, traces their behavior, and summarizes observations. Figure~\ref{fig:pipeline} shows the main steps along
  with their running time, data size, and  number of elements manipulated.
-  Timings are from a cluster of three 2.3GHz Intel Xeon 6140 servers, with 72 cores and 256GB of RAM, and shared OCFS network storage. The pipeline steps are:
+  Timings are from a cluster of three servers, each with 2.3GHz Intel Xeon 6140 processor with 72 cores and 256GB of RAM, and shared OCFS network storage. The pipeline steps are:
 
 
 \begin{figure}[!h]\hspace{-5mm}
@@ -508,7 +508,7 @@ limitations should invalidate our conclusions.
 \end{wrapfigure}
 %
 This section focuses on CRAN packages and reports statistics about the usage of
-\eval. We use the word \emph{site} to an occurrence of a call site to the \eval
+\eval. We use the word \emph{site} to refer to an occurrence of a call site to the \eval
 function in the source code and \emph{call} to denote an observed invocation of
 the \eval function.
 
@@ -725,7 +725,7 @@ from over 20 years of contributions by thousands of authors. The code in
 packages is well maintained and relatively well tested. Finally, Kaggle scripts
 are often written by less sophisticated users and likely perform more
 straightforward tasks, thus having a lesser need for \eval, and its uses
-originate from strings as these are easier to manipulate for end-users.
+originate from strings as these are easier to manipulate for end users.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
