@@ -51,11 +51,11 @@
 Most dynamic languages provide their users with a facility to
 transform unstructured text into executable code and evaluate that
 code. We refer to this reflective facility as \eval bowing to its
-origins in LISP, all the way back in 1956~\cite{lisp}. \Eval has been
+origins in LISP, all the way back in 1956. \Eval has been
 much maligned over the years. In computing lore, it is as close to a
 boogeyman as it gets. Yet, for McCarthy, \eval was simply the way to
 write down the definition of LISP; he was surprised that someone coded
-it up and offered it to end-users. Since then, reflective facilities
+it up and offered it to end users~\cite{lisp}. Since then, reflective facilities
 have been used to parameterize programs over code patterns that can be
 provided after the program is written. The presence of such a feature
 in a language is a hallmark of dynamism; it is a form of delayed
@@ -116,14 +116,16 @@ while R is used for statistical computing on desktops. JavaScript is a general-p
 scientific computing by data scientists and domain experts with, often, limited
 programming experience. One can distinguish between library implementers,
 developers with some programming experience and a working knowledge of R, and
-end-users, who are typically not expert programmers and often have only a
+end users, who are typically not expert programmers and often have only a
 cursory knowledge of the language.\footnote{Consider that R is lazy like
-Haskell. We informally surveyed end-users and did not find a single user aware
+Haskell. We informally surveyed end users and did not find a single user aware
 of this fact. Library developers, on the other hand, know and program
 defensively around laziness.} Thus, our goal is to highlight the differences in
 usage between JavaScript and R and try to explain those differences in terms of
 language features, application domain and programmer experience. Hopefully, some
 of our observations will generalize to other languages.
+Our data and code are open source and publicly
+available: \url{https://github.com/PRL-PRG/evalr-experiment}.
 
 \vspace{2mm}\noindent\emph{The What and How.} One significant benefit of
 choosing R is that every package in the CRAN repository is curated and comes
@@ -243,68 +245,81 @@ does not have to occur when optimized code is running~\cite{oopsla20a}.
 
 \subsection{Eval in R}\label{sec:eval-in-r}
 
-R exposes a rich reflective interface with functions, \c{eval},
-\c{evalq}, \c{eval.parent}, and \c{local}. The following simplifies details not
-relevant to this paper, the interested reader should consult \citet{hadley}.
-
+The \eval function in R takes three parameters: an \c{expression} to evaluate
+(\c{e}), an environment where to evaluate (\c{envir}), and an enclosure
+(\c{encl}) that is used to look up objects not found in \c{envir}.\footnote{Next to the \eval function R
+  offers three other variants:
+  \begin{inparaenum}[1.]
+    \item \c{evalq} automatically quotes passed expression---a shorthand to
+      \c{eval(quote(...))},
+    \item \c{eval.parent(e, n)} specifies the evaluating
+      environment in terms of number of call frames (\c{n}) to go back---a shorthand
+      to \c{eval(e, parent.frame(n))}, and
+    \item \c{local} evaluates \c{e} in a fresh
+      environment---a shorthand to \c{evalq(e, new.env())}.
+  \end{inparaenum} }
+%
 \begin{lstlisting}
  eval <- function(e, envir = parent.frame(),
                    encl = if(is.list(envir)) parent.frame() else baseenv()) ...
 \end{lstlisting}
-The most general is \eval. Parameter \c e is the \c{expression} to evaluate,
-\c{envir} is the evaluation environment, and \c{encl} is used to look up
-variables not found in \c{envir}. The default value of the latter is either the
-caller's environment or the base environment \Eval can take several types for \c e, for
-our purposes on the \c{expression}. These can be thought of as the abstract
-syntax trees returned by the parser. An \c{expression} can be obtained by
-calling \c{quote} or \c{parse} with a string:
+
+\noindent The expression passed to \eval can be thought of as an abstract
+syntax tree. It can be parsed from a string, created manually or using
+reflection:
+
+\vspace*{-2mm}
+\begin{figure}[htb]
+\begin{minipage}{.49\textwidth}
+\begin{lstlisting}[caption={Examples of calls producing expression \c{a+b}}]
+  parse(text="a+b")
+  quote(a+b)
+  call("+", quote(a), quote(b))
+
+  # reflect promise
+  f <- function(x) substitute(x)
+  f(a+b)
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{.49\textwidth}
+  \begin{lstlisting}[caption={Example of a call reflection}]
+  f <- function(x, y) {
+    mc <- match.call() # reflect curr. call
+    mc[[1]] <- as.name("g")
+    mc[["x"]] <- 2
+    mc
+  }
+  f(1,2) # returns a call g(2,y)
+  \end{lstlisting}
+\end{minipage}
+\end{figure}
+
+\vspace*{-2mm}
+\noindent The call to \c{substitute(x)} extracts the unevaluated expression from the
+promise \c{x}. The function \c{match.call} returns an expression representing the current call.
+
+R is generous when it comes to what is allowed to be passed as environment to
+\eval. Besides ordinary environments, it also accepts a list or a data
+frame (using element names or column names for variable resolution) or an
+integer \c{n} (in which case it would use the \c{n.} call frame). If no
+environment is specified, then the default is the environment where the call to
+\eval was made (as returned by \c{parent.frame}).
+%
+Environments nest, each has a parent. When creating a new environment with
+\c{new.env}, the parent is the current environment. Environment chains can be
+traversed with \c{parent.env}, until \c{emptyenv} is reached. The top-level
+environment is \c{.GlobalEnv}, it has parents that represent the packages that
+have been loaded. One can also directly read, modify or create new bindings,
+given any environment:
+%
 \begin{lstlisting}
- > quote(a + b)
- # a + b
- > parse(text="a+b")
- # expression(a+b)
+  # reading                                # writing
+  envir$v                                  envir$v <- 2
+  get("v", envir=envir)                    assign("v", 2, envir=envir)
 \end{lstlisting}
-Usually, expressions are obtained from promises using \c{substitute}. Consider a
-function called with \c{x = a+b}, then \c f returns an expression object.
-\begin{lstlisting}
- > f <- function(x) substitute(x)
- > f(a+b)
- # a+b
- > substitute(a+b,list(a=1,b=2))
- # 1+2
-\end{lstlisting}
-The call to \c{substitute(x)} extracts the unevaluated expression from the
-promise \c x. Function \c{substitute(e,envir)} takes two arguments, the second
-is used to substitute free variables in \c e.
-\begin{lstlisting}
- > environment()
- # <environment: R_GlobalEnv>
-\end{lstlisting}
-The \c{environment} function returns the current environment. Environments nest,
-each has a parent. When creating a new environment with \c{new.env}, the parent
-is the current environment. Environment chains can be traversed with
-\c{parent.env}, until \c{emptyenv} is reached. The top-level environment is
-\c{.GlobalEnv}, it has parents that represent the packages that have been
-loaded. One can also directly read, modify or create new bindings, given any
-environment:
-\begin{itemize}
-\item \c{envir\$v} and \c{get("v",envir=envir)}: read  \c{v} from \c{envir};
-\item \c{envir\$v<-2} and \c{assign("v",2,envir=envir)}: store 2 in \c{v}, if
-  not found, \c{v} is created in \c{envir}.
-\end{itemize}
+%
 \noindent Environments are used as hash maps as they have reference semantics
-and a built-in string lookup. Functions \c{parent.frame} and \c{sys.frame}
-return environments further up the call stack.
- \begin{lstlisting}
-  evalq <- function(e,envir,encl) eval(quote(e),envir,encl)
-  eval.parent <- function(e,n) eval(e,parent.frame(n))
-  local <- function(e,envir,encl) evalq(e,new.env())
-\end{lstlisting}
-The three variants can be expressed with \eval: \c{evalq} quotes its
-argument to prevent evaluation in the current environment,
-\c{eval.parent(e,n)} evaluates \c{e} in the environment of the {\tt n}-th
-caller of this function; finally, \c{local} evaluates \c{e} in a new environment
-to avoid polluting the current one.
+and a built-in string lookup.
 
 \subsection{Previous Work}
 
@@ -407,7 +422,7 @@ are unique solutions to \KaggleCompetitions competitions. They contain
 The analysis presented in this has been automated by a pipeline that acquires
 packages, extracts scripts, executes them, traces their behavior, and summarizes observations. Figure~\ref{fig:pipeline} shows the main steps along
  with their running time, data size, and  number of elements manipulated.
-  Timings are from a cluster of three 2.3GHz Intel Xeon 6140 servers, with 72 cores and 256GB of RAM, and shared OCFS network storage. The pipeline steps are:
+  Timings are from a cluster of three servers, each with 2.3GHz Intel Xeon 6140 processor with 72 cores and 256GB of RAM, and shared OCFS network storage. The pipeline steps are:
 
 
 \begin{figure}[!h]\hspace{-5mm}
@@ -454,18 +469,18 @@ based on GNU R 4.0.2 that exposes low-level callbacks for a variety of runtime
 events~\cite{oopsla19b}. The tracer registers callbacks to all \eval variants
 and a few additional functions to assist in locating the origin of \eval
 arguments. For example, we taint the results of calls to \c{parse} and
-\c{match.call} (reflects on current call). We also capture calls to R API for
-dynamic code loading. Next, we subscribe to the events related to a variable
-definition and assignment, allowing us to record side effects that happen in
-environments while evaluating code in \eval. One challenge was that R only
-provides source references for block surrounded by braces. Thus, a function
-whose body is \c{eval(x)} would no usable debug information, while the same
-expression surrounded by braces would be fine. This is unfortunately not easily
-fixed. We extended the dynamic analysis tool to attach synthetic source code
-references to all \eval call sites by traversing ASTs. The tracer is implemented
-as an R package in 3.2K C++ and 1.3K of R code. For performance reasons, most of
-the tracing is done in C++. While in theory, the implementation is relatively
-straightforward, not so in practice:
+\c{match.call}. We also capture calls to R API for dynamic code loading. Next,
+we subscribe to the events related to a variable definition and assignment,
+allowing us to record side effects that happen in environments while evaluating
+code in \eval. One challenge was that R only provides source references for
+block surrounded by braces. Thus, a function whose body is \c{eval(x)} would no
+usable debug information, while the same expression surrounded by braces would
+be fine. This is unfortunately not easily fixed. We extended the dynamic
+analysis tool to attach synthetic source code references to all \eval call
+sites by traversing ASTs. The tracer is implemented as an R package in 3.2K C++
+and 1.3K of R code. For performance reasons, most of the tracing is done in
+C++. While in theory, the implementation is relatively straightforward, not so
+in practice:
 %
 \begin{compactitem}[---]
 
@@ -508,7 +523,7 @@ limitations should invalidate our conclusions.
 \end{wrapfigure}
 %
 This section focuses on CRAN packages and reports statistics about the usage of
-\eval. We use the word \emph{site} to an occurrence of a call site to the \eval
+\eval. We use the word \emph{site} to refer to an occurrence of a call site to the \eval
 function in the source code and \emph{call} to denote an observed invocation of
 the \eval function.
 
@@ -725,7 +740,7 @@ from over 20 years of contributions by thousands of authors. The code in
 packages is well maintained and relatively well tested. Finally, Kaggle scripts
 are often written by less sophisticated users and likely perform more
 straightforward tasks, thus having a lesser need for \eval, and its uses
-originate from strings as these are easier to manipulate for end-users.
+originate from strings as these are easier to manipulate for end users.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1348,6 +1363,10 @@ CRAN that would otherwise be refused. For example,  it checks that packages
 do not call the \c{unlockBinding} function.\footnote{It allows one to open and
 modify loaded package namespaces.} Packages such as \c{data.table} circumvent
 such restrictions by using \eval as the check is only performed statically.
+
+\subsection{Alternatives to \eval}
+
+Talk about lazyeval and tidyeval
 
 \section{Conclusion}
 
