@@ -363,13 +363,14 @@ interpretation-based approach to analyzing dynamic languages. One must construct
 a static approximation of the argument to \eval and then analyze possible
 behaviors of the interpreter when evaluating the generated code.
 
-\citet{ecoop12} had a short section on the usage of \eval in R. They found the
-that \eval  is widely used in R code with 8500 call sites in CRAN and 2.2 million dynamic calls. The 15 most frequent call sites account for 88\% of those. The
+\citet{ecoop12} had a few paragraphs on the usage of \eval in R. They found the
+that \eval  is widely used in R code with 8500 call sites in 1238 CRAN packages and 2.2 million dynamic calls.   The 15 most frequent call sites account for 88\% of those. The
 \c{match.arg} function is the highest used one with 54\% of all calls. In the
 other call sites, they saw two use cases. The most common is the evaluation of
 the source code of a promise retrieved by \c{substitute} in a new environment,
 \eg as done in the \c{with} function. The other use case is the invocation of a
-function whose name or arguments are determined dynamically. For this purpose, R provides \c{do.call} and thus \eval is overkill.
+function whose name or arguments are determined dynamically. For this purpose, R provides \c{do.call} and thus \eval is overkill. Our corpus is larger, with \CranPackages packages, \packageTriggeredpkgs packages with at least one \eval, for a total of \PkgHitEvalCallSites sites and \packageAllcallsRnd dynamic calls, although they also looked at the Bioconductor package repository\footnote{\url{https://www.bioconductor.org/}} in addition to CRAN. We also track much more runtime information on the \eval calls during tracing. It enables us to have a more nuanced and accurate picture, and identify more diverse use cases of \eval.
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
