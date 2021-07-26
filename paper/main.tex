@@ -7,7 +7,8 @@
 
 \bibliographystyle{ACM-Reference-Format}
 \citestyle{acmauthoryear}   %% For author/year citations
-\usepackage{listings,hyperref,multirow,paralist,xspace,url,wrapfig}
+\usepackage{listings,hyperref,multirow,paralist,xspace,url,wrapfig,tikz}
+\usetikzlibrary{positioning,automata,fit,shapes.geometric,backgrounds,calc}
 \usepackage{tabularx}
 \input{macro}
 \newcommand{\mypara}[1]{\medskip\noindent\emph{#1}\xspace}
@@ -363,13 +364,14 @@ interpretation-based approach to analyzing dynamic languages. One must construct
 a static approximation of the argument to \eval and then analyze possible
 behaviors of the interpreter when evaluating the generated code.
 
-\citet{ecoop12} had a short section on the usage of \eval in R. They found the
-that \eval  is widely used in R code with 8500 call sites in CRAN and 2.2 million dynamic calls. The 15 most frequent call sites account for 88\% of those. The
+\citet{ecoop12} had a few paragraphs on the usage of \eval in R. They found the
+that \eval  is widely used in R code with 8500 call sites in 1238 CRAN packages and 2.2 million dynamic calls.   The 15 most frequent call sites account for 88\% of those. The
 \c{match.arg} function is the highest used one with 54\% of all calls. In the
 other call sites, they saw two use cases. The most common is the evaluation of
 the source code of a promise retrieved by \c{substitute} in a new environment,
 \eg as done in the \c{with} function. The other use case is the invocation of a
-function whose name or arguments are determined dynamically. For this purpose, R provides \c{do.call} and thus \eval is overkill.
+function whose name or arguments are determined dynamically. For this purpose, R provides \c{do.call} and thus \eval is overkill. Our corpus is larger, with \CranPackages packages, \packageTriggeredpkgs packages with at least one \eval, for a total of \PkgHitEvalCallSites sites and \packageAllcallsRnd dynamic calls, although they also looked at the Bioconductor package repository\footnote{\url{https://www.bioconductor.org/}} in addition to CRAN. We also track much more runtime information on the \eval calls during tracing. It enables us to have a more nuanced and accurate picture, and identify more diverse use cases of \eval.
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -422,13 +424,82 @@ are unique solutions to \KaggleCompetitions competitions. They contain
 The analysis presented in this has been automated by a pipeline that acquires
 packages, extracts scripts, executes them, traces their behavior, and summarizes observations. Figure~\ref{fig:pipeline} shows the main steps along
  with their running time, data size, and  number of elements manipulated.
-  Timings are from a cluster of three servers, each with 2.3GHz Intel Xeon 6140 processor with 72 cores and 256GB of RAM, and shared OCFS network storage. The pipeline steps are:
+ Timings are from a cluster of three servers, each with 2.3GHz Intel Xeon 6140 processor with 72 cores and 256GB of RAM, and shared OCFS network storage. The pipeline steps are:
 
+ \begin{figure}[ht!]
+   \centering
+   \scalebox{0.85}{
+     \begin{tikzpicture}
+       \definecolor{red}{HTML}{F8CECC}
+       \definecolor{darkred}{HTML}{B85450}
+       \definecolor{yellow}{HTML}{FFF2CC}
+       \definecolor{darkyellow}{HTML}{D6B656}
+       \definecolor{blue}{HTML}{DAE8FC}
+       \definecolor{darkblue}{HTML}{6C8EBF}
+       \definecolor{green}{HTML}{D5E8D4}
+       \definecolor{darkgreen}{HTML}{82B366}
 
-\begin{figure}[!h]\hspace{-5mm}
-  \includegraphics[width=.95\linewidth]{pipeline.pdf}
-  \caption{Pipeline}\label{fig:pipeline}
-\end{figure}
+       \newcommand{\nodesep}[0]{0.035 \textwidth}
+       \newcommand{\textsep}[0]{0.005 \textwidth}
+
+       \newcommand{\nodename}[1]{\begin{tabular}{c}#1\end{tabular}}
+       \newcommand{\nodedesc}[1]{\begin{tabular}{c}#1\end{tabular}}
+
+       \tikzstyle{block}     = [rectangle, rounded corners, minimum width=0.15 \textwidth, minimum height=60pt]
+       \tikzstyle{connector} = [line width=0.25mm, ->]
+
+       \node [block, fill = red, draw = darkred, very thick] (download) {
+         \nodename{
+           \vspace{1mm}\large{\textbf{Download}}\vspace{1mm}\\
+           15K Packages\\
+           8K Kaggle Kernels\\
+           219 Kaggle Datasets
+         }
+       };
+       \node [below = \textsep of download]   (downloaddesc)   {\nodedesc{12 Hours}};
+
+       \node [block, right = \nodesep of download, fill = yellow, draw = darkyellow, very thick] (extract) {
+         \nodename{
+           \vspace{1mm}\large{\textbf{Extract}}\vspace{1mm}\\
+           240K package programs\\%, 4.6M LOC\\
+           74 Kaggle kernels\\%, 13K LOC\\
+           \newline
+         }
+       };
+       \node [below = \textsep of extract]   (extractdesc)   {\nodedesc{2 Hours}};
+
+       \node [block, right = \nodesep of extract, fill = blue, draw = darkblue, very thick] (trace) {
+         \nodename{
+           \vspace{1mm}\large{\textbf{Trace}}\vspace{1mm}\\
+           49M eval calls \\
+           14M side-effects\\
+           \newline
+         }
+       };
+       \node [below = \textsep of trace]     (tracedesc)     {\nodedesc{1 Day 12 Hours}};
+
+       \node [block, right = \nodesep of trace, fill = green, draw = darkgreen, very thick] (analyze) {
+         \nodename{
+           \vspace{1mm}\large{\textbf{Analyze}}\vspace{1mm}\\
+           2.8M unique eval calls\\
+           22\% packages use eval\\
+           \newline
+         }
+       };
+       \node [below = \textsep of analyze]    (analyzedesc)    {\nodedesc{2 Hours}};
+
+       \draw [connector] (download)   edge (extract);
+       \draw [connector] (extract)    edge (trace);
+       \draw [connector] (trace)      edge (analyze);
+     \end{tikzpicture}
+   }
+   \vspace{-2mm}\caption{Pipeline}\label{fig:pipeline}
+ \end{figure}
+
+%% \begin{figure}[!h]\hspace{-5mm}
+%%  \includegraphics[width=.95\linewidth]{pipeline.pdf}
+%%  \caption{Pipeline}\label{fig:pipeline}
+%%\end{figure}
 
 \medskip
 \begin{compactenum}
