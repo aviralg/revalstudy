@@ -1,0 +1,134 @@
+---
+title: "Provenance analysis"
+author: "Pierre Donat-Bouillud"
+output:
+  html_document:
+        gallery: false
+        toc: true
+        toc_depth: 3
+        toc_float: true
+        df_print: paged
+date: "`r Sys.Date()`"
+editor_options: 
+  chunk_output_type: console
+params:
+  base_dir: Data/package/
+  calls_path: summarized.fst
+  corpus_path: corpus.txt
+  static_path: evals-static.csv
+  force_rebuild: FALSE
+---
+
+```{r setup, include=FALSE}
+knitr::knit_hooks$set(time_it = local({
+  now <- NULL
+  function(before, options) {
+    if (before) { # record the current time before each chunk
+      now <<- Sys.time()
+    } else { # calculate the time difference after a chunk
+      res <- difftime(Sys.time(), now)
+      # return a character string to show the time
+      paste("Time for this code chunk to run:", res, units(res))
+    }
+  }
+}))
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.align = "center",
+  fig.retina = 2,
+  fig.width = 10,
+  cache.lazy = FALSE
+)
+
+now <- Sys.time()
+
+library(tidyverse)
+library(fst)
+library(fs)
+library(DT)
+
+source("inc/latextags.R")
+source("inc/functions.R")
+source("inc/paths.R")
+theme_set(theme_minimal())
+
+dataset_name <- basename(params$base_dir)
+
+# Tags will be prefixed by the dataset name
+create_tags(path(TAGS_DIR, paste0(dataset_name, "_provenance.tex")), prefix = dataset_name, default = TRUE)
+# Also use ggsave_prefix instead of ggsave if you need to save a graph
+
+calls_path <- paste0(params$base_dir, params$calls_path)
+corpus_path <- paste0(params$base_dir, params$corpus_path)
+static_path <- paste0(params$base_dir, params$static_path)
+
+provenance_path <- paste0(params$base_dir, params$provenance_path)
+
+lock_path <- paste0(params$base_dir, ".provenance-lock.fst")
+min_path <- paste0(params$base_dir, "Eprov.fst")
+
+nb_eval_call_sites <- function(dataset) {
+  dataset %>% pull(src_ref) %>% n_distinct()
+}
+
+```
+
+# Loading datafiles
+
+```{r loading_fst}
+tibble(package = read_lines(corpus_path)) -> C_raw
+read_csv(static_path) %>% semi_join(C_raw, by = "package") -> P
+
+rebuild <- TRUE
+
+E_prov <- NULL
+
+if (file.exists(lock_path)) {
+  saved <- read.fst(lock_path)[[1,1]]
+  if (saved == file.size(calls_path)) {
+    read_fst(min_path) %>% as_tibble() -> E_prov
+    rebuild <- FALSE
+  }
+}
+
+if(params$force_rebuild || rebuild) {
+  read_fst(calls_path) %>% as_tibble() -> E_raw
+  
+  E_raw <- E_raw %>% mutate(envir_expression = if_else(envir_type == "NULL" & is.na(envir_expression), "NULL", envir_expression))
+  
+  E_raw %>% select(
+    run_package = package, #      The package which was run to trigger the eval
+    ev_variant = eval_function, # Which eval variant was called
+    duplicates = nb_ev_calls, #   Number of identical eval calls (weight)
+    src_ref = eval_call_srcref, # Source ref for the eval call site
+    file, #                       Script file name (name of this run)
+    ev_package = eval_source, #   Package of the call site
+    type = expr_resolved_type_tag, #   Argument type
+    ev_call = eval_call_expression,
+    ev_expr = expr_expression,
+    caller_expression,
+    match_call = expr_match_call,
+    parsed = expr_parsed_expression,
+  ) -> E_prov
+  
+  
+  E_prov %>% write_fst(min_path)
+  sz <- file.size(calls_path) %>% as_tibble()
+  write.fst(sz, lock_path)
+}
+
+C_raw -> C
+corpus_size <- nrow(C)
+```
+
+# Description of the data files
+
+```{r packages}
+nb_eval_calls <- count(E_prov, wt = duplicates)
+
+nb_call_sites <- E_prov %>% pull(src_ref) %>% n_distinct()
+```
+
+
+There are `r nb_eval_calls` eval calls and `r nb_call_sites` eval call sites in the dataset.
