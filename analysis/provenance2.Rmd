@@ -12,7 +12,8 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: Data/package/
+  #base_dir: Data/package/
+  base_dir: /mnt/ocfs_vol_00/project-evalr/evalr-experiment/run/preprocess/package/
   calls_path: summarized.fst
   corpus_path: corpus.txt
   static_path: evals-static.csv
@@ -56,7 +57,7 @@ theme_set(theme_minimal())
 dataset_name <- basename(params$base_dir)
 
 # Tags will be prefixed by the dataset name
-create_tags(path(TAGS_DIR, paste0(dataset_name, "_provenance.tex")), prefix = dataset_name, default = TRUE)
+create_tags(path(TAGS_DIR, paste0(dataset_name, "_provenance2.tex")), prefix = dataset_name, default = TRUE)
 # Also use ggsave_prefix instead of ggsave if you need to save a graph
 
 calls_path <- paste0(params$base_dir, params$calls_path)
@@ -65,8 +66,8 @@ static_path <- paste0(params$base_dir, params$static_path)
 
 provenance_path <- paste0(params$base_dir, params$provenance_path)
 
-lock_path <- paste0(params$base_dir, ".provenance-lock.fst")
-min_path <- paste0(params$base_dir, "Eprov.fst")
+lock_path <- paste0(params$base_dir, ".provenance2-lock.fst")
+min_path <- paste0(params$base_dir, "Eprov2.fst")
 
 nb_eval_call_sites <- function(dataset) {
   dataset %>% pull(src_ref) %>% n_distinct()
@@ -108,14 +109,18 @@ if(params$force_rebuild || rebuild) {
     ev_call = eval_call_expression,
     ev_expr = expr_expression,
     caller_expression,
-    match_call = expr_match_call,
-    parsed = expr_parsed_expression,
+    provenance, # the main provenance (i.e. climbing up LHSs)
+    provenance_args,
+    nb_provenances,
+    nb_operations,
+    longest_path_size,
+    all_provenances
   ) -> E_prov
   
   
-  E_prov %>% write_fst(min_path)
+  #E_prov %>% write_fst(min_path)
   sz <- file.size(calls_path) %>% as_tibble()
-  write.fst(sz, lock_path)
+  #write.fst(sz, lock_path)
 }
 
 C_raw -> C
@@ -132,3 +137,29 @@ nb_call_sites <- E_prov %>% pull(src_ref) %>% n_distinct()
 
 
 There are `r nb_eval_calls` eval calls and `r nb_call_sites` eval call sites in the dataset.
+
+
+In the dataset, the `provenance` column refers to the main provenance of an expression passed to `eval`. It is obtained by traversing the provenance graph and following the LHSs.
+
+# Provenance in numbers of calls
+
+```{r}
+provenance_calls <- E_prov %>% count(provenance, wt = duplicates, sort = TRUE) %>% 
+  mutate(pc = 100 * n / sum(n), cpc = cumsum(pc))
+
+
+nrows <- min(10, nrow(provenance_calls))
+r_vec("nb provenance calls", nrows, provenance_calls$provenance)
+r_vec("percent provenance calls", nrows, provenance_calls$pc)
+r_vec("cumpercent provenance calls", nrows, provenance_calls$cpc)
+```
+
+`r datatable(provenance_calls)`
+
+# Provenance in number of sites
+
+# All provenances
+
+## By combinations
+
+## In absolute numbers
