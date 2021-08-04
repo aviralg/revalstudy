@@ -1411,6 +1411,19 @@ In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a 
  D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
 \end{lstlisting}
 
+The \c{glue} package provides functions for string interpolation; text enclosed
+by c{\{} and c{\}} is evaluated using \eval as an R expression and replaced by
+its result. The code snippet below shows an example of this.
+
+\begin{lstlisting}
+library(glue)
+greeting <- "Hello"
+glue('{greeting} World!')
+#> Hello World!
+\end{lstlisting}
+
+
+
 
 \subsection{Unnecessary use of \eval}
 
@@ -1480,6 +1493,11 @@ are used. The \eval call evaluates the quoted expression
 \c{substitute(list(...))}. This returns a \c{list} of unevaluated argument
 expressions. The \c{hasGroupNumber} function from the \c{lattice} package is one
 of the many users of this pattern.
+
+The \c{withr} package provides the \c{defer} function which defers the
+evaluation of an expression until a stack frame is exited. It attaches this
+expression as an attribute to the frame environment and uses \eval to evaluate
+it on frame exit.
 
 \subsection{Discussion}
 
