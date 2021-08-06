@@ -1,5 +1,5 @@
-\documentclass[review,screen,acmsmall,anonymous=true]{acmart}
-\settopmatter{printfolios=false,printccs=false,printacmref=false}
+\documentclass[review,screen,acmsmall]{acmart}
+%\settopmatter{printfolios=false,printccs=false,printacmref=false}
 \setcopyright{none}
 \renewcommand\footnotetextcopyrightpermission[1]{}
 \pagestyle{plain}
@@ -23,11 +23,12 @@
 \title{What We Eval in the Shadows}
 \subtitle{A large-scale study of {\sf eval} usage in R programs}
 
-\author{Author }
-\authornote{Both authors contributed equally to this research.}
-\email{a@b.com}\orcid{}\author{Author}\authornotemark[1]
-\email{r@s.com}
-\affiliation{\institution{Institute} \country{Country}}
+\author{Pierre Donat-Bouillud}\affiliation{\institution{Czech Technical University in Prague}\country{Czech Republic}}
+\author{Aviral Goel}\affiliation{\institution{Northeastern University}\country{USA}}
+\author{Filip Křikava}\affiliation{\institution{Czech Technical University in Prague}\country{Czech Republic}}
+\author{Christoph Kirsch}\affiliation{\institution{Czech Technical University in Prague}\country{Czech Republic}}
+\author{Jan Vitek}\affiliation{\institution{Northeastern University}\country{USA}}
+\affiliation{\institution{Czech Technical University in Prague}\country{Czech Republic}}
 
 \begin{abstract}
   \noindent Most dynamic languages allow users to turn text into code using
@@ -1447,7 +1448,7 @@ its results into a variable:
 \end{lstlisting}
   or even to a one-liner \c{do.call(paste0("q",d), c(dp, list(...)))}.
 
-  
+
   The \c{copyslots} function from the \c{coin} package uses \eval to copy the
   slots from one \c{S4} object to another. It performs
   \c{eval(str2lang(paste0("target@", s, " <- source@", s)))} for each slot name
@@ -1503,7 +1504,7 @@ it on frame exit.
 
 \Eval in R is used chiefly for meta-programming purposes and to access
 environments other than the local one. In Javascript, patterns are ad-hoc, such
-as json loading and parsing, and can often be rewritten without \eval, such as a 
+as json loading and parsing, and can often be rewritten without \eval, such as a
 function or method call, or an assignment to a local variable or an object
 property. For R, the data suggests that in some cases, the use of \eval in the
 \c{X, V, \$, <-, FUN} and the function calls related to code generation could
