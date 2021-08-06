@@ -450,7 +450,7 @@ packages, extracts scripts, executes them, traces their behavior, and summarizes
 
        \node [block, fill = red, draw = darkred, very thick] (download) {
          \nodename{
-           \vspace{1mm}\large{\textbf{Download}}\vspace{1mm}\\
+           \vspace{1mm}\textbf{Download}\vspace{1mm}\\
            15K Packages\\
            8K Kaggle Kernels\\
            219 Kaggle Datasets
@@ -460,7 +460,7 @@ packages, extracts scripts, executes them, traces their behavior, and summarizes
 
        \node [block, right = \nodesep of download, fill = yellow, draw = darkyellow, very thick] (extract) {
          \nodename{
-           \vspace{1mm}\large{\textbf{Extract}}\vspace{1mm}\\
+           \vspace{1mm}\textbf{Extract}\vspace{1mm}\\
            240K package programs\\%, 4.6M LOC\\
            74 Kaggle kernels\\%, 13K LOC\\
            \newline
@@ -470,7 +470,7 @@ packages, extracts scripts, executes them, traces their behavior, and summarizes
 
        \node [block, right = \nodesep of extract, fill = blue, draw = darkblue, very thick] (trace) {
          \nodename{
-           \vspace{1mm}\large{\textbf{Trace}}\vspace{1mm}\\
+           \vspace{1mm}\textbf{Trace}\vspace{1mm}\\
            49M eval calls \\
            14M side-effects\\
            \newline
@@ -480,7 +480,7 @@ packages, extracts scripts, executes them, traces their behavior, and summarizes
 
        \node [block, right = \nodesep of trace, fill = green, draw = darkgreen, very thick] (analyze) {
          \nodename{
-           \vspace{1mm}\large{\textbf{Analyze}}\vspace{1mm}\\
+           \vspace{1mm}\textbf{Analyze}\vspace{1mm}\\
            2.8M unique eval calls\\
            22\% packages use eval\\
            \newline
@@ -582,14 +582,15 @@ results. Other limitations are that we ignore calls to the native \eval and to
 the alternate \c{rlang::tidy\_eval} uses native \eval internally. None of these
 limitations should invalidate our conclusions.
 
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Usage Metrics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{wrapfigure}{r}{5cm} \vspace{-1cm} \hspace*{-12mm}
   \centering
-  \includegraphics[width=72mm]{pkgs-eval-callsites-hist.pdf} \caption{CRAN
-  \eval call sites}%
+  \includegraphics[width=72mm]{pkgs-eval-callsites-hist.pdf}
+  \caption{CRAN \eval call sites}%
   \label{fig:pkgs-eval-callsites-hist}\vspace{-3mm}
 \end{wrapfigure}
 %
