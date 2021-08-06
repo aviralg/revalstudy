@@ -1459,17 +1459,57 @@ glue('{greeting} World!')
 #> Hello World!
 \end{lstlisting}
 
+\subsection{Miscellaneous}
+A common use of \eval is the extraction of unevaluated text of arguments passed
+to \c{...} (vararg). For a non-vararg parameter \c{x}, the expressions
+\c{substitute(x)} can be used to extract the argument text. However, for \c{...}
+arguments, the expression \c{eval(quote(substitute(list(...))))} or its variants
+are used. The \eval call evaluates the quoted expression
+\c{substitute(list(...))}. This returns a \c{list} of unevaluated argument
+expressions. The \c{hasGroupNumber} function from the \c{lattice} package is one
+of the many users of this pattern.
+
+The \c{withr} package provides the \c{defer} function which defers the
+evaluation of an expression until a stack frame is exited. It attaches this
+expression as an attribute to the frame environment and uses \eval to evaluate
+it on frame exit.
 
 
+\subsection{Alternatives to \eval}
+Talk about lazyeval and tidyeval
 
-\subsection{Unnecessary use of \eval}
+\subsection{Discussion}
+
+\Eval in R is used chiefly for meta-programming purposes and to access
+environments other than the local one. In Javascript, patterns are ad-hoc, such
+as json loading and parsing, and can often be rewritten without \eval, such as a
+function or method call, or an assignment to a local variable or an object
+property. For R, the data suggests that in some cases, the use of \eval in the
+\c{X, V, \$, <-, FUN} and the function calls related to code generation could
+replaced by more specific functions. For instance, variable lookup in any
+environment can be performed with \c{get}, and assignment in any environment,
+with \c{assign}. Building a call and executing can be done with \c{do.call}.
+Nevertheless, many of the observed \eval usage in R, particularly, the ones
+related to statistical modeling and DSLs are more sophisticated than those
+reported for JavaScript.
+
+Finally, let us mention an anecdotal use of \eval as a means to bypass some
+checks performed by the \c{R CMD CHECK} tool. This tool performs a number of
+well-formedness rules before accepting a package to the CRAN repository. Many
+checks are performed statically by looking at syntactic constructs in the R
+code. Using \eval allows one to bypass such checks and thus submit a package to
+CRAN that would otherwise be refused. For example,  it checks that packages
+do not call the \c{unlockBinding} function.\footnote{It allows one to open and
+modify loaded package namespaces.} Packages such as \c{data.table} circumvent
+such restrictions by using \eval as the check is only performed statically.
+
+\subsection{Removing \eval}
 
 Similarly to JavaScript, there are also unnecessary uses of \eval. These uses of
-\eval can be replaced with alternate functions yielding the same results.
-For example,
-the \c{PerformanceAnalytics} package contains a function \c{chart.QQPlot} that
-uses \eval to resolve a string into function and another to call it and assign
-its results into a variable:
+\eval can be replaced with alternate functions yielding the same results. For
+example, the \c{PerformanceAnalytics} package contains a function
+\c{chart.QQPlot} that uses \eval to resolve a string into function and another
+to call it and assign its results into a variable:
 \begin{lstlisting}
   function (R, d="norm", dp, ...) {
 	  q.f <- eval(parse(text=paste("q",d,sep=""))); z <- NULL
@@ -1521,52 +1561,6 @@ limits of dynamic analysis, we only have a partial coverage and cannot determine
 if for example, \eval sites classified as \c{X, V} will not be eventually called
 with an expression in a \c{F(), F(X)} or \c{F(F(X))} category.
 
-\subsection{Miscellaneous}
-A common use of \eval is the extraction of unevaluated text of arguments passed
-to \c{...} (vararg). For a non-vararg parameter \c{x}, the expressions
-\c{substitute(x)} can be used to extract the argument text. However, for \c{...}
-arguments, the expression \c{eval(quote(substitute(list(...))))} or its variants
-are used. The \eval call evaluates the quoted expression
-\c{substitute(list(...))}. This returns a \c{list} of unevaluated argument
-expressions. The \c{hasGroupNumber} function from the \c{lattice} package is one
-of the many users of this pattern.
-
-The \c{withr} package provides the \c{defer} function which defers the
-evaluation of an expression until a stack frame is exited. It attaches this
-expression as an attribute to the frame environment and uses \eval to evaluate
-it on frame exit.
-
-\subsection{Discussion}
-
-\Eval in R is used chiefly for meta-programming purposes and to access
-environments other than the local one. In Javascript, patterns are ad-hoc, such
-as json loading and parsing, and can often be rewritten without \eval, such as a
-function or method call, or an assignment to a local variable or an object
-property. For R, the data suggests that in some cases, the use of \eval in the
-\c{X, V, \$, <-, FUN} and the function calls related to code generation could
-replaced by more specific functions. For instance, variable lookup in any
-environment can be performed with \c{get}, and assignment in any environment,
-with \c{assign}. Building a call and executing can be done with \c{do.call}.
-Nevertheless, many of the observed \eval usage in R, particularly, the ones
-related to statistical modeling and DSLs are more sophisticated than those
-reported for JavaScript.
-
-Finally, let us mention an anecdotal use of \eval as a means to bypass some
-checks performed by the \c{R CMD CHECK} tool. This tool performs a number of
-well-formedness rules before accepting a package to the CRAN repository. Many
-checks are performed statically by looking at syntactic constructs in the R
-code. Using \eval allows one to bypass such checks and thus submit a package to
-CRAN that would otherwise be refused. For example,  it checks that packages
-do not call the \c{unlockBinding} function.\footnote{It allows one to open and
-modify loaded package namespaces.} Packages such as \c{data.table} circumvent
-such restrictions by using \eval as the check is only performed statically.
-
-
-
-
-\subsection{Alternatives to \eval}
-
-Talk about lazyeval and tidyeval
 
 \section{Conclusion}
 
