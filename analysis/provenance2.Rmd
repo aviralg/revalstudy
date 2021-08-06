@@ -251,3 +251,17 @@ r("symbol sites percent", ratio(symbol_sites, nb_call_sites))
 
 ```
 
+
+
+## Parse from a file
+
+```{r parse_from_file}
+
+parsed_from_file_calls <- string_calls %>% filter(str_detect(provenance_args, "\\bfile\\b"))
+
+parsed_from_file_sites <- parsed_from_file_calls %>% pull(src_ref) %>% n_distinct()
+
+r("nb parse from file sites", parsed_from_file_sites)
+
+```
+
