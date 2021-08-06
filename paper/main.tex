@@ -1474,10 +1474,6 @@ evaluation of an expression until a stack frame is exited. It attaches this
 expression as an attribute to the frame environment and uses \eval to evaluate
 it on frame exit.
 
-
-\subsection{Alternatives to \eval}
-Talk about lazyeval and tidyeval
-
 \subsection{Discussion}
 
 \Eval in R is used chiefly for meta-programming purposes and to access
@@ -1561,6 +1557,25 @@ limits of dynamic analysis, we only have a partial coverage and cannot determine
 if for example, \eval sites classified as \c{X, V} will not be eventually called
 with an expression in a \c{F(), F(X)} or \c{F(F(X))} category.
 
+
+\subsection{Alternatives to \eval}
+
+An alternative implementation of \eval, \c{eval\_tidy}, is provided by the
+\c{rlang} package. This forms the base of the tidy evaluation framework used by
+the libraries collectively referred to as the \c{tidyverse}~\cite{tidyverse}. It
+differs from the \c{eval} function in two ways. First, it supports evaluation of
+Quosures, which are also custom objects used by the \c{tidyverse} libraries for
+metaprogramming. Quosures package expression with an evaluation environment. The
+\c{tidy\_eval} function extracts this expression and evaluates it in that
+environment, ignoring the environment passed to it explicitly as an argument.
+Second, the \c{eval\_tidy} function also accepts a data mask argument.This is a
+set of bindings supplied by the user as a data frame or a named vector or list.
+The data mask environment take precedence over the environment passed for
+evaluation. Since the expression is always evaluated in the data mask, it has
+different semantics compared to \c{base::eval}. Effects such as assignment using
+\c{<-} happen in the data mask environment. Expressions such as \c{return()} do
+not work since the data mask environment does not correspond to a frame on the
+call stack.
 
 \section{Conclusion}
 
