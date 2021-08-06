@@ -1,5 +1,5 @@
-\documentclass[review,screen,acmsmall,anonymous=true]{acmart}
-\settopmatter{printfolios=false,printccs=false,printacmref=false}
+\documentclass[review,screen,acmsmall]{acmart}
+%\settopmatter{printfolios=false,printccs=false,printacmref=false}
 \setcopyright{none}
 \renewcommand\footnotetextcopyrightpermission[1]{}
 \pagestyle{plain}
@@ -23,11 +23,13 @@
 \title{What We Eval in the Shadows}
 \subtitle{A large-scale study of {\sf eval} usage in R programs}
 
-\author{Author }
-\authornote{Both authors contributed equally to this research.}
-\email{a@b.com}\orcid{}\author{Author}\authornotemark[1]
-\email{r@s.com}
-\affiliation{\institution{Institute} \country{Country}}
+\author{Aviral Goel}\affiliation{\institution{Northeastern
+    University}\country{USA}}
+\author{Pierre Donat-Bouillud}\affiliation{\institution{Czech Technical University in Prague}\country{Czech Republic}}
+\author{Filip Křikava}\affiliation{\institution{Czech Technical University in Prague}\country{Czech Republic}}
+\author{Christoph Kirsch}\affiliation{\institution{Czech Technical University in Prague}\country{Czech Republic}}
+\author{Jan Vitek}\affiliation{\institution{Northeastern University}\country{USA}}
+\affiliation{\institution{Czech Technical University in Prague}\country{Czech Republic}}
 
 \begin{abstract}
   \noindent Most dynamic languages allow users to turn text into code using
@@ -161,7 +163,7 @@ is used where other languages would provide macros. But, the expressive power of
 
 
 
-\newpage
+%\newpage
 \section{Background and Previous work}
 
 This section provides a short introduction to R and the reflective features of
@@ -450,7 +452,7 @@ packages, extracts scripts, executes them, traces their behavior, and summarizes
 
        \node [block, fill = red, draw = darkred, very thick] (download) {
          \nodename{
-           \vspace{1mm}\large{\textbf{Download}}\vspace{1mm}\\
+           \vspace{1mm}\textbf{Download}\vspace{1mm}\\
            15K Packages\\
            8K Kaggle Kernels\\
            219 Kaggle Datasets
@@ -460,7 +462,7 @@ packages, extracts scripts, executes them, traces their behavior, and summarizes
 
        \node [block, right = \nodesep of download, fill = yellow, draw = darkyellow, very thick] (extract) {
          \nodename{
-           \vspace{1mm}\large{\textbf{Extract}}\vspace{1mm}\\
+           \vspace{1mm}\textbf{Extract}\vspace{1mm}\\
            240K package programs\\%, 4.6M LOC\\
            74 Kaggle kernels\\%, 13K LOC\\
            \newline
@@ -470,7 +472,7 @@ packages, extracts scripts, executes them, traces their behavior, and summarizes
 
        \node [block, right = \nodesep of extract, fill = blue, draw = darkblue, very thick] (trace) {
          \nodename{
-           \vspace{1mm}\large{\textbf{Trace}}\vspace{1mm}\\
+           \vspace{1mm}\textbf{Trace}\vspace{1mm}\\
            49M eval calls \\
            14M side-effects\\
            \newline
@@ -480,7 +482,7 @@ packages, extracts scripts, executes them, traces their behavior, and summarizes
 
        \node [block, right = \nodesep of trace, fill = green, draw = darkgreen, very thick] (analyze) {
          \nodename{
-           \vspace{1mm}\large{\textbf{Analyze}}\vspace{1mm}\\
+           \vspace{1mm}\textbf{Analyze}\vspace{1mm}\\
            2.8M unique eval calls\\
            22\% packages use eval\\
            \newline
@@ -582,14 +584,15 @@ results. Other limitations are that we ignore calls to the native \eval and to
 the alternate \c{rlang::tidy\_eval} uses native \eval internally. None of these
 limitations should invalidate our conclusions.
 
+%\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Usage Metrics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{wrapfigure}{r}{5cm} \vspace{-1cm} \hspace*{-12mm}
   \centering
-  \includegraphics[width=72mm]{pkgs-eval-callsites-hist.pdf} \caption{CRAN
-  \eval call sites}%
+  \includegraphics[width=72mm]{pkgs-eval-callsites-hist.pdf}
+  \caption{CRAN \eval call sites}%
   \label{fig:pkgs-eval-callsites-hist}\vspace{-3mm}
 \end{wrapfigure}
 %
@@ -1352,17 +1355,44 @@ expressions passed to \eval. Here, we illustrate them in concrete instances.
 %\todo{Say somewhere that the R community commonly calls call/argument capturing
 %(with substitute or match.call), Non-Standard Evaluation.}
 
+\subsection{Simplify Interfaces}
+Many packages use the capability to parse and evaluate expressions in custom
+environments to design simpler interfaces. For example, the \c{AdapSamp} package
+provides functions that implement sampling algorithms. These functions take a
+\c{formula} argument, an expression in \c{x} as a string, that represents the
+kernel of the target distribution. This is turned into a closure using
+\c{function(x){eval(parse(text=formula))}}. While the \c{formula} supplied by
+the user could be a higher-order function, passing \c{"exp(-x\^2/2)"} as an
+argument is simpler for domain experts compared to \c{function(x) exp(-x\^2/2)}.
+The \c{bain::constraint\_to\_row} function has a similar pattern of \eval usage.
+It takes a constraint equation as a string argument, and, parses and evaluates
+it in a custom environment with the expected bindings. The
+\c{ctsem::ctModelTransformsToNum} function similarly evaluates a vector of
+formulae represented as a string vector.
+
+\subsection{Custom Evaluation}
+The \eval function is commonly used to customize the evaluation of expressions.
+An example is the \c{assertthat} package's \c{see\_if} function which is used to
+assert that the sequence of conditions supplied as arguments are true. It
+evaluates the condition expressions one-by-one inside a \c{tryCatch} block and
+produces an error at the first expression that returns \c{FALSE}. If the
+expression itself produces an error, the error message is captured by the
+enclosing \c{tryCatch} block and returned. The remaining expressions in the
+sequence remain unevaluated. A similar pattern is used by the \c{checkmate}
+package.
+
+
 \subsection{Domain Specific Language}
 
 The ability to capture the current call as a language object (\c{match.call()}),
 extract the unevaluated expression from function arguments (\c{substitute()})
-and \eval with first class environment makes the R toolkit for building DSLs.
+and \eval with first class environment makes R the toolkit for building DSLs.
 There are numerous widely spread DSLs used in R. For example, \c{data.table}
 package defines a DSL for data frame manipulation using the subset operator
 \c{[}. This allows one to write compact queries such as \c{flights[carrier ==
   "AA", .N, by = origin]}\footnote{The \c{data.table} subset operation is
-defined as \c{DT[i, j, k]}, where \c{j} expression is used to calculate on a
-subset/reorder of rows from \c{i} grouped by \c{k}.} which will compute the
+  defined as \c{DT[i, j, k]}, where \c{j} expression is used to calculate on a
+  subset/reorder of rows from \c{i} grouped by \c{k}.} which will compute the
 number of flights done by American Airlines for each origin airport.
 Essentially, it uses \c{substitute} to capture the operand's expressions,
 transforms then appropriately and finally uses \eval to execute the query.
@@ -1384,10 +1414,25 @@ In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a 
  D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
 \end{lstlisting}
 
+The \c{glue} package provides functions for string interpolation; text enclosed
+by c{\{} and c{\}} is evaluated using \eval as an R expression and replaced by
+its result. The code snippet below shows an example of this.
+
+\begin{lstlisting}
+library(glue)
+greeting <- "Hello"
+glue('{greeting} World!')
+#> Hello World!
+\end{lstlisting}
+
+
+
 
 \subsection{Unnecessary use of \eval}
 
-Similarly to JavaScript, there are also unnecessary uses of \eval. For example,
+Similarly to JavaScript, there are also unnecessary uses of \eval. These uses of
+\eval can be replaced with alternate functions yielding the same results.
+For example,
 the \c{PerformanceAnalytics} package contains a function \c{chart.QQPlot} that
 uses \eval to resolve a string into function and another to call it and assign
 its results into a variable:
@@ -1403,18 +1448,65 @@ its results into a variable:
 	  q.f <- get(paste0("q",d)); z <- q.f(dp, ...)
   }
 \end{lstlisting}
-or even to a one-liner \c{do.call(paste0("q",d), c(dp, list(...)))}.
+  or even to a one-liner \c{do.call(paste0("q",d), c(dp, list(...)))}.
+
+
+  The \c{copyslots} function from the \c{coin} package uses \eval to copy the
+  slots from one \c{S4} object to another. It performs
+  \c{eval(str2lang(paste0("target@", s, " <- source@", s)))} for each slot name
+  \c{s}. This can be replaced by the expression \c{slot(target, s) <- slot(source,
+    s)} which uses the \c{slot<-} and \c{slot} functions to assign and retrieve
+  the slots by name.
+
+  Another examples is in the \c{configr::config.funs.par} function whose
+  simplified definition is shown below.
+
+\begin{lstlisting}
+config.funs.par <- function(fun = "", ...) {
+  args.all <- as.list(match.call()); args.all <- args.all[names(args.all) != ""];
+  parameters <- list()
+  text.1 <- sprintf("parameters <- names(as.list(args(%s)))", fun)
+  text.2 <- "parameters <- parameters[parameters != '']"
+  text.3 <- "parameters <- args.all[names(args.all) %in% parameters]"
+  for (j in c(text.1, text.2, text.3)) {
+    eval(parse(text = j))
+  }
+  return(parameters)
+}
+\end{lstlisting}
+
+  The function appears to use \eval since the function name \c{fun} is received
+  as a string. This string can be resolved to the function object using the
+  \c{get} function and the contents of \c{text.1}, \c{text.2}, and \c{text.3}
+  can be written directly without the need to convert them to text for
+  evaluation using \eval.
+
 
 The problem is that these cases are not easy to spot. Because of the
 limits of dynamic analysis, we only have a partial coverage and cannot determine
 if for example, \eval sites classified as \c{X, V} will not be eventually called
 with an expression in a \c{F(), F(X)} or \c{F(F(X))} category.
 
+\subsection{Miscellaneous}
+A common use of \eval is the extraction of unevaluated text of arguments passed
+to \c{...} (vararg). For a non-vararg parameter \c{x}, the expressions
+\c{substitute(x)} can be used to extract the argument text. However, for \c{...}
+arguments, the expression \c{eval(quote(substitute(list(...))))} or its variants
+are used. The \eval call evaluates the quoted expression
+\c{substitute(list(...))}. This returns a \c{list} of unevaluated argument
+expressions. The \c{hasGroupNumber} function from the \c{lattice} package is one
+of the many users of this pattern.
+
+The \c{withr} package provides the \c{defer} function which defers the
+evaluation of an expression until a stack frame is exited. It attaches this
+expression as an attribute to the frame environment and uses \eval to evaluate
+it on frame exit.
+
 \subsection{Discussion}
 
 \Eval in R is used chiefly for meta-programming purposes and to access
 environments other than the local one. In Javascript, patterns are ad-hoc, such
-as json loading and parsing, and can often be rewritten without \eval, such as a 
+as json loading and parsing, and can often be rewritten without \eval, such as a
 function or method call, or an assignment to a local variable or an object
 property. For R, the data suggests that in some cases, the use of \eval in the
 \c{X, V, \$, <-, FUN} and the function calls related to code generation could
@@ -1434,6 +1526,9 @@ CRAN that would otherwise be refused. For example,  it checks that packages
 do not call the \c{unlockBinding} function.\footnote{It allows one to open and
 modify loaded package namespaces.} Packages such as \c{data.table} circumvent
 such restrictions by using \eval as the check is only performed statically.
+
+
+
 
 \subsection{Alternatives to \eval}
 
