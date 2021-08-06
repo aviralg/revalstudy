@@ -108,6 +108,7 @@ if(params$force_rebuild || rebuild) {
     type = expr_resolved_type_tag, #   Argument type
     ev_call = eval_call_expression,
     ev_expr = expr_expression,
+    ev_class = expr_resolved_class, # S3/S4 class
     caller_expression,
     provenance, # the main provenance (i.e. climbing up LHSs)
     provenance_args,
@@ -141,25 +142,70 @@ There are `r nb_eval_calls` eval calls and `r nb_call_sites` eval call sites in 
 
 In the dataset, the `provenance` column refers to the main provenance of an expression passed to `eval`. It is obtained by traversing the provenance graph and following the LHSs.
 
-# Provenance in numbers of calls
+# Provenances using the representative provenance
 
-```{r}
+## Provenance in numbers of calls
+
+```{r prov_number_calls}
 provenance_calls <- E_prov %>% count(provenance, wt = duplicates, sort = TRUE) %>% 
   mutate(pc = 100 * n / sum(n), cpc = cumsum(pc))
 
 
 nrows <- min(10, nrow(provenance_calls))
-r_vec("nb provenance calls", nrows, provenance_calls$provenance)
+r_vec("nb provenance calls", nrows, provenance_calls$n)
 r_vec("percent provenance calls", nrows, provenance_calls$pc)
 r_vec("cumpercent provenance calls", nrows, provenance_calls$cpc)
 ```
 
 `r datatable(provenance_calls)`
 
-# Provenance in number of sites
+## Provenance in number of sites
+
+```{r prov_number_sites}
+provenance_sites <- E_prov %>% group_by(src_ref) %>%
+  summarize(provenance = paste0(sort(unique(provenance)), collapse = "; "), n_provs = n_distinct(provenance)) %>% 
+  count(provenance, sort = TRUE) %>% 
+  mutate(pc = 100 * n / sum(n), cpc = cumsum(pc))
+
+
+# To get to 85 %
+
+nrows <- min(14, nrow(provenance_sites))
+r_vec("provenance name", nrows, if_else(provenance_sites$provenance == "", "NA", provenance_sites$provenance))
+r_vec("nb provenance sites", nrows, provenance_sites$n)
+r_vec("percent provenance sites", nrows, provenance_sites$pc)
+r_vec("cumpercent provenance sites", nrows, provenance_sites$cpc)
+
+```
+
+
+`r datatable(provenance_sites)`
 
 # All provenances
 
 ## By combinations
 
 ## In absolute numbers
+
+# Classes
+
+
+## In number of calls
+
+```{r class_nb_calls}
+classes_calls <- E_prov %>% count(ev_class, wt = duplicates, sort = TRUE) %>% 
+  mutate(pc = 100 * n / sum(n), cpc = cumsum(pc))
+
+```
+
+
+## In number of sites
+
+```{r class_nb_sites}
+classes_sites <- E_prov %>% group_by(src_ref) %>%
+  summarize(ev_class = paste0(sort(unique(ev_class)), collapse = "; "), n_classes = n_distinct(ev_class)) %>% 
+  count(ev_class, sort = TRUE) %>% 
+  mutate(pc = 100 * n / sum(n), cpc = cumsum(pc))
+
+```
+
