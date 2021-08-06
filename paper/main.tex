@@ -1083,7 +1083,37 @@ a loaded package is improper and R tries to make it difficult.
 \subsection{The origins of \eval}
 
 Where does the expression passed to \eval come from? There are various means of
-creating that expression, which are associated with particular use cases. We
+creating that expression, which are associated with particular use cases. We track the functions that build expressions or combine expressions during tracing to create a direct acyclic graph of the functions creating the expression passed to \eval. Then, we pick a \emph{representative provenance}, \ie following the left-hand side of assignments in the graph. 
+
+\NOTE{I can also put the absolute number of provenances, \ie if an expression has multiple provenances, we do not keep only the representative but also the other provenances. Also, if one site sometimes gets match.call and sometimes substitute, it is not going to be counted in either of them currently.}
+
+ Table~\ref{tab:detailed_provenances} shows the first provenances in number of sites, for a 85\% cumulative percentage. We only track the provenance of language expressions, not of floating point or strings for instance. In that case, the provenance is shown as \c{NA}.
+
+\begin{table}
+	\begin{tabular}{|c|c|c|}
+		\hline
+		Provenance & \#sites & \%sites \\
+		\hline
+		\packageProvenanceNamea & \packageNbProvenanceSitesa & \packagePercentProvenanceSitesa \\
+		\packageProvenanceNameb & \packageNbProvenanceSitesb & \packagePercentProvenanceSitesb \\
+		\packageProvenanceNamec & \packageNbProvenanceSitesc & \packagePercentProvenanceSitesc \\
+		\packageProvenanceNamed & \packageNbProvenanceSitesd & \packagePercentProvenanceSitesd \\
+		\packageProvenanceNamee & \packageNbProvenanceSitese & \packagePercentProvenanceSitese \\
+		\packageProvenanceNamef & \packageNbProvenanceSitesf & \packagePercentProvenanceSitesf \\
+		\packageProvenanceNameg & \packageNbProvenanceSitesg & \packagePercentProvenanceSitesg \\
+		\packageProvenanceNameh & \packageNbProvenanceSitesh & \packagePercentProvenanceSitesh \\
+		\packageProvenanceNamei & \packageNbProvenanceSitesi & \packagePercentProvenanceSitesi \\
+		\packageProvenanceNamej & \packageNbProvenanceSitesj & \packagePercentProvenanceSitesj \\
+		\packageProvenanceNamek & \packageNbProvenanceSitesk & \packagePercentProvenanceSitesk \\
+		\packageProvenanceNamel & \packageNbProvenanceSitesl & \packagePercentProvenanceSitesl \\
+		\packageProvenanceNamem & \packageNbProvenanceSitesm & \packagePercentProvenanceSitesm \\
+		\packageProvenanceNamen & \packageNbProvenanceSitesn & \packagePercentProvenanceSitesn \\
+		\hline
+	\end{tabular}
+	\caption{First provenances in number of sites.} \label{tab:detailed_provenances}
+\end{table}
+
+ We
 classify them into three categories:
 
 \begin{compactitem}[---]
