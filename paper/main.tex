@@ -1128,7 +1128,7 @@ creating that expression, which are associated with particular use cases. We tra
   expression associated with the promise. \c{formals} access the argument list of a function.
 \item {\it String:} Expressions created from strings by invoking \c{parse},
   \c{str2expression}, or \c{str2lang}.
-\item {\it Symbols: }   a symbol is created with \c{as.name} or \c{as.symbol}, typically to find the value of a symbol in a non-local environment.
+\item {\it Environment: }   a symbol is created with \c{as.name} or \c{as.symbol}, typically to find the value of a symbol in a non-local environment.
 \end{compactitem}
 
 
@@ -1142,9 +1142,10 @@ sites. Manual inspection of numerous examples suggests that errors are rare.
 \begin{wraptable}{r}{5cm}\small\centering
 \begin{tabular}{r|r|r} \hline
 Origin  & \#sites & \%sites \\\hline
-Constructed & \packageNbConstructedSites & \packageNbConstructedSitePercent \\
-Reflection &  \packageNbMatchCallExprsSites & \packageMatchCallExprsSitePercent\\
-String & \packageNbStringSites & \packageNbStringSitePercent \\\hline
+Constructed & \packageNbConstructedSites & \packageConstructedSitesPercent \\
+Reflection &  \packageNbReflectionSites & \packageReflectionSitesPercent\\
+Environment & \packageNbSymbolSites & \packageSymbolSitesPercent \\
+String & \packageNbStringSites & \packageStringSitesPercent \\\hline
 \end{tabular}
 \caption{Provenance}\label{tab:provenance}
 \end{wraptable}
@@ -1165,7 +1166,7 @@ minority of the use cases. Instead, the constructed category shows that most
 modified by the programmer before invoking \eval. Both constructed and
 reflection categories roughly correspond to meta-programming. Some of these use
 cases could likely be replaced by macros if the R designers could be convinced
-to overcome their distaste for those.
+to overcome their distaste for those. Another use of \eval is to directly build symbols to evaluate them in another environment than the default one.
 
 \subsection{The effects of \eval}
 
