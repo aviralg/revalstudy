@@ -211,3 +211,43 @@ classes_sites <- E_prov %>% group_by(src_ref) %>%
 
 ```
 
+
+# Classification
+
+```{r classification_calls}
+
+string_calls <- E_prov %>% filter(provenance %in% c("parse", "str2lang", "str2expression"))
+
+reflection_calls <- E_prov %>% filter(provenance %in% c("match.call", "formals", "substitute") | (provenance == "quote" & type != "symbol"))
+
+constructed_calls <- E_prov %>% filter(provenance %in% c("expression", "quote", "enquote", "call", "as.call", "as.vector"))
+
+symbol_calls <- E_prov %>% filter(provenance %in% c("as.name", "as.symbol") | (provenance == "quote" & type == "symbol"))
+
+```
+
+
+```{r classification_sites}
+
+string_sites <- string_calls %>% pull(src_ref) %>% n_distinct()
+
+reflection_sites <- reflection_calls %>% pull(src_ref) %>% n_distinct()
+
+constructed_sites <- constructed_calls %>%  pull(src_ref) %>% n_distinct()
+
+symbol_sites <- symbol_calls %>% pull(src_ref) %>% n_distinct()
+
+r("nb string sites", string_sites)
+r("string sites percent", ratio(string_sites, nb_call_sites))
+
+r("nb reflection sites", reflection_sites)
+r("reflection sites percent", ratio(reflection_sites, nb_call_sites))
+
+r("nb constructed sites", constructed_sites)
+r("constructed sites percent", ratio(constructed_sites, nb_call_sites))
+
+r("nb symbol sites", symbol_sites)
+r("symbol sites percent", ratio(symbol_sites, nb_call_sites))
+
+```
+
