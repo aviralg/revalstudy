@@ -1429,7 +1429,39 @@ see_if <- function(..., env = parent.frame(), msg = NULL) {
 
 \end{lstlisting}
 
+Similar idea is used by the \code{igraph} package to define the \code{\%\|\|\%}
+operator whose code is shown below. This operator returns the result of
+evaluating the first argument (\code{lhs}) if it is not \code{NULL}, otherwise
+it returns the result of evaluating the second argument (\code{rhs}). This is
+similar to the \code{\|\|} operator which performs the logical OR of its
+arguments except it treats \code{NULL} as the \code{FALSE} value.
 
+\begin{lstlisting}
+`%||%` <- function (lhs, rhs) {
+    lres <- withVisible(eval(lhs, envir = parent.frame()))
+    if (is.null(lres$value)) {
+        eval(rhs, envir = parent.frame())
+    } else {
+        if (lres$visible) { lres$value}
+        else { invisible(lres$value) }
+   }
+}
+\end{lstlisting}
+
+
+
+Many packages use \eval to implement variations of the \code{base} R functions.
+For example, the \code{igraph} package provides the \code{do_call} function
+shown below. This is a variant of the \code{do.call} function from the
+\code{base} package. This function executes a function call by constructs it
+from a name and a list of arguments and calling \eval.
+\begin{lstlisting}
+do_call <- function(f, ..., .args = list(), .env = parent.frame()) {
+  f <- substitute(f)
+  call <- make_call(f, ..., .args)
+  eval(call, .env)
+}
+\end{lstlisting}
 
 \subsection{Domain Specific Language}
 
@@ -1474,12 +1506,6 @@ glue('{greeting} World!')
 #> Hello World!
 \end{lstlisting}
 
-\subsection{Miscellaneous}
-
-The \code{withr} package provides the \code{defer} function which defers the
-evaluation of an expression until a stack frame is exited. It attaches this
-expression as an attribute to the frame environment and uses \eval to evaluate
-it on frame exit.
 
 \subsection{Discussion}
 
