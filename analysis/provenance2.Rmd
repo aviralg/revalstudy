@@ -254,7 +254,7 @@ r("nb symbol sites", symbol_sites)
 r("symbol sites percent", ratio(symbol_sites, nb_call_sites))
 
 r("nb external sites", external_sites)
-r("external sites percent", ratio(symbol_sites, nb_call_sites))
+r("external sites percent", ratio(external_sites, nb_call_sites))
 
 ```
 
