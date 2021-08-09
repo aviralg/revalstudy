@@ -714,15 +714,15 @@ instructions.
  \caption{Instructions per call} \label{ev}
 \end{figure}
 
-\paragraph{Summary}
+\paragraph{Discussion}
 
 \Eval is used in CRAN packages. Nearly every fourth package contains at least
 one \eval site. However, most packages that use \eval do that modestly. Half of
-them contain less than three \eval sites. Packages that rely heavily on \eval
-are mostly the ones that provide functions for statistical modeling and
-simulation. At runtime, over third of extracted programs triggered calls to
-\eval. Half of the \packageAllcallsRnd recorded calls come from a single \eval
-site, but for the rest, most of the packages have low \eval call frequency.
+them include less than three \eval sites. Packages that rely heavily on \eval
+are mostly the ones that provide statistical modeling and simulation functions.
+At runtime, over a third of extracted programs triggered calls to \eval. Half
+of the \packageAllcallsRnd recorded calls come from a single \eval site, but
+for the rest, most of the packages have low \eval call frequency.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
