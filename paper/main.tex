@@ -1391,12 +1391,17 @@ glue('{greeting} World!')
 text enclosed by c{\{} and c{\}} is
 evaluated using \eval as an R expression and replaced by its result.
 
-\emph{Remove Boilerplate}
+\emph{Avoid Boilerplate.}
 
-For example, the PopED::get_rse uses it to assign a number of variables in the current scope: eval(parse(text=paste(default_args[[i]]), "← ", i)). There are also more sophisticated cases. The plyr::allocate_column function uses eval for a deferred assignment to fill missing values in a column. Package overture repeatedly evaluates R expressions capturing any assignments that happen in it as samples of Markov chains.
+For example, the \code{PopED::get\_rse} uses it to assign a number of variables
+in the current scope: \code{eval(parse(text=paste(default_args[[i]]), "<- ",
+  i))}. There are also more sophisticated cases. The \code{plyr::allocate\_column}
+function uses eval for a deferred assignment to fill missing values in a column.
+Package overture repeatedly evaluates R expressions capturing any assignments
+that happen in it as samples of Markov chains.
 
 
-\emph{Code Obfuscation} Some packages use \eval to bypass the restrictions
+\emph{Code Obfuscation.} Some packages use \eval to bypass the restrictions
 imposed by the \code{R CMD CHECK} tool. This tool enforces some well-formedness
 rules on a submitted package before accepting it for inclusion in CRAN. Some
 static checks ensure that the package code does not use certain restricted
@@ -1420,7 +1425,7 @@ scalaEnsure <- function() {
 }
 \end{lstlisting}
 
-\emph{Miscellaneous}
+\emph{Miscellaneous.}
 
 
 
