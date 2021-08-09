@@ -1369,9 +1369,9 @@ example is the \code{rARS} function shown below. This function is defined in the
 
 \begin{lstlisting}
 rARS <- function(n, formula, min=-Inf, max=Inf, sp) {
-  ...
-  p <- function(x) { eval(parse(text=formula)) }
-  ...
+    ...
+    p <- function(x) { eval(parse(text=formula)) }
+    ...
 }
 
 \end{lstlisting}
@@ -1383,16 +1383,31 @@ argument, but passing \code{function(x) exp(-x^2/2)} is probably not as
 convenient for domain-experts as passing \code{"exp(-x^2/2)"}.
 
 
-\subsection{Custom Evaluation}
-The \eval function is commonly used to customize the evaluation of expressions.
-An example is the \code{assertthat} package's \code{see\_if} function which is used to
-assert that the sequence of conditions supplied as arguments are true. It
-evaluates the condition expressions one-by-one inside a \code{tryCatch} block and
-produces an error at the first expression that returns \code{FALSE}. If the
-expression itself produces an error, the error message is captured by the
-enclosing \code{tryCatch} block and returned. The remaining expressions in the
-sequence remain unevaluated. A similar pattern is used by the \code{checkmate}
-package.
+Assertion packages such as \code{assertthat} provide functions to check pre and
+post conditions and produce friendly error messages on failures. These
+conditions are written as expressions which are evaluated using \eval. Consider
+the \code{see_\if} function shown below. It accepts the conditions as arguments
+to the \code{...} parameter. The code of these conditions is extracted using
+\code{eval(substitute(alist(...)))}. The conditions are then evaluated
+sequentially by the expression \code{eval(assertion, env)}, inside a
+\code{tryCatch} block. If a condition evaluates to \code{FALSE}, the function
+returns immediately with an error message, leaving the remaining conditions
+unevaluated.
+
+\begin{lstlisting}
+see_if <- function(..., env = parent.frame(), msg = NULL) {
+    asserts <- eval(substitute(alist(...)))
+    for (assertion in asserts) {
+      res <- tryCatch({
+        eval(assertion, env)
+      }, assertError = function(e) {
+        structure(FALSE, msg = e$message)
+      })
+    ...
+}
+
+\end{lstlisting}
+
 
 
 \subsection{Domain Specific Language}
