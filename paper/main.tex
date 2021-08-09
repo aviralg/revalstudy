@@ -1043,12 +1043,29 @@ a loaded package is improper and R tries to make it difficult.
 \subsection{The origins of \eval}
 
 Where does the expression passed to \eval come from? There are various means of
-creating that expression, which are associated with particular use cases. We track the functions that build expressions or combine expressions during tracing to create a direct acyclic graph of the functions creating the expression passed to \eval. Then, we pick a \emph{representative provenance}, \ie following the left-hand side of assignments in the graph.
+creating that expression, which are associated with particular use cases. During tracing, at each function call, we check if the return value is an expression or a symbol, or if the function is a function of interest. If it is, we record it and also look at whether the arguments were recorded before if it is not an expression-building function. It makes it possible to build a direct acyclic graph of the functions that build expressions or combine expressions during tracing to create a direct acyclic graph of the functions creating the expression passed to \eval. The following example yields the provenance graph with four nodes on Figure~\ref{fig:provgraph} for expression \c{e} passed to \eval.
 
-\NOTE{I can also put the absolute number of provenances, \ie if an expression has multiple provenances, we do not keep only the representative but also the other provenances. Also, if one site sometimes gets match.call and sometimes substitute, it is not going to be counted in either of them currently.}
+\begin{lstlisting}
+e <- parse(text = "a ; b")
+e[[2]] <- quote(c)
+eval(e)
+\end{lstlisting}
 
- Table~\ref{tab:detailed_provenances} shows the first provenances in number of sites, for a 85\% cumulative percentage. We only track the provenance of language expressions, not of floating point or strings for instance. In that case, the provenance is shown as \c{NA}. We were also not able to track the provenances of some expressions in some list or data frames. In that case, the provenance that we show corresponds to the extraction step from the list, \ie \c{[[} or \c{\$}.
+\begin{figure}[h]
+\centering
+\includegraphics[width=8cm]{provenance-graph}
+\caption{The provenance DAG for the code example above. Assignments and complex assignments are intermediate nodes, whereas expression builders are leaves of the graph.} \label{fig:provgraph}
+\end{figure}
 
+
+
+Expression \c{e} has two origins, \c{parse} and \c{quote}, which corresponds to the leaves of the graph. We also extract from the graph a representative origin, by traversing the graph from the root, following the left-hand side member of the assignments until a leaf. It represents the provenance that is further modified to yield the expression passed to \eval. In our example, the representative provenance is \c{parse}.
+
+
+
+ Table~\ref{tab:detailed_provenances} shows the first provenances in number of sites. In \packagePercentProvenanceSitesd, the expression passed to \eval is not a language expression or a symbol but a floating point, or a string for instance. In that case, we did not track the provenance.
+ % Explain also why we do not show [[ or $ in the table.
+ % Explain the functions that we did not explain before.
 \begin{wraptable}{r}{5cm}\small\centering
 	\begin{tabular}{|c|c|c|}
 		\hline
@@ -1057,23 +1074,23 @@ creating that expression, which are associated with particular use cases. We tra
 		\packageProvenanceNamea & \packageNbProvenanceSitesa & \packagePercentProvenanceSitesa \\
 		\packageProvenanceNameb & \packageNbProvenanceSitesb & \packagePercentProvenanceSitesb \\
 		\packageProvenanceNamec & \packageNbProvenanceSitesc & \packagePercentProvenanceSitesc \\
-		\packageProvenanceNamed & \packageNbProvenanceSitesd & \packagePercentProvenanceSitesd \\
+		%\packageProvenanceNamed & \packageNbProvenanceSitesd & %\packagePercentProvenanceSitesd \\
 		\packageProvenanceNamee & \packageNbProvenanceSitese & \packagePercentProvenanceSitese \\
 		\packageProvenanceNamef & \packageNbProvenanceSitesf & \packagePercentProvenanceSitesf \\
 		\packageProvenanceNameg & \packageNbProvenanceSitesg & \packagePercentProvenanceSitesg \\
 		\packageProvenanceNameh & \packageNbProvenanceSitesh & \packagePercentProvenanceSitesh \\
 		\packageProvenanceNamei & \packageNbProvenanceSitesi & \packagePercentProvenanceSitesi \\
-		\packageProvenanceNamej & \packageNbProvenanceSitesj & \packagePercentProvenanceSitesj \\
-		\packageProvenanceNamek & \packageNbProvenanceSitesk & \packagePercentProvenanceSitesk \\
+		%\packageProvenanceNamej & \packageNbProvenanceSitesj & %\packagePercentProvenanceSitesj \\%[[
+		%\packageProvenanceNamek & \packageNbProvenanceSitesk & %\packagePercentProvenanceSitesk \\%$
 		\packageProvenanceNamel & \packageNbProvenanceSitesl & \packagePercentProvenanceSitesl \\
-		\packageProvenanceNamem & \packageNbProvenanceSitesm & \packagePercentProvenanceSitesm \\
+		%\packageProvenanceNamem & \packageNbProvenanceSitesm & %\packagePercentProvenanceSitesm \\
 		\packageProvenanceNamen & \packageNbProvenanceSitesn & \packagePercentProvenanceSitesn \\
 		\hline
 	\end{tabular}
-	\caption{Provenances in number of sites (85\% first sites).} \label{tab:detailed_provenances}
+	\caption{Provenances in number of sites.} \label{tab:detailed_provenances}
 \end{wraptable}
 
-\ \NOTE{I only see 70 sites with formulas (using the class of the expression) so it does not appear here.}
+
 
  We classify them into four categories:
 
@@ -1086,9 +1103,12 @@ creating that expression, which are associated with particular use cases. We tra
 \item {\it String:} Expressions created from strings by invoking \c{parse},
   \c{str2expression}, or \c{str2lang}.
 \item {\it Environment: }   A symbol is created with \c{as.name} or \c{as.symbol}, typically to find the value of a symbol in a non-local environment.
+\item {\it External: } a call to a C function. % Put an example
 \end{compactitem}
 
+\NOTE{I only see 70 sites with formulas (using the class of the expression) so it does not appear here.}
 
+\NOTE{I can also put the absolute number of provenances, \ie if an expression has multiple provenances, we do not keep only the representative but also the other provenances. Also, if one site sometimes gets match.call and sometimes substitute, it is not going to be counted in either of them currently.}
 
 \vspace{1mm}\noindent Table~\ref{tab:provenance} summarizes the expression
 provenance in our corpus. This data is obtained by dynamically tainting values
@@ -1102,6 +1122,7 @@ Origin  & \#sites & \%sites \\\hline
 Constructed & \packageNbConstructedSites & \packageConstructedSitesPercent \\
 Reflection &  \packageNbReflectionSites & \packageReflectionSitesPercent\\
 Environment & \packageNbSymbolSites & \packageSymbolSitesPercent \\
+External & \packageNbExternalSites & \packageExternalSitesPercent \\
 String & \packageNbStringSites & \packageStringSitesPercent \\\hline
 \end{tabular}
 \caption{Provenance}\label{tab:provenance}
