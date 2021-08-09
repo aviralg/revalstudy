@@ -382,38 +382,38 @@ infrastructure.
 
 \subsection{Corpus}
 
-The corpus is assembled from three sources: the \emph{Base} libraries bundled
-with the language implementation, packages hosted on \emph{CRAN}, and scripts
-from \emph{Kaggle}. Each of these sources represents a different part of
-the user base of the language and thus, potentially, different usage patterns.
+We distinguish three sources for calls to \eval, those originating from
+\emph{Base} libraries bundled with R, packages hosted on \emph{CRAN}, and
+end-user scripts from \emph{Kaggle}. We consider base libraries as part of the
+language implementation and do not include them in our analysis.
 
-\mypara{Base.} The \BasePackages libraries are bundled with R and widely used as
-they provide arithmetics, statistics, and operating system functionalities. Some
-\BaseFunsWithEvals functions contain \BaseEvalCallSites calls to \eval. The
-functions perform such key tasks such as package loading, there is thus hardly
-any R program that does not invoke them. These libraries have been written by
-experts with a deep understanding of the language and its environment.
+\mypara{Base.} The \BasePackages base libraries provide arithmetics, statistics,
+and operating system functionalities. Base has \BaseFunsWithEvals functions with
+\BaseEvalCallSites calls to \eval. These functions perform key tasks such as
+package loading, there is thus hardly any R program that does not invoke them.
 
-\mypara{CRAN.} This dataset consists of packages hosted on the Comprehensive R
-Archive Network ({\small \url{cran.r-project.org}}, aka CRAN). There are three
-sources of runnable code in a package: unit \emph{tests} for individual
-functions, code \emph{examples} automatically extracted from the documentation,
-and long-form use-cases called \emph{vignettes}. Package also often have sample
-input files. All of these runnable code snippets can be extract into independent
-files. We downloaded \CranPackages packages and extracted \CranRunnableScripts
-scripts, or \CranRunnableCode lines of code (\CranRunnableCodeExamplesRnd in
-examples, \CranRunnableCodeVignettesRnd in vignettes and
-\CranRunnableCodeTestsRnd in tests). CRAN packages are authored by experienced
-developers.
+\mypara{CRAN.} Packages hosted on the Comprehensive R Archive Network ({\small
+  \url{cran.r-project.org}}, aka CRAN) have three sources of runnable: unit
+\emph{tests} for individual functions, code \emph{examples} embedded in the
+documentation, and use-cases called \emph{vignettes}. All runnable snippets can
+be extracted into independent files. We download \CranPackages packages and
+extract \CranRunnableScripts scripts with \CranRunnableCode lines of code
+(\CranRunnableCodeExamplesRnd in examples, \CranRunnableCodeVignettesRnd in
+vignettes and \CranRunnableCodeTestsRnd in tests). CRAN packages are authored by
+experienced developers.
 
-\mypara{Kaggle.} This dataset contains \KaggleUnique programs from the Kaggle
-website ({\small \url{kaggle.com}}), an online platform that allows users to
-submit and compete to solve problems. Kaggle contains both scripts and notebooks
-as well as input files, but there is some duplication (we used SHA-1 hashes to
-remove \KaggleDuplicates duplicates). The dataset has 665K lines of R code and
-only \KaggleWithEvals calls \eval. Kaggle scripts are written by end-users with
-variable levels of expertise.
+\mypara{Kaggle.} Kaggle ({\small \url{kaggle.com}}) is an online platform that
+allows users to submit and compete to solve problems. We download \KaggleUnique
+unique scripts and notebooks with their input files (\KaggleDuplicates
+duplicates were removed using SHA-1 hashes); 665K lines of R code making only
+\KaggleWithEvals calls \eval. Authors of these scripts have highly variable
+levels of expertise.
 
+\mypara{Discussion.} When we started this project, our goal was to contrast the
+usage of \eval by package developers and end-users, but the Kaggle dataset have
+so few calls to \eval that there is little that can be said about those. The
+remainder of the paper focuses on CRAN with a few observations about the other
+sources when relevant.
 
 
 \subsection{Pipeline}
@@ -435,13 +435,10 @@ data size, and number of elements manipulated. The pipeline steps are:
        \definecolor{darkblue}{HTML}{6C8EBF}
        \definecolor{green}{HTML}{D5E8D4}
        \definecolor{darkgreen}{HTML}{82B366}
-
        \newcommand{\nodesep}[0]{0.035 \textwidth}
        \newcommand{\textsep}[0]{0.005 \textwidth}
-
        \newcommand{\nodename}[1]{\begin{tabular}{c}#1\end{tabular}}
        \newcommand{\nodedesc}[1]{\begin{tabular}{c}#1\end{tabular}}
-
        \tikzstyle{block}     = [rectangle, rounded corners, minimum width=0.15 \textwidth, minimum height=60pt]
        \tikzstyle{connector} = [line width=0.25mm, ->]
 
@@ -454,7 +451,6 @@ data size, and number of elements manipulated. The pipeline steps are:
          }
        };
        \node [below = \textsep of download]   (downloaddesc)   {\nodedesc{12 Hours}};
-
        \node [block, right = \nodesep of download, fill = yellow, draw = darkyellow, very thick] (extract) {
          \nodename{
            \vspace{1mm}\textbf{Extract}\vspace{1mm}\\
@@ -464,7 +460,6 @@ data size, and number of elements manipulated. The pipeline steps are:
          }
        };
        \node [below = \textsep of extract]   (extractdesc)   {\nodedesc{2 Hours}};
-
        \node [block, right = \nodesep of extract, fill = blue, draw = darkblue, very thick] (trace) {
          \nodename{
            \vspace{1mm}\textbf{Trace}\vspace{1mm}\\
@@ -474,7 +469,6 @@ data size, and number of elements manipulated. The pipeline steps are:
          }
        };
        \node [below = \textsep of trace]     (tracedesc)     {\nodedesc{1 Day 12 Hours}};
-
        \node [block, right = \nodesep of trace, fill = green, draw = darkgreen, very thick] (analyze) {
          \nodename{
            \vspace{1mm}\textbf{Analyze}\vspace{1mm}\\
@@ -484,7 +478,6 @@ data size, and number of elements manipulated. The pipeline steps are:
          }
        };
        \node [below = \textsep of analyze]    (analyzedesc)    {\nodedesc{2 Hours}};
-
        \draw [connector] (download)   edge (extract);
        \draw [connector] (extract)    edge (trace);
        \draw [connector] (trace)      edge (analyze);
@@ -549,7 +542,7 @@ invalidate our conclusions.
 
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Usage Metrics}
+\section{Measuring Eval across Datasets}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{wrapfigure}{r}{5cm} \vspace{-1cm} \hspace*{-12mm}
@@ -668,13 +661,14 @@ calls are to \eval itself, \c{eval.parent} is rare, and both \c{evalq} and
 sites underscores the limits of code coverage.
 
 
-Figure~\ref{cn}(a) shows normalized call counts per site; on the left are
-the average number of calls from a given site and given run, on the right are the counts of sites that fall in that range. For instance, \packageRunbinh sites are
+Figure~\ref{cn}(a) shows normalized call counts per site; on the left are the
+average number of calls from a given site and given run, on the right are the
+counts of sites that fall in that range. For instance, \packageRunbinh sites are
 invoked 2,000+ times per run. Larger numbers suggest loops or recursive contexts
 -- this seems to be the exception as most \evals, \packageRunbina, are exercised
 50 times or less. Figure~\ref{cn}(b) zooms in on low frequency sites. The x-axis
-shows normalized calls, and the y-axis is the number of sites for that value. Most
-low-frequency \evals are invoked only once; about half as many are invoked
+shows normalized calls, and the y-axis is the number of sites for that value.
+Most low-frequency \evals are invoked only once; about half as many are invoked
 twice; after that, the frequency quickly drops.
 
 \Eval takes any value, but if its argument is not an expression, it is returned
@@ -688,11 +682,12 @@ as \c{x}), \packageLanguagepercent are \c{language} objects (function calls),
   inheritance in \c{ggproto}, one of the many object-oriented systems in R, used
   in the \c{ggplot2} graphics library.}
 
-To estimate how much executable code is injected through \eval, we measure the number of nodes in the expressions; for example, \c{x+1} counts as 3. We
-also measured string lengths of unparsed expressions, but these measurements
-were dominated by the size of data objects which could range in the MBs. The
-median argument size is \packageMedianszeval (due to the symbols), and the
-average is \packageAvgszeval nodes. The largest \eval input observed is
+To estimate how much executable code is injected through \eval, we measure the
+number of nodes in the expressions; for example, \c{x+1} counts as 3. We also
+measured string lengths of unparsed expressions, but these measurements were
+dominated by the size of data objects which could range in the MBs. The median
+argument size is \packageMedianszeval (due to the symbols), and the average is
+\packageAvgszeval nodes. The largest \eval input observed is
 \packageMaxszeval\,-- a significant chunk of code.
 Figure~\ref{fig:sizedistribution} shows the distribution of sizes for arguments
 of fewer or equal to 25 nodes. The x-axis is the size of arguments in number of
@@ -723,8 +718,7 @@ instructions.
 
 
 \paragraph{Base}\label{sec:usage-base}
-
-We recorded \baseAllcalls \eval calls in the \BasePackages base libraries. This
+We recorded \baseAllcalls \eval calls in the base libraries. This
 comes from running 10\% randomly selected programs from the
 \CranRunnableScriptsRnd extracted programs from CRAN packages, covering
 \baseTriggeredevalpct of the \BaseEvalCallSites sites. Most of the calls
