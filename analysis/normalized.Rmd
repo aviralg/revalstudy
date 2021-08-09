@@ -11,7 +11,8 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: Data/package/
+  #base_dir: Data/package/
+  base_dir: /mnt/ocfs_vol_00/project-evalr/evalr-experiment/run/preprocess/package/
   calls_path: summarized.fst
   normalized_path: normalized-expressions.csv
   corpus_path: corpus.txt
@@ -133,9 +134,9 @@ if(params$force_rebuild || rebuild) {
     ev_expr = expr_expression,
     expr_resolved,
     func = expr_resolved_function, # the function (if any) at the root of the AST of expr_resolved
-    parsed = expr_parsed_expression,
+    #parsed = expr_parsed_expression,
     hash = expr_resolved_hash,
-    match.call = expr_match_call,
+    #match.call = expr_match_call,
     arg_size = expr_resolved_length, #   Size in characters of argument 
     ast_nodes = expr_resolved_nodes,
     n_op = interp_eval,
@@ -148,9 +149,9 @@ if(params$force_rebuild || rebuild) {
   
   E_cano <- E %>% left_join(N, by = "hash") # Common column is the hash of the full resolved expression
   
-  E_cano %>% write_fst(min_path)
+  #E_cano %>% write_fst(min_path)
   sz <- file.size(calls_path) %>% as_tibble()
-  write.fst(sz, lock_path)
+  #write.fst(sz, lock_path)
 }
 
 C_raw -> C
@@ -221,6 +222,22 @@ r_vec("MinimizedPercentParentFrames", nrows, pull(widespread_minimized, percent_
 ```
 
 `n_operations` is the average of R interpreter eval loop per minimized expression. `prop_envir` shows how much often an *explicit* environment is passed to `eval`. Looking up to a variable and applying a function to a variable, are the two non-trivial categories that most of the time explicitly use the `envir` argument of `eval`.
+
+
+```{r}
+simple_minimized <- E_cano %>% filter(type != "bytecode") %>%
+  mutate(minimized = if_else(minimized == "<-", "<", minimized)) %>%
+  group_by(src_ref) %>%
+  filter(all(minimized %in% c("X", "V", "$", "<"))) %>%
+  summarise(minimized = paste0(sort(unique(minimized)), collapse = ""), length = str_length(minimized))
+
+simple_minimized_one <- simple_minimized %>% filter(length == 1) %>% nrow()
+simple_minimized_more <- simple_minimized %>% filter(length > 1) %>% nrow()
+
+r("nb simple minimized one", simple_minimized_one)
+r("nb simple minimized more", simple_minimized_more)
+```
+
 
 # Examples of minimized expression
 
@@ -355,7 +372,9 @@ Yes, always!
 Is it correlated with `match.call`?
 
 ```{r}
-nb_mf_match.call <- modelframes %>% filter(!is.na(match.call)) %>% pull(src_ref) %>% n_distinct()
+#no more match.call column
+#nb_mf_match.call <- modelframes %>% filter(!is.na(match.call)) %>% pull(src_ref) %>% n_distinct()
+nb_mf_match.call <- modelframes
 ```
 
 `r nb_mf_match.call` call sites out of `model.frame` `r nb_modelf_call_sites` call sites use the `match.call` pattern, i.e. `r ratio(nb_mf_match.call, nb_modelf_call_sites)`%.
@@ -363,7 +382,9 @@ nb_mf_match.call <- modelframes %>% filter(!is.na(match.call)) %>% pull(src_ref)
 We can also reciprocally look at how many call sites with `match.call` have `model.frame`:
 
 ```{r}
-match.call_df <- E_cano %>% filter(!is.na(match.call))
+# No more match.call column
+#match.call_df <- E_cano %>% filter(!is.na(match.call))
+match.call_df <- E_cano
 
 nb_m.c_call_sites <- match.call_df %>% pull(src_ref) %>% n_distinct()
 
@@ -738,7 +759,7 @@ useful_percent <- 0
 ```
 
 
-```{r, eval=dataset_name == "package"}
+```{r, eval=dataset_name == "package", eval = FALSE}
 manual_value_necessary <- read_csv(path(params$base_dir, "non-necessary-value-evals.csv"), col_types = cols(src_ref = col_character(), necessary = col_logical()))
 
 statistic <- function(data, i) {
