@@ -393,14 +393,15 @@ and operating system functionalities. Base has \BaseFunsWithEvals functions with
 package loading, there is thus hardly any R program that does not invoke them.
 
 \mypara{CRAN.} Packages hosted on the Comprehensive R Archive Network ({\small
-  \url{cran.r-project.org}}, aka CRAN) have three sources of runnable: unit
+\url{cran.r-project.org}}, aka CRAN) have three sources of runnable: unit
 \emph{tests} for individual functions, code \emph{examples} embedded in the
-documentation, and use-cases called \emph{vignettes}. All runnable snippets can
-be extracted into independent files. We download \CranPackages packages and
+documentation, and use-cases called \emph{vignettes}. All runnable snippets
+can be extracted into independent files. We download \CranPackages packages and
 extract \CranRunnableScripts scripts with \CranRunnableCode lines of code
 (\CranRunnableCodeExamplesRnd in examples, \CranRunnableCodeVignettesRnd in
-vignettes and \CranRunnableCodeTestsRnd in tests). CRAN packages are authored by
-experienced developers.
+vignettes and \CranRunnableCodeTestsRnd in tests). CRAN packages contain 20
+years of contribution from thousands from thousands of authors, often
+experienced R developers.
 
 \mypara{Kaggle.} Kaggle ({\small \url{kaggle.com}}) is an online platform that
 allows users to submit and compete to solve problems. We download \KaggleUnique
@@ -445,12 +446,12 @@ data size, and number of elements manipulated. The pipeline steps are:
        \node [block, fill = red, draw = darkred, very thick] (download) {
          \nodename{
            \vspace{1mm}\textbf{Download}\vspace{1mm}\\
-           15K Packages\\
-           8K Kaggle Kernels\\
-           219 Kaggle Datasets
+           15K packages\\
+           8K Kaggle kernels\\
+           219 Kaggle datasets
          }
        };
-       \node [below = \textsep of download]   (downloaddesc)   {\nodedesc{12 Hours}};
+       \node [below = \textsep of download]   (downloaddesc)   {\nodedesc{12 hours}};
        \node [block, right = \nodesep of download, fill = yellow, draw = darkyellow, very thick] (extract) {
          \nodename{
            \vspace{1mm}\textbf{Extract}\vspace{1mm}\\
@@ -459,7 +460,7 @@ data size, and number of elements manipulated. The pipeline steps are:
            \newline
          }
        };
-       \node [below = \textsep of extract]   (extractdesc)   {\nodedesc{2 Hours}};
+       \node [below = \textsep of extract]   (extractdesc)   {\nodedesc{2 hours}};
        \node [block, right = \nodesep of extract, fill = blue, draw = darkblue, very thick] (trace) {
          \nodename{
            \vspace{1mm}\textbf{Trace}\vspace{1mm}\\
@@ -468,7 +469,7 @@ data size, and number of elements manipulated. The pipeline steps are:
            \newline
          }
        };
-       \node [below = \textsep of trace]     (tracedesc)     {\nodedesc{1 Day 12 Hours}};
+       \node [below = \textsep of trace]     (tracedesc)     {\nodedesc{36 hours}};
        \node [block, right = \nodesep of trace, fill = green, draw = darkgreen, very thick] (analyze) {
          \nodename{
            \vspace{1mm}\textbf{Analyze}\vspace{1mm}\\
@@ -477,7 +478,7 @@ data size, and number of elements manipulated. The pipeline steps are:
            \newline
          }
        };
-       \node [below = \textsep of analyze]    (analyzedesc)    {\nodedesc{2 Hours}};
+       \node [below = \textsep of analyze]    (analyzedesc)    {\nodedesc{2 hours}};
        \draw [connector] (download)   edge (extract);
        \draw [connector] (extract)    edge (trace);
        \draw [connector] (trace)      edge (analyze);
@@ -507,9 +508,12 @@ data size, and number of elements manipulated. The pipeline steps are:
   paper.
 \end{enumerate}
 
-\noindent The pipeline runs in parallel on three servers, each with 2.3GHz Intel
-Xeon 6140 processor with 72 cores and 256GB of RAM, and shared OCFS network
-storage. Servers run identical docker images with all dependencies installed.
+\vspace{1mm} 
+\noindent The pipeline runs in parallel~\cite{GNUparallel}
+orchestrated by a Makefile. Servers have identical environments thanks to a
+docker image with all dependencies installed\footnote{The docker image is part
+  of the accompanied artifact available at\\
+\url{https://github.com/PRL-PRG/evalr-experiment/tree/oopsla21}}.
 
 \subsection{Dynamic Analysis}
 
@@ -589,12 +593,6 @@ the \eval function.
   \caption{\eval call sites coverage of the \PkgPackages packages.}%
   \label{fig:traced-eval-callsites}
 \end{figure}
-
-\paragraph{CRAN}
-
-
-
-
 
 \begin{wrapfigure}{4}{5.8cm}
   \small
@@ -716,66 +714,19 @@ instructions.
  \caption{Instructions per call} \label{ev}
 \end{figure}
 
+\paragraph{Summary}
 
-\paragraph{Base}\label{sec:usage-base}
-We recorded \baseAllcalls \eval calls in the base libraries. This
-comes from running 10\% randomly selected programs from the
-\CranRunnableScriptsRnd extracted programs from CRAN packages, covering
-\baseTriggeredevalpct of the \BaseEvalCallSites sites. Most of the calls
-(\baseEvalsratio) are to the \c{eval} function, and most arguments
-(\baseCodepercent) are expressions. However, unlike CRAN, the majority
-(\baseLanguagepercent) of the arguments are language objects. The median
-argument size is \baseMedianszeval, which is more than for CRAN and the maximum
-size is \baseMaxszeval, less than for CRAN. Small instruction counts ($<50$)
-amount to \baseSmalleventspct of calls. A single site in the \c{match.arg}
-function is responsible for \baseTopFuncPercent of all recorded calls. This
-function provides a convenient way for argument verification using partial
-matching. It is heavily relied on in R functions that use string arguments to
-parameterize function behavior, common practice in R. For example, in a body of
-\c{center<-function(x,type=c("mean","median","trimmed"))} one can get the
-value of \c{type} parameter using \c{type<-match.arg(type)}. A call
-\c{center(x,"trim")} will match \c{type} to \c{"trimmed"}. The challenge
-dealing with Base is that every program uses it. It can thus generate extreme
-amounts of data, but the data is quite predictable. From now on, we only mention
-Base when it surprises.
-
-
-\paragraph{Kaggle}
-
-In total, \kaggleAllcalls \eval were recorded, all to \eval function. Out of
-\kaggleStaticeval sites from \KaggleWithEvals scripts, only \kaggleTriggeredeval
-sites in \kaggleNbruns scripts were hit; \KaggleFailedScripts scripts failed to
-run, and the others did not exercise the \eval sites. This is partially expected
-as Kaggle code does not need to abide by any checks. Upon a manual inspection,
-we observed that indeed, the failing scripts were of poor quality, often not
-finished, using misspelled package names, hard-coded file paths, or accessing
-missing files. Most call sites are invoked once. Only one site is called
-\kaggleMaxcalls times. Expressions amount for \kaggleCodepercent of arguments,
-there are very few symbols (\kaggleSymbolpercent). Most expressions result from
-calls to \c{parse}; thus, most \evals start with strings. The median argument
-size is \kaggleMedianszeval, which makes sense, as few arguments are only
-symbols. The largest argument is \kaggleMaxszeval. The distribution of
-instructions per eval is similar to CRAN; \kaggleSmalleventspct of \evals
-execute fewer than 50 instructions. Manual inspection of \eval usage in Kaggle
-suggests that it is consistent with the data obtained for CRAN. We do not
-discuss it further.
-
-
-\paragraph{Discussion}
-\Eval is central to R's implementation as it is omnipresent in the Base library.
-That library is, in turn, used by every single package. To avoid Base dominating
-the result, we excluded calls to it from the results. CRAN Packages, which are
-typically developed by experienced programmers, make regular and varied use of
-\eval. They represent our most interesting data set as these packages result
-from over 20 years of contributions by thousands of authors. The code in
-packages is well maintained and relatively well tested. Finally, Kaggle scripts
-are often written by less sophisticated users and likely perform more
-straightforward tasks, thus having a lesser need for \eval, and its uses
-originate from strings as these are easier to manipulate for end users.
+\Eval is used in CRAN packages. Nearly every fourth package contains at least
+one \eval site. However, most packages that use \eval do that modestly. Half of
+them contain less than three \eval sites. Packages that rely heavily on \eval
+are mostly the ones that provide functions for statistical modeling and
+simulation. At runtime, over third of extracted programs triggered calls to
+\eval. Half of the \packageAllcallsRnd recorded calls come from a single \eval
+site, but for the rest, most of the packages have low \eval call frequency.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{A Taxonomy of Eval}
+\section{A Taxonomy of \Eval}
 
 The previous section gave a quantitative view of \eval usage; we now try to
 elucidate \emph{what} it does.
