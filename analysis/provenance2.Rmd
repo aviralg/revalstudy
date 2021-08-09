@@ -12,7 +12,8 @@ date: "`r Sys.Date()`"
 editor_options: 
   chunk_output_type: console
 params:
-  base_dir: Data/package/
+  #base_dir: Data/package/
+  base_dir: /mnt/ocfs_vol_00/project-evalr/evalr-experiment/run/preprocess/package/
   calls_path: summarized.fst
   corpus_path: corpus.txt
   static_path: evals-static.csv
@@ -56,7 +57,7 @@ theme_set(theme_minimal())
 dataset_name <- basename(params$base_dir)
 
 # Tags will be prefixed by the dataset name
-create_tags(path(TAGS_DIR, paste0(dataset_name, "_provenance.tex")), prefix = dataset_name, default = TRUE)
+create_tags(path(TAGS_DIR, paste0(dataset_name, "_provenance2.tex")), prefix = dataset_name, default = TRUE)
 # Also use ggsave_prefix instead of ggsave if you need to save a graph
 
 calls_path <- paste0(params$base_dir, params$calls_path)
@@ -65,8 +66,8 @@ static_path <- paste0(params$base_dir, params$static_path)
 
 provenance_path <- paste0(params$base_dir, params$provenance_path)
 
-lock_path <- paste0(params$base_dir, ".provenance-lock.fst")
-min_path <- paste0(params$base_dir, "Eprov.fst")
+lock_path <- paste0(params$base_dir, ".provenance2-lock.fst")
+min_path <- paste0(params$base_dir, "Eprov2.fst")
 
 nb_eval_call_sites <- function(dataset) {
   dataset %>% pull(src_ref) %>% n_distinct()
@@ -107,15 +108,20 @@ if(params$force_rebuild || rebuild) {
     type = expr_resolved_type_tag, #   Argument type
     ev_call = eval_call_expression,
     ev_expr = expr_expression,
+    ev_class = expr_resolved_class, # S3/S4 class
     caller_expression,
-    match_call = expr_match_call,
-    parsed = expr_parsed_expression,
+    provenance, # the main provenance (i.e. climbing up LHSs)
+    provenance_args,
+    nb_provenances,
+    nb_operations,
+    longest_path_size,
+    all_provenances
   ) -> E_prov
   
   
-  E_prov %>% write_fst(min_path)
+  #E_prov %>% write_fst(min_path)
   sz <- file.size(calls_path) %>% as_tibble()
-  write.fst(sz, lock_path)
+  #write.fst(sz, lock_path)
 }
 
 C_raw -> C
@@ -132,3 +138,137 @@ nb_call_sites <- E_prov %>% pull(src_ref) %>% n_distinct()
 
 
 There are `r nb_eval_calls` eval calls and `r nb_call_sites` eval call sites in the dataset.
+
+
+In the dataset, the `provenance` column refers to the main provenance of an expression passed to `eval`. It is obtained by traversing the provenance graph and following the LHSs.
+
+# Provenances using the representative provenance
+
+## Provenance in numbers of calls
+
+```{r prov_number_calls}
+provenance_calls <- E_prov %>% count(provenance, wt = duplicates, sort = TRUE) %>% 
+  mutate(pc = 100 * n / sum(n), cpc = cumsum(pc))
+
+
+nrows <- min(10, nrow(provenance_calls))
+r_vec("nb provenance calls", nrows, provenance_calls$n)
+r_vec("percent provenance calls", nrows, provenance_calls$pc)
+r_vec("cumpercent provenance calls", nrows, provenance_calls$cpc)
+```
+
+`r datatable(provenance_calls)`
+
+## Provenance in number of sites
+
+```{r prov_number_sites}
+provenance_sites <- E_prov %>% group_by(src_ref) %>%
+  summarize(provenance = paste0(sort(unique(provenance)), collapse = "; "), n_provs = n_distinct(provenance)) %>% 
+  count(provenance, sort = TRUE) %>% 
+  mutate(pc = 100 * n / sum(n), cpc = cumsum(pc))
+
+
+# To get to 85 %
+
+nrows <- min(14, nrow(provenance_sites))
+r_vec("provenance name", nrows, case_when(provenance_sites$provenance == "" ~ "NA", 
+                                          provenance_sites$provenance == "$" ~ "\\$",
+                                          TRUE ~ provenance_sites$provenance))
+r_vec("nb provenance sites", nrows, provenance_sites$n)
+r_vec("percent provenance sites", nrows, provenance_sites$pc)
+r_vec("cumpercent provenance sites", nrows, provenance_sites$cpc)
+
+```
+
+
+`r datatable(provenance_sites)`
+
+# All provenances
+
+## By combinations
+
+## In absolute numbers
+
+# Classes
+
+
+## In number of calls
+
+```{r class_nb_calls}
+classes_calls <- E_prov %>% count(ev_class, wt = duplicates, sort = TRUE) %>% 
+  mutate(pc = 100 * n / sum(n), cpc = cumsum(pc))
+
+```
+
+
+## In number of sites
+
+```{r class_nb_sites}
+classes_sites <- E_prov %>% group_by(src_ref) %>%
+  summarize(ev_class = paste0(sort(unique(ev_class)), collapse = "; "), n_classes = n_distinct(ev_class)) %>% 
+  count(ev_class, sort = TRUE) %>% 
+  mutate(pc = 100 * n / sum(n), cpc = cumsum(pc))
+
+```
+
+
+# Classification
+
+```{r classification_calls}
+
+string_calls <- E_prov %>% filter(provenance %in% c("parse", "str2lang", "str2expression"))
+
+reflection_calls <- E_prov %>% filter(provenance %in% c("match.call", "formals", "substitute") | (provenance == "quote" & type != "symbol"))
+
+constructed_calls <- E_prov %>% filter(provenance %in% c("expression", "quote", "enquote", "call", "as.call", "as.vector"))
+
+symbol_calls <- E_prov %>% filter(provenance %in% c("as.name", "as.symbol") | (provenance == "quote" & type == "symbol"))
+
+external_calls <- E_prov %>% filter(provenance == ".External")
+
+```
+
+
+```{r classification_sites}
+
+string_sites <- string_calls %>% pull(src_ref) %>% n_distinct()
+
+reflection_sites <- reflection_calls %>% pull(src_ref) %>% n_distinct()
+
+constructed_sites <- constructed_calls %>%  pull(src_ref) %>% n_distinct()
+
+symbol_sites <- symbol_calls %>% pull(src_ref) %>% n_distinct()
+
+external_sites <- external_calls %>% pull(src_ref) %>% n_distinct()
+
+r("nb string sites", string_sites)
+r("string sites percent", ratio(string_sites, nb_call_sites))
+
+r("nb reflection sites", reflection_sites)
+r("reflection sites percent", ratio(reflection_sites, nb_call_sites))
+
+r("nb constructed sites", constructed_sites)
+r("constructed sites percent", ratio(constructed_sites, nb_call_sites))
+
+r("nb symbol sites", symbol_sites)
+r("symbol sites percent", ratio(symbol_sites, nb_call_sites))
+
+r("nb external sites", external_sites)
+r("external sites percent", ratio(external_sites, nb_call_sites))
+
+```
+
+
+
+## Parse from a file
+
+```{r parse_from_file}
+
+parsed_from_file_calls <- string_calls %>% filter(str_detect(provenance_args, "\\bfile\\b"))
+
+parsed_from_file_sites <- parsed_from_file_calls %>% pull(src_ref) %>% n_distinct()
+
+r("nb parse from file sites", parsed_from_file_sites)
+
+```
+
