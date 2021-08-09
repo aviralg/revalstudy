@@ -1362,9 +1362,10 @@ usage patterns below.
 
 \subsection{Simplify Interfaces}
 
-A common use of \eval is to \emph{simplify interfaces} by letting users pass string
-argument which can be parsed and evaluated in custom a environment. An example
-is the \code{rARS} function from the \code{AdapSamp} package, shown below.
+A common use of \eval is to \emph{simplify interfaces} by letting users pass
+string argument which can be parsed and evaluated in custom a environment. An
+example is the \code{rARS} function shown below. This function is defined in the
+\code{AdapSamp} package that implements sampling algorithms.
 
 \begin{lstlisting}
 rARS <- function(n, formula, min=-Inf, max=Inf, sp) {
