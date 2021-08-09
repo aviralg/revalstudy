@@ -1245,120 +1245,13 @@ that over half of them happen in a predictable environment.
 \section{Usage of \eval}
 
 The R language was intended to be extensible. The combination of lazy
-evaluation, \c{substitute} and \c{eval} are the tools given to developers to
-this end. In this section, we focus on the \emph{why}, giving real-world
-examples of the \eval usage in the wild. All the examples are based on code from
-our corpus, often simplified to fit the space and increase clarity. For each
-example, we indicate the package and the function where it is located.
-
-\subsection{Shapes redux}
-
-In Table~\ref{tab:minimizedexpressions} we have shown the most common shapes of
-expressions passed to \eval. Here, we illustrate them in concrete instances.
-
-\begin{compactitem}[---]
-
-  \item \emph{Variable lookup and values, and indexing \c{(X, V, \$)}}
-    constitute one of the most common use case for \eval. Let's consider the
-    \c{subset} function from the R base library, which allows, among others, to
-    select variables in a data frame. For example, given a data frame \c{df}
-    with three columns \c{A,B,C}, \c{subset(df, sel=A)} returns a subset of
-    \c{df} with just the \c{A} column. The same would happen with \c{subset(df,
-      sel=1)}. However, thanks to \eval it can also be also called with
-    \c{subset(df, sel=c(1,B,x))} returning a subset of the first column, column
-    \c{B} and whatever index the variable \c{x} holds. It is implemented using:
-    \lstinline|eval(substitute(sel), nl, parent.frame())| The first argument
-    returns the expression passed to \c{sel}, the second is the data frame in
-    which this expression will be evaluated, and the last indicates which
-    environment should be used to look up bindings not found in \c{nl}.
-
-    Another example is the most often called \eval site in CRAN:
-    \lstinline|eval(`_inherit`, env)| defined in the \c{find\_super} function in
-    the \c{ggproto} object system. It looks up the variable \c{`\_inherit`} to
-    find the parent class. In the vast majority of cases, the variable is a
-    symbol, so the \eval seems superfluous. The \eval is however necessary so
-    one can specify parent classes using \c{pkg\_name::class\_name}, as the
-    \c{::} operator is a function call in R.
-
-  \item \emph{Assignments \c{(<-)}} appear in the cases where a developer wants
-    to create or update a binding in a specific environment where either the
-    name or the value come from some expression. Most cases originate from
-    trivial code generation where the assign expression is assembled using
-    \c{parse} or \c{substitute}, often in a loop. For example, the
-    \c{PopED::get\_rse} uses it to assign a number of variables in the current
-    scope: \lstinline|eval(parse(text=paste(default_args[[i]]), "<-", i))|.
-
-    There are also more sophisticated cases. The \c{plyr::allocate\_column}
-    function uses \eval for a deferred assignment to fill missing values in a
-    column. Package \c{overture} repeatedly evaluates R expressions capturing
-    any assignments that happen in it as samples of Markov chains.
-
-  \item \emph{Function definition \c{(FUN)}} is mostly used in conjunction with
-    code generation where new functions are synthesized using either \c{parse}
-    or \c{substitute}. Some FFI frameworks use this to automatically generate R
-    binding to native code. For example, \c{Rcpp}, which bridges R with C++,
-    uses \eval to generate R functions for C++ methods:\\
-    \lstinline|eval(substitute(function(...) .CppObj$M(...), list(M=...)), env)|.
-
-  \item \emph{Function calls \c{(F(), F(X), F(F(X)))}} represent two very
-    frequent patterns: \emph{code generation} and \emph{call reflection}. There
-    are numerous cases for code generation.
-    %
-    One occurring usage (present also in the Kaggle scripts) is to generate
-    ad-hoc calls to libraries such as \c{ggplot2} when one needs to
-    parameterize data or aesthetics selection from a variable. For example
-    \lstinline|ggplot(df, aes(x=A, y=B))| maps X and Y axes in the plot to
-    \c{A} and \c{B} columns in \c{df}. It might not be immediately
-    clear\footnote{\cf
-    \url{https://stackoverflow.com/questions/22309285/how-to-use-a-variable-to-specify-column-name-in-ggplot}}
-    for a ggplot2 user how to modify the call to assign the axis columns from
-    variables. Another case is the traditional use of \eval as a mean to reduce
-    boilerplate code; simple and repetitive code can easily be replaced with
-    judicious use of \eval. For example, the \c{data.table} package uses \eval
-    to call the \c{options} function with named arguments taken from a vector
-    of strings:
-
-    \begin{lstlisting}[gobble=2]
-    opts = c("datatable.verbose"="FALSE", ... )
-    for (i in names(opts)) eval(parse(text=paste0("options(",i,"=",opts[i],")")))
-    \end{lstlisting}
-
-    Call reflection refers to the combination of \eval with \c{match.call}, a
-    function that returns the current call with all its arguments captured as
-    expressions. This is used mostly in the following circumstances: (1) to
-    record a call for later use in a possibly different environment, (2) pass
-    most of the captured call arguments to another function, or (3) evaluate
-    arguments of the function in different environments. This is widely used in
-    relation to statistical modeling in combination with a model fitting
-    function or with \c{model.frame} and related functions. For example the
-    \c{survival::coxph} function\footnote{Function fitting a Cox proportional
-    hazards regression model.} contains:
-    %
-    \begin{lstlisting}[gobble=2]
-    Call <- match.call()
-    tform <- Call[c(1,indx)]  # only keep the arguments we wanted
-    tform[[1L]] <- quote(stats::model.frame)  # change the function called
-    mf <- eval(tform, parent.frame())
-    \end{lstlisting}
-
-  \item \emph{Block \c{(BLOCK)}} can appear anywhere, but it is almost always
-    the case that the block is only passed to \eval rather than being directly
-    part of in as in \lstinline|eval({...})|. Essentially, the block denotes a
-    fragment of a program to be evaluated in a particular way and in a particular
-    environment. The latter is what makes it different from 0-argument closure.
-
-    There is a number of use cases: unit testing frameworks (\eg \c{testthat},
-    \c{testit}), code benchmarking (\eg \c{rbenchmark}, \c{microbenchmark}),
-    running code in parallel (\eg \c{foreach}, \c{doParallel}), or deferring
-    code execution (\eg \c{withr}).
-
-\end{compactitem}
-
-%\todo{Say somewhere that the R community commonly calls call/argument capturing
-%(with substitute or match.call), Non-Standard Evaluation.}
-To understand the how R developers use \eval, we manually inspected top 117 eval
-call-sites which contribute to 90\% of the eval calls. We describe the common
-usage patterns below.
+evaluation, \c{substitute} and \c{eval} are some of the tools given to
+developers to this end. To understand \emph{why} developers use \eval, we
+manually inspected top 117 \eval call-sites which contribute to 90\% of the
+\eval calls. In this section, we give examples of the \eval usage from this
+real-world sample. The examples are often simplified to fit the space and
+increase clarity. For each example, we indicate the package and the function
+where it is located.
 
 \emph{Simplify Interfaces}. A common use of \eval is to simplify interfaces by
 letting users pass string argument which can be parsed and evaluated in custom a
@@ -1467,11 +1360,12 @@ see_if <- function(..., env = parent.frame(), msg = NULL) {
 \end{lstlisting}
 
 
-\textit{Core function variants.} Many packages use \eval to implement variations of the
+\emph{Core function variants.} Many packages use \eval to implement variations of the
 \code{base} R functions. For example, the \code{igraph} package provides the
 \code{do_call} function shown below. This is a variant of the \code{do.call}
 function from the \code{base} package. This function executes a function call by
 constructs it from a name and a list of arguments and calling \eval.
+
 \begin{lstlisting}
 do_call <- function(f, ..., .args = list(), .env = parent.frame()) {
   f <- substitute(f)
@@ -1479,6 +1373,56 @@ do_call <- function(f, ..., .args = list(), .env = parent.frame()) {
   eval(call, .env)
 }
 \end{lstlisting}
+
+
+\emph{Domain-Specific Languages.} The combination of laziness, metaprogramming,
+first-class environments and dynamic evaluation make R the perfect toolkit for
+building DSLs. An example of this is the \code{glue} package which provides
+functions for string interpolation. The code snippet below shows an example of
+this.
+
+\begin{lstlisting}
+library(glue)
+greeting <- "Hello"
+glue('{greeting} World!')
+#> Hello World!
+\end{lstlisting}
+
+text enclosed by c{\{} and c{\}} is
+evaluated using \eval as an R expression and replaced by its result.
+
+\emph{Remove Boilerplate}
+
+For example, the PopED::get_rse uses it to assign a number of variables in the current scope: eval(parse(text=paste(default_args[[i]]), "← ", i)). There are also more sophisticated cases. The plyr::allocate_column function uses eval for a deferred assignment to fill missing values in a column. Package overture repeatedly evaluates R expressions capturing any assignments that happen in it as samples of Markov chains.
+
+
+\emph{Code Obfuscation} Some packages use \eval to bypass the restrictions
+imposed by the \code{R CMD CHECK} tool. This tool enforces some well-formedness
+rules on a submitted package before accepting it for inclusion in CRAN. Some
+static checks ensure that the package code does not use certain restricted
+functions. If package authors cannot avoid using these functions, they use \eval
+to obfuscate the code, bypassing the checks performed by the tool. An example of
+this use is the \code{scalaEnsure} function from the \code{aibd} package. It
+mutates the variable \code{s} in the package environment. However, the package
+environment in R is locked by default, which prevents bindings from being
+mutated. Environment can be unlocked using \code{unlockBinding}, but its use is
+flagged by the well-formedness checks. To work around this limitation, the
+author passes the expression to unlock the package environment as a string to
+\code{parse} which is then evaluated by \code{eval}. 
+
+\begin{lstlisting}
+scalaEnsure <- function() {
+    ...
+    env <- parent.env(environment())
+    eval(parse(text=paste0('unlockBinding("s", env)')))
+    assign("s", s, envir=env)
+    lockBinding("s", env)
+}
+\end{lstlisting}
+
+\emph{Miscellaneous}
+
+
 
 \subsection{Domain Specific Language}
 
@@ -1512,16 +1456,114 @@ In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a 
  D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
 \end{lstlisting}
 
-The \code{glue} package provides functions for string interpolation; text enclosed
-by c{\{} and c{\}} is evaluated using \eval as an R expression and replaced by
-its result. The code snippet below shows an example of this.
 
-\begin{lstlisting}
-library(glue)
-greeting <- "Hello"
-glue('{greeting} World!')
-#> Hello World!
-\end{lstlisting}
+\subsection{Shapes redux}
+
+In Table~\ref{tab:minimizedexpressions} we have shown the most common shapes of
+expressions passed to \eval. Here, we illustrate them in concrete instances.
+
+\begin{compactitem}[---]
+
+  \item \emph{Variable lookup and values, and indexing \c{(X, V, \$)}}
+    constitute one of the most common use case for \eval. Let's consider the
+    \c{subset} function from the R base library, which allows, among others, to
+    select variables in a data frame. For example, given a data frame \c{df}
+    with three columns \c{A,B,C}, \c{subset(df, sel=A)} returns a subset of
+    \c{df} with just the \c{A} column. The same would happen with \c{subset(df,
+      sel=1)}. However, thanks to \eval it can also be also called with
+    \c{subset(df, sel=c(1,B,x))} returning a subset of the first column, column
+    \c{B} and whatever index the variable \c{x} holds. It is implemented using:
+    \lstinline|eval(substitute(sel), nl, parent.frame())| The first argument
+    returns the expression passed to \c{sel}, the second is the data frame in
+    which this expression will be evaluated, and the last indicates which
+    environment should be used to look up bindings not found in \c{nl}.
+
+    Another example is the most often called \eval site in CRAN:
+    \lstinline|eval(`_inherit`, env)| defined in the \c{find\_super} function in
+    the \c{ggproto} object system. It looks up the variable \c{`\_inherit`} to
+    find the parent class. In the vast majority of cases, the variable is a
+    symbol, so the \eval seems superfluous. The \eval is however necessary so
+    one can specify parent classes using \c{pkg\_name::class\_name}, as the
+    \c{::} operator is a function call in R.
+
+  \item \emph{Assignments \c{(<-)}} appear in the cases where a developer wants
+    to create or update a binding in a specific environment where either the
+    name or the value come from some expression. Most cases originate from
+    trivial code generation where the assign expression is assembled using
+    \c{parse} or \c{substitute}, often in a loop. For example, the
+    \c{PopED::get\_rse} uses it to assign a number of variables in the current
+    scope: \lstinline|eval(parse(text=paste(default_args[[i]]), "<-", i))|.
+
+    There are also more sophisticated cases. The \c{plyr::allocate\_column}
+    function uses \eval for a deferred assignment to fill missing values in a
+    column. Package \c{overture} repeatedly evaluates R expressions capturing
+    any assignments that happen in it as samples of Markov chains.
+
+  \item \emph{Function definition \c{(FUN)}} is mostly used in conjunction with
+    code generation where new functions are synthesized using either \c{parse}
+    or \c{substitute}. Some FFI frameworks use this to automatically generate R
+    binding to native code. For example, \c{Rcpp}, which bridges R with C++,
+    uses \eval to generate R functions for C++ methods:\\
+    \lstinline|eval(substitute(function(...) .CppObj$M(...), list(M=...)), env)|.
+
+  \item \emph{Function calls \c{(F(), F(X), F(F(X)))}} represent two very
+    frequent patterns: \emph{code generation} and \emph{call reflection}. There
+    are numerous cases for code generation.
+    %
+    One occurring usage (present also in the Kaggle scripts) is to generate
+    ad-hoc calls to libraries such as \c{ggplot2} when one needs to
+    parameterize data or aesthetics selection from a variable. For example
+    \lstinline|ggplot(df, aes(x=A, y=B))| maps X and Y axes in the plot to
+    \c{A} and \c{B} columns in \c{df}. It might not be immediately
+    clear\footnote{\cf
+    \url{https://stackoverflow.com/questions/22309285/how-to-use-a-variable-to-specify-column-name-in-ggplot}}
+    for a ggplot2 user how to modify the call to assign the axis columns from
+    variables. Another case is the traditional use of \eval as a mean to reduce
+    boilerplate code; simple and repetitive code can easily be replaced with
+    judicious use of \eval. For example, the \c{data.table} package uses \eval
+    to call the \c{options} function with named arguments taken from a vector
+    of strings:
+
+    \begin{lstlisting}[gobble=2]
+    opts = c("datatable.verbose"="FALSE", ... )
+    for (i in names(opts)) eval(parse(text=paste0("options(",i,"=",opts[i],")")))
+    \end{lstlisting}
+
+    Call reflection refers to the combination of \eval with \c{match.call}, a
+    function that returns the current call with all its arguments captured as
+    expressions. This is used mostly in the following circumstances: (1) to
+    record a call for later use in a possibly different environment, (2) pass
+    most of the captured call arguments to another function, or (3) evaluate
+    arguments of the function in different environments. This is widely used in
+    relation to statistical modeling in combination with a model fitting
+    function or with \c{model.frame} and related functions. For example the
+    \c{survival::coxph} function\footnote{Function fitting a Cox proportional
+    hazards regression model.} contains:
+    %
+    \begin{lstlisting}[gobble=2]
+    Call <- match.call()
+    tform <- Call[c(1,indx)]  # only keep the arguments we wanted
+    tform[[1L]] <- quote(stats::model.frame)  # change the function called
+    mf <- eval(tform, parent.frame())
+    \end{lstlisting}
+
+  \item \emph{Block \c{(BLOCK)}} can appear anywhere, but it is almost always
+    the case that the block is only passed to \eval rather than being directly
+    part of in as in \lstinline|eval({...})|. Essentially, the block denotes a
+    fragment of a program to be evaluated in a particular way and in a particular
+    environment. The latter is what makes it different from 0-argument closure.
+
+    There is a number of use cases: unit testing frameworks (\eg \c{testthat},
+    \c{testit}), code benchmarking (\eg \c{rbenchmark}, \c{microbenchmark}),
+    running code in parallel (\eg \c{foreach}, \c{doParallel}), or deferring
+    code execution (\eg \c{withr}).
+
+\end{compactitem}
+
+%\todo{Say somewhere that the R community commonly calls call/argument capturing
+%(with substitute or match.call), Non-Standard Evaluation.}
+
+
 
 
 \subsection{Discussion}
@@ -1539,15 +1581,7 @@ Nevertheless, many of the observed \eval usage in R, particularly, the ones
 related to statistical modeling and DSLs are more sophisticated than those
 reported for JavaScript.
 
-Finally, let us mention an anecdotal use of \eval as a means to bypass some
-checks performed by the \code{R CMD CHECK} tool. This tool performs a number of
-well-formedness rules before accepting a package to the CRAN repository. Many
-checks are performed statically by looking at syntactic constructs in the R
-code. Using \eval allows one to bypass such checks and thus submit a package to
-CRAN that would otherwise be refused. For example,  it checks that packages
-do not call the \code{unlockBinding} function.\footnote{It allows one to open and
-modify loaded package namespaces.} Packages such as \code{data.table} circumvent
-such restrictions by using \eval as the check is only performed statically.
+
 
 \section{Discussion}
 
