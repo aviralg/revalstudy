@@ -855,22 +855,25 @@ formula. This form subsumes \c{F(F(X))}, \c{FUN}, and assignments. It is the
 single most popular function invoked from \eval; it occurs in 7\% of the sites.
 Each call does quite a lot of work with a 2K instructions median.
 
-\paragraph{Consistency} It is interesting how many different
-forms any given site sees. The more forms, the harder it is to characterize
-behavior at that site. Luckily, \packageNbOneMinimizedPercent of sites only see
-a single form. In other words, a compiler could correctly predict the
-\emph{shape} of an expression by looking just at the first call in
-\packageNbOneMinimizedPercent of the sites. Few sites are highly polymorphic (8
-or more different forms). These include the pipe operator of the \c{magrittr}
-package, used to compose functions.
+\paragraph{Consistency} It is interesting how many different forms any given
+site sees. The more forms, the harder it is to characterize behavior at that
+site. Luckily, \packageNbOneMinimizedPercent of sites only see a single form.
+In other words, a compiler could correctly predict the \emph{shape} of an
+expression by looking just at the first call in \packageNbOneMinimizedPercent
+of the sites. Few sites are highly polymorphic (8 or more different forms).
+These include the pipe operator of the \c{magrittr} package, used to compose
+functions, \eg instead of \c{f(g(h(x),y),z)} one can write \c{h(x) \%>\% g(y) \%>\%
+f(z)}.
 
 \paragraph{Discussion} The variety of uses of \eval is evidenced by the number
 of different forms. In comparison, JavaScript \eval usage was more
 straightforward and more predictable as reported by \citet{oopsla12b}, with
-98.7\% of the sites with only one form. Nevertheless, simple forms dominate in R
-also, and there are many cases where \eval could be replaced by less powerful
-constructs.
-
+98.7\% of the sites with only one form. Nevertheless, simple forms dominate
+in R. Among these there are many cases where \eval could be replaced by less
+powerful constructs such as \c{get} to lookup a name in an environment,
+\c{assign} to set a value to a name in an environment or \c{call} to
+reflectively call a function.
+% TODO: how many receive just the simple form
 
 \subsection{The environments of \eval}\label{sec:env}
 
@@ -1084,9 +1087,7 @@ functions \c{source} and \c{sys.source} do. We observed few calls
 (\packageNbParseFromFileSites in total) that consume the result of calling
 \c{parse} on a file. Most of the calls build strings programmatically. We also
 identified one function \c{invokeRestartInteractively} that prompts the user for
-input, parses it, and passes it to \eval. The use of strings seems to correlate
-with less sophisticated programmers; in Kaggle,
-\kaggleParseExprsSitePercent of sites use strings.
+input, parses it, and passes it to \eval. 
 
 \paragraph{Discussion}
 The origin data suggests that constructing expressions from strings is a
@@ -1099,7 +1100,7 @@ to overcome their distaste for those. Another use of \eval is to directly build 
 
 \subsection{The effects of \eval}
 
-\Eval may peform side-effects. From a compiler's perspective, we care about
+\Eval may perform side-effects. From a compiler's perspective, we care about
 effects that can be observed --- \ie variable definitions, updates, and removals
 that are visible after a call finishes. Knowing in which environments these
 side-effects happen, can help us determine how much of the compiler knowledge
