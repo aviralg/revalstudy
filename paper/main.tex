@@ -1,4 +1,4 @@
-\documentclass[review,screen,acmsmall]{acmart}
+\documentclass[screen,acmsmall]{acmart}
 %\settopmatter{printfolios=false,printccs=false,printacmref=false}
 \setcopyright{none}
 \renewcommand\footnotetextcopyrightpermission[1]{}
@@ -21,7 +21,7 @@
 
 \begin{document}
 \title{What We Eval in the Shadows}
-\subtitle{A large-scale study of {\sf eval} usage in R programs}
+\subtitle{A Large-scale Study of Eval in R programs}
 
 \author{Aviral Goel}\affiliation{\institution{Northeastern
     University}\country{USA}}
@@ -51,50 +51,45 @@
 
 \section{Introduction}
 
-Most dynamic languages provide their users with a facility to
-transform unstructured text into executable code and evaluate that
-code. We refer to this reflective facility as \eval bowing to its
-origins in LISP, all the way back in 1956. \Eval has been
-much maligned over the years. In computing lore, it is as close to a
-boogeyman as it gets. Yet, for McCarthy, \eval was simply the way to
-write down the definition of LISP; he was surprised that someone coded
-it up and offered it to end users~\cite{lisp}. Since then, reflective facilities
-have been used to parameterize programs over code patterns that can be
-provided after the program is written. The presence of such a feature
-in a language is a hallmark of dynamism; it is a form of delayed
-binding as the behavior of any particular call to \eval will only be
-known when the program is run, and that particular call site is
-evaluated.
+Most dynamic languages provide their users with a facility to transform
+unstructured text into executable code and evaluate that code. We refer to this
+reflective facility as \eval bowing to its origins in LISP, all the way back in
+1956. \Eval has been much maligned over the years. In computing lore, it is as
+close to a boogeyman as it gets. Yet, for McCarthy, \eval was simply the way to
+write down the definition of LISP; he was surprised that someone coded it up and
+offered it to end users~\cite{lisp}. Since then, reflective facilities have been
+used to parameterize programs over code patterns that can be provided after the
+program is written. The presence of such a feature in a language is a hallmark
+of dynamism; it is a form of delayed binding as the behavior of any particular
+call to \eval will only be known when the program is run, and that particular
+call site is evaluated.
 
-\vspace{2mm}\noindent\emph{Trouble in Paradise.} Reflective facilities
-hinder most attempts to reason about or apply meaning-preserving
-transformations to the code using them. In practice, \eval causes
-static analysis techniques to lose so much precision as to become
-pointless. For compilers, anything but the most trivial, local
-optimizations are unsound after the use of \eval. Furthermore, the
-addition of arbitrary code --- code that could have been obtained from
-a network connection --- as a program is running is a security
-vulnerability waiting to happen. To illustrate these challenges,
-consider the interaction of a static analysis tool with a dynamic
-language. An abstract interpretation-based program analyzer computes
-an over-approximation of the set of possible behaviors exhibited by
-the program under study~\cite{cc77}. A reflective facility may have \emph{any}
-behavior that can be expressed in the target language, \ie any legal sequence of instructions can replace \eval. As dynamic
-languages tend to be permissive, the analysis has to, for example,
-assume that many (or all) functions in scope may have been redefined,
-\eg that \texttt{`+`} now opens a network connection or something
-equally surprising. A single occurrence of \eval causes the static
-analyzer to lose all information about the program state and
-meaning of identifiers. This loss of precision can sometimes be
-mitigated by analyzing the string argument~\cite{moller03} to bound its
-possible behavior, but when the string comes from outside the program,
-not much can be done. A frustrated group of researchers argued giving up
-on soundness and, instead, under-approximating dynamic features
-(soundiness)~\cite{soundy}. In their words, ``a practical analysis,
-therefore, may pretend that \eval does nothing unless it can
-precisely resolve its string argument at compile time.'' Alas,
-assuming that \eval does not have side-effects or that side-effects
-will not affect the results of the analysis may be unduly optimistic.
+\vspace{2mm}\noindent\emph{Trouble in Paradise.} Reflective facilities hinder
+most attempts to reason about or apply meaning-preserving transformations to the
+code using them. In practice, \eval causes static analysis techniques to lose so
+much precision as to become pointless. For compilers, anything but the most
+trivial, local optimizations are unsound after the use of \eval. Furthermore,
+the addition of arbitrary code --- code that could have been obtained from a
+network connection --- as a program is running is a security vulnerability
+waiting to happen. To illustrate these challenges, consider the interaction of a
+static analysis tool with a dynamic language. An abstract interpretation-based
+program analyzer computes an over-approximation of the set of possible behaviors
+exhibited by the program under study~\cite{cc77}. A reflective facility may have
+\emph{any} behavior that can be expressed in the target language, \ie any legal
+sequence of instructions can replace \eval. As dynamic languages tend to be
+permissive, the analysis has to, for example, assume that many (or all)
+functions in scope may have been redefined, \eg that \texttt{`+`} now opens a
+network connection or something equally surprising. A single occurrence of \eval
+causes the static analyzer to lose all information about the program state and
+meaning of identifiers. This loss of precision can sometimes be mitigated by
+analyzing the string argument~\cite{moller03} to bound its possible behavior,
+but when the string comes from outside the program, not much can be done. A
+frustrated group of researchers argued giving up on soundness and, instead,
+under-approximating dynamic features (soundiness)~\cite{soundy}. In their words,
+``a practical analysis, therefore, may pretend that \eval does nothing unless it
+can precisely resolve its string argument at compile time.'' Alas, assuming that
+\eval does not have side-effects or that side-effects will not affect the
+results of the analysis may be unduly optimistic.
 
 \vspace{2mm}\noindent\emph{Is Past Prologue?} Previous work investigated how
 \eval is used in web programming, specifically in websites that use
@@ -372,7 +367,7 @@ that \eval  is widely used in R code with 8500 call sites in 1238 CRAN packages 
 other call sites, they saw two use cases. The most common is the evaluation of
 the source code of a promise retrieved by \c{substitute} in a new environment,
 \eg as done in the \c{with} function. The other use case is the invocation of a
-function whose name or arguments are determined dynamically. For this purpose, R provides \c{do.call} and thus \eval is overkill. Our corpus is larger, with \CranPackages packages, \packageTriggeredpkgs packages with at least one \eval, for a total of \PkgHitEvalCallSites sites and \packageAllcallsRnd dynamic calls, although they also looked at the Bioconductor package repository\footnote{\url{https://www.bioconductor.org/}} in addition to CRAN. We also track much more runtime information on the \eval calls during tracing. It enables us to have a more nuanced and accurate picture, and identify more diverse use cases of \eval.
+function whose name or arguments are determined dynamically. For this purpose, R provides \c{do.call} and thus \eval is overkill. Our corpus is larger, with \CranPackages packages, \packageTriggeredpkgs packages with at least one \eval, for a total of \PkgHitEvalCallSites sites and \packageAllcallsRnd dynamic calls, although they also looked at the Bioconductor package repository in addition to CRAN. We also track much more runtime information on the \eval calls during tracing. It enables us to have a more nuanced and accurate picture, and identify more diverse use cases of \eval.
 
 
 
@@ -381,52 +376,51 @@ function whose name or arguments are determined dynamically. For this purpose, R
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Methodology}
 
-This section explains how we selected our corpus and how we obtained the
-reported results.
+This section describes how the corpus of R program was selected and the analysis
+infrastructure.
 
 \subsection{Corpus}
 
-Our corpus is assembled from three sources: the \emph{Base} libraries bundled
+The corpus is assembled from three sources: the \emph{Base} libraries bundled
 with the language implementation, packages hosted on \emph{CRAN}, and scripts
-from \emph{Kaggle}.
+from \emph{Kaggle}. Each of these sources represents a different part of
+the user base of the language and thus, potentially, different usage patterns.
 
-\mypara{Base.} The dataset contains \BasePackages libraries performing basic
-arithmetics, statistics, and operating system functionalities. These libraries
-are bundled with R and executed pervasively. Together they contain
-\BaseEvalCallSites call sites to \eval in \BaseFunsWithEvals functions. Some of these
-functions provide basic functionalities such as package loading, and thus, there
-is hardly any code that does not invoke one of these.
+\mypara{Base.} The \BasePackages libraries are bundled with R and widely used as
+they provide arithmetics, statistics, and operating system functionalities. Some
+\BaseFunsWithEvals functions contain \BaseEvalCallSites calls to \eval. The
+functions perform such key tasks such as package loading, there is thus hardly
+any R program that does not invoke them. These libraries have been written by
+experts with a deep understanding of the language and its environment.
 
-\mypara{CRAN.} The Comprehensive R Archive Network
-({\small \url{cran.r-project.org}}) is the largest curated repository of R
-packages. It hosts \CranAvailablePackagesRnd packages with 6 new ones submitted
-daily~\cite{Ligges2017}. Packages are authored by experienced developers and
-abide by well-formedness rules automatically checked on each commit.
-Each package comes with sample data. There are three sources of
-runnable code in a package: \emph{tests, examples}, and \emph{vignettes} --
-respectively, unit tests, code snippets from the documentation, and long-form
-use-cases written in RMarkdown. Examples and vignettes can be turned into
-scripts by extracting the relevant code. From \CranPackages packages we
-extracted \CranRunnableScripts scripts that contain \CranRunnableCode lines of
-code (\CranRunnableCodeExamplesRnd in examples, \CranRunnableCodeVignettesRnd in
-vignettes and \CranRunnableCodeTestsRnd in tests).
+\mypara{CRAN.} This dataset consists of packages hosted on the Comprehensive R
+Archive Network ({\small \url{cran.r-project.org}}, aka CRAN). There are three
+sources of runnable code in a package: unit \emph{tests} for individual
+functions, code \emph{examples} automatically extracted from the documentation,
+and long-form use-cases called \emph{vignettes}. Package also often have sample
+input files. All of these runnable code snippets can be extract into independent
+files. We downloaded \CranPackages packages and extracted \CranRunnableScripts
+scripts, or \CranRunnableCode lines of code (\CranRunnableCodeExamplesRnd in
+examples, \CranRunnableCodeVignettesRnd in vignettes and
+\CranRunnableCodeTestsRnd in tests). CRAN packages are authored by experienced
+developers.
 
-\mypara{Kaggle.} The Kaggle website ({\small \url{kaggle.com}}) is an online
-platform for data science. It allows users to submit and compete to solve
-problems. Solutions, called \emph{kernels}, are uploaded as scripts or
-notebooks. While the quality of code is not uniform, each kernel is runnable,
-and maps to ones script. Input data is provided. We obtained \KaggleKernels
-kernels. Since Kaggle is not curated, we used SHA-1 hashes to identify and
-remove \KaggleDuplicates duplicate entries. The remaining \KaggleUnique kernels
-are unique solutions to \KaggleCompetitions competitions. They contain
-665K lines of R code. Only \KaggleWithEvals kernels call \eval.
+\mypara{Kaggle.} This dataset contains \KaggleUnique programs from the Kaggle
+website ({\small \url{kaggle.com}}), an online platform that allows users to
+submit and compete to solve problems. Kaggle contains both scripts and notebooks
+as well as input files, but there is some duplication (we used SHA-1 hashes to
+remove \KaggleDuplicates duplicates). The dataset has 665K lines of R code and
+only \KaggleWithEvals calls \eval. Kaggle scripts are written by end-users with
+variable levels of expertise.
+
+
 
 \subsection{Pipeline}
 
-The analysis presented in this has been automated by a pipeline that acquires
-packages, extracts scripts, executes them, traces their behavior, and summarizes observations. Figure~\ref{fig:pipeline} shows the main steps along
- with their running time, data size, and  number of elements manipulated.
- Timings are from a cluster of three servers, each with 2.3GHz Intel Xeon 6140 processor with 72 cores and 256GB of RAM, and shared OCFS network storage. The pipeline steps are:
+We implemented an automated pipeline to acquires packages, extracts scripts,
+executes them, traces their behavior, and summarizes observations.
+Figure~\ref{fig:pipeline} shows the main steps along with their running time,
+data size, and number of elements manipulated. The pipeline steps are:
 
  \begin{figure}[ht!]
    \centering
@@ -498,93 +492,61 @@ packages, extracts scripts, executes them, traces their behavior, and summarizes
    \vspace{-2mm}\caption{Pipeline}\label{fig:pipeline}
  \end{figure}
 
-%% \begin{figure}[!h]\hspace{-5mm}
-%%  \includegraphics[width=.95\linewidth]{pipeline.pdf}
-%%  \caption{Pipeline}\label{fig:pipeline}
-%%\end{figure}
+\begin{enumerate}
+\item \emph{Download.} Packages are downloaded from CRAN, for Kaggle a web
+  crawler retrieves code, and a command-line tool gets data. Installation is
+  complicated by native dependencies which sometimes have to be resolved
+  manually.
+\item \emph{Extract.} The \genthat tool extracts all runnable code snippets and
+  turns each of these into a self-standing program~\cite{issta18}, \c{knitr}
+  extracts code from notebooks. Each extracted script is instrumented with calls
+  to our dynamic analyzer in a way that avoid recording calls to \eval
+  originating from our execution harness.
+\item \emph{Trace.} Script run with a modified R interpreter to capture
+  execution traces. Each script is run in its own process with the GNU R
+  compiler turned off to avoid recording its execution. CRAN scripts run twice,
+  once to capture \eval calls originating from package code and a second time to
+  capture calls coming from base libraries.
+\item \emph{Analyze.} Analysis outputs are merged, cleaned, and summarized.
+  RMarkdown notebooks process the summarized data to generate all graphs (PDF
+  from \c{ggplot2}) and numbers (exported as \LaTeX macros) appearing in the
+  paper.
+\end{enumerate}
 
-\medskip
-\begin{compactenum}
-\item \emph{Download.} Packages are downloaded from CRAN. For scripts, a web
-  crawler retrieves code, and the Kaggle command-line tool gets data.
-  Installation is complicated by native dependencies, which are not adequately
-  documented and thus hard to resolve automatically.
-\item \emph{Extract.} Given installed packages, the \genthat tool extracts all
-  runnable code snippets and turns each of these into a self-standing
-  program~\cite{issta18}. Some Kaggle kernels are already scripts and nothing
-  more needs to be done. Kernels released as notebooks are processed by
-  \c{knitr} which extracts runnable code. The body of each program is
-  instrumented with calls to our dynamic analyzer to ensure that we only record
-  calls to \eval from the code of interest and not from bootstrapping or
-  execution harness operations.
-\item \emph{Trace.} Each program executes using our dynamic analysis tool, a
-  heavily instrumented interpreter that captures calls to \eval and many other
-  fine-grained runtime events. Packages are run twice, once to capture \eval
-  calls originating from package code and a second time to capture calls coming
-  from the base libraries. To avoid any interference, each program is run in its
-  own process with the GNU R compiler turned off to avoid recording its
-  execution.
-\item \emph{Analyze.} Finally, the analysis output is merged, cleaned, and summarized
-  in a post-processing phase driven by series of R scripts. The summarized data
-  is then analyzed in RMarkdown notebooks to gather insights. All figures and
-  numbers appearing in the paper are generated automatically. Figures are
-  produced in PDF by \c{ggplot2}; numbers are exported as \LaTeX macros.
-\end{compactenum}
-
-\noindent The pipeline runs in parallel~\cite{GNUparallel} orchestrated
-by a Makefile. Servers have identical environments thanks to docker images with
-all dependencies installed.
+\noindent The pipeline runs in parallel on three servers, each with 2.3GHz Intel
+Xeon 6140 processor with 72 cores and 256GB of RAM, and shared OCFS network
+storage. Servers run identical docker images with all dependencies installed.
 
 \subsection{Dynamic Analysis}
 
-The dynamic analysis is performed by \rdyntrace, a modified R virtual machine
-based on GNU R 4.0.2 that exposes low-level callbacks for a variety of runtime
-events~\cite{oopsla19b}. The tracer registers callbacks to all \eval variants
-and a few additional functions to assist in locating the origin of \eval
-arguments. For example, we taint the results of calls to \c{parse} and
-\c{match.call}. We also capture calls to R API for dynamic code loading. Next,
-we subscribe to the events related to a variable definition and assignment,
+The tracer that performs dynamic analysis of R scripts is built on top of
+\rdyntrace, an extended R 4.0.2 virtual machine that exposes callbacks for
+various runtime events~\cite{oopsla19b}. The tracer registers callbacks to all
+variants of \eval and a few additional functions to locate the origin of \eval
+arguments (it taints the results of calls to \c{parse} and \c{match.call}). It
+captures dynamic code loading, as well as variable definition and assignment,
 allowing us to record side effects that happen in environments while evaluating
-code in \eval. One challenge was that R only provides source references for
-block surrounded by braces. Thus, a function whose body is \c{eval(x)} would no
-usable debug information, while the same expression surrounded by braces would
-be fine. This is unfortunately not easily fixed. We extended the dynamic
-analysis tool to attach synthetic source code references to all \eval call
-sites by traversing ASTs. The tracer is implemented as an R package in 3.2K C++
-and 1.3K of R code. For performance reasons, most of the tracing is done in
-C++. While in theory, the implementation is relatively straightforward, not so
-in practice:
-%
-\begin{compactitem}[---]
-
-\item The lazy evaluation makes it challenging to analyze function arguments
-  while tracing as prematurely forcing a promise might have dangerous
-  consequences.
-
-\item While the R interpreter is implemented in C, most core functionality is in
-  R. For example, package loading is implemented in R using \eval. This makes it
-  hard in the tracer to separate the \eval that are essential to user programs
-  from the accidental ones that are products of the way R implements its basic
-  operations. This is even more so for the side-effects analysis.
-
-\item In the dynamic analysis, we run all the \emph{runnable} code we obtained
-  from CRAN and Kaggle---\ie actual code written by people with highly varying
-  expertise in R and programming in general. This exercises a lot of the corner
-  cases of the highly underspecified R behavior.
-
-\end{compactitem}
-
+code in \eval. A challenge was that lack of source code references for
+expression that are not within block surrounded by braces. This is unfortunately
+not easily fixed. We extend our dynamic analysis tool to attach synthetic source
+code references to all \eval call sites, but the approach fails in some edge
+cases. For performance reasons, the tracer is an R package written in C++ (3.2K
+LOC) and R (1.3K LOC). While in theory the implementation should be
+straightforward, not so in practice. Lazy evaluation requires delaying the
+processing of arguments until (and if) they are forced. Accounting for
+side-effects performed in an \eval is complicated by the fact that R is
+implemented in a mixture of R and C, and that the language implementation can
+call \eval. Lastly, large code bases exercise many edge cases of the highly
+underspecified R behavior.
 
 \mypara{Limitations.} Even with the extension described above, there are
-\PkgUndefinedRnd \eval calls without source references. This occurs when \eval
-is passed as an argument to a higher-order function or when the \eval call
-originates from native code. However, these missing source references account
-for a meager \PkgUndefinedRatio of all calls; they are unlikely to affect our
-results. Other limitations are that we ignore calls to the native \eval and to
-the alternate \c{rlang::tidy\_eval} uses native \eval internally. None of these
-limitations should invalidate our conclusions.
+\PkgUndefinedRnd \eval calls without source information (\PkgUndefinedRatio of
+all \eval calls). This happen when \eval is an argument to a higher-order
+function or when it is called from native code. An other limitation is that we
+do not record calls to the native \eval. Neither of these limitations should
+invalidate our conclusions.
 
-%\newpage
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Usage Metrics}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1086,7 +1048,7 @@ a loaded package is improper and R tries to make it difficult.
 \subsection{The origins of \eval}
 
 Where does the expression passed to \eval come from? There are various means of
-creating that expression, which are associated with particular use cases. We track the functions that build expressions or combine expressions during tracing to create a direct acyclic graph of the functions creating the expression passed to \eval. Then, we pick a \emph{representative provenance}, \ie following the left-hand side of assignments in the graph. 
+creating that expression, which are associated with particular use cases. We track the functions that build expressions or combine expressions during tracing to create a direct acyclic graph of the functions creating the expression passed to \eval. Then, we pick a \emph{representative provenance}, \ie following the left-hand side of assignments in the graph.
 
 \NOTE{I can also put the absolute number of provenances, \ie if an expression has multiple provenances, we do not keep only the representative but also the other provenances. Also, if one site sometimes gets match.call and sometimes substitute, it is not going to be counted in either of them currently.}
 
@@ -1633,10 +1595,6 @@ Even though we reckon that \eval has more expressive power than macros, as it
 can access runtime information such as its call stack, adding a macro system to
 R to replace \eval for all meta-programming purposes would help static analysis
 as macros can be expanded at analysis-time.
-
-% It's dubious whether R programmers would develop with macros though.
-% Macros and R
-% The Thomas Lumley's article, Programmer's Niche: Macros in R, (https://www.r-project.org/doc/Rnews/Rnews_2001-3.pdf) describes how to write a `defmacro` function that would like as a macro creator, using `substitute` and `eval`.  There are no local macro variables in this implementation though.
 
 \bibliography{bib/bibliography,bib/jv}
 
