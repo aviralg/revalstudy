@@ -19,6 +19,41 @@
 % cf. https://tex.stackexchange.com/a/144640
 \makeatletter\let\expandableinput\@@input\makeatother
 
+%% https://www.davehofmann.de/defining-custom-language-templates-for-latex-listings/
+% Define Language
+\lstdefinelanguage{smalleR} {
+  % list of keywords
+  morekeywords={
+    for,
+    if,
+    else,
+    function
+  },
+  sensitive=true, % keywords are not case-sensitive
+  morecomment=[l]{\#}, % l is for line comment
+  morestring=[b]{"} % defines that strings are enclosed in double quotes
+}
+
+\lstset{
+  language={smalleR},
+  columns=flexible,
+  captionpos=b,
+  frame=single,
+  framerule=0pt,
+  framexleftmargin=1mm,
+  framexrightmargin=1mm,
+  tabsize=2,
+  belowskip=0pt,
+  basicstyle=\small\ttfamily,
+  backgroundcolor=\color{LightGray},
+  emphstyle=\sffamily,
+  keywordstyle=\bfseries,
+  commentstyle=\color{Gray}\em,
+  stringstyle=\color{Gray},
+  alsoletter={., _, $},
+  breaklines=true
+}
+
 \begin{document}
 \title{What We Eval in the Shadows}
 \subtitle{A Large-scale Study of Eval in R programs}
