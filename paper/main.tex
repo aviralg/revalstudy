@@ -15,7 +15,8 @@
 \newcommand{\NOTE}[1]{{\it Note: #1}\xspace}
 \newcommand{\authorcomment}[3]{\xspace\textcolor{#1}{{\bf #2} #3}\xspace}
 \newcommand{\todo}[1]{\authorcomment{red}{TODO}{#1}}
-
+\newcommand{\code}[1]{\lstinline |#1|\xspace}
+%\renewcommand{\c}[1]{\lstinline |#1|\xspace}
 % cf. https://tex.stackexchange.com/a/144640
 \makeatletter\let\expandableinput\@@input\makeatother
 
@@ -1355,67 +1356,77 @@ expressions passed to \eval. Here, we illustrate them in concrete instances.
 
 %\todo{Say somewhere that the R community commonly calls call/argument capturing
 %(with substitute or match.call), Non-Standard Evaluation.}
+To understand the how R developers use \eval, we manually inspected top 117 eval
+call-sites which contribute to XX\% of the eval calls. We describe the common
+usage patterns below.
 
 \subsection{Simplify Interfaces}
-Many packages use the capability to parse and evaluate expressions in custom
-environments to design simpler interfaces. For example, the \c{AdapSamp} package
-provides functions that implement sampling algorithms. These functions take a
-\c{formula} argument, an expression in \c{x} as a string, that represents the
-kernel of the target distribution. This is turned into a closure using
-\c{function(x){eval(parse(text=formula))}}. While the \c{formula} supplied by
-the user could be a higher-order function, passing \c{"exp(-x\^2/2)"} as an
-argument is simpler for domain experts compared to \c{function(x) exp(-x\^2/2)}.
-The \c{bain::constraint\_to\_row} function has a similar pattern of \eval usage.
-It takes a constraint equation as a string argument, and, parses and evaluates
-it in a custom environment with the expected bindings. The
-\c{ctsem::ctModelTransformsToNum} function similarly evaluates a vector of
-formulae represented as a string vector.
+
+A common use of \eval is to \emph{simplify interfaces} by letting users pass string
+argument which can be parsed and evaluated in custom a environment. An example
+is the \code{rARS} function from the \code{AdapSamp} package, shown below.
+
+\begin{lstlisting}
+rARS <- function(n, formula, min=-Inf, max=Inf, sp) {
+  ...
+  p <- function(x) { eval(parse(text=formula)) }
+  ...
+}
+
+\end{lstlisting}
+The \code{rARS} function take a \code{formula} argument, an expression in
+\code{x} as a string, that represents the kernel of the target distribution.
+This is turned into the closure \code{function(x) \{ eval(parse(text=formula))
+  \}}. An alternative design would be to supply the closure itself as the
+argument, but passing \code{function(x) exp(-x^2/2)} is probably not as
+convenient for domain-experts as passing \code{"exp(-x^2/2)"}.
+
 
 \subsection{Custom Evaluation}
 The \eval function is commonly used to customize the evaluation of expressions.
-An example is the \c{assertthat} package's \c{see\_if} function which is used to
+An example is the \code{assertthat} package's \code{see\_if} function which is used to
 assert that the sequence of conditions supplied as arguments are true. It
-evaluates the condition expressions one-by-one inside a \c{tryCatch} block and
-produces an error at the first expression that returns \c{FALSE}. If the
+evaluates the condition expressions one-by-one inside a \code{tryCatch} block and
+produces an error at the first expression that returns \code{FALSE}. If the
 expression itself produces an error, the error message is captured by the
-enclosing \c{tryCatch} block and returned. The remaining expressions in the
-sequence remain unevaluated. A similar pattern is used by the \c{checkmate}
+enclosing \code{tryCatch} block and returned. The remaining expressions in the
+sequence remain unevaluated. A similar pattern is used by the \code{checkmate}
 package.
 
 
 \subsection{Domain Specific Language}
 
-The ability to capture the current call as a language object (\c{match.call()}),
-extract the unevaluated expression from function arguments (\c{substitute()})
+The ability to capture the current call as a language object (\code{match.call()}),
+extract the unevaluated expression from function arguments (\code{substitute()})
 and \eval with first class environment makes R the toolkit for building DSLs.
-There are numerous widely spread DSLs used in R. For example, \c{data.table}
+There are numerous widely spread DSLs used in R. For example, \code{data.table}
 package defines a DSL for data frame manipulation using the subset operator
-\c{[}. This allows one to write compact queries such as \c{flights[carrier ==
-  "AA", .N, by = origin]}\footnote{The \c{data.table} subset operation is
-  defined as \c{DT[i, j, k]}, where \c{j} expression is used to calculate on a
-  subset/reorder of rows from \c{i} grouped by \c{k}.} which will compute the
+\code{[}. This allows one to write compact queries such as \code{flights[carrier ==
+  "AA", .N, by = origin]}\footnote{The \code{data.table} subset operation is
+  defined as \code{DT[i, j, k]}, where \code{j} expression is used to calculate on a
+  subset/reorder of rows from \code{i} grouped by \code{k}.} which will compute the
 number of flights done by American Airlines for each origin airport.
-Essentially, it uses \c{substitute} to capture the operand's expressions,
+Essentially, it uses \code{substitute} to capture the operand's expressions,
 transforms then appropriately and finally uses \eval to execute the query.
 
-Another example is the \c{tidyselect} package that defines a DSL for selecting
+Another example is the \code{tidyselect} package that defines a DSL for selecting
 columns in a data frame powering number of data manipulation operation in the
-\c{data.table} main competitor, the \c{dply} package. It uses eval to build an
-interpreter for evaluating column selectors such as \c{select(df,
-starts\_with("length") \& !(name:mass))} which returns all columns in \c{df}
-that starts with the string \c{length} and is not between \c{name} and
-\c{mass} columns.
+\code{data.table} main competitor, the \code{dply} package. It uses eval to build an
+interpreter for evaluating column selectors such as \code{select(df,
+starts\_with("length") \& !(name:mass))} which returns all columns in \code{df}
+that starts with the string \code{length} and is not between \code{name} and
+\code{mass} columns.
 
 
-Another instance is the \emph{symbolic differentiation support} provided by base R package \emph{stats}, with two operators \c{D} and \c{deriv}. They support arithmetic operations and functions on real numbers such as \c{sin}, on expressions built with \c{expression()} or \c{parse}.
-In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \c{Dtensor} object is created: it contains expressions that are derived twice (with \c{DD}). To get a concrete value, it is evaluated in  dataframe \c{mu} where symbolic variables are bound to actual numbers.
+Another instance is the \emph{symbolic differentiation support} provided by base R package \emph{stats}, with two operators \code{D} and \code{deriv}. They support arithmetic operations and functions on real numbers such as \code{sin}, on expressions built with \code{expression()} or \code{parse}.
+In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \code{Dtensor} object is created: it contains expressions that are derived twice (with \code{DD}). To get a concrete value, it is evaluated in  dataframe \code{mu} where symbolic variables are bound to actual numbers.
 \begin{lstlisting}
  expr<-expression(beta_1 + time*beta_2+u)
  mu = data.frame(beta_1=0.5, beta_2=1, time=3, u=2.3)
  D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
 \end{lstlisting}
 
-The \c{glue} package provides functions for string interpolation; text enclosed
+The \code{glue} package provides functions for string interpolation; text enclosed
 by c{\{} and c{\}} is evaluated using \eval as an R expression and replaced by
 its result. The code snippet below shows an example of this.
 
@@ -1428,15 +1439,15 @@ glue('{greeting} World!')
 
 \subsection{Miscellaneous}
 A common use of \eval is the extraction of unevaluated text of arguments passed
-to \c{...} (vararg). For a non-vararg parameter \c{x}, the expressions
-\c{substitute(x)} can be used to extract the argument text. However, for \c{...}
-arguments, the expression \c{eval(quote(substitute(list(...))))} or its variants
+to \code{...} (vararg). For a non-vararg parameter \code{x}, the expressions
+\code{substitute(x)} can be used to extract the argument text. However, for \code{...}
+arguments, the expression \code{eval(quote(substitute(list(...))))} or its variants
 are used. The \eval call evaluates the quoted expression
-\c{substitute(list(...))}. This returns a \c{list} of unevaluated argument
-expressions. The \c{hasGroupNumber} function from the \c{lattice} package is one
+\code{substitute(list(...))}. This returns a \code{list} of unevaluated argument
+expressions. The \code{hasGroupNumber} function from the \code{lattice} package is one
 of the many users of this pattern.
 
-The \c{withr} package provides the \c{defer} function which defers the
+The \code{withr} package provides the \code{defer} function which defers the
 evaluation of an expression until a stack frame is exited. It attaches this
 expression as an attribute to the frame environment and uses \eval to evaluate
 it on frame exit.
@@ -1448,22 +1459,22 @@ environments other than the local one. In Javascript, patterns are ad-hoc, such
 as json loading and parsing, and can often be rewritten without \eval, such as a
 function or method call, or an assignment to a local variable or an object
 property. For R, the data suggests that in some cases, the use of \eval in the
-\c{X, V, \$, <-, FUN} and the function calls related to code generation could
+\code{X, V, \$, <-, FUN} and the function calls related to code generation could
 replaced by more specific functions. For instance, variable lookup in any
-environment can be performed with \c{get}, and assignment in any environment,
-with \c{assign}. Building a call and executing can be done with \c{do.call}.
+environment can be performed with \code{get}, and assignment in any environment,
+with \code{assign}. Building a call and executing can be done with \code{do.call}.
 Nevertheless, many of the observed \eval usage in R, particularly, the ones
 related to statistical modeling and DSLs are more sophisticated than those
 reported for JavaScript.
 
 Finally, let us mention an anecdotal use of \eval as a means to bypass some
-checks performed by the \c{R CMD CHECK} tool. This tool performs a number of
+checks performed by the \code{R CMD CHECK} tool. This tool performs a number of
 well-formedness rules before accepting a package to the CRAN repository. Many
 checks are performed statically by looking at syntactic constructs in the R
 code. Using \eval allows one to bypass such checks and thus submit a package to
 CRAN that would otherwise be refused. For example,  it checks that packages
-do not call the \c{unlockBinding} function.\footnote{It allows one to open and
-modify loaded package namespaces.} Packages such as \c{data.table} circumvent
+do not call the \code{unlockBinding} function.\footnote{It allows one to open and
+modify loaded package namespaces.} Packages such as \code{data.table} circumvent
 such restrictions by using \eval as the check is only performed statically.
 
 \section{Discussion}
@@ -1472,8 +1483,8 @@ such restrictions by using \eval as the check is only performed statically.
 
 Similarly to JavaScript, there are also unnecessary uses of \eval. These uses of
 \eval can be replaced with alternate functions yielding the same results. For
-example, the \c{PerformanceAnalytics} package contains a function
-\c{chart.QQPlot} that uses \eval to resolve a string into function and another
+example, the \code{PerformanceAnalytics} package contains a function
+\code{chart.QQPlot} that uses \eval to resolve a string into function and another
 to call it and assign its results into a variable:
 \begin{lstlisting}
   function (R, d="norm", dp, ...) {
@@ -1487,17 +1498,17 @@ to call it and assign its results into a variable:
 	  q.f <- get(paste0("q",d)); z <- q.f(dp, ...)
   }
 \end{lstlisting}
-  or even to a one-liner \c{do.call(paste0("q",d), c(dp, list(...)))}.
+  or even to a one-liner \code{do.call(paste0("q",d), c(dp, list(...)))}.
 
 
-  The \c{copyslots} function from the \c{coin} package uses \eval to copy the
-  slots from one \c{S4} object to another. It performs
-  \c{eval(str2lang(paste0("target@", s, " <- source@", s)))} for each slot name
-  \c{s}. This can be replaced by the expression \c{slot(target, s) <- slot(source,
-    s)} which uses the \c{slot<-} and \c{slot} functions to assign and retrieve
+  The \code{copyslots} function from the \code{coin} package uses \eval to copy the
+  slots from one \code{S4} object to another. It performs
+  \code{eval(str2lang(paste0("target@", s, " <- source@", s)))} for each slot name
+  \code{s}. This can be replaced by the expression \code{slot(target, s) <- slot(source,
+    s)} which uses the \code{slot<-} and \code{slot} functions to assign and retrieve
   the slots by name.
 
-  Another examples is in the \c{configr::config.funs.par} function whose
+  Another examples is in the \code{configr::config.funs.par} function whose
   simplified definition is shown below.
 
 \begin{lstlisting}
@@ -1514,9 +1525,9 @@ config.funs.par <- function(fun = "", ...) {
 }
 \end{lstlisting}
 
-  The function appears to use \eval since the function name \c{fun} is received
+  The function appears to use \eval since the function name \code{fun} is received
   as a string. This string can be resolved to the function object using the
-  \c{get} function and the contents of \c{text.1}, \c{text.2}, and \c{text.3}
+  \code{get} function and the contents of \code{text.1}, \code{text.2}, and \code{text.3}
   can be written directly without the need to convert them to text for
   evaluation using \eval.
 
