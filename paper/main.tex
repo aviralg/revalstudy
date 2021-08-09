@@ -1116,12 +1116,7 @@ unit testing frameworks.\footnote{In the corpus, we have \c{RUnit, testthat,
   tinytest} and \c{unitizer} testing frameworks.} They run their tests via
 \eval, and thus everything becomes a side-effect.
 
-From our 98K
-%\packageNbrunsRnd
-programs, we capture
-14M
-%\SEAllRnd
-side-effects from
+From our \packageNbrunsRnd programs, we capture \SEAllRnd side-effects from
 \SEAllCallsRnd \eval calls (\SEUserCallsToAllRatio) in \SEAllSites sites
 (\SEUserSitesToAllRatio). Again, the challenge is to remove the accidental
 side-effects caused by the R virtual machine implementation which are not
@@ -1129,8 +1124,8 @@ related to the user code. For example, the \c{.Random.seed} variable, which
 contains the state of the random number generator, is saved and restored from
 and to the global environment every time  a statistical routine is called.
 %
-Removing those leaves us with \SEUserRnd side effects from \SEUserCallsRnd \eval
-calls in \SEUserSites sites. These sites are part of \SEUserFunctions R
+Removing those leaves us with \SEUserRnd side effects from \SEUserCallsRnd
+\eval calls in \SEUserSites sites. These sites are part of \SEUserFunctions R
 functions (\SEUserFunctionsToAllRatio of all functions doing \eval) in
 \SEUserPackages packages. From these functions, \SEFunsNighty are responsible
 for 90\% of side effects. Half of the side-effects come just from three
@@ -1209,6 +1204,7 @@ JavaScript,\footnote{\citep{ecoop11} shows that in the \emph{Interactive}
 scenario, \eval in Javascript performs, store events can reach up to 40\% of the
 events, and 7\% to 8\% of the \eval do side effects in the global scope. } and
 that over half of them happen in a predictable environment.
+% TODO connect the minimization group and side-effects
 
 \section{Usage of \eval}
 
