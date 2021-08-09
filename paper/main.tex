@@ -1382,11 +1382,32 @@ This is turned into the closure \code{function(x) \{ eval(parse(text=formula))
 argument, but passing \code{function(x) exp(-x^2/2)} is probably not as
 convenient for domain-experts as passing \code{"exp(-x^2/2)"}.
 
+An unexpected use of \eval is the extraction of unevaluated text of arguments
+passed to a \code{...} parameter. Consider the definition of the \code{NVL}
+function from the \code{statnet.common} package. This function returns the first
+argument that is non \code{NULL}.
+
+\begin{lstlisting}
+NVL <- function(...) {
+    for(e in eval(substitute(alist(...))))
+        x <- eval(e, parent.frame())
+        if(!is.null(x)) break
+    }
+    x
+}
+\end{lstlisting}
+The expression \code{eval(substitute(alist(...)))} is used to extract the
+unevaluated text of the arguments passed to \code{NVL}.
+\code{substitute(alist(...))} returns an expression representing a call to the
+\code{alist} function with \code{...} replaced by the arguments supplied to
+\code{NVL}. Evaluating this expression returns a \code{list} whose arguments are
+the unevaluated argument expressions which are evaluated sequentially for their
+result.
 
 Assertion packages such as \code{assertthat} provide functions to check pre and
 post conditions and produce friendly error messages on failures. These
 conditions are written as expressions which are evaluated using \eval. Consider
-the \code{see_\if} function shown below. It accepts the conditions as arguments
+the \code{see\_if} function shown below. It accepts the conditions as arguments
 to the \code{...} parameter. The code of these conditions is extracted using
 \code{eval(substitute(alist(...)))}. The conditions are then evaluated
 sequentially by the expression \code{eval(assertion, env)}, inside a
@@ -1454,14 +1475,6 @@ glue('{greeting} World!')
 \end{lstlisting}
 
 \subsection{Miscellaneous}
-A common use of \eval is the extraction of unevaluated text of arguments passed
-to \code{...} (vararg). For a non-vararg parameter \code{x}, the expressions
-\code{substitute(x)} can be used to extract the argument text. However, for \code{...}
-arguments, the expression \code{eval(quote(substitute(list(...))))} or its variants
-are used. The \eval call evaluates the quoted expression
-\code{substitute(list(...))}. This returns a \code{list} of unevaluated argument
-expressions. The \code{hasGroupNumber} function from the \code{lattice} package is one
-of the many users of this pattern.
 
 The \code{withr} package provides the \code{defer} function which defers the
 evaluation of an expression until a stack frame is exited. It attaches this
