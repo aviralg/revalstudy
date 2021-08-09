@@ -384,31 +384,37 @@ infrastructure.
 
 We distinguish three sources for calls to \eval, those originating from
 \emph{Base} libraries bundled with R, packages hosted on \emph{CRAN}, and
-end-user scripts from \emph{Kaggle}. We consider base libraries as part of the
-language implementation and do not include them in our analysis.
+end-user scripts from \emph{Kaggle}: 
 
-\mypara{Base.} The \BasePackages base libraries provide arithmetics, statistics,
-and operating system functionalities. Base has \BaseFunsWithEvals functions with
-\BaseEvalCallSites calls to \eval. These functions perform key tasks such as
-package loading, there is thus hardly any R program that does not invoke them.
+\begin{itemize}[$-$]
 
-\mypara{CRAN.} Packages hosted on the Comprehensive R Archive Network ({\small
-\url{cran.r-project.org}}, aka CRAN) have three sources of runnable: unit
-\emph{tests} for individual functions, code \emph{examples} embedded in the
-documentation, and use-cases called \emph{vignettes}. All runnable snippets
-can be extracted into independent files. We download \CranPackages packages and
-extract \CranRunnableScripts scripts with \CranRunnableCode lines of code
-(\CranRunnableCodeExamplesRnd in examples, \CranRunnableCodeVignettesRnd in
-vignettes and \CranRunnableCodeTestsRnd in tests). CRAN packages contain 20
-years of contribution from thousands from thousands of authors, often
-experienced R developers.
+\item \emph{Base.} The \BasePackages base libraries provide arithmetics,
+  statistics, and operating system functionalities. Base has \BaseFunsWithEvals
+  functions with \BaseEvalCallSites calls to \eval. These functions perform key
+  tasks such as package loading, there is thus hardly any R program that does
+  not invoke them. We consider base libraries as part of the language
+  implementation and do not include them in our analysis.
 
-\mypara{Kaggle.} Kaggle ({\small \url{kaggle.com}}) is an online platform that
-allows users to submit and compete to solve problems. We download \KaggleUnique
-unique scripts and notebooks with their input files (\KaggleDuplicates
-duplicates were removed using SHA-1 hashes); 665K lines of R code making only
-\KaggleWithEvals calls \eval. Authors of these scripts have highly variable
-levels of expertise.
+\item \emph{CRAN.} Packages hosted on the Comprehensive R Archive Network
+  ({\small \url{cran.r-project.org}}, aka CRAN) have three sources of runnable:
+  unit \emph{tests} for individual functions, code \emph{examples} embedded in
+  the documentation, and use-cases called \emph{vignettes}. All runnable
+  snippets can be extracted into independent files. We download \CranPackages
+  packages and extract \CranRunnableScripts scripts with \CranRunnableCode
+  lines of code (\CranRunnableCodeExamplesRnd in examples,
+  \CranRunnableCodeVignettesRnd in vignettes and \CranRunnableCodeTestsRnd in
+  tests). CRAN packages contain 20 years of contribution from thousands from
+  thousands of authors, often experienced R developers.
+
+\item \emph{Kaggle.} Kaggle ({\small \url{kaggle.com}}) is an online platform
+  that allows users to submit and compete to solve problems. We download
+  \KaggleUnique unique scripts and notebooks with their input files
+  (\KaggleDuplicates duplicates were removed using SHA-1 hashes); 665K lines of
+  R code making only \KaggleWithEvals calls \eval. Authors of these scripts
+  have highly variable levels of expertise.
+  
+\end{itemize}
+
 
 \mypara{Discussion.} When we started this project, our goal was to contrast the
 usage of \eval by package developers and end-users, but the Kaggle dataset have
@@ -487,7 +493,7 @@ data size, and number of elements manipulated. The pipeline steps are:
    \vspace{-2mm}\caption{Pipeline}\label{fig:pipeline}
  \end{figure}
 
-\begin{enumerate}
+\begin{compactenum}[(1)]
 \item \emph{Download.} Packages are downloaded from CRAN, for Kaggle a web
   crawler retrieves code, and a command-line tool gets data. Installation is
   complicated by native dependencies which sometimes have to be resolved
@@ -506,7 +512,7 @@ data size, and number of elements manipulated. The pipeline steps are:
   RMarkdown notebooks process the summarized data to generate all graphs (PDF
   from \c{ggplot2}) and numbers (exported as \LaTeX macros) appearing in the
   paper.
-\end{enumerate}
+\end{compactenum} 
 
 \vspace{1mm} 
 \noindent The pipeline runs in parallel~\cite{GNUparallel}
