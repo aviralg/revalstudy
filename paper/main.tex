@@ -1357,15 +1357,13 @@ expressions passed to \eval. Here, we illustrate them in concrete instances.
 %\todo{Say somewhere that the R community commonly calls call/argument capturing
 %(with substitute or match.call), Non-Standard Evaluation.}
 To understand the how R developers use \eval, we manually inspected top 117 eval
-call-sites which contribute to XX\% of the eval calls. We describe the common
+call-sites which contribute to 90\% of the eval calls. We describe the common
 usage patterns below.
 
-\subsection{Simplify Interfaces}
-
-A common use of \eval is to \emph{simplify interfaces} by letting users pass
-string argument which can be parsed and evaluated in custom a environment. An
-example is the \code{rARS} function shown below. This function is defined in the
-\code{AdapSamp} package that implements sampling algorithms.
+\emph{Simplify Interfaces}. A common use of \eval is to simplify interfaces by
+letting users pass string argument which can be parsed and evaluated in custom a
+environment. An example is the \code{rARS} function shown below. This function
+is defined in the \code{AdapSamp} package that implements sampling algorithms.
 
 \begin{lstlisting}
 rARS <- function(n, formula, min=-Inf, max=Inf, sp) {
@@ -1373,8 +1371,8 @@ rARS <- function(n, formula, min=-Inf, max=Inf, sp) {
     p <- function(x) { eval(parse(text=formula)) }
     ...
 }
-
 \end{lstlisting}
+
 The \code{rARS} function take a \code{formula} argument, an expression in
 \code{x} as a string, that represents the kernel of the target distribution.
 This is turned into the closure \code{function(x) \{ eval(parse(text=formula))
@@ -1382,7 +1380,26 @@ This is turned into the closure \code{function(x) \{ eval(parse(text=formula))
 argument, but passing \code{function(x) exp(-x^2/2)} is probably not as
 convenient for domain-experts as passing \code{"exp(-x^2/2)"}.
 
-An unexpected use of \eval is the extraction of unevaluated text of arguments
+\emph{Code Generation.} The \c{Rcpp} package which bridges R with C++ is a
+popular user of this pattern. Its \code{.makeCppMethods} function, shown below,
+uses \eval to automatically generate R bindings to native code. The expression
+\code{function(...) .CppObject$WHAT(...), list(WHAT = as.name(what))} is
+evaluated with different values of \code{what} to generate wrapper functions
+which are assigned to the \code{methods} structure keyed by \code{what}.
+
+\begin{lstlisting}
+.makeCppMethods <- function(methods, cppclassinfo, env) {
+    cppMethods <- names(cppclassinfo@methods)
+    newMethods <- names(methods)
+    for(what in cppMethods[! cppMethods %in% newMethods])
+        methods[[what]] <- eval(substitute(
+                  function(...) .CppObject$WHAT(...), list(WHAT = as.name(what))),
+                                env)
+    methods
+}
+\end{lstlisting}
+
+\emph{Extracting ... arguments.} A surprising use of \eval is the extraction of unevaluated text of arguments
 passed to a \code{...} parameter. Consider the definition of the \code{NVL}
 function from the \code{statnet.common} package. This function returns the first
 argument that is non \code{NULL}.
@@ -1404,33 +1421,9 @@ unevaluated text of the arguments passed to \code{NVL}.
 the unevaluated argument expressions which are evaluated sequentially for their
 result.
 
-Assertion packages such as \code{assertthat} provide functions to check pre and
-post conditions and produce friendly error messages on failures. These
-conditions are written as expressions which are evaluated using \eval. Consider
-the \code{see\_if} function shown below. It accepts the conditions as arguments
-to the \code{...} parameter. The code of these conditions is extracted using
-\code{eval(substitute(alist(...)))}. The conditions are then evaluated
-sequentially by the expression \code{eval(assertion, env)}, inside a
-\code{tryCatch} block. If a condition evaluates to \code{FALSE}, the function
-returns immediately with an error message, leaving the remaining conditions
-unevaluated.
-
-\begin{lstlisting}
-see_if <- function(..., env = parent.frame(), msg = NULL) {
-    asserts <- eval(substitute(alist(...)))
-    for (assertion in asserts) {
-      res <- tryCatch({
-        eval(assertion, env)
-      }, assertError = function(e) {
-        structure(FALSE, msg = e$message)
-      })
-    ...
-}
-
-\end{lstlisting}
-
-Similar idea is used by the \code{igraph} package to define the \code{\%\|\|\%}
-operator whose code is shown below. This operator returns the result of
+\emph{Conditional Evaluation.} Developers frequently use \eval to explicitly
+control the evaluation of code. Consider the \code{\%\|\|\%} operator from the
+\code{igraph} package shown below. This operator returns the result of
 evaluating the first argument (\code{lhs}) if it is not \code{NULL}, otherwise
 it returns the result of evaluating the second argument (\code{rhs}). This is
 similar to the \code{\|\|} operator which performs the logical OR of its
@@ -1448,13 +1441,37 @@ arguments except it treats \code{NULL} as the \code{FALSE} value.
 }
 \end{lstlisting}
 
+A similar idea is used by assertion packages such as \code{assertthat} which
+provide functions to check pre and post conditions and produce friendly error
+messages on failures. These conditions are written as expressions which are
+evaluated using \eval. Consider the \code{see\_if} function shown below. It
+accepts the conditions as arguments to the \code{...} parameter. The code of
+these conditions is extracted using \code{eval(substitute(alist(...)))}. The
+conditions are then evaluated sequentially by the expression
+\code{eval(assertion, env)}, inside a \code{tryCatch} block. If a condition
+evaluates to \code{FALSE}, the function returns immediately with an error
+message, leaving the remaining conditions unevaluated.
+
+\begin{lstlisting}
+see_if <- function(..., env = parent.frame(), msg = NULL) {
+    asserts <- eval(substitute(alist(...)))
+    for (assertion in asserts) {
+      res <- tryCatch({
+        eval(assertion, env)
+      }, assertError = function(e) {
+        structure(FALSE, msg = e$message)
+      })
+    ...
+}
+
+\end{lstlisting}
 
 
-Many packages use \eval to implement variations of the \code{base} R functions.
-For example, the \code{igraph} package provides the \code{do_call} function
-shown below. This is a variant of the \code{do.call} function from the
-\code{base} package. This function executes a function call by constructs it
-from a name and a list of arguments and calling \eval.
+\textit{Core function variants.} Many packages use \eval to implement variations of the
+\code{base} R functions. For example, the \code{igraph} package provides the
+\code{do_call} function shown below. This is a variant of the \code{do.call}
+function from the \code{base} package. This function executes a function call by
+constructs it from a name and a list of arguments and calling \eval.
 \begin{lstlisting}
 do_call <- function(f, ..., .args = list(), .env = parent.frame()) {
   f <- substitute(f)
