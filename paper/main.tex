@@ -1196,8 +1196,6 @@ environment. We have manually inspected a few of these sites, but except for
 manual injection of parameters into a \c{model.frame} execution environment, we
 did not find a common use case.
 
-% TODO do assignments change types?
-
 \begin{table}[h]
   \small
   \centering
@@ -1208,6 +1206,19 @@ did not find a common use case.
   \caption{Types of \eval side-effects} \label{tab:se-types}
 \end{table}
 
+Out of the minimized expressions, it is \c{BLOCK}, \c{<-} and
+\c{F(F(X)} that contribute to the vast majority of side effects. Concretely,
+92\% of \c{BLOCK}, 87\% of \c{<-} and 15\% of \c{F(F(X))} expressions contain
+side effects. In the case of \c{BLOCK}, most of the side effects happen in the
+environment passed to \eval (which by default is the parent environment, \ie
+the local or function in our classification). For \c{<-} it is 15\%, however,
+that is only because of the \c{plyr::allocate\_column} which does the side
+effect in the environment containing the data frame that is the target for the
+newly allocated column. Without this call, \c{<-} is similarly predictable with
+96\% of side effects in the passed environment. For \c{F(F(X))} minimization
+for, it is less clear as 48\% of side effects happen in a different environment
+to the one that was passed to \eval. 
+
 \mypara{Discussion} In JavaScript assignments in \eval can happen in either
 local scope or less often, when called through an alias, in the global scope. In
 R, given the support for first-class environments, it can happen anywhere,
@@ -1217,7 +1228,6 @@ JavaScript,\footnote{\citep{ecoop11} shows that in the \emph{Interactive}
 scenario, \eval in Javascript performs, store events can reach up to 40\% of the
 events, and 7\% to 8\% of the \eval do side effects in the global scope. } and
 that over half of them happen in a predictable environment.
-% TODO connect the minimization group and side-effects
 
 \section{Usage of \eval}
 
