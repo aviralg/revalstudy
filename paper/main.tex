@@ -677,9 +677,9 @@ accounts for \packageGgplotsymbolpercent of symbols and comes from one site in
 \c{ggproto}, one of the many object-oriented systems for R.}
 
 
-\begin{wrapfigure}{r}{5.8cm}
+\begin{wrapfigure}{r}{6.2cm}
 \begin{tabular}{c}
-{\hspace{-25mm}\includegraphics[width=0.7\textwidth]{package_size_loaded_distribution}}
+{\hspace{-25mm}\includegraphics[width=0.8\textwidth]{package_size_loaded_distribution}}
 \end{tabular}
 \caption{Loaded code} \label{fig:sizedistribution}
 \end{wrapfigure}
@@ -740,14 +740,25 @@ elucidate \emph{what} it does.
 \subsection{The expression in \eval} \label{sec:minimized}
 
 
-The expressions passed to \eval vary widely. In order to categorize them, let us
-use a minimization function $min(e)$ which for a given expression $e$ returns a
-normal form that abstracts incidental details allowing the reader to focus on
-the structure of the evaluated code. The minimization function performs constant
-folding of arithmetic and string expressions for base operators, e.g.
-$min(\c{1+1})=\c{V}$, value simplification, $min(\c{c(1,2,3+2)})=\c{V}$,
-variable absorption, $min(\c{x+y})=\c{X}$, function absorption,
-$min(\c{g(f(x),h(z))})=\c{F(F(X))}$ and a number of other simplifications.
+The expressions passed to \eval vary widely. We categorize expressions using a
+minimization function which abstract some of the incidental details of
+expressions and return a ``shape'' that can be used to group similar \evals. The
+function $min(e)$ which for a given expression $e$ returns a normal form. Normal
+forms use \c V to stand in for values occurring in expression, \c X stands in
+for variables, and \c F stands for functions. The function performs constant
+folding of arithmetic and string expressions over base operators, for instance
+$min(\c{1+1})$ simplifies to $\c{V}$, on the ground that addition of values
+likely returns a value. Value simplification takes $min(\c{c(1,2,3+2)})$ to
+$\c{V}$ as a complex vector containing values is a value. Variable absorption
+has $min(\c{x+y})$ becomes $\c{X}$, this motivated by the fact that addition is
+not an ``interesting'' operation, and that \c X stands in for any number of
+variable lookups. Function absorption simplifies nested functions to keep an
+abstraction of the nesting $min(\c{g(f(x),h(z))})=\c{F(F(X))}$. There are other
+simplifications, the full list is in our artifact. It is worth mentioning that
+these simplifications are heuristics, in R \c{1+1} is not necessary \c 2. The
+addition operator can be redefined, but it typically isn't or at least not in a
+way that would invalidate arithmetic.
+
 Table~\ref{tab:minimizedexpressions} gives the 10 most frequent forms; \#sites
 and \%sites are, respectively, the number and ratio of sites receiving arguments
 of that form; \#packages is the number of packages with that form; \#operations
