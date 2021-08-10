@@ -1230,7 +1230,7 @@ real-world sample. The examples are often simplified to fit the space and
 increase clarity. For each example, we indicate the package and the function
 where it is located.
 
-\paragraph{Simplify Interfaces} A common use of \eval is to simplify interfaces by
+\mypara{Simplify Interfaces} A common use of \eval is to simplify interfaces by
 letting users pass string argument which can be parsed and evaluated in custom a
 environment. An example is the \code{rARS} function shown below. This function
 is defined in the \code{AdapSamp} package that implements sampling algorithms.
@@ -1253,7 +1253,7 @@ This is turned into the closure \code{function(x) \{ eval(parse(text=formula))
 argument, but passing \code{function(x) exp(-x^2/2)} is probably not as
 convenient for domain-experts as passing \code{"exp(-x^2/2)"}.
 
-\paragraph{Code Generation} The \c{Rcpp} package which bridges R with C++ is a
+\mypara{Code Generation} The \c{Rcpp} package which bridges R with C++ is a
 popular user of this pattern. Its \code{.makeCppMethods} function, shown below,
 uses \eval to automatically generate R bindings to native code. The expression
 \code{function(...) .CppObject$WHAT(...), list(WHAT = as.name(what))} is
@@ -1275,7 +1275,7 @@ which are assigned to the \code{methods} structure keyed by \code{what}.
   \caption{Rcpp::.makeCppMethods}
 \end{figure}
 
-\paragraph{Extracting \texttt{...} arguments} A surprising use of \eval is the
+\mypara{Extracting varargs} A surprising use of \eval is the
 extraction of unevaluated text of arguments passed to a \code{...} parameter.
 Consider the definition of the \code{NVL} function from the
 \code{statnet.common} package. This function returns the first argument that is
@@ -1302,7 +1302,7 @@ unevaluated text of the arguments passed to \code{NVL}.
 the unevaluated argument expressions which are evaluated sequentially for their
 result.
 
-\paragraph{Conditional Evaluation} Developers frequently use \eval to explicitly
+\mypara{Conditional Evaluation} Developers frequently use \eval to explicitly
 control the evaluation of code. Consider the \code{\%\|\|\%} operator from the
 \code{igraph} package shown below. This operator returns the result of
 evaluating the first argument (\code{lhs}) if it is not \code{NULL}, otherwise
@@ -1352,7 +1352,7 @@ see_if <- function(..., env = parent.frame(), msg = NULL) {
   \caption{assertthat::see\_if}
 \end{figure}
 
-\paragraph{Core function variants} Many packages use \eval to implement variations of the
+\mypara{Core function variants} Many packages use \eval to implement variations of the
 \code{base} R functions. For example, the \code{igraph} package provides the
 \code{do_call} function shown below. This is a variant of the \code{do.call}
 function from the \code{base} package. This function executes a function call by
@@ -1369,7 +1369,7 @@ do_call <- function(f, ..., .args = list(), .env = parent.frame()) {
 \caption{igraph::do\_call}
 \end{figure}
 
-\paragraph{Domain-Specific Languages} The combination of laziness, metaprogramming,
+\mypara{Domain-Specific Languages} The combination of laziness, metaprogramming,
 first-class environments and dynamic evaluation make R the perfect toolkit for
 building DSLs. An example of this is the \code{glue} package which provides
 functions for string interpolation. The code snippet below shows an example of
@@ -1418,37 +1418,35 @@ In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a 
  D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
 \end{lstlisting}
 
-\paragraph{Easier Maintenance} The combination of \c{match.call} and \eval is
-frequently used to make it easier to maintain functions with similar interfaces.
-This pattern is very commonly employed by modeling functions. Consider the
-example below of the \code{survfit.formula} function from package
-\code{survival}.
+
+\mypara{Boilerplate Removal} The combination of \code{match.call} and \code{eval}
+is frequently used by modeling functions to avoid boilerplate code and ease
+maintenance. Consider the example shown below of function \code{survfit.formula}
+from the \code{survival} package.
 
 \begin{figure}[h]
 \begin{lstlisting}
-survfit.formula <- function(formula, data, ...) {
+survfit.formula <- function(formula, data, weights, ...) {
   Call <- match.call()
-  indx <- match(c('formula', 'data', ...), names(Call), nomatch=0)
+  indx <- match(c('formula', 'data', 'weights'), names(Call), nomatch=0)
   temp <- Call[c(1, indx)]
   temp[[1L]] <- quote(stats::model.frame)
   mf <- eval.parent(temp)
-  ...
 }
 \end{lstlisting}
   \caption{survival::survfit.formula}
 \end{figure}
 
-This function uses \code{match.call} to extract the expression with which it is
-called. Then, it extracts the indices of relevant arguments using the
-\code{match} function. Next, it subsets the \code{Call} variable to extract
-elements at those indices along with the first element which is the function
-name. The function name is then replaced with \code{stats::model.frame}.
-Finally, this expression is evaluated. By using \code{...}, the function accepts
-arbitrary arguments. It filters the arguments of interest using \code{match}
-function. \todo{explain more}
+Here, \code{match.call} is used to access the expression with which
+\code{survfit.formula} is called. The next three lines construct a call to
+\code{stats::model.frame} with argument text of parameters \code{'formula'},
+\code{'data'}, and \code{'weights'}. Then, the call expression is evaluated in
+the parent environment. The use of \code{match.call}, avoids repeated use of
+\code{substitute} for extracting the argument expressions. This setup is also
+extensible as new parameter names can be easily added to the \code{match} call.
 
 
-\paragraph{Remove Boilerplate} For example, the \code{PopED::get\_rse} uses it to
+For example, the \code{PopED::get\_rse} uses it to
 assign a number of variables in the current scope:
 \code{eval(parse(text=paste(default_args[[i]]), "<- ", i))}. There are also more
 sophisticated cases. The \code{plyr::allocate\_column} function uses eval for a
@@ -1457,7 +1455,7 @@ repeatedly evaluates R expressions capturing any assignments that happen in it
 as samples of Markov chains.
 
 
-\paragraph{Code Obfuscation} Some packages use \eval to bypass the restrictions
+\mypara{Code Obfuscation} Some packages use \eval to bypass the restrictions
 imposed by the \code{R CMD CHECK} tool. This tool enforces some well-formedness
 rules on a submitted package before accepting it for inclusion in CRAN. Some
 static checks ensure that the package code does not use certain restricted
@@ -1484,9 +1482,22 @@ scalaEnsure <- function() {
 \caption{aibd::scalaEnsure}
 \end{figure}
 
-\paragraph{Miscellaneous}
+\mypara{Miscellaneous}
 
-\paragraph{Lookup and indexing}
+\mypara{Lookup and indexing}
+
+\mypara{Attributes}
+Package \code{nlme} uses \eval to evaluate expressions attached as attributes to
+its objects. Consider the definition of the \code{formula.pdMat} function below.
+It extracts the \code{"formula"} attribute attached to the \code{pdMat} object
+and evaluates it.
+
+\begin{figure}[h]
+\begin{lstlisting}
+formula.pdMat <- function(x, asList, ...) eval(attr(x, "formula"))
+\end{lstlisting}
+  \caption{nlme::formula.pdMat}
+\end{figure}
 
 
 \subsection{Shapes redux}
