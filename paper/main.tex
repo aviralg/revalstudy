@@ -212,12 +212,12 @@ choices affect its expressive power. The key choices are the input format, the
 environment in which generated code evaluates and the reflective operations
 available to that code. Fig.~\ref{comp} summarizes a few designs.
 
-\begin{figure}[!h]\center\small\begin{tabular}{r@{~}l|l|l|l}\hline
-\tiny\sc Language&&\sc\tiny Input&\sc\tiny Scope&\tiny\sc Reflective operations\\\hline
+\begin{figure}[!h]\center\small\begin{tabular}{r@{~}llll}\toprule
+\tiny\sc Language&&\sc\tiny Input&\sc\tiny Scope&\tiny\sc Reflective operations\\\midrule
 \bf Julia&\cite{julia}     & expression& toplevel         & data\\
 \bf Java&\cite{cl}  & bytecode  & classloader       & data\\
 \bf JavaScript&\cite{ecoop11}& text      & current, toplevel& data\\
-\bf R&\cite{R96}  & expression& programmatic      & data, stack, environment\\\hline
+\bf R&\cite{R96}  & expression& programmatic      & data, stack, environment\\\bottomrule
 \end{tabular}\caption{Design space of \eval}\label{comp}
 \end{figure}
 
@@ -594,24 +594,24 @@ histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
   \small
 \begin{tabular}{@{}l@{\hspace{1.5cm}}l@{}}
 \begin{minipage} {5cm}\small
-  \begin{tabular}{|r@{\,}r@{\,}l@{}r|r@{\,}r@{\,}l@{}r|} \hline
-    \multicolumn{3}{|c}{\small\#calls} &\small \#pck
-&     \multicolumn{3}{c}{\small\#calls} &\small\#pck \\\hline
+  \begin{tabular}{r@{\,}r@{\,}l@{}r|r@{\,}r@{\,}l@{}r} \toprule
+    \multicolumn{3}{c}{\bf \small\#calls} &\bf \small \#pck
+&     \multicolumn{3}{c}{\bf \small\#calls} &\bf \small\#pck \\\midrule
 \tt 1 &--& \tt 10      & \packageBina  & \tt 10K &--&\tt 100K  & \packageBine\\
 \tt 11 &--& \tt 100    & \packageBinb  & \tt 100K &--&\tt 1M  & \packageBinf\\
 \tt 101 &--& \tt 1K    & \packageBinc  & \tt 1M &--&\tt 10M   & \packageBing\\
-\tt 1K &--& \tt 10K    & \packageBind  & \tt 10M &--& \tt 100M & \packageBinh\\\hline
+\tt 1K &--& \tt 10K    & \packageBind  & \tt 10M &--& \tt 100M & \packageBinh\\\bottomrule
 \end{tabular}
 \caption{Call frequency}\label{freq}
 \end{minipage}
 &
 \begin{minipage}{7cm}\small
-\begin{tabular}{|@{\,}r|rrrr|}\hline
-  &\eval & \c{evalq} & \c{eval} & \c{local}\\[-1.5mm]
-           & & & \c{.parent} &\\\hline
+\begin{tabular}{@{\,}r|rrrr}\toprule
+  &\bf \eval & \bf \c{\bf evalq} & \c{\bf eval} & \c{\bf local}\\[-1.5mm]
+           & & & \c{\bf .parent} &\\\midrule
 \small Static sites &\packageStaticeval&\packageStaticevalq&\packageStaticevalparent&\packageStaticlocal \\
 \small Exercised sites&\packageTriggeredeval&\packageTriggeredevalq&\packageTriggeredevalparent&\packageTriggeredlocal\\
-\small Invocations&\packageEvalsRnd&\packageEvalqsRnd&\packageEparentsRnd&\packageLocalsRnd\\\hline
+\small Invocations&\packageEvalsRnd&\packageEvalqsRnd&\packageEparentsRnd&\packageLocalsRnd\\\bottomrule
 \end{tabular}~\\[2mm]\caption{Variants}\label{tab:variantseval}
 \end{minipage}\end{tabular}
 
@@ -621,6 +621,7 @@ histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
   \caption{\eval call sites coverage of the \PkgPackages packages.}%
   \label{fig:traced-eval-callsites}
 \end{figure}
+
 
 Our pipeline runs \CranRunnableScripts scripts extracted from \CranPackages
 packages. Any run that does not call \eval is discarded, leaving us with
@@ -632,32 +633,28 @@ exercised can be chalked down to incomplete tests and analysis failures
 (\PkgFailedProgramsRatio of the runs crashed or timed out).
 Fig.~\ref{fig:traced-eval-callsites} plots exercised site with respect to all
 sites for each program; as can be seen coverage is unequal.
-
 Fig.~\ref{freq} summarizes the frequency of calls, call counts on the left and
 number of packages on the right. There are \packageFewcalls packages with fewer
 than 100 calls, and \packageManycalls packages with more than 1,000 calls.
 \packageMaxcallspack calls \eval \packageMaxcalls times and thus accounts for
 over half of our observations.
-
 Fig.~\ref{tab:variantseval} summarizes use of variants, the first row has sites
 (\emph{static}), the second has sites encountered during analysis
 (\emph{exercised}) and the last gives calls (\emph{invocations}). Most sites and
 calls go to \eval itself, \c{eval.parent} is rare, and both \c{evalq} and
 \c{local} are barely used at all.
 
-
 \begin{wrapfigure}{r}{5cm}  \small  \vspace*{-2mm}\centering
-  \begin{tabular}{|r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r|} \hline
-\multicolumn{3}{|c}{\#calls} & \#sites &
-\multicolumn{3}{c}{\#calls} & \#sites \\\hline
-\tt 0 &--& \tt 50    & \packageRunbina & \tt 501 &--& \tt 1000   & \packageRunbine\\
-\tt 51 &--& \tt 100  & \packageRunbinb & \tt 1001 &--& \tt 1500  & \packageRunbinf\\
-\tt 101 &--& \tt 250 & \packageRunbinc & \tt 1501 &--& \tt 2000  & \packageRunbing\\
-\tt 251 &--& \tt 500 & \packageRunbind & \tt 2001 &--& \tt 3000 & \packageRunbinh\\\hline
-\end{tabular}
-\caption{Normalized calls} \label{cn}
+  \begin{tabular}{r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r} \toprule
+    \multicolumn{3}{c}{\bf \#calls} & \bf \#sites &
+     \multicolumn{3}{c}{\bf \#calls} & \bf \#sites \\\midrule
+    \tt 0 &--& \tt 50    & \packageRunbina & \tt 501 &--& \tt 1000   & \packageRunbine\\
+    \tt 51 &--& \tt 100  & \packageRunbinb & \tt 1001 &--& \tt 1500  & \packageRunbinf\\
+    \tt 101 &--& \tt 250 & \packageRunbinc & \tt 1501 &--& \tt 2000  & \packageRunbing\\
+    \tt 251 &--& \tt 500 & \packageRunbind & \tt 2001 &--& \tt 3000 & \packageRunbinh\\\bottomrule
+  \end{tabular}
+  \caption{Normalized calls} \label{cn}
 \end{wrapfigure}
-
 
 Fig.~\ref{cn} shows average count of calls from a given site and given run and
 how many sites fall in that range. For instance, \packageRunbinh sites are
@@ -767,18 +764,18 @@ is the ratio of sites that evaluate in a function environment. The example
 column shows one sample expression $e$ that normalizes to the particular form.
 
 \begin{table}[h]\small
-\begin{tabular}{|c|r|r|r|r|r|c|}\hline
-  $min(e)$& \#sites & \%sites & \#packages & \#operations & \%envir & example\\\hline
-\c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedmedianoperationsaRnd &\packageMinimizedpercentparentframesa & \c{y+1}\\\hline
-\c{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedmedianoperationsbRnd & \packageMinimizedpercentparentframesb & \c{gbov( mean(x), a-1)}\\\hline
-\c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedmedianoperationscRnd &\packageMinimizedpercentparentframesc& \c{c(42,21,0)}\\\hline
-\c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedmedianoperationsdRnd & \packageMinimizedpercentparentframesd & \c{seq\_len(iters)} \\\hline
-\c{\$} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedmedianoperationseRnd & \packageMinimizedpercentparentframese & \c{DF\$B}\\\hline
-\c{model.frame}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedmedianoperationsfRnd & \packageMinimizedpercentparentframesf &  \c{model.frame(formula = Z $\sim$ U)}   \\\hline
-\c{F()}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedmedianoperationsgRnd & \packageMinimizedpercentparentframesg & \c{rgamma(3, 2, n = 10L)} \\\hline
-\c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentparentframesh & \c{function(x, y) x + 3 * y} \\\hline
-\c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedmedianoperationsiRnd & \packageMinimizedpercentparentframesi & \c{x[1, 2:3, 2:3] <- value}\\\hline
-\c{BLOCK} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentparentframesj & \c{\{ write.csv(iris, tf) ; file.size(tf) \}} \\\hline
+\begin{tabular}{crrrrrc}\toprule
+  \bf $min(e)$& \bf \#sites & \bf \%sites & \bf \#packages & \bf \#operations & \bf \%envir & \bf example\\\midrule
+\c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedmedianoperationsaRnd &\packageMinimizedpercentparentframesa & \c{y+1}\\
+\c{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedmedianoperationsbRnd & \packageMinimizedpercentparentframesb & \c{gbov( mean(x), a-1)}\\
+\c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedmedianoperationscRnd &\packageMinimizedpercentparentframesc& \c{c(42,21,0)}\\
+\c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedmedianoperationsdRnd & \packageMinimizedpercentparentframesd & \c{seq\_len(iters)} \\
+\c{\$} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedmedianoperationseRnd & \packageMinimizedpercentparentframese & \c{DF\$B}\\
+\c{model.frame}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedmedianoperationsfRnd & \packageMinimizedpercentparentframesf &  \c{model.frame(formula = Z $\sim$ U)}   \\
+\c{F()}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedmedianoperationsgRnd & \packageMinimizedpercentparentframesg & \c{rgamma(3, 2, n = 10L)} \\
+\c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentparentframesh & \c{function(x, y) x + 3 * y} \\
+\c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedmedianoperationsiRnd & \packageMinimizedpercentparentframesi & \c{x[1, 2:3, 2:3] <- value}\\
+\c{BLOCK} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentparentframesj & \c{\{ write.csv(iris, tf) ; file.size(tf) \}} \\\bottomrule
 \end{tabular}
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
@@ -935,42 +932,42 @@ first invocation.
 \begin{table}[h]
   \centering\small\hspace{-.5cm}
 \begin{minipage}{3.7cm}
-  \begin{tabular}{@{}r|r|r@{}}\hline
- Kind & \#sites & \%sites \\\hline
+  \begin{tabular}{@{}rrr@{}}\toprule
+ \bf Kind & \bf \#sites & \bf \%sites \\\midrule
  Function & \packageNbFunctionEnvSites &  \packageNbFunctionEnvSitePercent\\
  Synthetic & \packageNbSyntheticEnvSites & \packageNbSyntheticEnvSitePercent \\
  Global &  \packageNbStrictGlobalEnvSites & \packageNbStrictGlobalEnvSitePercent \\
- Package & \packageNbPackageNamespaceEnvSites & \packageNbPackageNamespaceEnvSitePercent \\\hline
+ Package & \packageNbPackageNamespaceEnvSites & \packageNbPackageNamespaceEnvSitePercent \\\bottomrule
 \end{tabular}
 \caption{Kinds per site} \label{tab:highlevelenvironments}
 \end{minipage}\hspace{-.2cm}
 \begin{minipage}{3.7cm}\centering
-\begin{tabular}{@{}r|r|r@{}}\hline
- Offset & \#sites & \%sites \\\hline
+  \begin{tabular}{@{}rrr@{}}\toprule
+ \bf Offset & \bf \#sites & \bf \%sites \\\midrule
   \packageCallerEnvHierarchyNamea & \packageCallerEnvHierarchySitesaRnd & \packageCallerEnvHierarchySitePercenta \\
   \packageCallerEnvHierarchyNameb& \packageCallerEnvHierarchySitesbRnd & \packageCallerEnvHierarchySitePercentb \\
   \packageCallerEnvHierarchyNamec& \packageCallerEnvHierarchySitescRnd & \packageCallerEnvHierarchySitePercentc  \\
-$\ge 3$& \packageNbFarAwayCallerSites &  \packageNbFarAwayCallerSitePercent \\\hline
+$\ge 3$& \packageNbFarAwayCallerSites &  \packageNbFarAwayCallerSitePercent \\\bottomrule
  \end{tabular}
 \caption{Function offset}\label{tab:funoffset}
 \end{minipage}\hspace{-.2cm}
 \begin{minipage}{3.7cm}
-\begin{tabular}{@{}r|r|r@{}} \hline
-Parent & \#sites & \%sites \\\hline
+  \begin{tabular}{@{}rrr@{}} \toprule
+\bf Parent & \bf \#sites & \bf \%sites \\\midrule
 Function & \packageNewEnvCategorySitesa & \packageNewEnvCategorySitePercenta \\
 Package & \packageNewEnvCategorySitesb &  \packageNewEnvCategorySitePercentb\\
 Global & \packageNewEnvCategorySitesc & \packageNewEnvCategorySitePercentc \\
-Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\hline
+    Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\bottomrule
 \end{tabular}
 \caption{Wrapper envs.} \label{tab:newenvs}
 \end{minipage}\hspace{-.2cm}
 \begin{minipage}{3.7cm}\centering
- \begin{tabular}{@{}c|c|c@{}} \hline
- \#kinds & \#sites &  \%sites \\ \hline
+  \begin{tabular}{@{}ccc@{}} \toprule
+ \bf \#kinds & \bf \#sites &  \bf \%sites \\\midrule
  \packageNbCategoryEnvira & \packageNbCategoryEnvirSitesaRnd &  \packageNbCategoryEnvirPercenta\\
  \packageNbCategoryEnvirb &  \packageNbCategoryEnvirSitesbRnd & \packageNbCategoryEnvirPercentb \\
  \packageNbCategoryEnvirc & \packageNbCategoryEnvirSitescRnd &  \packageNbCategoryEnvirPercentc\\
- \packageNbCategoryEnvird & \packageNbCategoryEnvirSitesdRnd & \packageNbCategoryEnvirPercentd\\\hline
+ \packageNbCategoryEnvird & \packageNbCategoryEnvirSitesdRnd & \packageNbCategoryEnvirPercentd\\\bottomrule
 \end{tabular}\caption{Multiplicities}\label{tab:polyenvir}
 \end{minipage}\hspace{-1cm}
 \end{table}
@@ -1036,10 +1033,10 @@ Expression \c{e} has two origins, \c{parse} and \c{quote}, which corresponds to 
 
 % Wrap tables do not play well with lists (they warn about it in the documentation actually!)
 \begin{wraptable}{r}{5cm}\small\centering
-	\begin{tabular}{|c|c|c|}
-		\hline
-		Provenance & \#sites & \%sites \\
-		\hline
+	\begin{tabular}{lcc}
+		\toprule
+		\bf Provenance & \bf \#sites & \bf \%sites \\
+		\midrule
 		\packageProvenanceNamea & \packageNbProvenanceSitesa & \packagePercentProvenanceSitesa \\
 		\packageProvenanceNameb & \packageNbProvenanceSitesb & \packagePercentProvenanceSitesb \\
 		\packageProvenanceNamec & \packageNbProvenanceSitesc & \packagePercentProvenanceSitesc \\
@@ -1054,7 +1051,7 @@ Expression \c{e} has two origins, \c{parse} and \c{quote}, which corresponds to 
 		\packageProvenanceNamel & \packageNbProvenanceSitesl & \packagePercentProvenanceSitesl \\
 		%\packageProvenanceNamem & \packageNbProvenanceSitesm & %\packagePercentProvenanceSitesm \\ %as.vector
 		\packageProvenanceNamen & \packageNbProvenanceSitesn & \packagePercentProvenanceSitesn \\
-		\hline
+		\bottomrule
 	\end{tabular}
 	\caption{First provenances in number of sites.} \label{tab:detailed_provenances}
 \end{wraptable}
@@ -1088,13 +1085,13 @@ results. In particular, we misclassify some sites but these cases happen rarely.
 Table~\ref{tab:provenance} summarizes the expression provenance in our corpus. Note that some sites can be invoked several times with different provenances. In that case, we have counted them several times in the table.
 
 \begin{wraptable}[8]{r}{5cm}\small\centering
-\begin{tabular}{r|r|r} \hline
-Origin  & \#sites & \%sites \\\hline
+\begin{tabular}{rrr} \toprule
+\bf Origin  & \bf \#sites & \bf \%sites \\\midrule
 Reflection &  \packageNbReflectionSites & \packageReflectionSitesPercent\\
 String & \packageNbStringSites & \packageStringSitesPercent \\
 Constructed & \packageNbConstructedSites & \packageConstructedSitesPercent \\
 Environment & \packageNbSymbolSites & \packageSymbolSitesPercent \\
-External & \packageNbExternalSites & \packageExternalSitesPercent \\\hline
+External & \packageNbExternalSites & \packageExternalSitesPercent \\\bottomrule
 \end{tabular}
 \caption{Provenance}\label{tab:provenance}
 \end{wraptable}
@@ -1149,8 +1146,8 @@ Section~\ref{sec:eval-in-r}), \SESitesNotInEnvirRatio modifies other
 environments, and finally, \SESitesBothEnvirRatio does both.
 
 \begin{wraptable}{r}{7cm}\small\centering
-  \begin{tabular}{l|r|r|r|r}\hline
-    Environments & \#sites & \%sites & \#funs. & \%funs. \\%
+  \begin{tabular}{lrrrr}\toprule
+    \bf Environments & \bf \#sites & \bf \%sites & \bf \#funs. & \bf \%funs. \\%
     \expandableinput tag/table-se-target-envs.tex
   \end{tabular}
   \caption{Target environments for side-effects} \label{tab:se-env}
@@ -1197,8 +1194,8 @@ did not find a common use case.
 \begin{table}[h]
   \small
   \centering
-  \begin{tabular}{l|r|r|r|r|r|r}\hline
-    Side effect & \#events & \%events & \#calls & \%calls & \#sites & \%sites \\%
+  \begin{tabular}{lrrrrrr}\toprule
+    \bf Side effect & \bf \#events & \bf \%events & \bf \#calls & \bf \%calls & \bf \#sites & \bf \%sites \\%
     \expandableinput tag/table-se-types.tex
   \end{tabular}
   \caption{Types of \eval side-effects} \label{tab:se-types}
