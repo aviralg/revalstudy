@@ -736,34 +736,7 @@ elucidate \emph{what} it does.
 
 \subsection{The expression in \eval} \label{sec:minimized}
 
-
-The expressions passed to \eval vary widely. We categorize expressions using a
-minimization function which abstract some of the incidental details of
-expressions and return a ``shape'' that can be used to group similar \evals. The
-function $min(e)$ which for a given expression $e$ returns a normal form. Normal
-forms use \c V to stand in for values occurring in expression, \c X stands in
-for variables, and \c F stands for functions. The function performs constant
-folding of arithmetic and string expressions over base operators, for instance
-$min(\c{1+1})$ simplifies to $\c{V}$, on the ground that addition of values
-likely returns a value. Value simplification takes $min(\c{c(1,2,3+2)})$ to
-$\c{V}$ as a complex vector containing values is a value. Variable absorption
-has $min(\c{x+y})$ becomes $\c{X}$, this motivated by the fact that addition is
-not an ``interesting'' operation, and that \c X stands in for any number of
-variable lookups. Function absorption simplifies nested functions to keep an
-abstraction of the nesting $min(\c{g(f(x),h(z))})=\c{F(F(X))}$. There are other
-simplifications, the full list is in our artifact. It is worth mentioning that
-these simplifications are heuristics, in R \c{1+1} is not necessary \c 2. The
-addition operator can be redefined, but it typically isn't or at least not in a
-way that would invalidate arithmetic.
-
-Table~\ref{tab:minimizedexpressions} gives the 10 most frequent forms; \#sites
-and \%sites are, respectively, the number and ratio of sites receiving arguments
-of that form; \#packages is the number of packages with that form; \#operations
-is the median number of instructions performed by the interpreter; and \%envir
-is the ratio of sites that evaluate in a function environment. The example
-column shows one sample expression $e$ that normalizes to the particular form.
-
-\begin{table}[h]\small
+\begin{table}[!b]\small
 \begin{tabular}{crrrrrc}\toprule
   \bf $min(e)$& \bf \#sites & \bf \%sites & \bf \#packages & \bf \#operations & \bf \%envir & \bf example\\\midrule
 \c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedmedianoperationsaRnd &\packageMinimizedpercentparentframesa & \c{y+1}\\
@@ -780,117 +753,115 @@ column shows one sample expression $e$ that normalizes to the particular form.
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
 
-\medskip  We detail these forms and discuss their implication for the behavior of \eval.
+
+The expressions passed to \eval vary widely. We categorize expressions using a
+minimization function which abstract some of the incidental details of
+expressions and return a ``shape'' that can be used to group similar \evals. The
+function $min(e)$ which for a given expression $e$ returns a normal form. Normal
+forms use \c V to stand in for values occurring in expression, \c X stands in
+for variables, and \c F stands for functions. The function performs constant
+folding of arithmetic and string expressions over base operators, for instance
+$min(\c{1+1})$ simplifies to $\c{V}$, on the ground that addition of values
+likely returns a value. Value simplification takes $min(\c{c(1,2,3+2)})$ to
+$\c{V}$ as a complex vector containing values is a value. Variable absorption
+has $min(\c{x+y})$ becomes $\c{X}$, this motivated by the fact that addition is
+not an ``interesting'' operation, and that \c X stands in for any number of
+variable lookups. Function absorption simplifies nested functions to keep an
+abstraction of the nesting $min(\c{g(f(x),h(z))})=\c{F(F(X))}$. There are other
+simplifications, the full list can be found in our artifact. It is worth
+mentioning that these simplifications are heuristics, in R \c{1+1} is not
+necessary \c 2. The addition operator can be redefined, but it typically isn't
+or at least not in a way that would invalidate arithmetic.
+
+Table~\ref{tab:minimizedexpressions} gives the 10 most frequent shapes with the
+number and ratio of sites that received arguments of that shape. Operations is
+the median count of instructions performed by the interpreter when evaluating
+argument of the given shape. Envir is the ratio of sites that evaluate in a
+function environment. The last column has a sample expression that normalizes to
+the corresponding shape. We detail these shapes and discuss their implication for
+the behavior of \eval.
 
 \newcommand{\EE}[1]{{{\emph{\framebox{#1}}}}\\[1mm]}
 
-\medskip\EE{$min(e)=\c{V}$} Expressions that represent values are
-frequently passed to \eval -- they occur in 17\% of sites. The majority of
-those, \packageValOneNodePercent, are inline constants (integer or double
-vectors). The rest trivially evaluate to a value, \eg~\c{1+1}.\footnote{True as
-long as base functions such as \c{+} are not redefined. They typically are not,
-but this is a limitation of this categorization.} In our corpus,
-\packageNbCallSitesUniqueActualValue call sites only ever see a simple value,
-such as:
+\begin{tabular}{@{}p{.97\linewidth}}
+  \medskip\EE{$min(e)=\c{V}$} \\[-2mm]\small Values occur in 16\% of sites, 74\% of
+  those are constants such as integers, the remainder evaluate to a value. \Eval
+  is needed when the expression denoting the values is constructed
+  programmatically. Cases when a value is directly given to \eval, and \eval
+  returns it unchanged, often occur when a computation has a default path and
+  another, more interesting, path that requires evaluation. The following is a
+  call site that always see a string; \packageNbCallSitesUniqueActualValue of
+  sites only ever see a value. This shape usually run in few interpreter steps.
+  The environment in which they evaluate is mostly irrelevant.
 \begin{lstlisting}
- f1 <- eval(paste("A~",paste(paste(names(X[,-1])),collapse="+")))
+  eval(paste("A~",paste(paste(names(X[,-1])),collapse="+")))
 \end{lstlisting}
-where the argument to \eval is a string which \eval simply returns. Of twenty
-randomly selected \evals, XXXXX
-%% UNFINED TODO \packageUsefulValueEvalPercent
-of them need \eval for
-some inputs. Either we are dealing with a value that needs to be constructed
-dynamically, or the value is a default case that sometimes is replaced by a more
-interesting expression. This form is usually evaluated in few interpreter steps;
-in fact, the median is only \packageMinimizedmedianoperationscRnd. The
-environment in which they evaluate is mostly irrelevant.
-
-\medskip\EE{$min(e)=\c{X}$} Variable lookups are the most common form;
-they are found in 28\% of the sites. This form includes simple variable reads,
-\eg~\c{x}, which are \packageNbSymbolVarSitePercent of \c X. The form also
-subsumes \c{V}, so it includes a mixture of arithmetic expressions,
-\eg~\c{x+y+1}. The operations allowed are limited to built-in arithmetics. It is
-noteworthy that, while most \c{X}\!s evaluate in a single step, the variable can
-be bound to a promise, and accessing it may trigger evaluation of that promise,
-thus resulting in an arbitrary amount of computation. The median number of
-interpreted operations is \packageMinimizedmedianoperationsaRnd, suggesting that
-it is not the common case. Lookups are often evaluated in constructed
-environments; as few as \packageMinimizedpercentparentframesa of these
+\\
+\medskip\EE{$min(e)=\c{X}$}\\[-2mm]\small Variable lookups are the most common shape,
+\packageNbSymbolVarSitePercent are simple variable names, e.g. \c x. The shapes
+subsumes \c{V} and built-in arithmetic operations, so a mixture of arithmetics
+and variables normalize to \c X. A lookup is one step of execution, if a promise
+is returned an arbitrary number of additional steps may be needed; the median is
+\packageMinimizedmedianoperationsaRnd, suggesting that most variable read do
+little work. Variables are often evaluated in environments that have been
+constructed programmatically, \packageMinimizedpercentparentframesa of
 expressions are evaluated in a function environment.
+\\
+\medskip\EE{$min(e)=\c{\$}$}\\[-2mm]\small This shape extends \c X to include lookup
+with the dollar operator, \eg~\c{x\$f}, and vector indexing, \eg~\c{x[42]} and
+\c{x[[24]]}. This takes a few more step of evaluation on average, and is
+typically used in a function environment.
+\\
+\medskip\EE{$min(e)=$~\c{<-}}\\[-2mm]\small This includes both direct assignment {\tt
+  <-} and parent environment assignment {\tt <\,\!<-} as well as the \c{assign}
+function. It subsumes \c{\$}. Assignments
+represent the most obvious source of side effects in \eval.
+\\
+\medskip\EE{$min(e)=\c{F()}$}\\[-2mm]\small Function calls without variable lookups or
+assignment. A variable is allowed the function position, looking up
+functions does not trigger computation unless the function's name
+is bound to a promise. This shape typically does not perform much work.
+\\
+\medskip\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$}\\[-2mm]\small Function
+calls whose arguments may include variable references and nested calls. Together
+they represent the most frequent shape and perform over 16 steps. They are
+frequently evaluated in function environments.
+\end{tabular}
 
-\medskip\EE{$min(e)=\c{\$}$} This form extends \c X to include lookup
-with the dollar operator, \eg~\c{x\$f}, and vector indexing, \eg~\c{x[42]} or
-\c{x[[24]]}. As with \c X, we allow arithmetics and values in this form. Lookup
-occurs in 10\% of the sites. The interpreter evaluates
-\packageMinimizedmedianoperationsgRnd operations on average; the minimum is 3
-operations. This is typically used in a function environment,
-\packageMinimizedpercentparentframese of the time to be precise.
-
-\medskip\EE{$min(e)=$~\c{<-}} This form includes both assignment
-operators, the direct assignment {\tt <-}, and assignment to the parent
-environment {\tt <\,\!<-}, the \c{assign} function and the \c{\$} form.
-Assignments occur in 5\% of the sites. They represent the most obvious source of
-side effects. The median count is \packageMinimizedmedianoperationsiRnd (min=3).
-
-\medskip\EE{$min(e)=\c{F()}$} This form captures simple function calls,
-\eg~\c{f(2)}, with neither variables nor assignments. More specifically, it
-allows for variables in the function position but not in arguments. Usually,
-looking up function names does not trigger computation, but that is not a given
-if the function is returned by a promise or if the function name is shadowed by
-a promise containing a value, then the computation will occur. This form occurs in
-6\% of sites and typically does not perform much work.
-
-\medskip\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$} These
-forms allow for function calls whose arguments may include variable references.
-The latter allows nested calls. Assignments are excluded from this form. They
-occur in, respectively, 14\% and 20\% of the sites in the corpus. Together they
-are the most frequent forms. The median numbers of interpreter steps are,
-respectively, \packageMinimizedmedianoperationsdRnd and
-\packageMinimizedmedianoperationsbRnd. Also,
-\packageMinimizedpercentparentframesd and \packageMinimizedpercentparentframesb
-of these expressions run in function environments.
-
-\medskip\EE{$min(e)=\c{FUN}$} This form captures expressions that
-define functions, \eg~\c{function(x) x+1}, and do nothing else. \c{FUN} occurs
-in \packageFunctionDefinitionSitesPercent of sites. Evaluating a function
-definition is done in 2 interpreter steps; the data does not record the work
-performed by the interpreter when the generated functions are eventually run. In
-addition to \c{FUN}, \packageGeneralizedFunctionDefinitionSitesPercent of sites
-have function definitions nested in other expressions. This gives an idea of the
-use of higher-order functions.
-
-\medskip\EE{$min(e)=\c{BLOCK}$} This form captures multi-statement
-code blocks, which occur in only 4\% of sites. These are huge expressions; we
-do not inspect the contents of the blocks. The median number of executed operations
-is \packageMinimizedmedianoperationsjRnd. They typically run in function
+\begin{tabular}{@{}p{.97\linewidth}}
+  \medskip\EE{$min(e)=\c{FUN}$}\\[-2mm]\small Function definitions without any
+  computation, \eg~\c{function(x) x+1}. In addition to \c{FUN},
+  \packageGeneralizedFunctionDefinitionSitesPercent of sites have function
+  definitions nested in other expressions.
+\\
+\medskip\EE{$min(e)=\c{BLOCK}$}\\[-2mm]\small Multi-statement code blocks, as
+they can be large we do not try to normalize their contents. They execute in a
+median \packageMinimizedmedianoperationsjRnd steps, usually, in function
 environments.
+\\
+\medskip\EE{$min(e)=\c{model.frame}$}\\[-2mm]\small The \c{model.frame} function
+returns a dataframe resulting from fitting the model described in a formula.
+This shape subsumes \c{F(F(X))}, \c{FUN}, and assignments. It is the single most
+popular function invoked from \eval. Each call does a median of 2K instructions.
+\end{tabular}
 
-\medskip\EE{$min(e)=\c{model.frame}$} The \c{model.frame} function
-returns a dataframe resulting from fitting the model described in a given
-formula. This form subsumes \c{F(F(X))}, \c{FUN}, and assignments. It is the
-single most popular function invoked from \eval; it occurs in 7\% of the sites.
-Each call does quite a lot of work with a 2K instructions median.
-
-\paragraph{Discussion.}
-It is interesting how many different forms any given site sees. The more forms,
-the harder it is to characterize behavior at that site. Luckily,
-\packageNbOneMinimizedPercent of sites only see a single form. In other words,
-a compiler could correctly predict the \emph{shape} of an expression by looking
-just at the first call in \packageNbOneMinimizedPercent of the sites. Few sites
-are highly polymorphic (8 or more different forms). These include the pipe
-operator of the \c{magrittr} package, used to compose functions, \eg instead of
-\c{f(g(h(x),y),z)} one can write \c{h(x) \%>\% g(y) \%>\% f(z)}.
-
-The number of different forms evidences the variety of uses of \eval. In
-comparison, JavaScript \eval usage was more straightforward and more
-predictable as reported by \citet{oopsla12b}, with 98.7\% of the sites with
-only one form. On the other hand, there are \packageNbSimpleMinimizedOne sites
-that only receive one of the simple forms (\ie\xspace \c{X}, \c{V}, \c{\$} or
-\c{<-}). Additional \packageNbSimpleMinimizedMore sites take multiple forms,
-but all of them are these simple ones. Among these sites, there are many cases
-where \eval could be replaced by simpler constructs such as \c{get} to lookup a
-name in an environment, \c{assign} to set a value to a name in an environment,
-or \c{do.call} to call a function reflectively.
+\paragraph{Discussion.} The number of different shapes that any given
+\eval site sees is an indication of the versatility of that site.
+\packageNbOneMinimizedPercent of sites only see a single expression shape. It
+would be encouraging if one could, given a small training set, predict the shape
+of \evals to come. In our corpus, only a few sites are highly polymorphic with
+more than eight shapes. An example of those is the pipe operator of the
+\c{magrittr} package which is used to compose functions, \eg instead of
+\c{f(g(h(x),y),z)} one can write \c{h(x) \%>\% g(y) \%>\% f(z)}. As there many
+different patterns of use, there are also many different shapes. In comparison
+with R, JavaScript's \eval usage was more straightforward and more predictable
+as reported by \citet{oopsla12b}, with 98\% of sites with only one shape. On the
+other hand, there are \packageNbSimpleMinimizedOne sites that only receive one
+of the simple shape (\ie\xspace \c{X}, \c{V}, \c{\$} or \c{<-}), and
+\packageNbSimpleMinimizedMore sites get multiple simple shapes. Among these
+sites, there are many cases where \eval could be replaced by simpler constructs
+such as \c{get} to lookup a name in an environment, \c{assign} to set a value to
+a name in an environment, or \c{do.call} to call a function reflectively.
 
 \subsection{The environments of \eval}\label{sec:env}
 
