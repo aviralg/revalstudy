@@ -865,40 +865,36 @@ a name in an environment, or \c{do.call} to call a function reflectively.
 
 \subsection{The environments of \eval}\label{sec:env}
 
-Contrary to the Javascript \eval, which does not specify the environment in
-which to evaluate, the second argument of \eval in R, \c{envir}, is dedicated to
-that. This argument determines what is visible to the computation started by
-\eval and the potential reach of its side-effects. Environments used by \eval
-can be classified into the following four kinds:
+Contrary to JavaScript, in R the environment of \eval can be specifies by its
+\c{env} argument. This gives users control over what is visible to the
+computation started by \eval and the potential reach of its side-effects. We
+distinguish the following kinds of environments:
 
-\begin{compactitem}[---]
+\begin{itemize}[---]
 \item \emph{Function:} environments for the local variables of some function
   currently active on the call stack. Obtained by calling \c{parent.frame()} or
   \c{sys.frame()}.
 \item \emph{Synthetic:} environments built from data structures such as lists,
-  dataframes, or constructed explicitly with \c{new.env}, \c{list2env}, or
-  \c{as.environment}. It also includes the empty environment.
-\item \emph{Global:}  environments in which scripts or interactive commands are
-  evaluated. \item \emph{Package:}  environments of a loaded library.
-\end{compactitem}
+  data.frames, or constructed explicitly with \c{new.env}, \c{list2env}, or
+  \c{as.environment} or the empty environment.
+\item \emph{Global:} environments in which scripts or interactive commands are
+  evaluated.
+\item \emph{Package:} environments of libraries.
+\end{itemize}
 
 
-As shown in Table~\ref{tab:highlevelenvironments}, most calls evaluate in the
-scope of a function with global as a distant second. This means that most
-variable reads and most side-effects operate on local variables. But for which
-function? From the point of view of the caller of \eval,
-Table~\ref{tab:funoffset} identifies that function by its offset on the call
-stack. Thus 0 is the direct caller, 1 is its parent, and so on. The data
-suggests that in 81\% of cases, \eval accesses the caller -- this means the
-variables of the function where \eval textually occurs are read and written to.
-It is noteworthy that 1.5\% of sites evaluate three frames or above. This means
-that, in general, modular reasoning is impossible in R. To understand what any
-given code snippet may do requires fully understanding all the functions that
-may be called, transitively, from that snippet. The actions of \eval happen at a
-distance. Finally, note that any site may see several kinds, but in
-\packageNbOneCategoryEnvirSitePercent of the cases they have a single kind. It
-means that a compiler could predict the \emph{kind} of environment after the
-first invocation.
+Table~\ref{tab:highlevelenvironments} shows that most calls evaluate in the
+scope of a function, global is a distant second. This means that most reads and
+writes act on local variables. But of which function? Table~\ref{tab:funoffset}
+gives the offset of that function on the call stack: 0 is function that called
+\eval, 1 is that function's caller, and so on. In 81\% of cases, \eval is
+resolved the caller -- the variables of the function where the call to \eval
+textually occurs are read and written. About 1.5\% of sites evaluate their
+argument three frames up the call stack, or above. Modular reasoning is thus
+impossible in R. Since the actions of \eval happen at a distance, understanding
+any given code snippet requires knowing which functions may be called
+transitively from that snippet. In \packageNbOneCategoryEnvirSitePercent of
+sites, only kind of environment is observed.
 
 \begin{table}[h]
   \centering\small\hspace{-.5cm}
@@ -943,119 +939,91 @@ Global & \packageNewEnvCategorySitesc & \packageNewEnvCategorySitePercentc \\
 \end{minipage}\hspace{-1cm}
 \end{table}
 
-
-Global \evals are likely split between intentional and accidental one. Direct
-references to the top-level, using \c{globalenv()} or \c{.GlobalEnv}, are rare;
-they occur in only \packageNbExplicitGlobalSites sites. Thus we suspect most
-uses of global are accidental. They arise from properties of our corpus, most
-scripts are top-level code snippets. Thus, global is often the caller of \eval
-or close to it. The reason we make this point is that values stored in the
-global environment are visible to all functions and are not reclaimed by the
-garbage collector. So accidental uses may pollute that namespace.
-
 Each synthetic environment has parent that is specified when calling
 \c{new.env}. When \c{envir} is a list or a data frame, \eval uses its third
 argument (\c{enclos}). The parent is used to search for variables not found in
 its child (side-effects stay in the child). Table~\ref{tab:newenvs} shows parent
-kinds for synthetic environments. Most of them are functions, then come global
-and package.
+kinds for synthetic environments. Most of them are functions.
 
+Global \evals split between intentional and accidental one. Direct references to
+the top-level, using \c{globalenv()} or \c{.GlobalEnv}, are rare; they occur in
+only \packageNbExplicitGlobalSites sites. Thus we suspect most uses of global
+are accidental. They arise from the fact that our corpus, consists of many code
+snippet that are run at top-level, global is thus the caller of \eval. This
+noteworthy because writes to global variables are visible to all functions and
+are not reclaimed by the garbage collector. So accidental uses may pollute that
+namespace. Table~\ref{tab:polyenvir} gives the number of kinds seen at a given
+call site.
 
 \paragraph{Discussion.}
-The data presented in this section is what one could expect. For {\it
-  functions}, they represent the main user case for \eval. Thus \eval is really
-extending the behavior of that function by executing a dynamically selected
-piece of code in the function's scope. Typically, variables are read (mostly),
-written (less), but there are also some cases where new variables are injected
-or existing variables are deleted. Usually, this happens in the current
-function, but also in frames arbitrarily far up the call stack. One data point
-we lack is how the target environment was obtained. The expected case is that
-the body of a promise was modified and the resulting expression was evaluated in
-the same environment the promise originated from. Likely less frequent are cases
-where \eval is provided the results of programmatically selecting some call
-stack. For {\it synthetics}, their relatively high frequency correlates to use
-cases where one wants to evaluate an expression in either a restricted
-environment or to use a data structure as an environment. For {\it global}, its
-relatively high frequency is likely an artifact of how the code of our corpus is
-is run. For {\it packages}, only \packageNbPackageNamespaceEnvSites sites have
-this kind. This is probably for the best as mutating the bindings of
-a loaded package is improper and R tries to make it difficult.
+The data presented here is not surprising. The main use of \eval is to provide a
+customizable extension mechanism for the behavior of functions. They are a way
+to parameterize the function with any behavior that can be expressed in R. The
+behavior of \eval within its enclosing function is to read and write variables,
+mostly read, and very rarely delete variables. There are also some cases where
+new variables are injected in a function. Usually, this in the direct caller,
+but can sometimes take effect several frames up the call stack. There is
+something brittle about code relying on the position of a caller, many
+refactorings may break code that does that.
+
+One bit of information that we lack is how the environment was obtained. Our
+expectation is that the expression was extracted from a promise using
+\c{substitute}, perhaps modified, and then evaluated with the environment coming
+from the same promise. We believe the case where \eval is provided the results
+of programmatically selecting some call stack to be less frequent.
+
+Synthetic environments are relatively frequent. Common uses-case include
+evaluation of an expression in a sandbox, or using a data structure as
+environment, for example one could evaluate a method of an object and use and
+environment to hold the object's fields.
+
+We have already explained the popularity of global environments, as for package
+environments, they are used in only \packageNbPackageNamespaceEnvSites sites.
+This is probably for the best as mutating the bindings of a loaded package is
+frowned upon and R tries to discourage it.
 
 \subsection{The origins of \eval}
 
 Where does the expression passed to \eval come from? There are various means of
-creating that expression, which are associated with particular use cases. During tracing, at each function call, we check if the return value is an expression or a symbol, or if the function is a function of interest. If it is, we record it and also look at whether the arguments were recorded before if it is not an expression-building function. It makes it possible to build a direct acyclic graph of the functions that build expressions or combine expressions during tracing to create a direct acyclic graph of the functions creating the expression passed to \eval. The following example yields the provenance graph with five nodes on Figure~\ref{fig:provgraph} for expression \c{e} passed to \eval.
+creating an expression, often these means correlate with a particular use case.
+Our analysis records the values returned by some functions of interest as well
+as their arguments. We build a direct acyclic graph that track the provenance of
+the values that are given to \eval. The following example yields the provenance
+graph with five nodes on Figure~\ref{fig:provgraph} for expression \c{e}.
 
 \begin{lstlisting}
-e <- parse(text = "a ; b")
-e[[2]] <- quote(c)
-eval(e)
+ > e <- parse(text = "a ; b")
+ > e[[2]] <- quote(c)
+ > eval(e)
 \end{lstlisting}
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=8cm]{provenance-graph}
-\caption{The provenance DAG for the code example above. Assignments and complex assignments are intermediate nodes, whereas expression builders are leaves of the graph.} \label{fig:provgraph}
+\begin{figure}[h]\centering
+\includegraphics[width=5cm]{provenance-graph}
+\caption{Provenance} \label{fig:provgraph}
 \end{figure}
 
-
-
-Expression \c{e} has two origins, \c{parse} and \c{quote}, which corresponds to the leaves of the graph. We also extract from the graph a representative origin, by traversing the graph from the root, following the left-hand side member of the assignments until a leaf. It represents the provenance that is further modified to yield the expression passed to \eval. In our example, the representative provenance is \c{parse}.
+The provenance of \c{e} includes both \c{parse} and \c{quote}. We pick an origin
+by traversing the graph from the root, following the left-hand side member of
+assignments until a leaf. It represents the provenance that is further modified
+to yield the expression passed to \eval. In our example, the origin is \c{parse}.
 
 % Wrap tables do not play well with lists (they warn about it in the documentation actually!)
 \begin{wraptable}{r}{5cm}\small\centering
-	\begin{tabular}{lcc}
-		\toprule
-		\bf Provenance & \bf \#sites & \bf \%sites \\
-		\midrule
+\begin{tabular}{lcc}\toprule
+\bf Provenance & \bf \#sites & \bf \%sites \\\midrule
 		\packageProvenanceNamea & \packageNbProvenanceSitesa & \packagePercentProvenanceSitesa \\
 		\packageProvenanceNameb & \packageNbProvenanceSitesb & \packagePercentProvenanceSitesb \\
 		\packageProvenanceNamec & \packageNbProvenanceSitesc & \packagePercentProvenanceSitesc \\
-		%\packageProvenanceNamed & \packageNbProvenanceSitesd & %\packagePercentProvenanceSitesd \\
 		\packageProvenanceNamee & \packageNbProvenanceSitese & \packagePercentProvenanceSitese \\
 		\packageProvenanceNamef & \packageNbProvenanceSitesf & \packagePercentProvenanceSitesf \\
 		\packageProvenanceNameg & \packageNbProvenanceSitesg & \packagePercentProvenanceSitesg \\
 		\packageProvenanceNameh & \packageNbProvenanceSitesh & \packagePercentProvenanceSitesh \\
 		\packageProvenanceNamei & \packageNbProvenanceSitesi & \packagePercentProvenanceSitesi \\
-		%\packageProvenanceNamej & \packageNbProvenanceSitesj & %\packagePercentProvenanceSitesj \\%[[
-		%\packageProvenanceNamek & \packageNbProvenanceSitesk & %\packagePercentProvenanceSitesk \\%$
 		\packageProvenanceNamel & \packageNbProvenanceSitesl & \packagePercentProvenanceSitesl \\
-		%\packageProvenanceNamem & \packageNbProvenanceSitesm & %\packagePercentProvenanceSitesm \\ %as.vector
-		\packageProvenanceNamen & \packageNbProvenanceSitesn & \packagePercentProvenanceSitesn \\
-		\bottomrule
-	\end{tabular}
-	\caption{First provenances in number of sites.} \label{tab:detailed_provenances}
-\end{wraptable}
-
-Table~\ref{tab:detailed_provenances} shows the first provenances in number of sites. In \packagePercentProvenanceSitesd\% of the sites, the expression passed to \eval is not a language expression or a symbol but a floating point, or a string for instance. In that case, we did not track the provenance. \c{.External} invokes a C function. For instance, in the following code, \c{.External(C\_deriv, expr, namevec, function.arg, tag, hessian)} calls a C function called \c{C\_deriv} to derive an expression.
- Due to technical reasons, there is some imprecision in the
-results. In particular, we misclassify some sites but these cases happen rarely. For instance,  \packagePercentProvenanceSitesj\% of the sites have provenance \c{[[}, a subsetting operator, as we lose the provenance of the subsetted expression, often when that expression is given attributes. Manual inspection of numerous examples suggests that errors are rare.
-
-
-
-
-
- We further classify them into four high-level categories:
-
-\begin{compactitem}[---]
-\item {\it Reflection:} This group corresponds to uses of \c{match.call} to
-	reflectively capture the expression that invoked the current function. Function arguments are passed as promises, and \c{substitute} is used to retrieve the source
-	expression associated with the promise. \c{formals} access the argument list of a function.
-\item {\it String:} Expressions created from strings by invoking \c{parse},
-	\c{str2expression}, or \c{str2lang}.
-\item {\it Constructed:} Expressions can be constructed by invoking the
-  \c{quote}, \c{expression} functions, or by building a call with \c{call} or \c{as.call}.
-\item {\it Environment: }   A symbol is created with \c{as.name} or \c{as.symbol}, typically to find the value of a symbol in a non-local environment.
-\item {\it External: } a call to a C function. % Put an example
-\end{compactitem}
-
-%\NOTE{I only see 70 sites with formulas (using the class of the expression) so it does not appear here.}
-
-%\NOTE{I can also put the absolute number of provenances, \ie if an expression has multiple provenances, we do not keep only the representative but also the other provenances. Also, if one site sometimes gets match.call and sometimes substitute, it is not going to be counted in either of them currently.}
-
-Table~\ref{tab:provenance} summarizes the expression provenance in our corpus. Note that some sites can be invoked several times with different provenances. In that case, we have counted them several times in the table.
-
-\begin{wraptable}[8]{r}{5cm}\small\centering
+		\packageProvenanceNamen & \packageNbProvenanceSitesn & \packagePercentProvenanceSitesn \\\bottomrule
+\end{tabular}
+\caption{Origin} \label{tab:detailed_provenances}
+\medskip
 \begin{tabular}{rrr} \toprule
 \bf Origin  & \bf \#sites & \bf \%sites \\\midrule
 Reflection &  \packageNbReflectionSites & \packageReflectionSitesPercent\\
@@ -1067,54 +1035,69 @@ External & \packageNbExternalSites & \packageExternalSitesPercent \\\bottomrule
 \caption{Provenance}\label{tab:provenance}
 \end{wraptable}
 
-Strings could correlate with dynamic code loading. This is what the base
-functions \c{source} and \c{sys.source} do. We observed few calls
-(\packageNbParseFromFileSites in total) that consume the result of calling
-\c{parse} on a file. Most of the calls build strings programmatically. We also
-identified one function \c{invokeRestartInteractively} that prompts the user for
-input, parses it, and passes it to \eval.
+Table~\ref{tab:detailed_provenances} shows frequencies of provenance. For
+technical reasons, we misclassify a small number of sites. Manual inspection of
+numerous examples suggests that errors are rare. We further classify them into
+high-level categories:
+
+\begin{itemize}[---]
+\item {\it Reflection:} use of \c{match.call} to reflectively capture the
+  expression that invoked this function, arguments are promises, and
+  \c{substitute} is used to retrieve their source.
+\item {\it String:} create from strings by invoking \c{parse},
+  \c{str2expression}, or \c{str2lang}.
+\item {\it Constructed:} invoked \c{quote} or \c{expression}, or by built with
+  \c{call} or \c{as.call}.
+\item {\it Environment: } created with \c{as.name} or \c{as.symbol}, typically
+  to read a non-local environment.
+\item {\it External: }  call to a C function. % Put an example
+\end{itemize}
+
+Table~\ref{tab:provenance} summarizes provenance. Some sites are invoked with
+different provenances, they are counted multiple times. Strings correlate with
+dynamic code loading as done by \c{source} and \c{sys.source}. Few calls
+(\packageNbParseFromFileSites in total) consume the result of calling \c{parse}
+on a file. Most build strings programmatically. We identified one function
+\c{invokeRestartInteractively} that prompts the user for input and \evals it.
+
+
+
 
 \paragraph{Discussion}
-The origin data suggests that reflection is the first use case for \eval, \ie using \c{match.call}, \c{substitute}, or \c{match.call} to access and transform the arguments of a function when calling the function. Constructing expressions from strings is also
-a common use case. The constructed category shows that most
-\evals comes from code that was processed by the compiler, and may be slightly
-modified by the programmer before invoking \eval. Both constructed and
-reflection categories roughly correspond to meta-programming. Some of these use
-cases could likely be replaced by macros if the R designers could be convinced
-to overcome their distaste for those. Another use of \eval is to directly build symbols to evaluate them in another environment than the default one.
+The main use case for \eval involves using \c{match.call}, \c{substitute}, or
+\c{match.call} to access and transform arguments of a function. Constructing
+expressions from strings is also a common use case. The constructed category
+shows that most \evals comes from existing code that was modified by the
+programmer before invoking \eval. Both constructed and reflection categories
+roughly correspond to meta-programming. Some use cases could likely be replaced
+by macros if the R designers could be convinced to overcome their distaste for
+those. Another use of \eval is to directly build symbols to evaluate them in
+another environment.
 
 \subsection{The effects of \eval}
 
-\Eval may perform side-effects. From a compiler's perspective, we care about
-effects that can be observed --- \ie variable definitions, updates, and removals
-that are visible after a call finishes. Knowing in which environments these
-side-effects happen, can help us determine how much of the compiler knowledge
-about the program will be invalidated. Our analysis records information about
+\Eval may perform side-effects. We care about effects that are visible after a
+call finishes, \ie variable definitions, updates, and removals. Knowing in which
+environments these side-effects happen, can help determine the impact of \eval
+on our ability to reason about the code. Our analysis records information about
 every environment. From the recorded data, we discard side-effects coming from
-unit testing frameworks.\footnote{In the corpus, we have \c{RUnit, testthat,
-  tinytest} and \c{unitizer} testing frameworks.} They run their tests via
-\eval, and thus everything becomes a side-effect.
+unit testing frameworks as they use \eval to run all their tests and thus
+dominate the side-effect data.\footnote{The corpus has \c{RUnit, testthat,
+  tinytest} and \c{unitizer} testing frameworks.}
 
-From our \packageNbrunsRnd programs, we capture \SEAllRnd side-effects from
-\SEAllCallsRnd \eval calls (\SEUserCallsToAllRatio) in \SEAllSites sites
-(\SEUserSitesToAllRatio). Again, the challenge is to remove the accidental
-side-effects caused by the R virtual machine implementation which are not
-related to the user code. For example, the \c{.Random.seed} variable, which
-contains the state of the random number generator, is saved and restored from
-and to the global environment every time  a statistical routine is called.
-%
-Removing those leaves us with \SEUserRnd side effects from \SEUserCallsRnd
-\eval calls in \SEUserSites sites. These sites are part of \SEUserFunctions R
-functions (\SEUserFunctionsToAllRatio of all functions doing \eval) in
-\SEUserPackages packages. From these functions, \SEFunsNighty are responsible
-for 90\% of side effects. Half of the side-effects come just from three
+We record \SEAllRnd side-effects from \SEAllCallsRnd calls and \SEAllSites
+sites. The challenge is to remove accidental side-effects caused by the R
+virtual machine implementation and not user code. For example, the
+\c{.Random.seed} variable is saved and restored from and to the global
+environment every time a statistical routine is called. Filtering accidental
+side-effects leaves us with \SEUserRnd writes from \SEUserCallsRnd calls (in
+\SEUserSites sites and \SEUserFunctions functions). \SEFunsNighty functions are
+responsible for 90\% of side effects. Half of those come from just three
 functions: \c{plyr::allocate\_column} (allocates space for a new data frame
 column), \c{withr::execute\_handlers} (executes deferred expressions), and
 \c{foreach::doSEQ} (executes an expression on each element in a collection,
-possibly in parallel). Most of the \eval sites (\SESitesInEnvirRatio) do side
-effects in the environment specified by the \c{envir} parameter (\cf
-Section~\ref{sec:eval-in-r}), \SESitesNotInEnvirRatio modifies other
-environments, and finally, \SESitesBothEnvirRatio does both.
+possibly in parallel). Most of the sites (\SESitesInEnvirRatio) update
+the environment specified by the \c{env} parameter.
 
 \begin{wraptable}{r}{7cm}\small\centering
   \begin{tabular}{lrrrr}\toprule
