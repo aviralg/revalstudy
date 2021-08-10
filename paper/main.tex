@@ -1020,7 +1020,7 @@ a loaded package is improper and R tries to make it difficult.
 \subsection{The origins of \eval}
 
 Where does the expression passed to \eval come from? There are various means of
-creating that expression, which are associated with particular use cases. During tracing, at each function call, we check if the return value is an expression or a symbol, or if the function is a function of interest. If it is, we record it and also look at whether the arguments were recorded before if it is not an expression-building function. It makes it possible to build a direct acyclic graph of the functions that build expressions or combine expressions during tracing to create a direct acyclic graph of the functions creating the expression passed to \eval. The following example yields the provenance graph with four nodes on Figure~\ref{fig:provgraph} for expression \c{e} passed to \eval.
+creating that expression, which are associated with particular use cases. During tracing, at each function call, we check if the return value is an expression or a symbol, or if the function is a function of interest. If it is, we record it and also look at whether the arguments were recorded before if it is not an expression-building function. It makes it possible to build a direct acyclic graph of the functions that build expressions or combine expressions during tracing to create a direct acyclic graph of the functions creating the expression passed to \eval. The following example yields the provenance graph with five nodes on Figure~\ref{fig:provgraph} for expression \c{e} passed to \eval.
 
 \begin{lstlisting}
 e <- parse(text = "a ; b")
@@ -1038,11 +1038,7 @@ eval(e)
 
 Expression \c{e} has two origins, \c{parse} and \c{quote}, which corresponds to the leaves of the graph. We also extract from the graph a representative origin, by traversing the graph from the root, following the left-hand side member of the assignments until a leaf. It represents the provenance that is further modified to yield the expression passed to \eval. In our example, the representative provenance is \c{parse}.
 
-
-
- Table~\ref{tab:detailed_provenances} shows the first provenances in number of sites. In \packagePercentProvenanceSitesd, the expression passed to \eval is not a language expression or a symbol but a floating point, or a string for instance. In that case, we did not track the provenance.
- % Explain also why we do not show [[ or $ in the table.
- % Explain the functions that we did not explain before.
+% Wrap tables do not play well with lists (they warn about it in the documentation actually!)
 \begin{wraptable}{r}{5cm}\small\centering
 	\begin{tabular}{|c|c|c|}
 		\hline
@@ -1060,47 +1056,49 @@ Expression \c{e} has two origins, \c{parse} and \c{quote}, which corresponds to 
 		%\packageProvenanceNamej & \packageNbProvenanceSitesj & %\packagePercentProvenanceSitesj \\%[[
 		%\packageProvenanceNamek & \packageNbProvenanceSitesk & %\packagePercentProvenanceSitesk \\%$
 		\packageProvenanceNamel & \packageNbProvenanceSitesl & \packagePercentProvenanceSitesl \\
-		%\packageProvenanceNamem & \packageNbProvenanceSitesm & %\packagePercentProvenanceSitesm \\
+		%\packageProvenanceNamem & \packageNbProvenanceSitesm & %\packagePercentProvenanceSitesm \\ %as.vector
 		\packageProvenanceNamen & \packageNbProvenanceSitesn & \packagePercentProvenanceSitesn \\
 		\hline
 	\end{tabular}
-	\caption{Provenances in number of sites.} \label{tab:detailed_provenances}
+	\caption{First provenances in number of sites.} \label{tab:detailed_provenances}
 \end{wraptable}
 
+Table~\ref{tab:detailed_provenances} shows the first provenances in number of sites. In \packagePercentProvenanceSitesd\% of the sites, the expression passed to \eval is not a language expression or a symbol but a floating point, or a string for instance. In that case, we did not track the provenance. \c{.External} invokes a C function. For instance, in the following code, \c{.External(C\_deriv, expr, namevec, function.arg, tag, hessian)} calls a C function called \c{C\_deriv} to derive an expression.
+ Due to technical reasons, there is some imprecision in the
+results. In particular, we misclassify some sites but these cases happen rarely. For instance,  \packagePercentProvenanceSitesj\% of the sites have provenance \c{[[}, a subsetting operator, as we lose the provenance of the subsetted expression, often when that expression is given attributes. Manual inspection of numerous examples suggests that errors are rare.
+ 
+ 
 
 
- We classify them into four categories:
+
+ We further classify them into four high-level categories:
 
 \begin{compactitem}[---]
-\item {\it Constructed:} Expressions can be constructed by invoking the
-  \c{quote}, \c{enquote}, \c{expression} functions, or by building a call with \c{call} or \c{as.call}.
 \item {\it Reflection:} This group corresponds to uses of \c{match.call} to
-  reflectively capture the expression that invoked the current function. Function arguments are passed as promises, and \c{substitute} is used to retrieve the source
-  expression associated with the promise. \c{formals} access the argument list of a function.
+	reflectively capture the expression that invoked the current function. Function arguments are passed as promises, and \c{substitute} is used to retrieve the source
+	expression associated with the promise. \c{formals} access the argument list of a function.
 \item {\it String:} Expressions created from strings by invoking \c{parse},
-  \c{str2expression}, or \c{str2lang}.
+	\c{str2expression}, or \c{str2lang}.
+\item {\it Constructed:} Expressions can be constructed by invoking the
+  \c{quote}, \c{expression} functions, or by building a call with \c{call} or \c{as.call}.
 \item {\it Environment: }   A symbol is created with \c{as.name} or \c{as.symbol}, typically to find the value of a symbol in a non-local environment.
 \item {\it External: } a call to a C function. % Put an example
 \end{compactitem}
 
-\NOTE{I only see 70 sites with formulas (using the class of the expression) so it does not appear here.}
+%\NOTE{I only see 70 sites with formulas (using the class of the expression) so it does not appear here.}
 
-\NOTE{I can also put the absolute number of provenances, \ie if an expression has multiple provenances, we do not keep only the representative but also the other provenances. Also, if one site sometimes gets match.call and sometimes substitute, it is not going to be counted in either of them currently.}
+%\NOTE{I can also put the absolute number of provenances, \ie if an expression has multiple provenances, we do not keep only the representative but also the other provenances. Also, if one site sometimes gets match.call and sometimes substitute, it is not going to be counted in either of them currently.}
 
-Table~\ref{tab:provenance} summarizes the expression provenance in our corpus.
-This data is obtained by dynamically tainting values as they are produced by the
-various sources. Due to technical reasons, there is some imprecision in the
-results. In particular, we are not able to classify all sites. Manual inspection
-of numerous examples suggests that errors are rare.
+Table~\ref{tab:provenance} summarizes the expression provenance in our corpus. Note that some sites can be invoked several times with different provenances. In that case, we have counted them several times in the table.
 
-\begin{wraptable}{r}{5cm}\small\centering
+\begin{wraptable}[8]{r}{5cm}\small\centering
 \begin{tabular}{r|r|r} \hline
 Origin  & \#sites & \%sites \\\hline
-Constructed & \packageNbConstructedSites & \packageConstructedSitesPercent \\
 Reflection &  \packageNbReflectionSites & \packageReflectionSitesPercent\\
+String & \packageNbStringSites & \packageStringSitesPercent \\
+Constructed & \packageNbConstructedSites & \packageConstructedSitesPercent \\
 Environment & \packageNbSymbolSites & \packageSymbolSitesPercent \\
-External & \packageNbExternalSites & \packageExternalSitesPercent \\
-String & \packageNbStringSites & \packageStringSitesPercent \\\hline
+External & \packageNbExternalSites & \packageExternalSitesPercent \\\hline
 \end{tabular}
 \caption{Provenance}\label{tab:provenance}
 \end{wraptable}
@@ -1113,8 +1111,8 @@ identified one function \c{invokeRestartInteractively} that prompts the user for
 input, parses it, and passes it to \eval.
 
 \paragraph{Discussion}
-The origin data suggests that constructing expressions from strings is a
-minority of the use cases. Instead, the constructed category shows that most
+The origin data suggests that reflection is the first use case for \eval, \ie using \c{match.call}, \c{substitute}, or \c{match.call} to access and transform the arguments of a function when calling the function. Constructing expressions from strings is also
+a common use case. The constructed category shows that most
 \evals comes from code that was processed by the compiler, and may be slightly
 modified by the programmer before invoking \eval. Both constructed and
 reflection categories roughly correspond to meta-programming. Some of these use
