@@ -877,25 +877,27 @@ formula. This form subsumes \c{F(F(X))}, \c{FUN}, and assignments. It is the
 single most popular function invoked from \eval; it occurs in 7\% of the sites.
 Each call does quite a lot of work with a 2K instructions median.
 
-\paragraph{Consistency} It is interesting how many different forms any given
-site sees. The more forms, the harder it is to characterize behavior at that
-site. Luckily, \packageNbOneMinimizedPercent of sites only see a single form.
-In other words, a compiler could correctly predict the \emph{shape} of an
-expression by looking just at the first call in \packageNbOneMinimizedPercent
-of the sites. Few sites are highly polymorphic (8 or more different forms).
-These include the pipe operator of the \c{magrittr} package, used to compose
-functions, \eg instead of \c{f(g(h(x),y),z)} one can write \c{h(x) \%>\% g(y) \%>\%
-f(z)}.
+\paragraph{Discussion} 
 
-\paragraph{Discussion} The variety of uses of \eval is evidenced by the number
-of different forms. In comparison, JavaScript \eval usage was more
-straightforward and more predictable as reported by \citet{oopsla12b}, with
-98.7\% of the sites with only one form. Nevertheless, simple forms dominate
-in R. Among these there are many cases where \eval could be replaced by less
-powerful constructs such as \c{get} to lookup a name in an environment,
-\c{assign} to set a value to a name in an environment or \c{call} to
-reflectively call a function.
-% TODO: how many receive just the simple form
+It is interesting how many different forms any given site sees. The more forms,
+the harder it is to characterize behavior at that site. Luckily,
+\packageNbOneMinimizedPercent of sites only see a single form. In other words,
+a compiler could correctly predict the \emph{shape} of an expression by looking
+just at the first call in \packageNbOneMinimizedPercent of the sites. Few sites
+are highly polymorphic (8 or more different forms). These include the pipe
+operator of the \c{magrittr} package, used to compose functions, \eg instead of
+\c{f(g(h(x),y),z)} one can write \c{h(x) \%>\% g(y) \%>\% f(z)}.
+
+The variety of uses of \eval is evidenced by the number of different forms. In
+comparison, JavaScript \eval usage was more straightforward and more
+predictable as reported by \citet{oopsla12b}, with 98.7\% of the sites with
+only one form. On the other hand, there are \packageNbSimpleMinimizedOne sites
+that only receive one of the simple forms (\ie\xspace \c{X}, \c{V}, \c{\$} or
+\c{<-}). Additional \packageNbSimpleMinimizedMore sites takes multiple forms,
+but all are these simple ones. Among these sites there are many cases where
+\eval could be replaced by less powerful constructs such as \c{get} to lookup a
+name in an environment, \c{assign} to set a value to a name in an environment
+or \c{do.call} to reflectively call a function.
 
 \subsection{The environments of \eval}\label{sec:env}
 
@@ -912,9 +914,8 @@ can be classified into the following four kinds:
 \item \emph{Synthetic:} environments built from data structures such as lists,
   dataframes, or constructed explicitly with \c{new.env}, \c{list2env}, or
   \c{as.environment}. It also includes the empty environment.
-\item \emph{Global:}  environments in which scripts or interactive commands
-  are evaluated.
-\item \emph{Package:}  environments of a loaded library.
+\item \emph{Global:}  environments in which scripts or interactive commands are
+  evaluated. \item \emph{Package:}  environments of a loaded library.
 \end{compactitem}
 
 \noindent
