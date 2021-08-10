@@ -1360,7 +1360,7 @@ do_call <- function(f, ..., .args = list(), .env = parent.frame()) {
 \caption{igraph::do\_call}
 \end{figure}
 
-\mypara{Domain-Specific Languages} The combination of laziness, metaprogramming,
+\paragraph{Domain-Specific Languages} The combination of laziness, metaprogramming,
 first-class environments and dynamic evaluation makes R the perfect toolkit for
 building DSLs. An example of this is the \code{glue} package which provides
 functions for string interpolation. The code snippet below shows an example of
@@ -1390,7 +1390,7 @@ for each origin airport. At its core, \code{[} uses \code{substitute} to capture
 the operand expressions, transforms them, and evaluates them using \eval in an
 environment which has data frame columns available as bindings.
 
-\mypara{Boilerplate Removal} The combination of \code{match.call} and \code{eval}
+\paragraph{Boilerplate Removal} The combination of \code{match.call} and \code{eval}
 is frequently used by modeling functions to avoid boilerplate code and ease
 maintenance. Consider the example shown below of function \code{survfit.formula}
 from the \code{survival} package.
@@ -1459,23 +1459,36 @@ the author passes the expression to unlock the package environment as a string
 to \code{parse} which is then evaluated by \code{eval}.
 
 
+\paragraph{Miscellaneous} Many uses of \eval are diverse and do not fit into a
+category by themselves. For example, packages for unit testing (testthat,
+testit, etc.), code benchmarking (rbenchmark, microbenchmark, etc.), and,
+running code in parallel (foreach, doParallel, etc.), use \eval to evaluate
+program fragments in a particular way in specific environments. Many numerical
+computation and mathematical modeling packages use \eval to evaluate chunks of
+code or bodies of functions in specific environments. Consider the
+\code{findZeros} function from \code{mosaic} package which is used to compute
+the zero of a function.
 
+\begin{figure}[h]
+\begin{lstlisting}
+findZeros <- function(expr, ..., xlim=c(near-within, near+within), near=0, within=Inf) {
+  dots <- list(...)
 
-\paragraph{Miscellaneous}
+  pfun <- function(x){  # removed . from name, was .x
+    mydots <- dots
+    mydots[[rhsVars]] <- x
+    eval( lhs(expr), envir=mydots, enclos=parent.frame() )
+  }
+  searchx <- sort(unique(internal.near   + c(0, leftseq, middleseq, rightseq)))
+  y <- sapply( searchx, pfun )
+\end{lstlisting}
+  \caption{mosaic::findZeros}
+\end{figure}
 
-\paragraph{Lookup and indexing}
-
-
-For example, the \code{PopED::get\_rse} uses it to
-assign a number of variables in the current scope:
-\code{eval(parse(text=paste(default_args[[i]]), "<- ", i))}. There are also more
-sophisticated cases. The \code{plyr::allocate\_column} function uses eval for a
-deferred assignment to fill missing values in a column. Package overture
-repeatedly evaluates R expressions capturing any assignments that happen in it
-as samples of Markov chains.
-
-
-
+This function can be invoked as: \code{findZeros( A*sin(2*pi*t/P) ~ t,
+  xlim=c(0,100), P=50, A=2)}. It will evaluate \code{A*sin(2*pi*t/P)} inside
+\code{pfun}. It calls \code{pfun} repeatedly with different values of \code{t}
+to find the point at which the expression is zero.
 
 
 \subsection{Shapes redux}
