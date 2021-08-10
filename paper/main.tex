@@ -734,8 +734,7 @@ instructions.
  \caption{Instructions per call} \label{ev}
 \end{figure}
 
-\paragraph{Discussion}
-
+\mypara{Discussion.}
 \Eval is used in CRAN packages. Nearly every fourth package contains at least
 one \eval site. However, most packages that use \eval do that modestly. Half of
 them include less than three \eval sites. Packages that rely heavily on \eval
@@ -877,8 +876,7 @@ formula. This form subsumes \c{F(F(X))}, \c{FUN}, and assignments. It is the
 single most popular function invoked from \eval; it occurs in 7\% of the sites.
 Each call does quite a lot of work with a 2K instructions median.
 
-\paragraph{Discussion} 
-
+\mypara{Discussion.} 
 It is interesting how many different forms any given site sees. The more forms,
 the harder it is to characterize behavior at that site. Luckily,
 \packageNbOneMinimizedPercent of sites only see a single form. In other words,
@@ -894,8 +892,8 @@ predictable as reported by \citet{oopsla12b}, with 98.7\% of the sites with
 only one form. On the other hand, there are \packageNbSimpleMinimizedOne sites
 that only receive one of the simple forms (\ie\xspace \c{X}, \c{V}, \c{\$} or
 \c{<-}). Additional \packageNbSimpleMinimizedMore sites takes multiple forms,
-but all are these simple ones. Among these sites there are many cases where
-\eval could be replaced by less powerful constructs such as \c{get} to lookup a
+but all of them are these simple ones. Among these sites there are many cases
+where \eval could be replaced by simpler constructs such as \c{get} to lookup a
 name in an environment, \c{assign} to set a value to a name in an environment
 or \c{do.call} to reflectively call a function.
 
@@ -997,7 +995,7 @@ kinds for synthetic environments. Most of them are functions, then come global
 and package.
 
 
-\paragraph{Discussion}
+\mypara{Discussion.}
 The data presented in this section is what one could expect. For {\it
   functions}, they represent the main user case for \eval. Thus \eval is really
 extending the behavior of that function by executing a dynamically selected
@@ -1112,7 +1110,7 @@ functions \c{source} and \c{sys.source} do. We observed few calls
 identified one function \c{invokeRestartInteractively} that prompts the user for
 input, parses it, and passes it to \eval.
 
-\paragraph{Discussion}
+\mypara{Discussion}
 The origin data suggests that constructing expressions from strings is a
 minority of the use cases. Instead, the constructed category shows that most
 \evals comes from code that was processed by the compiler, and may be slightly
