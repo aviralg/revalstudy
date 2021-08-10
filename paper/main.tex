@@ -588,6 +588,7 @@ histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
   \includegraphics[width=10cm]{pkgs-eval-callsites-hist.pdf}
   \caption{ \eval call sites}\label{fig:pkgs-eval-callsites-hist}
 
+\medskip
   \medskip
 
   \small
@@ -621,7 +622,31 @@ histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
   \label{fig:traced-eval-callsites}
 \end{figure}
 
-\begin{wrapfigure}{4}{5.8cm}  \small  \vspace*{-2mm}\centering
+Our pipeline runs \CranRunnableScripts scripts extracted from \CranPackages
+packages. Any run that does not call \eval is discarded, leaving us with
+\packageNbruns runs. In these runs, \packageAllcalls \eval calls were recorded
+originating from \PkgHitEvalCallSites sites. The runs exercised
+\PkgHitEvalCallSitesAvgRatio of sites, a ratio similar to the package code
+coverage metric which is \PkgCodeCoverage. The reasons some sites are not
+exercised can be chalked down to incomplete tests and analysis failures
+(\PkgFailedProgramsRatio of the runs crashed or timed out).
+Fig.~\ref{fig:traced-eval-callsites} plots exercised site with respect to all
+sites for each program; as can be seen coverage is unequal.
+
+Fig.~\ref{freq} summarizes the frequency of calls, call counts on the left and
+number of packages on the right. There are \packageFewcalls packages with fewer
+than 100 calls, and \packageManycalls packages with more than 1,000 calls.
+\packageMaxcallspack calls \eval \packageMaxcalls times and thus accounts for
+over half of our observations.
+
+Fig.~\ref{tab:variantseval} summarizes use of variants, the first row has sites
+(\emph{static}), the second has sites encountered during analysis
+(\emph{exercised}) and the last gives calls (\emph{invocations}). Most sites and
+calls go to \eval itself, \c{eval.parent} is rare, and both \c{evalq} and
+\c{local} are barely used at all.
+
+
+\begin{wrapfigure}{r}{5cm}  \small  \vspace*{-2mm}\centering
   \begin{tabular}{|r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r|} \hline
 \multicolumn{3}{|c}{\#calls} & \#sites &
 \multicolumn{3}{c}{\#calls} & \#sites \\\hline
@@ -630,48 +655,16 @@ histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
 \tt 101 &--& \tt 250 & \packageRunbinc & \tt 1501 &--& \tt 2000  & \packageRunbing\\
 \tt 251 &--& \tt 500 & \packageRunbind & \tt 2001 &--& \tt 3000 & \packageRunbinh\\\hline
 \end{tabular}
-
-  \medskip  (a) All  \medskip  \medskip
-
-  \includegraphics[width=5.6cm, trim=5.5cm 0 5cm 0, clip]{package_calls_per_run_per_call_site}
-
-  (b) Small
-
 \caption{Normalized calls} \label{cn}
-
-\medskip\medskip
-\begin{tabular}{c}
-{\hspace{-25mm}\includegraphics[width=0.7\textwidth]{package_size_loaded_distribution}}
-\end{tabular}
-\caption{Loaded code} \label{fig:sizedistribution}
 \end{wrapfigure}
 
-Our pipeline runs \CranRunnableScripts scripts extracted from \CranPackages
-packages. Any run that does not call \eval is discarded, leaving us with
-\packageNbruns runs. We recorded \packageAllcalls \eval calls originating from
-\PkgHitEvalCallSites sites. This exercised \PkgHitEvalCallSitesAvgRatio of
-sites, the coverage is similar to the package code coverage metric which is
-\PkgCodeCoverage. The reason some sites are not exercised can be chalked down to
-incomplete tests and analysis failures (\PkgFailedProgramsRatio of all scripts
-crashed or timed out). Fig~\ref{fig:traced-eval-callsites} plots exercised site
-with respect to all sites for each program; as can be seen coverage is unequal.
-Figure~\ref{freq} summarizes the frequency of calls, number of calls on the left
-and number of packages on the right. There are \packageFewcalls packages with
-fewer than 100 calls, and \packageManycalls packages with more than 1,000 calls.
-\packageMaxcallspack calls \eval \packageMaxcalls times and thus accounts for
-over half of the observations. Fig.~\ref{tab:variantseval} summarizes use of
-variants, the first row has sites (\emph{static}), the second has sites
-encountered during analysis (\emph{exercised}) and the last gives calls
-(\emph{invocations}). Most sites and calls go to \eval itself, \c{eval.parent}
-is rare, and both \c{evalq} and \c{local} are barely used at all.
 
-Figure~\ref{cn}(a) shows average count of calls from a given site and given run
-and how many sites fall in that range. For instance, \packageRunbinh sites are
-called over 2,000 times per run. Larger numbers suggest loops or recursive
-contexts -- this seems to be the exception; \packageRunbina of sites are called
-fewer than 50 times. Fig.~\ref{cn}(b) zooms in on low frequency sites. The
-x-axis shows normalized calls, and the y-axis counts sites. Most sites are
-invoked once, half as many are invoked twice, the drop off is sharp after that.
+Fig.~\ref{cn} shows average count of calls from a given site and given run and
+how many sites fall in that range. For instance, \packageRunbinh sites are
+called over 2,000 times per run. Larger call counts suggest the presence of
+loops or recursive functions, but given the data this seems to be the exception;
+\packageRunbina of sites are called fewer than 50 times, most sites are invoked
+once and half as many are invoked twice.
 
 \Eval accepts any value as argument, but if the value is not an expression,
 \eval returns it unchanged. Expressions account for \packageCodepercent of
@@ -680,30 +673,37 @@ such as \c{x}), \packageLanguagepercent are \c{language} objects (expressions
 representing a function calls), and \packageExpressionpercent are \c{expression}
 objects (lists of expressions). Further inspection reveals that \c{\_inherit}
 accounts for \packageGgplotsymbolpercent of symbols and comes from one site in
-\c{ggplot2}.\footnote{To model inheritance in \c{ggproto}, one of the many
-object-oriented systems for R.}
+\c{ggplot2}.\footnote{Each object has a field model inheritance, this comes from
+\c{ggproto}, one of the many object-oriented systems for R.}
+
+
+\begin{wrapfigure}{r}{5.8cm}
+\begin{tabular}{c}
+{\hspace{-25mm}\includegraphics[width=0.7\textwidth]{package_size_loaded_distribution}}
+\end{tabular}
+\caption{Loaded code} \label{fig:sizedistribution}
+\end{wrapfigure}
 
 To estimate how much executable code is injected through \eval, we measure the
-number of nodes in the expressions; for example, \c{x+1} counts as 3. We also
-measured string lengths of unparsed expressions, but these measurements were
-dominated by the size of data objects which could range in the MBs. The median
-argument size is \packageMedianszeval (due to the symbols), and the average is
-\packageAvgszeval nodes. The largest \eval input observed is
-\packageMaxszeval\,-- a significant chunk of code.
-Figure~\ref{fig:sizedistribution} shows the distribution of sizes for arguments
-of fewer or equal to 25 nodes. The x-axis is the size of arguments in number of
-nodes, and the y-axis is the count of arguments with that size. The size drops
-rapidly, with few observations larger than 15 nodes. The long tail is omitted
-for legibility.
+size of the arguments in terms of number of nodes. For example,
+\c{expression(x+1)} has a size of 3. The large number of symbols skew the median
+to \packageMedianszeval but the average size is \packageAvgszeval nodes. The
+largest \eval input we observed was an expression of \packageMaxszeval nodes, a
+significant chunk of code. Fig.~\ref{fig:sizedistribution} shows the
+distribution of sizes for arguments of fewer than 25 nodes. Sizes drop rapidly,
+there are few observations larger than 15 nodes. The long tail is omitted for
+legibility. As an alternative to counting nodes, we tried measuring string
+lengths of expressions after calling a function to deparse values back to
+strings, but these measurements were dominated by massive data objects which
+could range in the MBs.
 
-
-To estimate the work performed in \evals, we count instructions executed by the
-interpreter. Most invocations perform relatively little work, with
-\packageSmalleventspct of \evals executing 50 or fewer instructions. The violin
-plot of Figure~\ref{ev}(a) corresponds to \evals executing $\leq$ 50
-instructions; it is dominated by trivial symbol lookups. Figure~\ref{ev}(b) has
-the work-intensive \evals, which go all the way to \packageMaxeventsRnd
-instructions.
+To assess how much computational work is performed in \evals, we count the
+instructions executed by the interpreter. Most call do relatively little, with
+\packageSmalleventspct of calls executing fewer than 50 instructions. The violin
+plot of Fig.~\ref{ev}(a) shows the distribution of short running \evals; the
+data is dominated by \evals which simply perform symbol lookup. Fig.~\ref{ev}(b)
+shows the distribution of work-intensive \evals which go all the way to
+\packageMaxeventsRnd instructions.
 
 \begin{figure}[h!]
 \begin{tabular}{@{}c@{}c@{}}
@@ -718,13 +718,17 @@ instructions.
 \end{figure}
 
 \paragraph{Discussion.}
-\Eval is used in CRAN packages. Nearly every fourth package contains at least
-one \eval site. However, most packages that use \eval do that modestly. Half of
-them include less than three \eval sites. Packages that rely heavily on \eval
-are mostly the ones that provide statistical modeling and simulation functions.
-At runtime, over a third of extracted programs triggered calls to \eval. Half
-of the \packageAllcallsRnd recorded calls come from a single \eval site, but
-for the rest, most of the packages have low \eval call frequency.
+\Eval is widely used in CRAN packages. Nearly every fourth package contains at
+least one \eval call site. However, most packages use \eval modestly. Packages
+that rely heavily on \eval are mostly ones that provide statistical modeling and
+simulation functions. At runtime, over a third of our scripts triggered calls to
+\eval, note that all scripts performed \eval originating from base package but
+these are disregarded here. Half of the calls come from a single site, for the
+rest, most packages have low call frequency. The data is consistent with usage
+of \eval for configuration and meta-programming and not in performance sensitive
+contexts such as loops. While most arguments to \eval are small, often just a
+variable name, and do little work, we have also observed large \eval arguments
+and arguments that perform massive amounts of work.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
