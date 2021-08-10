@@ -1445,14 +1445,19 @@ the parent environment. The use of \code{match.call}, avoids repeated use of
 \code{substitute} for extracting the argument expressions. This setup is also
 extensible as new parameter names can be easily added to the \code{match} call.
 
+\mypara{Formula Resolution} Many packages use \code{eval} to evaluate formula
+expressions. Consider the definition of the \code{formula.pdMat} function from
+\code{nlme} package.
 
-For example, the \code{PopED::get\_rse} uses it to
-assign a number of variables in the current scope:
-\code{eval(parse(text=paste(default_args[[i]]), "<- ", i))}. There are also more
-sophisticated cases. The \code{plyr::allocate\_column} function uses eval for a
-deferred assignment to fill missing values in a column. Package overture
-repeatedly evaluates R expressions capturing any assignments that happen in it
-as samples of Markov chains.
+\begin{figure}[h]
+\begin{lstlisting}
+formula.pdMat <- function(x, asList, ...) eval(attr(x, "formula"))
+\end{lstlisting}
+  \caption{nlme::formula.pdMat}
+\end{figure}
+
+It extracts the \code{"formula"} attribute attached to the \code{pdMat} object
+and evaluates it.
 
 
 \mypara{Code Obfuscation} Some packages use \eval to bypass the restrictions
@@ -1461,14 +1466,7 @@ rules on a submitted package before accepting it for inclusion in CRAN. Some
 static checks ensure that the package code does not use certain restricted
 functions. If package authors cannot avoid using these functions, they use \eval
 to obfuscate the code, bypassing the checks performed by the tool. An example of
-this use is the \code{scalaEnsure} function from the \code{aibd} package. It
-mutates the variable \code{s} in the package environment. However, the package
-environment in R is locked by default, which prevents bindings from being
-mutated. Environment can be unlocked using \code{unlockBinding}, but its use is
-flagged by the well-formedness checks. To work around this limitation, the
-author passes the expression to unlock the package environment as a string to
-\code{parse} which is then evaluated by \code{eval}.
-
+this use is the \code{scalaEnsure} function from the \code{aibd} package.
 \begin{figure}[h]
 \begin{lstlisting}
 scalaEnsure <- function() {
@@ -1479,25 +1477,34 @@ scalaEnsure <- function() {
     lockBinding("s", env)
 }
 \end{lstlisting}
-\caption{aibd::scalaEnsure}
+  \caption{aibd::scalaEnsure}
 \end{figure}
+
+This function mutates the variable \code{s} in the package environment. However,
+the package environment in R is locked by default, which prevents bindings from
+being mutated. Environment can be unlocked using \code{unlockBinding}, but its
+use is flagged by the well-formedness checks. To work around this limitation,
+the author passes the expression to unlock the package environment as a string
+to \code{parse} which is then evaluated by \code{eval}.
+
+
+
 
 \mypara{Miscellaneous}
 
 \mypara{Lookup and indexing}
 
-\mypara{Attributes}
-Package \code{nlme} uses \eval to evaluate expressions attached as attributes to
-its objects. Consider the definition of the \code{formula.pdMat} function below.
-It extracts the \code{"formula"} attribute attached to the \code{pdMat} object
-and evaluates it.
 
-\begin{figure}[h]
-\begin{lstlisting}
-formula.pdMat <- function(x, asList, ...) eval(attr(x, "formula"))
-\end{lstlisting}
-  \caption{nlme::formula.pdMat}
-\end{figure}
+For example, the \code{PopED::get\_rse} uses it to
+assign a number of variables in the current scope:
+\code{eval(parse(text=paste(default_args[[i]]), "<- ", i))}. There are also more
+sophisticated cases. The \code{plyr::allocate\_column} function uses eval for a
+deferred assignment to fill missing values in a column. Package overture
+repeatedly evaluates R expressions capturing any assignments that happen in it
+as samples of Markov chains.
+
+
+
 
 
 \subsection{Shapes redux}
