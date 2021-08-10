@@ -886,16 +886,16 @@ are highly polymorphic (8 or more different forms). These include the pipe
 operator of the \c{magrittr} package, used to compose functions, \eg instead of
 \c{f(g(h(x),y),z)} one can write \c{h(x) \%>\% g(y) \%>\% f(z)}.
 
-The variety of uses of \eval is evidenced by the number of different forms. In
+The number of different forms evidences the variety of uses of \eval. In
 comparison, JavaScript \eval usage was more straightforward and more
 predictable as reported by \citet{oopsla12b}, with 98.7\% of the sites with
 only one form. On the other hand, there are \packageNbSimpleMinimizedOne sites
 that only receive one of the simple forms (\ie\xspace \c{X}, \c{V}, \c{\$} or
-\c{<-}). Additional \packageNbSimpleMinimizedMore sites takes multiple forms,
-but all of them are these simple ones. Among these sites there are many cases
+\c{<-}). Additional \packageNbSimpleMinimizedMore sites take multiple forms,
+but all of them are these simple ones. Among these sites, there are many cases
 where \eval could be replaced by simpler constructs such as \c{get} to lookup a
-name in an environment, \c{assign} to set a value to a name in an environment
-or \c{do.call} to reflectively call a function.
+name in an environment, \c{assign} to set a value to a name in an environment,
+or \c{do.call} to call a function reflectively.
 
 \subsection{The environments of \eval}\label{sec:env}
 
