@@ -759,7 +759,7 @@ useful_percent <- 0
 ```
 
 
-```{r, eval=dataset_name == "package", eval = FALSE}
+```{r, eval=dataset_name == "package"}
 manual_value_necessary <- read_csv(path(params$base_dir, "non-necessary-value-evals.csv"), col_types = cols(src_ref = col_character(), necessary = col_logical()))
 
 statistic <- function(data, i) {
