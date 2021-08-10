@@ -1256,13 +1256,11 @@ which are assigned to the \code{methods} structure keyed by \code{what}.
 \begin{figure}[h]
 \begin{lstlisting}
 .makeCppMethods <- function(methods, cppclassinfo, env) {
-    cppMethods <- names(cppclassinfo@methods)
-    newMethods <- names(methods)
+    ...
     for(what in cppMethods[! cppMethods %in% newMethods])
         methods[[what]] <- eval(substitute(
-                  function(...) .CppObject$WHAT(...), list(WHAT = as.name(what))),
-                                env)
-    methods
+                  function(...) .CppObject$WHAT(...), list(WHAT = as.name(what))), env)
+    ...
 }
 \end{lstlisting}
   \caption{Rcpp::.makeCppMethods}
@@ -1362,11 +1360,11 @@ do_call <- function(f, ..., .args = list(), .env = parent.frame()) {
 \caption{igraph::do\_call}
 \end{figure}
 
-\paragraph{Domain-Specific Languages} The combination of laziness, metaprogramming,
-first-class environments and dynamic evaluation make R the perfect toolkit for
+\mypara{Domain-Specific Languages} The combination of laziness, metaprogramming,
+first-class environments and dynamic evaluation makes R the perfect toolkit for
 building DSLs. An example of this is the \code{glue} package which provides
 functions for string interpolation. The code snippet below shows an example of
-this.
+\code{glue} function in action.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1378,41 +1376,21 @@ glue('{greeting} World!')
   \caption{glue::glue}
 \end{figure}
 
-text enclosed by c{\{} and c{\}} is
-evaluated using \eval as an R expression and replaced by its result.
+The \code{glue} function extracts snippets of R code enclosed between \c{\{} and
+\c{\}}, evaluates them using \eval, and splices the result to construct the
+final string.
 
-The ability to capture the current call as a language object (\code{match.call()}),
-extract the unevaluated expression from function arguments (\code{substitute()})
-and \eval with first class environment makes R the toolkit for building DSLs.
-There are numerous widely spread DSLs used in R. For example, \code{data.table}
-package defines a DSL for data frame manipulation using the subset operator
-\code{[}. This allows one to write compact queries such as \code{flights[carrier ==
-  "AA", .N, by = origin]}\footnote{The \code{data.table} subset operation is
-  defined as \code{DT[i, j, k]}, where \code{j} expression is used to calculate on a
-  subset/reorder of rows from \code{i} grouped by \code{k}.} which will compute the
-number of flights done by American Airlines for each origin airport.
-Essentially, it uses \code{substitute} to capture the operand's expressions,
-transforms then appropriately and finally uses \eval to execute the query.
+Another example is the \code{data.table} package that defines a DSL for data
+frame manipulation using the subset operator \code{[}. This subset operation is
+defined as \code{DT[i, j, k]}, where expression \code{j} is used to calculate on
+a subset/reorder of rows from \code{i} grouped by \code{k}. This enables compact
+queries on data frames such as \code{flights[carrier == "AA", .N, by = origin]}
+which will compute the number of flights done by American Airlines (\code{"AA"})
+for each origin airport. At its core, \code{[} uses \code{substitute} to capture
+the operand expressions, transforms them, and evaluates them using \eval in an
+environment which has data frame columns available as bindings.
 
-Another example is the \code{tidyselect} package that defines a DSL for selecting
-columns in a data frame powering number of data manipulation operation in the
-\code{data.table} main competitor, the \code{dply} package. It uses eval to build an
-interpreter for evaluating column selectors such as \code{select(df,
-starts\_with("length") \& !(name:mass))} which returns all columns in \code{df}
-that starts with the string \code{length} and is not between \code{name} and
-\code{mass} columns.
-
-
-Another instance is the \emph{symbolic differentiation support} provided by base R package \emph{stats}, with two operators \code{D} and \code{deriv}. They support arithmetic operations and functions on real numbers such as \code{sin}, on expressions built with \code{expression()} or \code{parse}.
-In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a \code{Dtensor} object is created: it contains expressions that are derived twice (with \code{DD}). To get a concrete value, it is evaluated in  dataframe \code{mu} where symbolic variables are bound to actual numbers.
-\begin{lstlisting}
- expr<-expression(beta_1 + time*beta_2+u)
- mu = data.frame(beta_1=0.5, beta_2=1, time=3, u=2.3)
- D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
-\end{lstlisting}
-
-
-\paragraph{Boilerplate Removal} The combination of \code{match.call} and \code{eval}
+\mypara{Boilerplate Removal} The combination of \code{match.call} and \code{eval}
 is frequently used by modeling functions to avoid boilerplate code and ease
 maintenance. Consider the example shown below of function \code{survfit.formula}
 from the \code{survival} package.
