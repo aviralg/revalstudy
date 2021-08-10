@@ -1233,7 +1233,7 @@ real-world sample. The examples are often simplified to fit the space and
 increase clarity. For each example, we indicate the package and the function
 where it is located.
 
-\emph{Simplify Interfaces}. A common use of \eval is to simplify interfaces by
+\paragraph{Simplify Interfaces} A common use of \eval is to simplify interfaces by
 letting users pass string argument which can be parsed and evaluated in custom a
 environment. An example is the \code{rARS} function shown below. This function
 is defined in the \code{AdapSamp} package that implements sampling algorithms.
@@ -1256,7 +1256,7 @@ This is turned into the closure \code{function(x) \{ eval(parse(text=formula))
 argument, but passing \code{function(x) exp(-x^2/2)} is probably not as
 convenient for domain-experts as passing \code{"exp(-x^2/2)"}.
 
-\emph{Code Generation.} The \c{Rcpp} package which bridges R with C++ is a
+\paragraph{Code Generation} The \c{Rcpp} package which bridges R with C++ is a
 popular user of this pattern. Its \code{.makeCppMethods} function, shown below,
 uses \eval to automatically generate R bindings to native code. The expression
 \code{function(...) .CppObject$WHAT(...), list(WHAT = as.name(what))} is
@@ -1278,10 +1278,11 @@ which are assigned to the \code{methods} structure keyed by \code{what}.
   \caption{Rcpp::.makeCppMethods}
 \end{figure}
 
-\emph{Extracting ... arguments.} A surprising use of \eval is the extraction of unevaluated text of arguments
-passed to a \code{...} parameter. Consider the definition of the \code{NVL}
-function from the \code{statnet.common} package. This function returns the first
-argument that is non \code{NULL}.
+\paragraph{Extracting \texttt{...} arguments} A surprising use of \eval is the
+extraction of unevaluated text of arguments passed to a \code{...} parameter.
+Consider the definition of the \code{NVL} function from the
+\code{statnet.common} package. This function returns the first argument that is
+non \code{NULL}.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1304,7 +1305,7 @@ unevaluated text of the arguments passed to \code{NVL}.
 the unevaluated argument expressions which are evaluated sequentially for their
 result.
 
-\emph{Conditional Evaluation.} Developers frequently use \eval to explicitly
+\paragraph{Conditional Evaluation} Developers frequently use \eval to explicitly
 control the evaluation of code. Consider the \code{\%\|\|\%} operator from the
 \code{igraph} package shown below. This operator returns the result of
 evaluating the first argument (\code{lhs}) if it is not \code{NULL}, otherwise
@@ -1354,7 +1355,7 @@ see_if <- function(..., env = parent.frame(), msg = NULL) {
   \caption{assertthat::see\_if}
 \end{figure}
 
-\emph{Core function variants.} Many packages use \eval to implement variations of the
+\paragraph{Core function variants} Many packages use \eval to implement variations of the
 \code{base} R functions. For example, the \code{igraph} package provides the
 \code{do_call} function shown below. This is a variant of the \code{do.call}
 function from the \code{base} package. This function executes a function call by
@@ -1371,7 +1372,7 @@ do_call <- function(f, ..., .args = list(), .env = parent.frame()) {
 \caption{igraph::do\_call}
 \end{figure}
 
-\emph{Domain-Specific Languages.} The combination of laziness, metaprogramming,
+\paragraph{Domain-Specific Languages} The combination of laziness, metaprogramming,
 first-class environments and dynamic evaluation make R the perfect toolkit for
 building DSLs. An example of this is the \code{glue} package which provides
 functions for string interpolation. The code snippet below shows an example of
@@ -1420,7 +1421,7 @@ In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a 
  D[i]<-eval(DD(expr, name[unlist(comb.pos[i,])]), mu)
 \end{lstlisting}
 
-\emph{Easier Maintenance.} The combination of \c{match.call} and \eval is
+\paragraph{Easier Maintenance} The combination of \c{match.call} and \eval is
 frequently used to make it easier to maintain functions with similar interfaces.
 This pattern is very commonly employed by modeling functions. Consider the
 example below of the \code{survfit.formula} function from package
@@ -1450,7 +1451,7 @@ arbitrary arguments. It filters the arguments of interest using \code{match}
 function. \todo{explain more}
 
 
-\emph{Remove Boilerplate.} For example, the \code{PopED::get\_rse} uses it to
+\paragraph{Remove Boilerplate} For example, the \code{PopED::get\_rse} uses it to
 assign a number of variables in the current scope:
 \code{eval(parse(text=paste(default_args[[i]]), "<- ", i))}. There are also more
 sophisticated cases. The \code{plyr::allocate\_column} function uses eval for a
@@ -1459,7 +1460,7 @@ repeatedly evaluates R expressions capturing any assignments that happen in it
 as samples of Markov chains.
 
 
-\emph{Code Obfuscation.} Some packages use \eval to bypass the restrictions
+\paragraph{Code Obfuscation} Some packages use \eval to bypass the restrictions
 imposed by the \code{R CMD CHECK} tool. This tool enforces some well-formedness
 rules on a submitted package before accepting it for inclusion in CRAN. Some
 static checks ensure that the package code does not use certain restricted
@@ -1486,9 +1487,9 @@ scalaEnsure <- function() {
 \caption{aibd::scalaEnsure}
 \end{figure}
 
-\emph{Miscellaneous.}
+\paragraph{Miscellaneous}
 
-\emph{Lookup and indexing.}
+\paragraph{Lookup and indexing}
 
 
 \subsection{Shapes redux}
