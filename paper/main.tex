@@ -9,7 +9,6 @@
 \usetikzlibrary{positioning,automata,fit,shapes.geometric,backgrounds,calc}
 \usepackage{tabularx}
 \input{macro}
-\newcommand{\mypara}[1]{\medskip\noindent\emph{#1}\xspace}
 \newcommand{\NOTE}[1]{{\it Note: #1}\xspace}
 \newcommand{\authorcomment}[3]{\xspace\textcolor{#1}{{\bf #2} #3}\xspace}
 \newcommand{\todo}[1]{\authorcomment{red}{TODO}{#1}}
@@ -61,7 +60,7 @@
 \affiliation{\institution{Czech Technical University in Prague}\country{Czech Republic}}
 
 \begin{abstract}
-  \noindent Most dynamic languages allow users to turn text into code using
+ Most dynamic languages allow users to turn text into code using
   various functions, often named \eval, with language-dependent semantics. The
   widespread use of these reflective functions hinders static analysis and
   prevents compilers from performing optimizations. This paper aims to provide a
@@ -279,7 +278,7 @@ to the \eval function R offers three other variants:
                    encl = if(is.list(envir)) parent.frame() else baseenv()) ...
 \end{lstlisting}
 
-\noindent The expression passed to \eval can be thought of as an abstract syntax
+The expression passed to \eval can be thought of as an abstract syntax
 tree. It can be parsed from a string, created manually or using reflection.
 
 \begin{figure}[htb]
@@ -307,7 +306,7 @@ tree. It can be parsed from a string, created manually or using reflection.
 \end{minipage}
 \end{figure}
 
-\noindent The call to \c{substitute(x)} extracts the unevaluated expression from
+ The call to \c{substitute(x)} extracts the unevaluated expression from
 the promise \c{x}. The function \c{match.call} returns an expression
 representing the current call.
 
@@ -331,7 +330,7 @@ given any environment:
   get("v", envir=envir)                    assign("v", 2, envir=envir)
 \end{lstlisting}
 %
-\noindent Environments are used as hash maps as they have reference semantics
+ Environments are used as hash maps as they have reference semantics
 and a built-in string lookup.
 
 \subsection{Previous Work}
@@ -436,7 +435,7 @@ end-user scripts from \emph{Kaggle}:
 \end{itemize}
 
 
-\mypara{Discussion.} When we started this project, our goal was to contrast the
+\paragraph{Discussion.} When we started this project, our goal was to contrast the
 usage of \eval by package developers and end-users, but the Kaggle dataset have
 so few calls to \eval that there is little that can be said about those. The
 remainder of the paper focuses on CRAN with a few observations about the other
@@ -510,7 +509,7 @@ data size, and number of elements manipulated. The pipeline steps are:
        \draw [connector] (trace)      edge (analyze);
      \end{tikzpicture}
    }
-   \vspace{-2mm}\caption{Pipeline}\label{fig:pipeline}
+   \caption{Pipeline}\label{fig:pipeline}
  \end{figure}
 
 \begin{compactenum}[(1)]
@@ -534,7 +533,7 @@ data size, and number of elements manipulated. The pipeline steps are:
   paper.
 \end{compactenum}
 
-\noindent The pipeline runs in parallel~\cite{GNUparallel} orchestrated by a
+ The pipeline runs in parallel~\cite{GNUparallel} orchestrated by a
 Makefile. Servers have identical environments thanks to a docker image with all
 dependencies installed.
 
@@ -560,32 +559,38 @@ implemented in a mixture of R and C, and that the language implementation can
 call \eval. Lastly, large code bases exercise many edge cases of the highly
 underspecified R behavior.
 
-\mypara{Limitations.} Even with the extension described above, there are
+\paragraph{Limitations.} Even with the extension described above, there are
 \PkgUndefinedRnd \eval calls without source information (\PkgUndefinedRatio of
 all \eval calls). This happen when \eval is an argument to a higher-order
 function or when it is called from native code. An other limitation is that we
 do not record calls to the native \eval. Neither of these limitations should
 invalidate our conclusions.
 
-\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Measuring Eval across Datasets}
+\section{Measuring Eval}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{wrapfigure}{r}{5cm} \vspace{-1cm} \hspace*{-12mm}
-  \centering
-  \includegraphics[width=72mm]{pkgs-eval-callsites-hist.pdf}
-  \caption{CRAN \eval call sites}%
-  \label{fig:pkgs-eval-callsites-hist}\vspace{-3mm}
-\end{wrapfigure}
-%
-This section focuses on CRAN packages and reports statistics about the usage of
-\eval. We use the word \emph{site} to refer to an occurrence of a call site to the \eval
-function in the source code and \emph{call} to denote an observed invocation of
-the \eval function.
+This section reports on the frequency of \eval in CRAN. We use \emph{site} to
+refer to an occurrence of a call site to the \eval function in the source code
+and \emph{call} to denote an observed invocation of the \eval function.
+
+There are \PkgEvalCallSites \eval sites in \PkgPackages packages;
+\PkgPackagesRatio packages use \eval. Over half of these packages have fewer
+than 3 sites, and with the exception \MaxEvalCallSitesPackage which has
+\MaxEvalCallSitesCount sites, all packages contain fewer than
+\MaxEvalCallSitesRest sites. Fig~\ref{fig:pkgs-eval-callsites-hist} shows a
+histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
+\CranFunsWithEvalRatio of all functions use \eval.
+
 
 \begin{figure}[!b]
-\small
+\centering
+  \includegraphics[width=10cm]{pkgs-eval-callsites-hist.pdf}
+  \caption{ \eval call sites}\label{fig:pkgs-eval-callsites-hist}
+
+  \medskip
+
+  \small
 \begin{tabular}{@{}l@{\hspace{1.5cm}}l@{}}
 \begin{minipage} {5cm}\small
   \begin{tabular}{|r@{\,}r@{\,}l@{}r|r@{\,}r@{\,}l@{}r|} \hline
@@ -609,10 +614,9 @@ the \eval function.
 \end{tabular}~\\[2mm]\caption{Variants}\label{tab:variantseval}
 \end{minipage}\end{tabular}
 
-\end{figure}
+\medskip
 
-\begin{figure}[b] \centering
-  \includegraphics[width=.7\textwidth]{traced-eval-callsites.pdf} \centering
+\includegraphics[width=.8\textwidth]{traced-eval-callsites.pdf} \centering
   \caption{\eval call sites coverage of the \PkgPackages packages.}%
   \label{fig:traced-eval-callsites}
 \end{figure}
@@ -629,76 +633,55 @@ the \eval function.
 
   \medskip  (a) All  \medskip  \medskip
 
-  \vspace*{-1mm}
   \includegraphics[width=5.6cm, trim=5.5cm 0 5cm 0, clip]{package_calls_per_run_per_call_site}
 
   (b) Small
 
-\caption{Normalized calls} \label{cn}\vspace{-2mm}
+\caption{Normalized calls} \label{cn}
 
-\medskip
-\medskip
-
+\medskip\medskip
 \begin{tabular}{c}
-  \vspace*{-1mm}
-  {\hspace{-25mm}\includegraphics[width=0.7\textwidth]{package_size_loaded_distribution}}
+{\hspace{-25mm}\includegraphics[width=0.7\textwidth]{package_size_loaded_distribution}}
 \end{tabular}
 \caption{Loaded code} \label{fig:sizedistribution}
 \end{wrapfigure}
-There are \PkgEvalCallSites \eval sites in \PkgPackages packages. The proportion
-of packages calling \eval is \PkgPackagesRatio. Over half of these packages
-have fewer than 3 sites, and with the exception \MaxEvalCallSitesPackage, which
-has \MaxEvalCallSitesCount sites, all packages contain fewer than
-\MaxEvalCallSitesRest sites (\cf Fig~\ref{fig:pkgs-eval-callsites-hist}, which
-shows a histogram of sites per package). These sites appear in \PkgFunsWithEval
-functions (\CranFunsWithEvalRatio of all functions in CRAN).
-For dynamic analysis, we run \CranRunnableScripts programs extracted from
-\CranPackages packages. Any run that does not exercise \eval is discarded. This
-left \packageNbruns runs from \packageCorpus packages. There were
-\packageAllcalls calls in \packageTriggeredpkgs packages originating from
-\PkgHitEvalCallSites unique sites. In terms of coverage, the data exercised
-\PkgHitEvalCallSitesAvgRatio of sites, a coverage similar to the code coverage
-metric for the packages, which is \PkgCodeCoverage. The fact that not all sites
-are exercised can be chalked down to incomplete tests and occasional analysis
-failures (\PkgFailedProgramsRatio of programs crashed or timed out).
-Fig~\ref{fig:traced-eval-callsites} shows the number of sites that were
-exercised; coverage is unequal. Figure~\ref{freq} summarizes the frequency of
-dynamic calls to \eval, with the left
-column being the number of calls and the right, the number of packages in that
-range. There are \packageFewcalls packages with low \eval frequency, fewer than
-100 calls, and a smaller, but still significant, number of packages,
-\packageManycalls to be precise, that use \eval more than 1,000 times. Package
-\packageMaxcallspack makes \packageMaxcalls calls and thus accounts for over
-half of the observations. Figure~\ref{tab:variantseval} summarizes the use of
-variants of \eval. For each of the four variants, the first row shows the number
-of sites in the corpus (\emph{static}), the second row is the number of sites
-that were encountered during analysis (\emph{exercised}), the last row is the
-number of calls (\emph{invocations}). The overwhelming majority of sites and
-calls are to \eval itself, \c{eval.parent} is rare, and both \c{evalq} and
-\c{local} are barely used at all. The difference between sites and exercised
-sites underscores the limits of code coverage.
 
+Our pipeline runs \CranRunnableScripts scripts extracted from \CranPackages
+packages. Any run that does not call \eval is discarded, leaving us with
+\packageNbruns runs. We recorded \packageAllcalls \eval calls originating from
+\PkgHitEvalCallSites sites. This exercised \PkgHitEvalCallSitesAvgRatio of
+sites, the coverage is similar to the package code coverage metric which is
+\PkgCodeCoverage. The reason some sites are not exercised can be chalked down to
+incomplete tests and analysis failures (\PkgFailedProgramsRatio of all scripts
+crashed or timed out). Fig~\ref{fig:traced-eval-callsites} plots exercised site
+with respect to all sites for each program; as can be seen coverage is unequal.
+Figure~\ref{freq} summarizes the frequency of calls, number of calls on the left
+and number of packages on the right. There are \packageFewcalls packages with
+fewer than 100 calls, and \packageManycalls packages with more than 1,000 calls.
+\packageMaxcallspack calls \eval \packageMaxcalls times and thus accounts for
+over half of the observations. Fig.~\ref{tab:variantseval} summarizes use of
+variants, the first row has sites (\emph{static}), the second has sites
+encountered during analysis (\emph{exercised}) and the last gives calls
+(\emph{invocations}). Most sites and calls go to \eval itself, \c{eval.parent}
+is rare, and both \c{evalq} and \c{local} are barely used at all.
 
-Figure~\ref{cn}(a) shows normalized call counts per site; on the left are the
-average number of calls from a given site and given run, on the right are the
-counts of sites that fall in that range. For instance, \packageRunbinh sites are
-invoked 2,000+ times per run. Larger numbers suggest loops or recursive contexts
--- this seems to be the exception as most \evals, \packageRunbina, are exercised
-50 times or less. Figure~\ref{cn}(b) zooms in on low frequency sites. The x-axis
-shows normalized calls, and the y-axis is the number of sites for that value.
-Most low-frequency \evals are invoked only once; about half as many are invoked
-twice; after that, the frequency quickly drops.
+Figure~\ref{cn}(a) shows average count of calls from a given site and given run
+and how many sites fall in that range. For instance, \packageRunbinh sites are
+called over 2,000 times per run. Larger numbers suggest loops or recursive
+contexts -- this seems to be the exception; \packageRunbina of sites are called
+fewer than 50 times. Fig.~\ref{cn}(b) zooms in on low frequency sites. The
+x-axis shows normalized calls, and the y-axis counts sites. Most sites are
+invoked once, half as many are invoked twice, the drop off is sharp after that.
 
-\Eval takes any value, but if its argument is not an expression, it is returned
-unchanged. Expressions account for \packageCodepercent of arguments. More
-specifically, \packageSymbolpercent are \texttt{symbol}s (single variables such
-as \c{x}), \packageLanguagepercent are \c{language} objects (function calls),
-  and \packageExpressionpercent are \c{expression} objects (lists of
-  expressions). Further inspection reveals that most symbols,
-  \packageGgplotsymbolpercent to be exact, come from a single site in the
-  \c{ggplot2} package and have the value \c{\_inherit}.\footnote{This models
-  inheritance in \c{ggproto}, one of the many object-oriented systems in R, used
-  in the \c{ggplot2} graphics library.}
+\Eval accepts any value as argument, but if the value is not an expression,
+\eval returns it unchanged. Expressions account for \packageCodepercent of
+arguments. More specifically, \packageSymbolpercent are \c{symbol}s (variables
+such as \c{x}), \packageLanguagepercent are \c{language} objects (expressions
+representing a function calls), and \packageExpressionpercent are \c{expression}
+objects (lists of expressions). Further inspection reveals that \c{\_inherit}
+accounts for \packageGgplotsymbolpercent of symbols and comes from one site in
+\c{ggplot2}.\footnote{To model inheritance in \c{ggproto}, one of the many
+object-oriented systems for R.}
 
 To estimate how much executable code is injected through \eval, we measure the
 number of nodes in the expressions; for example, \c{x+1} counts as 3. We also
@@ -734,7 +717,7 @@ instructions.
  \caption{Instructions per call} \label{ev}
 \end{figure}
 
-\mypara{Discussion.}
+\paragraph{Discussion.}
 \Eval is used in CRAN packages. Nearly every fourth package contains at least
 one \eval site. However, most packages that use \eval do that modestly. Half of
 them include less than three \eval sites. Packages that rely heavily on \eval
@@ -785,11 +768,11 @@ column shows one sample expression $e$ that normalizes to the particular form.
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
 
-\medskip\noindent  We detail these forms and discuss their implication for the behavior of \eval.
+\medskip  We detail these forms and discuss their implication for the behavior of \eval.
 
 \newcommand{\EE}[1]{{{\emph{\framebox{#1}}}}\\[1mm]}
 
-\medskip\noindent\EE{$min(e)=\c{V}$} Expressions that represent values are
+\medskip\EE{$min(e)=\c{V}$} Expressions that represent values are
 frequently passed to \eval -- they occur in 17\% of sites. The majority of
 those, \packageValOneNodePercent, are inline constants (integer or double
 vectors). The rest trivially evaluate to a value, \eg~\c{1+1}.\footnote{True as
@@ -810,7 +793,7 @@ interesting expression. This form is usually evaluated in few interpreter steps;
 in fact, the median is only \packageMinimizedmedianoperationscRnd. The
 environment in which they evaluate is mostly irrelevant.
 
-\medskip\noindent\EE{$min(e)=\c{X}$} Variable lookups are the most common form;
+\medskip\EE{$min(e)=\c{X}$} Variable lookups are the most common form;
 they are found in 28\% of the sites. This form includes simple variable reads,
 \eg~\c{x}, which are \packageNbSymbolVarSitePercent of \c X. The form also
 subsumes \c{V}, so it includes a mixture of arithmetic expressions,
@@ -823,7 +806,7 @@ it is not the common case. Lookups are often evaluated in constructed
 environments; as few as \packageMinimizedpercentparentframesa of these
 expressions are evaluated in a function environment.
 
-\medskip\noindent\EE{$min(e)=\c{\$}$} This form extends \c X to include lookup
+\medskip\EE{$min(e)=\c{\$}$} This form extends \c X to include lookup
 with the dollar operator, \eg~\c{x\$f}, and vector indexing, \eg~\c{x[42]} or
 \c{x[[24]]}. As with \c X, we allow arithmetics and values in this form. Lookup
 occurs in 10\% of the sites. The interpreter evaluates
@@ -831,13 +814,13 @@ occurs in 10\% of the sites. The interpreter evaluates
 operations. This is typically used in a function environment,
 \packageMinimizedpercentparentframese of the time to be precise.
 
-\medskip\noindent\EE{$min(e)=$~\c{<-}} This form includes both assignment
+\medskip\EE{$min(e)=$~\c{<-}} This form includes both assignment
 operators, the direct assignment {\tt <-}, and assignment to the parent
 environment {\tt <\,\!<-}, the \c{assign} function and the \c{\$} form.
 Assignments occur in 5\% of the sites. They represent the most obvious source of
 side effects. The median count is \packageMinimizedmedianoperationsiRnd (min=3).
 
-\medskip\noindent\EE{$min(e)=\c{F()}$} This form captures simple function calls,
+\medskip\EE{$min(e)=\c{F()}$} This form captures simple function calls,
 \eg~\c{f(2)}, with neither variables nor assignments. More specifically, it
 allows for variables in the function position but not in arguments. Usually,
 looking up function names does not trigger computation, but that is not a given
@@ -845,7 +828,7 @@ if the function is returned by a promise or if the function name is shadowed by
 a promise containing a value, then the computation will occur. This form occurs in
 6\% of sites and typically does not perform much work.
 
-\medskip\noindent\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$} These
+\medskip\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$} These
 forms allow for function calls whose arguments may include variable references.
 The latter allows nested calls. Assignments are excluded from this form. They
 occur in, respectively, 14\% and 20\% of the sites in the corpus. Together they
@@ -855,7 +838,7 @@ respectively, \packageMinimizedmedianoperationsdRnd and
 \packageMinimizedpercentparentframesd and \packageMinimizedpercentparentframesb
 of these expressions run in function environments.
 
-\medskip\noindent\EE{$min(e)=\c{FUN}$} This form captures expressions that
+\medskip\EE{$min(e)=\c{FUN}$} This form captures expressions that
 define functions, \eg~\c{function(x) x+1}, and do nothing else. \c{FUN} occurs
 in \packageFunctionDefinitionSitesPercent of sites. Evaluating a function
 definition is done in 2 interpreter steps; the data does not record the work
@@ -864,19 +847,19 @@ addition to \c{FUN}, \packageGeneralizedFunctionDefinitionSitesPercent of sites
 have function definitions nested in other expressions. This gives an idea of the
 use of higher-order functions.
 
-\medskip\noindent\EE{$min(e)=\c{BLOCK}$} This form captures multi-statement
+\medskip\EE{$min(e)=\c{BLOCK}$} This form captures multi-statement
 code blocks, which occur in only 4\% of sites. These are huge expressions; we
 do not inspect the contents of the blocks. The median number of executed operations
 is \packageMinimizedmedianoperationsjRnd. They typically run in function
 environments.
 
-\medskip\noindent\EE{$min(e)=\c{model.frame}$} The \c{model.frame} function
+\medskip\EE{$min(e)=\c{model.frame}$} The \c{model.frame} function
 returns a dataframe resulting from fitting the model described in a given
 formula. This form subsumes \c{F(F(X))}, \c{FUN}, and assignments. It is the
 single most popular function invoked from \eval; it occurs in 7\% of the sites.
 Each call does quite a lot of work with a 2K instructions median.
 
-\mypara{Discussion.} 
+\paragraph{Discussion.}
 It is interesting how many different forms any given site sees. The more forms,
 the harder it is to characterize behavior at that site. Luckily,
 \packageNbOneMinimizedPercent of sites only see a single form. In other words,
@@ -916,7 +899,7 @@ can be classified into the following four kinds:
   evaluated. \item \emph{Package:}  environments of a loaded library.
 \end{compactitem}
 
-\noindent
+
 As shown in Table~\ref{tab:highlevelenvironments}, most calls evaluate in the
 scope of a function with global as a distant second. This means that most
 variable reads and most side-effects operate on local variables. But for which
@@ -977,7 +960,7 @@ Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\hli
 \end{minipage}\hspace{-1cm}
 \end{table}
 
-\noindent
+
 Global \evals are likely split between intentional and accidental one. Direct
 references to the top-level, using \c{globalenv()} or \c{.GlobalEnv}, are rare;
 they occur in only \packageNbExplicitGlobalSites sites. Thus we suspect most
@@ -995,7 +978,7 @@ kinds for synthetic environments. Most of them are functions, then come global
 and package.
 
 
-\mypara{Discussion.}
+\paragraph{Discussion.}
 The data presented in this section is what one could expect. For {\it
   functions}, they represent the main user case for \eval. Thus \eval is really
 extending the behavior of that function by executing a dynamically selected
@@ -1064,8 +1047,8 @@ Expression \c{e} has two origins, \c{parse} and \c{quote}, which corresponds to 
 Table~\ref{tab:detailed_provenances} shows the first provenances in number of sites. In \packagePercentProvenanceSitesd\% of the sites, the expression passed to \eval is not a language expression or a symbol but a floating point, or a string for instance. In that case, we did not track the provenance. \c{.External} invokes a C function. For instance, in the following code, \c{.External(C\_deriv, expr, namevec, function.arg, tag, hessian)} calls a C function called \c{C\_deriv} to derive an expression.
  Due to technical reasons, there is some imprecision in the
 results. In particular, we misclassify some sites but these cases happen rarely. For instance,  \packagePercentProvenanceSitesj\% of the sites have provenance \c{[[}, a subsetting operator, as we lose the provenance of the subsetted expression, often when that expression is given attributes. Manual inspection of numerous examples suggests that errors are rare.
- 
- 
+
+
 
 
 
@@ -1108,7 +1091,7 @@ functions \c{source} and \c{sys.source} do. We observed few calls
 identified one function \c{invokeRestartInteractively} that prompts the user for
 input, parses it, and passes it to \eval.
 
-\mypara{Discussion}
+\paragraph{Discussion}
 The origin data suggests that reflection is the first use case for \eval, \ie using \c{match.call}, \c{substitute}, or \c{match.call} to access and transform the arguments of a function when calling the function. Constructing expressions from strings is also
 a common use case. The constructed category shows that most
 \evals comes from code that was processed by the compiler, and may be slightly
@@ -1208,7 +1191,7 @@ did not find a common use case.
   \caption{Types of \eval side-effects} \label{tab:se-types}
 \end{table}
 
-\mypara{Discussion} In JavaScript assignments in \eval can happen in either
+\paragraph{Discussion} In JavaScript assignments in \eval can happen in either
 local scope or less often, when called through an alias, in the global scope. In
 R, given the support for first-class environments, it can happen anywhere,
 making it \eval more dangerous than it already is. However, the data suggest
@@ -1230,7 +1213,7 @@ real-world sample. The examples are often simplified to fit the space and
 increase clarity. For each example, we indicate the package and the function
 where it is located.
 
-\mypara{Simplify Interfaces} A common use of \eval is to simplify interfaces by
+\paragraph{Simplify Interfaces} A common use of \eval is to simplify interfaces by
 letting users pass string argument which can be parsed and evaluated in custom a
 environment. An example is the \code{rARS} function shown below. This function
 is defined in the \code{AdapSamp} package that implements sampling algorithms.
@@ -1253,7 +1236,7 @@ This is turned into the closure \code{function(x) \{ eval(parse(text=formula))
 argument, but passing \code{function(x) exp(-x^2/2)} is probably not as
 convenient for domain-experts as passing \code{"exp(-x^2/2)"}.
 
-\mypara{Code Generation} The \c{Rcpp} package which bridges R with C++ is a
+\paragraph{Code Generation} The \c{Rcpp} package which bridges R with C++ is a
 popular user of this pattern. Its \code{.makeCppMethods} function, shown below,
 uses \eval to automatically generate R bindings to native code. The expression
 \code{function(...) .CppObject$WHAT(...), list(WHAT = as.name(what))} is
@@ -1275,7 +1258,7 @@ which are assigned to the \code{methods} structure keyed by \code{what}.
   \caption{Rcpp::.makeCppMethods}
 \end{figure}
 
-\mypara{Extracting varargs} A surprising use of \eval is the
+\paragraph{Extracting varargs} A surprising use of \eval is the
 extraction of unevaluated text of arguments passed to a \code{...} parameter.
 Consider the definition of the \code{NVL} function from the
 \code{statnet.common} package. This function returns the first argument that is
@@ -1302,7 +1285,7 @@ unevaluated text of the arguments passed to \code{NVL}.
 the unevaluated argument expressions which are evaluated sequentially for their
 result.
 
-\mypara{Conditional Evaluation} Developers frequently use \eval to explicitly
+\paragraph{Conditional Evaluation} Developers frequently use \eval to explicitly
 control the evaluation of code. Consider the \code{\%\|\|\%} operator from the
 \code{igraph} package shown below. This operator returns the result of
 evaluating the first argument (\code{lhs}) if it is not \code{NULL}, otherwise
@@ -1352,7 +1335,7 @@ see_if <- function(..., env = parent.frame(), msg = NULL) {
   \caption{assertthat::see\_if}
 \end{figure}
 
-\mypara{Core function variants} Many packages use \eval to implement variations of the
+\paragraph{Core function variants} Many packages use \eval to implement variations of the
 \code{base} R functions. For example, the \code{igraph} package provides the
 \code{do_call} function shown below. This is a variant of the \code{do.call}
 function from the \code{base} package. This function executes a function call by
@@ -1369,7 +1352,7 @@ do_call <- function(f, ..., .args = list(), .env = parent.frame()) {
 \caption{igraph::do\_call}
 \end{figure}
 
-\mypara{Domain-Specific Languages} The combination of laziness, metaprogramming,
+\paragraph{Domain-Specific Languages} The combination of laziness, metaprogramming,
 first-class environments and dynamic evaluation make R the perfect toolkit for
 building DSLs. An example of this is the \code{glue} package which provides
 functions for string interpolation. The code snippet below shows an example of
@@ -1419,7 +1402,7 @@ In \emph{MCMCglmm} (Monte Carl Markov Chain Generalised Linear Mixed Models), a 
 \end{lstlisting}
 
 
-\mypara{Boilerplate Removal} The combination of \code{match.call} and \code{eval}
+\paragraph{Boilerplate Removal} The combination of \code{match.call} and \code{eval}
 is frequently used by modeling functions to avoid boilerplate code and ease
 maintenance. Consider the example shown below of function \code{survfit.formula}
 from the \code{survival} package.
@@ -1445,7 +1428,7 @@ the parent environment. The use of \code{match.call}, avoids repeated use of
 \code{substitute} for extracting the argument expressions. This setup is also
 extensible as new parameter names can be easily added to the \code{match} call.
 
-\mypara{Formula Resolution} Many packages use \code{eval} to evaluate formula
+\paragraph{Formula Resolution} Many packages use \code{eval} to evaluate formula
 expressions. Consider the definition of the \code{formula.pdMat} function from
 \code{nlme} package.
 
@@ -1460,7 +1443,7 @@ It extracts the \code{"formula"} attribute attached to the \code{pdMat} object
 and evaluates it.
 
 
-\mypara{Code Obfuscation} Some packages use \eval to bypass the restrictions
+\paragraph{Code Obfuscation} Some packages use \eval to bypass the restrictions
 imposed by the \code{R CMD CHECK} tool. This tool enforces some well-formedness
 rules on a submitted package before accepting it for inclusion in CRAN. Some
 static checks ensure that the package code does not use certain restricted
@@ -1490,9 +1473,9 @@ to \code{parse} which is then evaluated by \code{eval}.
 
 
 
-\mypara{Miscellaneous}
+\paragraph{Miscellaneous}
 
-\mypara{Lookup and indexing}
+\paragraph{Lookup and indexing}
 
 
 For example, the \code{PopED::get\_rse} uses it to
