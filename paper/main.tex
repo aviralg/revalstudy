@@ -1394,6 +1394,20 @@ for each origin airport. At its core, \code{[} uses \code{substitute} to capture
 the operand expressions, transforms them, and evaluates them using \eval in an
 environment which has data frame columns available as bindings.
 
+The use of \eval with \code{substitute} is a general pattern that we often see
+in R packages. It is used to make the interfaces more flexible. For example the
+\c{subset}, which selects columns in a data frame, uses it to allow to specify
+the selected columns using either the column name or index. For example
+\c{subset(df, sel=c(1,B,x))} returns a subset of \code{df} with the first
+column, the column named \code{B} and whatever column is at index the variable
+\code{x} holds.
+
+It is implemented using \code{eval(substitute(sel), nl, parent.frame())}. The
+first argument returns the expression passed to \code{sel}. The second is a
+named list that contains the names of the columns from \code{df} and which will
+be used to evaluate the expression. The last parameter indicates which
+environment should be used to look up bindings not found in \c{nl}.
+
 \paragraph{Boilerplate Removal} The combination of \code{match.call} and \code{eval}
 is frequently used by modeling functions to avoid boilerplate code and ease
 maintenance. Consider the example shown below of function \code{survfit.formula}
