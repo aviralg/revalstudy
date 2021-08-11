@@ -1100,9 +1100,12 @@ possibly in parallel). Most of the sites (\SESitesInEnvirRatio) update
 the environment specified by the \c{env} parameter.
 
 \begin{wraptable}{r}{7cm}\small\centering
-  \begin{tabular}{lrrrr}\toprule
+  \begin{tabular}{lrrrr}
+    \toprule
     \bf Environments & \bf \#sites & \bf \%sites & \bf \#funs. & \bf \%funs. \\%
+    \midrule
     \expandableinput tag/table-se-target-envs.tex
+    \bottomrule
   \end{tabular}
   \caption{Target environments for side-effects} \label{tab:se-env}
 \end{wraptable}
@@ -1148,9 +1151,13 @@ did not find a common use case.
 \begin{table}[h]
   \small
   \centering
-  \begin{tabular}{lrrrrrr}\toprule
+  \begin{tabular}{lrrrrrr}
+    \toprule
     \bf Side effect & \bf \#events & \bf \%events & \bf \#calls & \bf \%calls & \bf \#sites & \bf \%sites \\%
+    Side effect & \#events & \%events & \#calls & \%calls & \#sites & \%sites \\%
+    \midrule
     \expandableinput tag/table-se-types.tex
+    \bottomrule
   \end{tabular}
   \caption{Types of \eval side-effects} \label{tab:se-types}
 \end{table}
