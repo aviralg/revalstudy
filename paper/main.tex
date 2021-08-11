@@ -786,32 +786,30 @@ the behavior of \eval.
 \begin{tabular}{@{}p{.97\linewidth}}
   \vspace{1mm}
   \EE{$min(e)=\code{V}$} \\[-2mm]\small Values occur in 16\% of sites, 74\% of
-  those are constants such as integers, the remainder evaluate to a value. \Eval
+  those are constants such as integers, the remainder evaluate to a value (\packageNbCallSitesUniqueActualValue of
+  sites only ever see a value). \Eval
   is needed when the expression denoting the values is constructed
   programmatically. Cases when a value is directly given to \eval, and \eval
   returns it unchanged, often occur when a computation has a default path and
-  another, more interesting, path that requires evaluation. The following is a
-  call site that always see a string; \packageNbCallSitesUniqueActualValue of
-  sites only ever see a value. This shape usually run in few interpreter steps.
+  another, more interesting, path that requires evaluation.
+  This shape usually run in few interpreter steps.
   The environment in which they evaluate is mostly irrelevant.
-\begin{lstlisting}
-  eval(paste("A~",paste(paste(names(X[,-1])),collapse="+")))
-\end{lstlisting}
-\vspace{2mm}
-\EE{$min(e)=\code{X}$}\\[-2mm]\small Variable lookups are the most common shape,
-\packageNbSymbolVarSitePercent are simple variable names, e.g. \c x. The shapes
-subsumes \c{V} and built-in arithmetic operations, so a mixture of arithmetics
-and variables normalize to \c X. A lookup is one step of execution, if a promise
-is returned an arbitrary number of additional steps may be needed; the median is
-\packageMinimizedmedianoperationsaRnd, suggesting that most variable read do
-little work. Variables are often evaluated in environments that have been
-constructed programmatically, \packageMinimizedpercentparentframesa of
-expressions are evaluated in a function environment.
-\vspace{2mm}
-\EE{$min(e)=\code{\$}$}\\[-2mm]\small This shape extends \c X to include lookup
-with the dollar operator, \eg~\c{x\$f}, and vector indexing, \eg~\c{x[42]} and
-\c{x[[24]]}. This takes a few more step of evaluation on average, and is
-typically used in a function environment.
+
+  \vspace{2mm}
+  \EE{$min(e)=\code{X}$}\\[-2mm]\small Variable lookups are the most common shape,
+  \packageNbSymbolVarSitePercent are simple variable names, e.g. \c x. The shapes
+  subsumes \c{V} and built-in arithmetic operations, so a mixture of arithmetics
+  and variables normalize to \c X. A lookup is one step of execution, if a promise
+  is returned an arbitrary number of additional steps may be needed; the median is
+  \packageMinimizedmedianoperationsaRnd, suggesting that most variable read do
+  little work. Variables are often evaluated in environments that have been
+  constructed programmatically, \packageMinimizedpercentparentframesa of
+  expressions are evaluated in a function environment.
+  \vspace{2mm}
+  \EE{$min(e)=\code{\$}$}\\[-2mm]\small This shape extends \c X to include lookup
+  with the dollar operator, \eg~\c{x\$f}, and vector indexing, \eg~\c{x[42]} and
+  \c{x[[24]]}. This takes a few more step of evaluation on average, and is
+  typically used in a function environment.
 
 \vspace{2mm}
 \EE{$min(e)=$~\code{<-}}\\[-2mm]\small This includes both direct
@@ -819,18 +817,14 @@ assignment {\tt <-} and parent environment assignment {\tt <\,\!<-} as well as
 the \c{assign} function. It subsumes \c{\$}. Assignments represent the most
 obvious source of side effects in \eval. Most cases originate from trivial code
 generation where the assign expression is assembled using parse or substitute,
-often in a loop. For example (taken from \c{PopED::get\_rse}), the following
-code will populate the current scope with a number of variables:
-%
-\begin{lstlisting}
-for (i in seq_along(args)) eval(parse(text=paste(args[i], "<-", i)))
-\end{lstlisting}
+often in a loop.
 
 \vspace{2mm}
 \EE{$min(e)=\code{F()}$}\\[-2mm]\small Function calls without variable lookups or
 assignment. A variable is allowed the function position, looking up
 functions does not trigger computation unless the function's name
 is bound to a promise. This shape typically does not perform much work.
+
 \vspace{2mm}
 \framebox{$min(e)=\code{F(X)}$}~\EE{$min(e)=\code{F(F(X))}$}\\[-2mm]\small Function
 calls whose arguments may include variable references and nested calls. Together
