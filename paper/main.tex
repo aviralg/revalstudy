@@ -784,7 +784,7 @@ the behavior of \eval.
 \newcommand{\EE}[1]{{{\emph{\framebox{#1}}}}\\[1mm]}
 
 \begin{tabular}{@{}p{.97\linewidth}}
-  \medskip\EE{$min(e)=\c{V}$} \\[-2mm]\small Values occur in 16\% of sites, 74\% of
+  \medskip\EE{$min(e)=$ \code{V}} \\[-2mm]\small Values occur in 16\% of sites, 74\% of
   those are constants such as integers, the remainder evaluate to a value. \Eval
   is needed when the expression denoting the values is constructed
   programmatically. Cases when a value is directly given to \eval, and \eval
@@ -797,7 +797,7 @@ the behavior of \eval.
   eval(paste("A~",paste(paste(names(X[,-1])),collapse="+")))
 \end{lstlisting}
 \\
-\medskip\EE{$min(e)=$\code{X}}\\[-2mm]\small Variable lookups are the most common shape,
+\medskip\EE{$min(e)=$ \code{X}}\\[-2mm]\small Variable lookups are the most common shape,
 \packageNbSymbolVarSitePercent are simple variable names, e.g. \c x. The shapes
 subsumes \c{V} and built-in arithmetic operations, so a mixture of arithmetics
 and variables normalize to \c X. A lookup is one step of execution, if a promise
@@ -807,7 +807,7 @@ little work. Variables are often evaluated in environments that have been
 constructed programmatically, \packageMinimizedpercentparentframesa of
 expressions are evaluated in a function environment.
 \\
-\medskip\EE{$min(e)=$\code{$}}\\[-2mm]\small This shape extends \c X to include lookup
+\medskip\EE{$min(e)=$ \code{$}}\\[-2mm]\small This shape extends \c X to include lookup
 with the dollar operator, \eg~\c{x\$f}, and vector indexing, \eg~\c{x[42]} and
 \c{x[[24]]}. This takes a few more step of evaluation on average, and is
 typically used in a function environment.
@@ -817,29 +817,29 @@ typically used in a function environment.
 function. It subsumes \c{\$}. Assignments
 represent the most obvious source of side effects in \eval.
 \\
-\medskip\EE{$min(e)=$\code{F()}}\\[-2mm]\small Function calls without variable lookups or
+\medskip\EE{$min(e)=$ \code{F()}}\\[-2mm]\small Function calls without variable lookups or
 assignment. A variable is allowed the function position, looking up
 functions does not trigger computation unless the function's name
 is bound to a promise. This shape typically does not perform much work.
 \\
-\medskip\framebox{$min(e)=$\code{F(X)}}~\EE{$min(e)=\c{F(F(X))}$}\\[-2mm]\small Function
+\medskip\framebox{$min(e)=$ \code{F(X)}}~\EE{$min(e)=\c{F(F(X))}$}\\[-2mm]\small Function
 calls whose arguments may include variable references and nested calls. Together
 they represent the most frequent shape and perform over 16 steps. They are
 frequently evaluated in function environments.
 \end{tabular}
 
 \begin{tabular}{@{}p{.97\linewidth}}
-  \medskip\EE{$min(e)=$\code{FUN}}\\[-2mm]\small Function definitions without any
+  \medskip\EE{$min(e)=$ \code{FUN}}\\[-2mm]\small Function definitions without any
   computation, \eg~\c{function(x) x+1}. In addition to \c{FUN},
   \packageGeneralizedFunctionDefinitionSitesPercent of sites have function
   definitions nested in other expressions.
 \\
-\medskip\EE{$min(e)=$\code{BLOCK}}\\[-2mm]\small Multi-statement code blocks, as
+\medskip\EE{$min(e)=$ \code{BLOCK}}\\[-2mm]\small Multi-statement code blocks, as
 they can be large we do not try to normalize their contents. They execute in a
 median \packageMinimizedmedianoperationsjRnd steps, usually, in function
 environments.
 \\
-\medskip\EE{$min(e)=$\code{model.frame}}\\[-2mm]\small The \c{model.frame} function
+\medskip\EE{$min(e)=$ \code{model.frame}}\\[-2mm]\small The \c{model.frame} function
 returns a dataframe resulting from fitting the model described in a formula.
 This shape subsumes \c{F(F(X))}, \c{FUN}, and assignments. It is the single most
 popular function invoked from \eval. Each call does a median of 2K instructions.
