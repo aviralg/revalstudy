@@ -348,6 +348,7 @@ left_join(
   print(
     file=file.path(TAGS_DIR, "table-se-target-envs.tex"),
     comment=FALSE, 
+    hline.after=NULL,
     include.colnames=FALSE,
     include.rownames=FALSE,
     only.contents=TRUE,
@@ -383,6 +384,7 @@ left_join(
   print(
     file=file.path(TAGS_DIR, "table-se-types.tex"),
     comment=FALSE, 
+    hline.after=NULL,
     include.colnames=FALSE,
     include.rownames=FALSE,
     only.contents=TRUE,
