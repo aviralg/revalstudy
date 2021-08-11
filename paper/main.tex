@@ -1390,9 +1390,9 @@ environment which has data frame columns available as bindings.
 
 The use of \eval with \code{substitute} is a general pattern that we often see
 in R packages. It is used to make the interfaces more flexible. For example the
-\c{subset}, which selects columns in a data frame, uses it to allow to specify
+\code{subset}, which selects columns in a data frame, uses it to allow to specify
 the selected columns using either the column name or index. For example
-\c{subset(df, sel=c(1,B,x))} returns a subset of \code{df} with the first
+\code{subset(df, sel=c(1,B,x))} returns a subset of \code{df} with the first
 column, the column named \code{B} and whatever column is at index the variable
 \code{x} holds.
 
