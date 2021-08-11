@@ -1161,18 +1161,17 @@ did not find a common use case.
   \caption{Types of \eval side-effects} \label{tab:se-types}
 \end{table}
 
-Out of the minimized expressions, it is \c{BLOCK}, \c{<-} and
-\c{F(F(X)} that contribute to the vast majority of side effects. Concretely,
-92\% of \c{BLOCK}, 87\% of \c{<-} and 15\% of \c{F(F(X))} expressions contain
-side effects. In the case of \c{BLOCK}, most of the side effects happen in the
-environment passed to \eval (which by default is the parent environment, \ie
-the local or function in our classification). For \c{<-} it is 15\%, however,
-that is only because of the \c{plyr::allocate\_column} which does the side
-effect in the environment containing the data frame that is the target for the
-newly allocated column. Without this call, \c{<-} is similarly predictable with
-96\% of side effects in the passed environment. For \c{F(F(X))} minimization
-for, it is less clear as 48\% of side effects happen in a different environment
-to the one that was passed to \eval.
+Out of the minimized expressions, it is \c{BLOCK}, \c{<-} and \c{F(F(X)} that
+contribute to the vast majority of side effects. Concretely, 92\% of \c{BLOCK},
+87\% of \c{<-} and 15\% of \c{F(F(X))} expressions do side effects. In the case
+of \c{BLOCK}, most of them happen in the environment passed to the \eval call
+(default is the parent environment). For \c{<-} it is 15\%. However, this form
+is dominated by the \c{plyr::allocate\_column} function that side-effects in
+the environment containing the data frame to which it allocates new column.
+Without this call, \c{<-} is similarly predictable with 96\% of side effects
+happening in the passed environment. For \c{F(F(X))}, it is less clear as 58\%
+of side effects happen in a different environment to the one that was passed to
+\eval.
 
 \paragraph{Discussion} In JavaScript assignments in \eval can happen in either
 local scope or less often, when called through an alias, in the global scope. In
