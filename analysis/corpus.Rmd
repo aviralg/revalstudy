@@ -324,10 +324,11 @@ eval_call_sites_hist <- function(df, df_all, y_lab, max_evals=20L) {
           panel.grid.minor.x = element_blank(), aspect.ratio = 4/3) 
 }
 
-eval_call_sites_hist(PKG_C, CRAN_C, "CRAN packages")
+eval_call_sites_hist(PKG_C, CRAN_C, "")
 ggsave(path(PLOT_DIR, "pkgs-eval-callsites-hist.pdf"))
-eval_call_sites_hist(KAGGLE, KAGGLE_ALL, "KAGGLE programs")
-ggsave(path(PLOT_DIR, "kaggle-eval-callsites-hist.pdf"))
+
+# eval_call_sites_hist(KAGGLE, KAGGLE_ALL, "KAGGLE programs")
+# ggsave(path(PLOT_DIR, "kaggle-eval-callsites-hist.pdf"))
 ```
 
 ### Eval plot
@@ -373,7 +374,6 @@ eval_plot_df %>%
       breaks = size_breaks,
       labels=scales::comma_format(accuracy = 1)
     ) +
-#    geom_smooth(method = "lm", se = FALSE, show.legend = FALSE, linetype="dashed", color="red", size=0.2) +
     labs(x="Eval call sites (log)", y="Traced eval call sites (log)", size="Package R code size") +
     theme(
       text = element_text(size=17),
