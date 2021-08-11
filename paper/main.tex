@@ -1011,9 +1011,9 @@ graph with five nodes on Figure~\ref{fig:provgraph} for expression \c{e}.
 		]
 		\node (E) at (2,0) {\c{eval(e)}};
 		\node[text width = 3cm] (CA) at (2, 1.5) {\c{[[<-(e, 2, quote(c))}};
-		\node (Q) at (0, 3) {\c{quote(c)}};
-		\node[text width = 4cm] (A) at (4, 3) {\c{e <- parse(text = "a ; b"}};
-		\node[text width = 3cm] (P) at (4, 4.5) {\c{parse(text = "a ; b"}};
+		\node (Q) at (4, 3) {\c{quote(c)}};
+		\node[text width = 4cm] (A) at (0, 3) {\c{e <- parse(text = "a ; b"}};
+		\node[text width = 3cm] (P) at (0, 4.5) {\c{parse(text = "a ; b"}};
 		
 		\draw[->, >=latex] (E) -- (CA);
 		\draw[->, >=latex] (CA) -- (Q);
