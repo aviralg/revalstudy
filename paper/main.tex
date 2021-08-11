@@ -793,9 +793,6 @@ the behavior of \eval.
   another, more interesting, path that requires evaluation.
   This shape usually run in few interpreter steps.
   The environment in which they evaluate is mostly irrelevant.
-\begin{lstlisting}
-  eval(paste("A~",paste(paste(names(X[,-1])),collapse="+")))
-\end{lstlisting}
 \\
 \medskip\EE{$min(e)=\c{X}$}\\[-2mm]\small Variable lookups are the most common shape,
 \packageNbSymbolVarSitePercent are simple variable names, e.g. \c x. The shapes
@@ -814,8 +811,10 @@ typically used in a function environment.
 \\
 \medskip\EE{$min(e)=$~\c{<-}}\\[-2mm]\small This includes both direct assignment {\tt
   <-} and parent environment assignment {\tt <\,\!<-} as well as the \c{assign}
-function. It subsumes \c{\$}. Assignments
-represent the most obvious source of side effects in \eval.
+function. It subsumes \c{\$}. Assignments represent the most obvious source
+of side effects in \eval. Most cases originate from trivial code generation
+where the assign expression is assembled using parse or substitute, often in
+a loop.
 \\
 \medskip\EE{$min(e)=\c{F()}$}\\[-2mm]\small Function calls without variable lookups or
 assignment. A variable is allowed the function position, looking up
@@ -838,6 +837,14 @@ frequently evaluated in function environments.
 they can be large we do not try to normalize their contents. They execute in a
 median \packageMinimizedmedianoperationsjRnd steps, usually, in function
 environments.
+Essentially, the block denotes a fragment of a program to be evaluated in a
+particular way and in a particular environment. The latter is what makes it
+different from 0-argument closure. There is a number of use cases: unit testing
+frameworks (\eg \c{testthat}, \c{testit}), code benchmarking (\eg
+\c{rbenchmark}, \c{microbenchmark}), running code in parallel (\eg \c{foreach},
+\c{doParallel}), or deferring code execution (\eg \c{withr}).
+
+
 \\
 \medskip\EE{$min(e)=\c{model.frame}$}\\[-2mm]\small The \c{model.frame} function
 returns a dataframe resulting from fitting the model described in a formula.
