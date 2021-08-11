@@ -992,7 +992,7 @@ the values that are given to \eval. The following example yields the provenance
 graph with five nodes on Figure~\ref{fig:provgraph} for expression \c{e}.
 
 \begin{lstlisting}
- > e <- parse(text = "a ; b")
+ > e <- parse(text = "a;b")
  > e[[2]] <- quote(c)
  > eval(e)
 \end{lstlisting}
@@ -1010,15 +1010,15 @@ graph with five nodes on Figure~\ref{fig:provgraph} for expression \c{e}.
 		every node/.style={draw, rounded corners, fill=LightGray, text width = 2cm, align = center}
 		]
 		\node (E) at (2,0) {\c{eval(e)}};
-		\node[text width = 3cm] (CA) at (2, 1.5) {\c{[[<-(e, 2, quote(c))}};
+		\node[text width = 3cm] (CA) at (2, 1.5) {\c{e[[2]] <-quote(c)}};
 		\node (Q) at (4, 3) {\c{quote(c)}};
-		\node[text width = 4cm] (A) at (0, 3) {\c{e <- parse(text = "a ; b"}};
-		\node[text width = 3cm] (P) at (0, 4.5) {\c{parse(text = "a ; b"}};
+		\node[text width = 4cm] (A) at (0, 3) {\c{e <- parse(text = "a;b")}};
+		\node[text width = 3cm] (P) at (0, 4.5) {\c{parse(text = "a;b")}};
 		
-		\draw[->, >=latex] (E) -- (CA);
-		\draw[->, >=latex] (CA) -- (Q);
-		\draw[->, >=latex] (CA) -- (A);
-		\draw[->, >=latex] (A) -- (P);
+		\draw[<-, >=latex] (E) -- (CA);
+		\draw[<-, >=latex] (CA) -- (Q);
+		\draw[<-, >=latex] (CA) -- (A);
+		\draw[<-, >=latex] (A) -- (P);
 	\end{tikzpicture}
 \caption{Provenance} \label{fig:provgraph}
 \end{figure}
