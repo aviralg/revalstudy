@@ -1216,264 +1216,174 @@ anywhere, the data suggests most effects are sane.
 The R language was intended to be extensible. The combination of lazy
 evaluation, \c{substitute} and \c{eval} are some of the tools given to
 developers to this end. To understand \emph{why} developers use \eval, we
-manually inspected top 117 \eval call-sites which contribute to 90\% of the
-\eval calls. In this section, we give examples of the \eval usage from this
-real-world sample. The examples are often simplified to fit the space and
-increase clarity. For each example, we indicate the package and the function
-where it is located.
+manually inspected top 117 sites which contribute to 90\% of the calls in the
+corpus. This section gives some real-world examples, we simplify code for
+clarity.
 
-\paragraph{Simplify Interfaces} A common use of \eval is to simplify interfaces by
-letting users pass string argument which can be parsed and evaluated in custom a
-environment. An example is the \code{rARS} function shown below. This function
-is defined in the \code{AdapSamp} package that implements sampling algorithms.
+\paragraph{Extended Interfaces}
+Sometimes it is convenient to allow users to extend the behavior of a library
+function. \Eval allows clients to provide a simple text string that shall be
+executed in the context of the function. The example here allows users to
+provide formulas as strings, such as \k{"exp(-x^2/2)"}, the contract being that
+the text can refer to some variable \c x that will be set up by the called
+function. In this case one users could provide an anonymous function.
 
-\begin{figure}[h]
+\begin{figure}[h!]
 \begin{lstlisting}
-rARS <- function(n, formula, min=-Inf, max=Inf, sp) {
-    ...
-    p <- function(x) { eval(parse(text=formula)) }
-    ...
-}
-\end{lstlisting}
-  \caption{AdapSamp::rARS}
+ function(n,formula) {
+    p <- function(x) eval(parse(text=formula))
+\end{lstlisting} \caption{AdapSamp::rARS}
 \end{figure}
 
-The \code{rARS} function take a \code{formula} argument, an expression in
-\code{x} as a string, that represents the kernel of the target distribution.
-This is turned into the closure \code{function(x) \{ eval(parse(text=formula))
-  \}}. An alternative design would be to supply the closure itself as the
-argument, but passing \code{function(x) exp(-x^2/2)} is probably not as
-convenient for domain-experts as passing \code{"exp(-x^2/2)"}.
-
-\paragraph{Code Generation} The \c{Rcpp} package which bridges R with C++ is a
-popular user of this pattern. Its \code{.makeCppMethods} function, shown below,
-uses \eval to automatically generate R bindings to native code. The expression
-\code{function(...) .CppObject$WHAT(...), list(WHAT = as.name(what))} is
-evaluated with different values of \code{what} to generate wrapper functions
-which are assigned to the \code{methods} structure keyed by \code{what}.
+\paragraph{Code Generation}
+\Eval can be used to generate boiler plate code that would either be tedious to
+write by hand or that is only known after deployment. The example uses \eval to
+construct function objects that are parameterized with string \c{what}.
+This is used  automatically generate R bindings to native code.
 
 \begin{figure}[h]
 \begin{lstlisting}
-.makeCppMethods <- function(methods, cppclassinfo, env) {
-    ...
-    for(what in cppMethods[! cppMethods %in% newMethods])
-        methods[[what]] <- eval(substitute(
-                  function(...) .CppObject$WHAT(...), list(WHAT = as.name(what))), env)
-    ...
-}
+ function(methods,env) {
+   for(what in cppMethods)
+     methods[[what]] <- eval(substitute(function(...)CppObject$WHAT(...,name=what)),env)
 \end{lstlisting}
   \caption{Rcpp::.makeCppMethods}
 \end{figure}
 
-\paragraph{Extracting varargs} A surprising use of \eval is the
-extraction of unevaluated text of arguments passed to a \code{...} parameter.
-Consider the definition of the \code{NVL} function from the
-\code{statnet.common} package. This function returns the first argument that is
-non \code{NULL}.
+\paragraph{Extracting Varargs}
+A somewhat odd use of \eval is to obtain the source code of the arguments passed
+to a vararg parameter. In this example, the function iterates over the contents
+of the vararg until it finds a non-null value. \k{substitute(alist(...))} yields
+an expression that represents a call to \k{alist} but where the \code{...} are
+expended with the arguments supplied to the function. \Eval then returns a
+\code{list} with unevaluated argument expressions which are evaluated
+sequentially for their result.
 
 \begin{figure}[h]
 \begin{lstlisting}
-NVL <- function(...) {
-    for(e in eval(substitute(alist(...))))
-        x <- eval(e, parent.frame())
-        if(!is.null(x)) break
-    }
-    x
-}
+ function(...) {
+   for(e in eval(substitute(alist(...)))) {
+     x <- eval(e, parent.frame())
+     if(!is.null(x)) break
+   }
+   x
+ }
 \end{lstlisting}
   \caption{statnet.common::NVL}
 \end{figure}
 
-The expression \code{eval(substitute(alist(...)))} is used to extract the
-unevaluated text of the arguments passed to \code{NVL}.
-\code{substitute(alist(...))} returns an expression representing a call to the
-\code{alist} function with \code{...} replaced by the arguments supplied to
-\code{NVL}. Evaluating this expression returns a \code{list} whose arguments are
-the unevaluated argument expressions which are evaluated sequentially for their
-result.
 
-\paragraph{Conditional Evaluation} Developers frequently use \eval to explicitly
-control the evaluation of code. Consider the \code{\%\|\|\%} operator from the
-\code{igraph} package shown below. This operator returns the result of
-evaluating the first argument (\code{lhs}) if it is not \code{NULL}, otherwise
-it returns the result of evaluating the second argument (\code{rhs}). This is
-similar to the \code{\|\|} operator which performs the logical OR of its
-arguments except it treats \code{NULL} as the \code{FALSE} value.
+\paragraph{Controlled Evaluation}
+Developer often want to control when and if expressions are evaluated. For
+example, a package that provides users with the ability to make assertions and,
+if they fail, produce legible error messages. The example here accepts a vararg
+with a list of expressions whose code is extracted using
+\code{eval(substitute(alist(...)))}. The expression are evaluated sequentially
+in the caller's environment. If an expression is false, an error message is
+generated.
 
 \begin{figure}[h]
 \begin{lstlisting}
-`%||%` <- function (lhs, rhs) {
-    lres <- withVisible(eval(lhs, envir = parent.frame()))
-    if (is.null(lres$value)) {
-        eval(rhs, envir = parent.frame())
-    } else {
-        if (lres$visible) { lres$value}
-        else { invisible(lres$value) }
-   }
-}
-\end{lstlisting}
-  \caption{igraph::\%||\%}
-\end{figure}
-
-A similar idea is used by assertion packages such as \code{assertthat} which
-provide functions to check pre and post conditions and produce friendly error
-messages on failures. These conditions are written as expressions which are
-evaluated using \eval. Consider the \code{see\_if} function shown below. It
-accepts the conditions as arguments to the \code{...} parameter. The code of
-these conditions is extracted using \code{eval(substitute(alist(...)))}. The
-conditions are then evaluated sequentially by the expression
-\code{eval(assertion, env)}, inside a \code{tryCatch} block. If a condition
-evaluates to \code{FALSE}, the function returns immediately with an error
-message, leaving the remaining conditions unevaluated.
-
-\begin{figure}[h]
-\begin{lstlisting}
-see_if <- function(..., env = parent.frame(), msg = NULL) {
+ function(..., env=parent.frame(), msg=NULL) {
     asserts <- eval(substitute(alist(...)))
     for (assertion in asserts) {
       res <- tryCatch({
         eval(assertion, env)
-      }, assertError = function(e) {
-        structure(FALSE, msg = e$message)
-      })
-    ...
-}
+      }, assertError=function(e) { structure(FALSE, msg=e$message) })
 \end{lstlisting}
   \caption{assertthat::see\_if}
 \end{figure}
 
-\paragraph{Core function variants} Many packages use \eval to implement variations of
-the
-\code{base} R functions. For example, the \code{igraph} package provides the
-\code{do_call} function shown below. This is a variant of the \code{do.call}
-function from the \code{base} package. This function executes a function call by
-constructs it from a name and a list of arguments and calling \eval.
+\paragraph{Shadowing}
+%%% TODO ?????????????////
+Many packages use \eval to implement variations of the \code{base} R functions.
+For example, the \code{igraph} package provides the \code{do_call} function
+shown below. This is a variant of the \code{do.call} function from the
+\code{base} package. This function executes a function call by constructs it
+from a name and a list of arguments and calling \eval.
 
 \begin{figure}[h]
 \begin{lstlisting}
-do_call <- function(f, ..., .args = list(), .env = parent.frame()) {
-  f <- substitute(f)
-  call <- make_call(f, ..., .args)
-  eval(call, .env)
-}
+ function(f,...,args=list(),env=parent.frame()) {
+   f <- substitute(f)
+   eval(make_call(f,...,args), env)
+ }
 \end{lstlisting}
 \caption{igraph::do\_call}
 \end{figure}
 
-\paragraph{Domain-Specific Languages} The combination of laziness, metaprogramming,
-first-class environments and dynamic evaluation makes R the perfect toolkit for
-building DSLs. An example of this is the \code{glue} package which provides
-functions for string interpolation. The code snippet below shows an example of
-\code{glue} function in action.
+\paragraph{Domain-Specific Language}
+A domain-specific language leverages R's grammar but redefines it semantics in
+some suitable way. The usage example illustrates string interpolation. The
+\k{glue} function extracts snippets of code enclosed between braces and
+evaluates them using \eval, and finally splices their results to construct the
+result.
 
 \begin{figure}[h]
 \begin{lstlisting}
-library(glue)
-greeting <- "Hello"
-glue('{greeting} World!')
-#> Hello World!
+ library(glue)
+ greeting <- "Hello"
+ glue('{greeting} World!')
+ #> Hello World!
 \end{lstlisting}
   \caption{glue::glue}
 \end{figure}
 
-The \code{glue} function extracts snippets of R code enclosed between \c{\{} and
-\c{\}}, evaluates them using \eval, and splices the result to construct the
-final string.
 
-Another example is the \code{data.table} package that defines a DSL for data
-frame manipulation using the subset operator \code{[}. This subset operation is
-defined as \code{DT[i, j, k]}, where expression \code{j} is used to calculate on
-a subset/reorder of rows from \code{i} grouped by \code{k}. This enables compact
-queries on data frames such as \code{flights[carrier == "AA", .N, by = origin]}
-which will compute the number of flights done by American Airlines (\code{"AA"})
-for each origin airport. At its core, \code{[} uses \code{substitute} to capture
-the operand expressions, transforms them, and evaluates them using \eval in an
-environment which has data frame columns available as bindings.
-
-The use of \eval with \code{substitute} is a general pattern that we often see
-in R packages. It is used to make the interfaces more flexible. For example the
-\code{subset}, which selects columns in a data frame, uses it to allow to specify
-the selected columns using either the column name or index. For example
-\code{subset(df, sel=c(1,B,x))} returns a subset of \code{df} with the first
-column, the column named \code{B} and whatever column is at index the variable
-\code{x} holds.
-
-It is implemented using \code{eval(substitute(sel), nl, parent.frame())}. The
-first argument returns the expression passed to \code{sel}. The second is a
-named list that contains the names of the columns from \code{df} and which will
-be used to evaluate the expression. The last parameter indicates which
-environment should be used to look up bindings not found in \c{nl}.
-
-\paragraph{Boilerplate Removal} The combination of \code{match.call} and \code{eval}
-is frequently used by modeling functions to avoid boilerplate code and ease
-maintenance. Consider the example shown below of function \code{survfit.formula}
-from the \code{survival} package.
+\paragraph{Boilerplate Removal}
+A variant of code generation is to let users write compact code that is expended
+via \eval and \code{match.call}. The example uses \code{match.call} to access
+the expression with which the function is called. The next three lines construct
+a call to \code{stats::model.frame} with argument text of parameters
+\code{'formula'}, \code{'data'}, and \code{'weights'}. Then, the call expression
+is evaluated in the parent environment. The use of \code{match.call}, avoids
+repeated use of \code{substitute} for extracting the argument expressions. This
+setup is also extensible as new parameter names can be easily added.
 
 \begin{figure}[h]
 \begin{lstlisting}
-survfit.formula <- function(formula, data, weights, ...) {
-  Call <- match.call()
-  indx <- match(c('formula', 'data', 'weights'), names(Call), nomatch=0)
-  temp <- Call[c(1, indx)]
-  temp[[1L]] <- quote(stats::model.frame)
-  mf <- eval.parent(temp)
-}
+ function(formula, data, weights, ...) {
+   Call <- match.call()
+   indx <- match(c('formula', 'data', 'weights'), names(Call), nomatch=0)
+   temp <- Call[c(1, indx)]
+   temp[[1L]] <- quote(stats::model.frame)
+   mf <- eval.parent(temp)
 \end{lstlisting}
   \caption{survival::survfit.formula}
 \end{figure}
 
-Here, \code{match.call} is used to access the expression with which
-\code{survfit.formula} is called. The next three lines construct a call to
-\code{stats::model.frame} with argument text of parameters \code{'formula'},
-\code{'data'}, and \code{'weights'}. Then, the call expression is evaluated in
-the parent environment. The use of \code{match.call}, avoids repeated use of
-\code{substitute} for extracting the argument expressions. This setup is also
-extensible as new parameter names can be easily added to the \code{match} call.
-
-\paragraph{Formula Resolution} Many packages use \code{eval} to evaluate formula
-expressions. Consider the definition of the \code{formula.pdMat} function from
-\code{nlme} package.
+\paragraph{Formula Resolution}
+Many packages use \eval to evaluate formulas. The example extracts the
+\code{"formula"} attribute attached to the \code{pdMat} object and evaluates it.
 
 \begin{figure}[h]
 \begin{lstlisting}
-formula.pdMat <- function(x, asList, ...) eval(attr(x, "formula"))
+ function(x, asList, ...) eval(attr(x, "formula"))
 \end{lstlisting}
   \caption{nlme::formula.pdMat}
 \end{figure}
 
-It extracts the \code{"formula"} attribute attached to the \code{pdMat} object
-and evaluates it.
+\paragraph{Obfuscation}
+Some packages use \eval to bypass the restrictions imposed by the \code{R CMD
+  CHECK} tool. This tool enforces some well-formedness rules on a submitted
+package before accepting it for inclusion in CRAN. Some static checks ensure
+that the package code does not use certain restricted functions. Package authors
+use \eval to obfuscate their code. The example mutates the variable \code{s} in
+the package environment. However, that is locked by default and
+\code{unlockBinding}, is a restricted function. To work around this, the call to
+unlock is done through \eval.
 
-
-\paragraph{Code Obfuscation} Some packages use \eval to bypass the restrictions
-imposed by the \code{R CMD CHECK} tool. This tool enforces some well-formedness
-rules on a submitted package before accepting it for inclusion in CRAN. Some
-static checks ensure that the package code does not use certain restricted
-functions. If package authors cannot avoid using these functions, they use \eval
-to obfuscate the code, bypassing the checks performed by the tool. An example of
-this use is the \code{scalaEnsure} function from the \code{aibd} package.
 \begin{figure}[h]
 \begin{lstlisting}
-scalaEnsure <- function() {
-    ...
-    env <- parent.env(environment())
-    eval(parse(text=paste0('unlockBinding("s", env)')))
-    assign("s", s, envir=env)
-    lockBinding("s", env)
-}
+ function() {
+   env <- parent.env(environment())
+   eval(parse(text=paste0('unlockBinding("s", env)')))
+   assign("s", s, envir=env)
+   lockBinding("s", env)
 \end{lstlisting}
   \caption{aibd::scalaEnsure}
 \end{figure}
 
-This function mutates the variable \code{s} in the package environment. However,
-the package environment in R is locked by default, which prevents bindings from
-being mutated. Environment can be unlocked using \code{unlockBinding}, but its
-use is flagged by the well-formedness checks. To work around this limitation,
-the author passes the expression to unlock the package environment as a string
-to \code{parse} which is then evaluated by \code{eval}.
-
-
-\subsection{Shapes redux}
 
 \emph{Variable lookup and values, and indexing \c{(X, V, \$)}}
     constitute one of the most common use case for \eval. Let's consider the
@@ -1489,13 +1399,6 @@ to \code{parse} which is then evaluated by \code{eval}.
     which this expression will be evaluated, and the last indicates which
     environment should be used to look up bindings not found in \c{nl}.
 
-    Another example is the most often called \eval site in CRAN:
-    \lstinline|eval(`_inherit`, env)| defined in the \c{find\_super} function in
-    the \c{ggproto} object system. It looks up the variable \c{`\_inherit`} to
-    find the parent class. In the vast majority of cases, the variable is a
-    symbol, so the \eval seems superfluous. The \eval is however necessary so
-    one can specify parent classes using \c{pkg\_name::class\_name}, as the
-    \c{::} operator is a function call in R.
 
  \emph{Assignments \c{(<-)}} appear in the cases where a developer wants
     to create or update a binding in a specific environment where either the
@@ -1504,12 +1407,6 @@ to \code{parse} which is then evaluated by \code{eval}.
     \c{parse} or \c{substitute}, often in a loop. For example, the
     \c{PopED::get\_rse} uses it to assign a number of variables in the current
     scope: \lstinline|eval(parse(text=paste(default_args[[i]]), "<-", i))|.
-
-    There are also more sophisticated cases. The \c{plyr::allocate\_column}
-    function uses \eval for a deferred assignment to fill missing values in a
-    column. Package \c{overture} repeatedly evaluates R expressions capturing
-    any assignments that happen in it as samples of Markov chains.
-
 
 
  \emph{Function calls \c{(F(), F(X), F(F(X)))}} represent two very
@@ -1534,27 +1431,6 @@ to \code{parse} which is then evaluated by \code{eval}.
     opts = c("datatable.verbose"="FALSE", ... )
     for (i in names(opts)) eval(parse(text=paste0("options(",i,"=",opts[i],")")))
     \end{lstlisting}
-
-    Call reflection refers to the combination of \eval with \c{match.call}, a
-    function that returns the current call with all its arguments captured as
-    expressions. This is used mostly in the following circumstances: (1) to
-    record a call for later use in a possibly different environment, (2) pass
-    most of the captured call arguments to another function, or (3) evaluate
-    arguments of the function in different environments. This is widely used in
-    relation to statistical modeling in combination with a model fitting
-    function or with \c{model.frame} and related functions. For example the
-    \c{survival::coxph} function\footnote{Function fitting a Cox proportional
-    hazards regression model.} contains:
-    %
-    \begin{lstlisting}[gobble=2]
-    Call <- match.call()
-    tform <- Call[c(1,indx)]  # only keep the arguments we wanted
-    tform[[1L]] <- quote(stats::model.frame)  # change the function called
-    mf <- eval(tform, parent.frame())
-    \end{lstlisting}
-
-
-
 
 
 
