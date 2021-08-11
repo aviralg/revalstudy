@@ -12,7 +12,6 @@
 \newcommand{\NOTE}[1]{{\it Note: #1}\xspace}
 \newcommand{\authorcomment}[3]{\xspace\textcolor{#1}{{\bf #2} #3}\xspace}
 \newcommand{\todo}[1]{\authorcomment{red}{TODO}{#1}}
-\newcommand{\code}[1]{\lstinline |#1|\xspace}
 \renewcommand{\k}[1]{\lstinline |#1|\xspace}
 % cf. https://tex.stackexchange.com/a/144640
 \makeatletter\let\expandableinput\@@input\makeatother
@@ -187,14 +186,14 @@ choices; lastly, this work is put in context.
 They characterized it as a lazy, vectorized, functional language with a rich
 complement of dynamic features expressive enough to layer several object systems
 on top of the core language. Most data types are sequences of primitive values.
-For instance, \code{c("Ha","bye")} evaluates to a vector of two strings. Constants
-such as \code{42} are vectors of length one. To enable equational reasoning, values
+For instance, \k{c("Ha","bye")} evaluates to a vector of two strings. Constants
+such as \k{42} are vectors of length one. To enable equational reasoning, values
 accessible through multiple aliases are copied when written to. Furthermore,
 values can be tagged by attributes; these are key-value pairs. For instance, the
-attribute \code{dim}-\code{c(2,2)} can be attached to the value at \code{x} by
-\code{attr(x,"dim") <- c(2,2)}. Adding this attribute turns \code{x} into a
-matrix. The \code{class} attribute gives a value a 'class' in the object-oriented
-sense. So, \code{class(x)<-"human"} sets the class of \code{x} to \code{human}; classes
+attribute \k{dim}-\k{c(2,2)} can be attached to the value at \k{x} by
+\k{attr(x,"dim") <- c(2,2)}. Adding this attribute turns \k{x} into a
+matrix. The \k{class} attribute gives a value a 'class' in the object-oriented
+sense. So, \k{class(x)<-"human"} sets the class of \k{x} to \k{human}; classes
 are used for method dispatch. Every linguistic construct is desugared to a
 function call, even control flow statements, assignments and bracketing. All
 functions can be shadowed and redefined, making R at the same time remarkably
@@ -259,18 +258,18 @@ to occur when optimized code is running~\cite{oopsla20a}.
 
 \subsection{Eval in R}\label{sec:eval-in-r}
 
-The \eval function in R takes three parameters: an \code{expression} to evaluate
-(\code{e}), an environment where to evaluate (\code{envir}), and an enclosure
-(\code{encl}) that is used to look up objects not found in \code{envir}.\footnote{Next
+The \eval function in R takes three parameters: an \k{expression} to evaluate
+(\k{e}), an environment where to evaluate (\k{envir}), and an enclosure
+(\k{encl}) that is used to look up objects not found in \k{envir}.\footnote{Next
 to the \eval function R offers three other variants:
   \begin{inparaenum}[1.]
-    \item \code{evalq} automatically quotes passed expression---a shorthand to
-      \code{eval(quote(...))},
-    \item \code{eval.parent(e, n)} specifies the evaluating environment in terms of
-      number of call frames (\code{n}) to go back---a shorthand to \code{eval(e,
+    \item \k{evalq} automatically quotes passed expression---a shorthand to
+      \k{eval(quote(...))},
+    \item \k{eval.parent(e, n)} specifies the evaluating environment in terms of
+      number of call frames (\k{n}) to go back---a shorthand to \k{eval(e,
         parent.frame(n))}, and
-    \item \code{local} evaluates \code{e} in a fresh environment---a shorthand to
-      \code{evalq(e, new.env())}.
+    \item \k{local} evaluates \k{e} in a fresh environment---a shorthand to
+      \k{evalq(e, new.env())}.
   \end{inparaenum} }
 
 \begin{lstlisting}
@@ -283,7 +282,7 @@ tree. It can be parsed from a string, created manually or using reflection.
 
 \begin{figure}[htb]
 \begin{minipage}{.49\textwidth}
-\begin{lstlisting}[caption={Examples of calls producing expression \code{a+b}}]
+\begin{lstlisting}[caption={Examples of calls producing expression \k{a+b}}]
   parse(text="a+b")
   quote(a+b)
   call("+", quote(a), quote(b))
@@ -306,21 +305,21 @@ tree. It can be parsed from a string, created manually or using reflection.
 \end{minipage}
 \end{figure}
 
- The call to \code{substitute(x)} extracts the unevaluated expression from
-the promise \code{x}. The function \code{match.call} returns an expression
+ The call to \k{substitute(x)} extracts the unevaluated expression from
+the promise \k{x}. The function \k{match.call} returns an expression
 representing the current call.
 
 R is generous when it comes to what is allowed to be passed as environment to
 \eval. Besides ordinary environments, it also accepts a list or a data
 frame (using element names or column names for variable resolution) or an
-integer \code{n} (in which case it would use the \code{n.} call frame). If no
+integer \k{n} (in which case it would use the \k{n.} call frame). If no
 environment is specified, then the default is the environment where the call to
-\eval was made (as returned by \code{parent.frame}).
+\eval was made (as returned by \k{parent.frame}).
 %
 Environments nest, each has a parent. When creating a new environment with
-\code{new.env}, the parent is the current environment. Environment chains can be
-traversed with \code{parent.env}, until \code{emptyenv} is reached. The top-level
-environment is \code{.GlobalEnv}, it has parents that represent the packages that
+\k{new.env}, the parent is the current environment. Environment chains can be
+traversed with \k{parent.env}, until \k{emptyenv} is reached. The top-level
+environment is \k{.GlobalEnv}, it has parents that represent the packages that
 have been loaded. One can also directly read, modify or create new bindings,
 given any environment:
 %
@@ -357,7 +356,7 @@ in 17 Python programs~\cite{chen}. They did not observe many uses of \eval.
 \citet{oscar} performed an empirical study of the usage of dynamic features in
 1,000 Smalltalk projects. While \eval itself is not present, Smalltalk has a
 rich reflective interface. The authors found that reflective methods are used in less
-than 2\% of methods. The most common reflective method is \code{perform:}; it send
+than 2\% of methods. The most common reflective method is \k{perform:}; it send
 a message that is specified by a string. These features are primarily used in the
 core libraries.
 
@@ -376,12 +375,12 @@ behaviors of the interpreter when evaluating the generated code.
 \citet{ecoop12} had a few paragraphs on the usage of \eval in R. They found the
 that \eval is widely used in R code with 8500 call sites in 1238 CRAN packages
 and 2.2 million dynamic calls. The 15 most frequent call sites account for 88\%
-of those. The \code{match.arg} function is the highest used one with 54\% of all
+of those. The \k{match.arg} function is the highest used one with 54\% of all
 calls. In the other call sites, they saw two use cases. The most common is the
-evaluation of the source code of a promise retrieved by \code{substitute} in a new
-environment, \eg as done in the \code{with} function. The other use case is the
+evaluation of the source code of a promise retrieved by \k{substitute} in a new
+environment, \eg as done in the \k{with} function. The other use case is the
 invocation of a function whose name or arguments are determined dynamically. For
-this purpose, R provides \code{do.call} and thus \eval is overkill. Our corpus is
+this purpose, R provides \k{do.call} and thus \eval is overkill. Our corpus is
 larger, with \CranPackages packages, \packageTriggeredpkgs packages with at
 least one \eval, for a total of \PkgHitEvalCallSites sites and
 \packageAllcallsRnd dynamic calls, although they also looked at the Bioconductor
@@ -518,7 +517,7 @@ data size, and number of elements manipulated. The pipeline steps are:
   complicated by native dependencies which sometimes have to be resolved
   manually.
 \item \emph{Extract.} The \genthat tool extracts all runnable code snippets and
-  turns each of these into a self-standing program~\cite{issta18}, \code{knitr}
+  turns each of these into a self-standing program~\cite{issta18}, \k{knitr}
   extracts code from notebooks. Each extracted script is instrumented with calls
   to our dynamic analyzer in a way that avoid recording calls to \eval
   originating from our execution harness.
@@ -529,7 +528,7 @@ data size, and number of elements manipulated. The pipeline steps are:
   capture calls coming from base libraries.
 \item \emph{Analyze.} Analysis outputs are merged, cleaned, and summarized.
   RMarkdown notebooks process the summarized data to generate all graphs (PDF
-  from \code{ggplot2}) and numbers (exported as \LaTeX macros) appearing in the
+  from \k{ggplot2}) and numbers (exported as \LaTeX macros) appearing in the
   paper.
 \end{compactenum}
 
@@ -543,7 +542,7 @@ The tracer that performs dynamic analysis of R scripts is built on top of
 \rdyntrace, an extended R 4.0.2 virtual machine that exposes callbacks for
 various runtime events~\cite{oopsla19b}. The tracer registers callbacks to all
 variants of \eval and a few additional functions to locate the origin of \eval
-arguments (it taints the results of calls to \code{parse} and \code{match.call}). It
+arguments (it taints the results of calls to \k{parse} and \k{match.call}). It
 captures dynamic code loading, as well as variable definition and assignment,
 allowing us to record side effects that happen in environments while evaluating
 code in \eval. A challenge was that lack of source code references for
@@ -607,8 +606,8 @@ histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
 &
 \begin{minipage}{7cm}\small
 \begin{tabular}{@{\,}r|rrrr}\toprule
-  &\eval & \code{evalq} & \code{eval} & \code{local}\\[-1.5mm]
-           & & & \code{.parent} &\\\midrule
+  &\eval & \k{evalq} & \k{eval} & \k{local}\\[-1.5mm]
+           & & & \k{.parent} &\\\midrule
 \small Static sites &\packageStaticeval&\packageStaticevalq&\packageStaticevalparent&\packageStaticlocal \\
 \small Exercised sites&\packageTriggeredeval&\packageTriggeredevalq&\packageTriggeredevalparent&\packageTriggeredlocal\\
 \small Invocations&\packageEvalsRnd&\packageEvalqsRnd&\packageEparentsRnd&\packageLocalsRnd\\\bottomrule
@@ -641,8 +640,8 @@ over half of our observations.
 Fig.~\ref{tab:variantseval} summarizes use of variants, the first row has sites
 (\emph{static}), the second has sites encountered during analysis
 (\emph{exercised}) and the last gives calls (\emph{invocations}). Most sites and
-calls go to \eval itself, \code{eval.parent} is rare, and both \code{evalq} and
-\code{local} are barely used at all.
+calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
+\k{local} are barely used at all.
 
 \begin{wrapfigure}{r}{5cm}  \small  \vspace*{-2mm}\centering
   \begin{tabular}{r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r} \toprule
@@ -665,13 +664,13 @@ once and half as many are invoked twice.
 
 \Eval accepts any value as argument, but if the value is not an expression,
 \eval returns it unchanged. Expressions account for \packageCodepercent of
-arguments. More specifically, \packageSymbolpercent are \code{symbol}s (variables
-such as \code{x}), \packageLanguagepercent are \code{language} objects (expressions
-representing a function calls), and \packageExpressionpercent are \code{expression}
-objects (lists of expressions). Further inspection reveals that \code{\_inherit}
+arguments. More specifically, \packageSymbolpercent are \k{symbol}s (variables
+such as \k{x}), \packageLanguagepercent are \k{language} objects (expressions
+representing a function calls), and \packageExpressionpercent are \k{expression}
+objects (lists of expressions). Further inspection reveals that \k{\_inherit}
 accounts for \packageGgplotsymbolpercent of symbols and comes from one site in
-\code{ggplot2}.\footnote{Each object has a field model inheritance, this comes from
-\code{ggproto}, one of the many object-oriented systems for R.}
+\k{ggplot2}.\footnote{Each object has a field model inheritance, this comes from
+\k{ggproto}, one of the many object-oriented systems for R.}
 
 
 \begin{wrapfigure}{r}{6.2cm}
@@ -683,7 +682,7 @@ accounts for \packageGgplotsymbolpercent of symbols and comes from one site in
 
 To estimate how much executable code is injected through \eval, we measure the
 size of the arguments in terms of number of nodes. For example,
-\code{expression(x+1)} has a size of 3. The large number of symbols skew the median
+\k{expression(x+1)} has a size of 3. The large number of symbols skew the median
 to \packageMedianszeval but the average size is \packageAvgszeval nodes. The
 largest \eval input we observed was an expression of \packageMaxszeval nodes, a
 significant chunk of code. Fig.~\ref{fig:sizedistribution} shows the
@@ -739,16 +738,16 @@ elucidate \emph{what} it does.
 \begin{table}[!b]\small
 \begin{tabular}{crrrrrc}\toprule
   \bf $min(e)$& \bf \#sites & \bf \%sites & \bf \#packages & \bf \#operations & \bf \%envir & \bf example\\\midrule
-\code{X}&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedmedianoperationsaRnd &\packageMinimizedpercentparentframesa & \code{y+1}\\
-\code{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedmedianoperationsbRnd & \packageMinimizedpercentparentframesb & \code{gbov( mean(x), a-1)}\\
-\code{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedmedianoperationscRnd &\packageMinimizedpercentparentframesc& \code{c(42,21,0)}\\
-\code{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedmedianoperationsdRnd & \packageMinimizedpercentparentframesd & \code{seq\_len(iters)} \\
-\code{\$} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedmedianoperationseRnd & \packageMinimizedpercentparentframese & \code{DF\$B}\\
-\code{model.frame}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedmedianoperationsfRnd & \packageMinimizedpercentparentframesf &  \code{model.frame(formula = Z ~ U)}   \\
-\code{F()}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedmedianoperationsgRnd & \packageMinimizedpercentparentframesg & \code{rgamma(3, 2, n = 10L)} \\
-\code{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentparentframesh & \code{function(x, y) x + 3 * y} \\
-\code{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedmedianoperationsiRnd & \packageMinimizedpercentparentframesi & \code{x[1, 2:3, 2:3] <- value}\\
-\code{BLOCK} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentparentframesj & \code{\{write.csv(iris,tf);file.size(tf)\}} \\\bottomrule
+\k{X}&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedmedianoperationsaRnd &\packageMinimizedpercentparentframesa & \k{y+1}\\
+\k{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedmedianoperationsbRnd & \packageMinimizedpercentparentframesb & \k{gbov( mean(x), a-1)}\\
+\k{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedmedianoperationscRnd &\packageMinimizedpercentparentframesc& \k{c(42,21,0)}\\
+\k{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedmedianoperationsdRnd & \packageMinimizedpercentparentframesd & \k{seq\_len(iters)} \\
+\k{\$} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedmedianoperationseRnd & \packageMinimizedpercentparentframese & \k{DF\$B}\\
+\k{model.frame}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedmedianoperationsfRnd & \packageMinimizedpercentparentframesf &  \k{model.frame(formula = Z ~ U)}   \\
+\k{F()}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedmedianoperationsgRnd & \packageMinimizedpercentparentframesg & \k{rgamma(3, 2, n = 10L)} \\
+\k{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentparentframesh & \k{function(x, y) x + 3 * y} \\
+\k{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedmedianoperationsiRnd & \packageMinimizedpercentparentframesi & \k{x[1, 2:3, 2:3] <- value}\\
+\k{BLOCK} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentparentframesj & \k{\{write.csv(iris,tf);file.size(tf)\}} \\\bottomrule
 \end{tabular}
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
@@ -758,19 +757,19 @@ The expressions passed to \eval vary widely. We categorize expressions using a
 minimization function which abstract some of the incidental details of
 expressions and return a ``shape'' that can be used to group similar \evals. The
 function $min(e)$ which for a given expression $e$ returns a normal form. Normal
-forms use \code{V} to stand in for values occurring in expression, \code{X} stands in
-for variables, and \code{F} stands for functions. The function performs constant
+forms use \k{V} to stand in for values occurring in expression, \k{X} stands in
+for variables, and \k{F} stands for functions. The function performs constant
 folding of arithmetic and string expressions over base operators, for instance
 $min(\c{1+1})$ simplifies to $\c{V}$, on the ground that addition of values
 likely returns a value. Value simplification takes $min(\c{c(1,2,3+2)})$ to
 $\c{V}$ as a complex vector containing values is a value. Variable absorption
 has $min(\c{x+y})$ becomes $\c{X}$, this motivated by the fact that addition is
-not an ``interesting'' operation, and that \code{X} stands in for any number of
+not an ``interesting'' operation, and that \k{X} stands in for any number of
 variable lookups. Function absorption simplifies nested functions to keep an
 abstraction of the nesting $min(\c{g(f(x),h(z))})=\c{F(F(X))}$. There are other
 simplifications, the full list can be found in our artifact. It is worth
-mentioning that these simplifications are heuristics, in R \code{1+1} is not
-necessary \code{2}. The addition operator can be redefined, but it typically isn't
+mentioning that these simplifications are heuristics, in R \k{1+1} is not
+necessary \k{2}. The addition operator can be redefined, but it typically isn't
 or at least not in a way that would invalidate arithmetic.
 
 Table~\ref{tab:minimizedexpressions} gives the 10 most frequent shapes with the
@@ -795,23 +794,23 @@ the behavior of \eval.
   The environment in which they evaluate is mostly irrelevant.
 \\
 \medskip\EE{$min(e)=\c{X}$}\\[-2mm]\small Variable lookups are the most common shape,
-\packageNbSymbolVarSitePercent are simple variable names, e.g. \code{x}. The shapes
-subsumes \code{V} and built-in arithmetic operations, so a mixture of arithmetics
-and variables normalize to \code{X}. A lookup is one step of execution, if a promise
+\packageNbSymbolVarSitePercent are simple variable names, e.g. \k{x}. The shapes
+subsumes \k{V} and built-in arithmetic operations, so a mixture of arithmetics
+and variables normalize to \k{X}. A lookup is one step of execution, if a promise
 is returned an arbitrary number of additional steps may be needed; the median is
 \packageMinimizedmedianoperationsaRnd, suggesting that most variable read do
 little work. Variables are often evaluated in environments that have been
 constructed programmatically, \packageMinimizedpercentparentframesa of
 expressions are evaluated in a function environment.
 \\
-\medskip\EE{$min(e)=\c{\$}$}\\[-2mm]\small This shape extends \code{X} to include lookup
-with the dollar operator, \eg~\code{x\$f}, and vector indexing, \eg~\code{x[42]} and
-\code{x[[24]]}. This takes a few more step of evaluation on average, and is
+\medskip\EE{$min(e)=\c{\$}$}\\[-2mm]\small This shape extends \k{X} to include lookup
+with the dollar operator, \eg~\k{x\$f}, and vector indexing, \eg~\k{x[42]} and
+\k{x[[24]]}. This takes a few more step of evaluation on average, and is
 typically used in a function environment.
 \\
-\medskip\EE{$min(e)=$~\code{<-}}\\[-2mm]\small This includes both direct assignment {\tt
-  <-} and parent environment assignment {\tt <\,\!<-} as well as the \code{assign}
-function. It subsumes \code{\$}. Assignments represent the most obvious source
+\medskip\EE{$min(e)=$~\k{<-}}\\[-2mm]\small This includes both direct assignment {\tt
+  <-} and parent environment assignment {\tt <\,\!<-} as well as the \k{assign}
+function. It subsumes \k{\$}. Assignments represent the most obvious source
 of side effects in \eval. Most cases originate from trivial code generation
 where the assign expression is assembled using parse or substitute, often in
 a loop.
@@ -829,7 +828,7 @@ frequently evaluated in function environments.
 
 \begin{tabular}{@{}p{.97\linewidth}}
   \medskip\EE{$min(e)=\c{FUN}$}\\[-2mm]\small Function definitions without any
-  computation, \eg~\code{function(x) x+1}. In addition to \code{FUN},
+  computation, \eg~\k{function(x) x+1}. In addition to \k{FUN},
   \packageGeneralizedFunctionDefinitionSitesPercent of sites have function
   definitions nested in other expressions.
 \\
@@ -840,15 +839,15 @@ environments.
 Essentially, the block denotes a fragment of a program to be evaluated in a
 particular way and in a particular environment. The latter is what makes it
 different from 0-argument closure. There is a number of use cases: unit testing
-frameworks (\eg \code{testthat}, \code{testit}), code benchmarking (\eg
-\code{rbenchmark}, \code{microbenchmark}), running code in parallel (\eg \code{foreach},
-\code{doParallel}), or deferring code execution (\eg \code{withr}).
+frameworks (\eg \k{testthat}, \k{testit}), code benchmarking (\eg
+\k{rbenchmark}, \k{microbenchmark}), running code in parallel (\eg \k{foreach},
+\k{doParallel}), or deferring code execution (\eg \k{withr}).
 
 
 \\
-\medskip\EE{$min(e)=\c{model.frame}$}\\[-2mm]\small The \code{model.frame} function
+\medskip\EE{$min(e)=\c{model.frame}$}\\[-2mm]\small The \k{model.frame} function
 returns a dataframe resulting from fitting the model described in a formula.
-This shape subsumes \code{F(F(X))}, \code{FUN}, and assignments. It is the single most
+This shape subsumes \k{F(F(X))}, \k{FUN}, and assignments. It is the single most
 popular function invoked from \eval. Each call does a median of 2K instructions.
 \end{tabular}
 
@@ -858,32 +857,32 @@ popular function invoked from \eval. Each call does a median of 2K instructions.
 would be encouraging if one could, given a small training set, predict the shape
 of \evals to come. In our corpus, only a few sites are highly polymorphic with
 more than eight shapes. An example of those is the pipe operator of the
-\code{magrittr} package which is used to compose functions, \eg instead of
-\code{f(g(h(x),y),z)} one can write \code{h(x) \%>\% g(y) \%>\% f(z)}. As there many
+\k{magrittr} package which is used to compose functions, \eg instead of
+\k{f(g(h(x),y),z)} one can write \k{h(x) \%>\% g(y) \%>\% f(z)}. As there many
 different patterns of use, there are also many different shapes. In comparison
 with R, JavaScript's \eval usage was more straightforward and more predictable
 as reported by \citet{oopsla12b}, with 98\% of sites with only one shape. On the
 other hand, there are \packageNbSimpleMinimizedOne sites that only receive one
-of the simple shape (\ie\xspace \code{X}, \code{V}, \code{\$} or \code{<-}), and
+of the simple shape (\ie\xspace \k{X}, \k{V}, \k{\$} or \k{<-}), and
 \packageNbSimpleMinimizedMore sites get multiple simple shapes. Among these
 sites, there are many cases where \eval could be replaced by simpler constructs
-such as \code{get} to lookup a name in an environment, \code{assign} to set a value to
-a name in an environment, or \code{do.call} to call a function reflectively.
+such as \k{get} to lookup a name in an environment, \k{assign} to set a value to
+a name in an environment, or \k{do.call} to call a function reflectively.
 
 \subsection{The environments of \eval}\label{sec:env}
 
 Contrary to JavaScript, in R the environment of \eval can be specifies by its
-\code{env} argument. This gives users control over what is visible to the
+\k{env} argument. This gives users control over what is visible to the
 computation started by \eval and the potential reach of its side-effects. We
 distinguish the following kinds of environments:
 
 \begin{itemize}[---]
 \item \emph{Function:} environments for the local variables of some function
-  currently active on the call stack. Obtained by calling \code{parent.frame()} or
-  \code{sys.frame()}.
+  currently active on the call stack. Obtained by calling \k{parent.frame()} or
+  \k{sys.frame()}.
 \item \emph{Synthetic:} environments built from data structures such as lists,
-  data.frames, or constructed explicitly with \code{new.env}, \code{list2env}, or
-  \code{as.environment} or the empty environment.
+  data.frames, or constructed explicitly with \k{new.env}, \k{list2env}, or
+  \k{as.environment} or the empty environment.
 \item \emph{Global:} environments in which scripts or interactive commands are
   evaluated.
 \item \emph{Package:} environments of libraries.
@@ -947,13 +946,13 @@ Global & \packageNewEnvCategorySitesc & \packageNewEnvCategorySitePercentc \\
 \end{table}
 
 Each synthetic environment has parent that is specified when calling
-\code{new.env}. When \code{envir} is a list or a data frame, \eval uses its third
-argument (\code{enclos}). The parent is used to search for variables not found in
+\k{new.env}. When \k{envir} is a list or a data frame, \eval uses its third
+argument (\k{enclos}). The parent is used to search for variables not found in
 its child (side-effects stay in the child). Table~\ref{tab:newenvs} shows parent
 kinds for synthetic environments. Most of them are functions.
 
 Global \evals split between intentional and accidental one. Direct references to
-the top-level, using \code{globalenv()} or \code{.GlobalEnv}, are rare; they occur in
+the top-level, using \k{globalenv()} or \k{.GlobalEnv}, are rare; they occur in
 only \packageNbExplicitGlobalSites sites. Thus we suspect most uses of global
 are accidental. They arise from the fact that our corpus, consists of many code
 snippet that are run at top-level, global is thus the caller of \eval. This
@@ -975,7 +974,7 @@ refactorings may break code that does that.
 
 One bit of information that we lack is how the environment was obtained. Our
 expectation is that the expression was extracted from a promise using
-\code{substitute}, perhaps modified, and then evaluated with the environment coming
+\k{substitute}, perhaps modified, and then evaluated with the environment coming
 from the same promise. We believe the case where \eval is provided the results
 of programmatically selecting some call stack to be less frequent.
 
@@ -996,7 +995,7 @@ creating an expression, often these means correlate with a particular use case.
 Our analysis records the values returned by some functions of interest as well
 as their arguments. We build a direct acyclic graph that track the provenance of
 the values that are given to \eval. The following example yields the provenance
-graph with five nodes on Figure~\ref{fig:provgraph} for expression \code{e}.
+graph with five nodes on Figure~\ref{fig:provgraph} for expression \k{e}.
 
 \begin{lstlisting}
  > e <- parse(text = "a;b")
@@ -1016,11 +1015,11 @@ graph with five nodes on Figure~\ref{fig:provgraph} for expression \code{e}.
 	\begin{tikzpicture}[
 		every node/.style={draw, rounded corners, fill=LightGray, text width = 2cm, align = center, thick}
 		]
-		\node (E) at (2,0) {\code{eval(e)}};
-		\node[text width = 3cm] (CA) at (2, 1.5) {\code{e[[2]] <-quote(c)}};
-		\node (Q) at (4, 3) {\code{quote(c)}};
-		\node[text width = 4cm] (A) at (0, 3) {\code{e <- parse(text = "a;b")}};
-		\node[text width = 3cm] (P) at (0, 4.5) {\code{parse(text = "a;b")}};
+		\node (E) at (2,0) {\k{eval(e)}};
+		\node[text width = 3cm] (CA) at (2, 1.5) {\k{e[[2]] <-quote(c)}};
+		\node (Q) at (4, 3) {\k{quote(c)}};
+		\node[text width = 4cm] (A) at (0, 3) {\k{e <- parse(text = "a;b")}};
+		\node[text width = 3cm] (P) at (0, 4.5) {\k{parse(text = "a;b")}};
 
 		\draw[<-, >=latex] (E) -- (CA);
 		\draw[<-, >=latex] (CA) -- (Q);
@@ -1030,10 +1029,10 @@ graph with five nodes on Figure~\ref{fig:provgraph} for expression \code{e}.
 \caption{Provenance} \label{fig:provgraph}
 \end{figure}
 
-The provenance of \code{e} includes both \code{parse} and \code{quote}. We pick an origin
+The provenance of \k{e} includes both \k{parse} and \k{quote}. We pick an origin
 by traversing the graph from the root, following the left-hand side member of
 assignments until a leaf. It represents the provenance that is further modified
-to yield the expression passed to \eval. In our example, the origin is \code{parse}.
+to yield the expression passed to \eval. In our example, the origin is \k{parse}.
 
 % Wrap tables do not play well with lists (they warn about it in the documentation actually!)
 \begin{wraptable}{r}{5cm}\small\centering
@@ -1069,31 +1068,31 @@ numerous examples suggests that errors are rare. We further classify them into
 high-level categories:
 
 \begin{itemize}[---]
-\item {\it Reflection:} use of \code{match.call} to reflectively capture the
+\item {\it Reflection:} use of \k{match.call} to reflectively capture the
   expression that invoked this function, arguments are promises, and
-  \code{substitute} is used to retrieve their source.
-\item {\it String:} create from strings by invoking \code{parse},
-  \code{str2expression}, or \code{str2lang}.
-\item {\it Constructed:} invoked \code{quote} or \code{expression}, or by built with
-  \code{call} or \code{as.call}.
-\item {\it Environment: } created with \code{as.name} or \code{as.symbol}, typically
+  \k{substitute} is used to retrieve their source.
+\item {\it String:} create from strings by invoking \k{parse},
+  \k{str2expression}, or \k{str2lang}.
+\item {\it Constructed:} invoked \k{quote} or \k{expression}, or by built with
+  \k{call} or \k{as.call}.
+\item {\it Environment: } created with \k{as.name} or \k{as.symbol}, typically
   to read a non-local environment.
 \item {\it External: }  call to a C function. % Put an example
 \end{itemize}
 
 Table~\ref{tab:provenance} summarizes provenance. Some sites are invoked with
 different provenances, they are counted multiple times. Strings correlate with
-dynamic code loading as done by \code{source} and \code{sys.source}. Few calls
-(\packageNbParseFromFileSites in total) consume the result of calling \code{parse}
+dynamic code loading as done by \k{source} and \k{sys.source}. Few calls
+(\packageNbParseFromFileSites in total) consume the result of calling \k{parse}
 on a file. Most build strings programmatically. We identified one function
-\code{invokeRestartInteractively} that prompts the user for input and \evals it.
+\k{invokeRestartInteractively} that prompts the user for input and \evals it.
 
 
 
 
 \paragraph{Discussion}
-The main use case for \eval involves using \code{match.call}, \code{substitute}, or
-\code{formals} to access and transform arguments of a function. Constructing
+The main use case for \eval involves using \k{match.call}, \k{substitute}, or
+\k{formals} to access and transform arguments of a function. Constructing
 expressions from strings is also a common use case. The constructed category
 shows that most \evals comes from existing code that was modified by the
 programmer before invoking \eval. Both constructed and reflection categories
@@ -1110,22 +1109,22 @@ environments these side-effects happen, can help determine the impact of \eval
 on our ability to reason about the code. Our analysis records information about
 every environment. From the recorded data, we discard side-effects coming from
 unit testing frameworks as they use \eval to run all their tests and thus
-dominate the side-effect data.\footnote{The corpus has \code{RUnit, testthat,
-  tinytest} and \code{unitizer} testing frameworks.}
+dominate the side-effect data.\footnote{The corpus has \k{RUnit, testthat,
+  tinytest} and \k{unitizer} testing frameworks.}
 
 We record \SEAllRnd side-effects from \SEAllCallsRnd calls and \SEAllSites
 sites. The challenge is to remove accidental side-effects caused by the R
 virtual machine implementation and not user code. For example, the
-\code{.Random.seed} variable is saved and restored from and to the global
+\k{.Random.seed} variable is saved and restored from and to the global
 environment every time a statistical routine is called. Filtering accidental
 side-effects leaves us with \SEUserRnd writes from \SEUserCallsRnd calls (in
 \SEUserSites sites and \SEUserFunctions functions). \SEFunsNighty functions are
 responsible for 90\% of side effects. Half of those come from just three
-functions: \code{plyr::allocate\_column} (allocates space for a new data frame
-column), \code{withr::execute\_handlers} (executes deferred expressions), and
-\code{foreach::doSEQ} (executes an expression on each element in a collection,
+functions: \k{plyr::allocate\_column} (allocates space for a new data frame
+column), \k{withr::execute\_handlers} (executes deferred expressions), and
+\k{foreach::doSEQ} (executes an expression on each element in a collection,
 possibly in parallel). Most of the sites (\SESitesInEnvirRatio) update
-the environment specified by the \code{env} parameter.
+the environment specified by the \k{env} parameter.
 
 \begin{wraptable}{r}{7cm}\small\centering
   \begin{tabular}{lrrrr}
@@ -1159,9 +1158,9 @@ This is expected. A subsequent \eval call will turn a definition into an update.
 The most dangerous side effect is variable removal, as it means that after a
 call to \eval some binding in some environments will disappear. While rare, this
 happens, but the vast majority comes from a single site
-(\code{withr::execute\_handlers}). This makes sense as it is used to defer
+(\k{withr::execute\_handlers}). This makes sense as it is used to defer
 evaluation of an expression to after the function exit and thus used for clean
-up. It is used almost exclusively by the \code{tidyselect} package for removing the
+up. It is used almost exclusively by the \k{tidyselect} package for removing the
 reference to the current quosure environment while interpreting a data frame
 column selectors.\footnote{\cf \url{https://tidyselect.r-lib.org/}}
 
@@ -1171,7 +1170,7 @@ majority of \eval sites involve basic R vectors (\SEBasicTypeRatio) and lists
 many sites change function bindings. In the corpus, this happens in only
 \SEClosureType sites; \SEClosureTypeLocal of them do that in the local
 environment. We have manually inspected a few of these sites, but except for
-manual injection of parameters into a \code{model.frame} execution environment, we
+manual injection of parameters into a \k{model.frame} execution environment, we
 did not find a common use case.
 
 \begin{table}[h]
@@ -1187,15 +1186,15 @@ did not find a common use case.
   \caption{Types of \eval side-effects} \label{tab:se-types}
 \end{table}
 
-Out of the minimized expressions, it is \code{BLOCK}, \code{<-} and \code{F(F(X))} that
-contribute to the vast majority of side effects. Concretely, 92\% of \code{BLOCK},
-87\% of \code{<-} and 15\% of \code{F(F(X))} expressions do side effects. In the case
-of \code{BLOCK}, most of them happen in the environment passed to the \eval call
-(default is the parent environment). For \code{<-} it is 15\%. However, this form
-is dominated by the \code{plyr::allocate\_column} function that side-effects in
+Out of the minimized expressions, it is \k{BLOCK}, \k{<-} and \k{F(F(X))} that
+contribute to the vast majority of side effects. Concretely, 92\% of \k{BLOCK},
+87\% of \k{<-} and 15\% of \k{F(F(X))} expressions do side effects. In the case
+of \k{BLOCK}, most of them happen in the environment passed to the \eval call
+(default is the parent environment). For \k{<-} it is 15\%. However, this form
+is dominated by the \k{plyr::allocate\_column} function that side-effects in
 the environment containing the data frame to which it allocates new column.
-Without this call, \code{<-} is similarly predictable with 96\% of side effects
-happening in the passed environment. For \code{F(F(X))}, it is less clear as 58\%
+Without this call, \k{<-} is similarly predictable with 96\% of side effects
+happening in the passed environment. For \k{F(F(X))}, it is less clear as 58\%
 of side effects happen in a different environment to the one that was passed to
 \eval.
 
@@ -1214,7 +1213,7 @@ anywhere, the data suggests most effects are sane.
 \section{Usage of \eval}
 
 The R language was intended to be extensible. The combination of lazy
-evaluation, \code{substitute} and \code{eval} are some of the tools given to
+evaluation, \k{substitute} and \k{eval} are some of the tools given to
 developers to this end. To understand \emph{why} developers use \eval, we
 manually inspected top 117 sites which contribute to 90\% of the calls in the
 corpus. This section gives some real-world examples, we simplify code for
@@ -1225,7 +1224,7 @@ Sometimes it is convenient to allow users to extend the behavior of a library
 function. \Eval allows clients to provide a simple text string that shall be
 executed in the context of the function. The example here allows users to
 provide formulas as strings, such as \k{"exp(-x^2/2)"}, the contract being that
-the text can refer to some variable \code{x} that will be set up by the called
+the text can refer to some variable \k{x} that will be set up by the called
 function. In this case one users could provide an anonymous function.
 
 \begin{figure}[h!]
@@ -1238,7 +1237,7 @@ function. In this case one users could provide an anonymous function.
 \paragraph{Code Generation}
 \Eval can be used to generate boiler plate code that would either be tedious to
 write by hand or that is only known after deployment. The example uses \eval to
-construct function objects that are parameterized with string \code{what}.
+construct function objects that are parameterized with string \k{what}.
 This is used  automatically generate R bindings to native code.
 
 \begin{figure}[h]
@@ -1254,9 +1253,9 @@ This is used  automatically generate R bindings to native code.
 A somewhat odd use of \eval is to obtain the source code of the arguments passed
 to a vararg parameter. In this example, the function iterates over the contents
 of the vararg until it finds a non-null value. \k{substitute(alist(...))} yields
-an expression that represents a call to \k{alist} but where the \code{...} are
+an expression that represents a call to \k{alist} but where the \k{...} are
 expended with the arguments supplied to the function. \Eval then returns a
-\code{list} with unevaluated argument expressions which are evaluated
+\k{list} with unevaluated argument expressions which are evaluated
 sequentially for their result.
 
 \begin{figure}[h]
@@ -1278,7 +1277,7 @@ Developer often want to control when and if expressions are evaluated. For
 example, a package that provides users with the ability to make assertions and,
 if they fail, produce legible error messages. The example here accepts a vararg
 with a list of expressions whose code is extracted using
-\code{eval(substitute(alist(...)))}. The expression are evaluated sequentially
+\k{eval(substitute(alist(...)))}. The expression are evaluated sequentially
 in the caller's environment. If an expression is false, an error message is
 generated.
 
@@ -1296,10 +1295,10 @@ generated.
 
 \paragraph{Shadowing}
 %%% TODO ?????????????////
-Many packages use \eval to implement variations of the \code{base} R functions.
-For example, the \code{igraph} package provides the \code{do_call} function
-shown below. This is a variant of the \code{do.call} function from the
-\code{base} package. This function executes a function call by constructs it
+Many packages use \eval to implement variations of the \k{base} R functions.
+For example, the \k{igraph} package provides the \k{do_call} function
+shown below. This is a variant of the \k{do.call} function from the
+\k{base} package. This function executes a function call by constructs it
 from a name and a list of arguments and calling \eval.
 
 \begin{figure}[h]
@@ -1332,12 +1331,12 @@ result.
 
 \paragraph{Boilerplate Removal}
 A variant of code generation is to let users write compact code that is expended
-via \eval and \code{match.call}. The example uses \code{match.call} to access
+via \eval and \k{match.call}. The example uses \k{match.call} to access
 the expression with which the function is called. The next three lines construct
-a call to \code{stats::model.frame} with argument text of parameters
-\code{'formula'}, \code{'data'}, and \code{'weights'}. Then, the call expression
-is evaluated in the parent environment. The use of \code{match.call}, avoids
-repeated use of \code{substitute} for extracting the argument expressions. This
+a call to \k{stats::model.frame} with argument text of parameters
+\k{'formula'}, \k{'data'}, and \k{'weights'}. Then, the call expression
+is evaluated in the parent environment. The use of \k{match.call}, avoids
+repeated use of \k{substitute} for extracting the argument expressions. This
 setup is also extensible as new parameter names can be easily added.
 
 \begin{figure}[h]
@@ -1354,7 +1353,7 @@ setup is also extensible as new parameter names can be easily added.
 
 \paragraph{Formula Resolution}
 Many packages use \eval to evaluate formulas. The example extracts the
-\code{"formula"} attribute attached to the \code{pdMat} object and evaluates it.
+\k{"formula"} attribute attached to the \k{pdMat} object and evaluates it.
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -1364,13 +1363,13 @@ Many packages use \eval to evaluate formulas. The example extracts the
 \end{figure}
 
 \paragraph{Obfuscation}
-Some packages use \eval to bypass the restrictions imposed by the \code{R CMD
+Some packages use \eval to bypass the restrictions imposed by the \k{R CMD
   CHECK} tool. This tool enforces some well-formedness rules on a submitted
 package before accepting it for inclusion in CRAN. Some static checks ensure
 that the package code does not use certain restricted functions. Package authors
-use \eval to obfuscate their code. The example mutates the variable \code{s} in
+use \eval to obfuscate their code. The example mutates the variable \k{s} in
 the package environment. However, that is locked by default and
-\code{unlockBinding}, is a restricted function. To work around this, the call to
+\k{unlockBinding}, is a restricted function. To work around this, the call to
 unlock is done through \eval.
 
 \begin{figure}[h]
@@ -1385,46 +1384,46 @@ unlock is done through \eval.
 \end{figure}
 
 
-\emph{Variable lookup and values, and indexing \code{(X, V, \$)}}
+\emph{Variable lookup and values, and indexing \k{(X, V, \$)}}
     constitute one of the most common use case for \eval. Let's consider the
-    \code{subset} function from the R base library, which allows, among others, to
-    select variables in a data frame. For example, given a data frame \code{df}
-    with three columns \code{A,B,C}, \code{subset(df, sel=A)} returns a subset of
-    \code{df} with just the \code{A} column. The same would happen with \code{subset(df,
+    \k{subset} function from the R base library, which allows, among others, to
+    select variables in a data frame. For example, given a data frame \k{df}
+    with three columns \k{A,B,C}, \k{subset(df, sel=A)} returns a subset of
+    \k{df} with just the \k{A} column. The same would happen with \k{subset(df,
       sel=1)}. However, thanks to \eval it can also be also called with
-    \code{subset(df, sel=c(1,B,x))} returning a subset of the first column, column
-    \code{B} and whatever index the variable \code{x} holds. It is implemented using:
+    \k{subset(df, sel=c(1,B,x))} returning a subset of the first column, column
+    \k{B} and whatever index the variable \k{x} holds. It is implemented using:
     \lstinline|eval(substitute(sel), nl, parent.frame())| The first argument
-    returns the expression passed to \code{sel}, the second is the data frame in
+    returns the expression passed to \k{sel}, the second is the data frame in
     which this expression will be evaluated, and the last indicates which
-    environment should be used to look up bindings not found in \code{nl}.
+    environment should be used to look up bindings not found in \k{nl}.
 
 
- \emph{Assignments \code{(<-)}} appear in the cases where a developer wants
+ \emph{Assignments \k{(<-)}} appear in the cases where a developer wants
     to create or update a binding in a specific environment where either the
     name or the value come from some expression. Most cases originate from
     trivial code generation where the assign expression is assembled using
-    \code{parse} or \code{substitute}, often in a loop. For example, the
-    \code{PopED::get\_rse} uses it to assign a number of variables in the current
+    \k{parse} or \k{substitute}, often in a loop. For example, the
+    \k{PopED::get\_rse} uses it to assign a number of variables in the current
     scope: \lstinline|eval(parse(text=paste(default_args[[i]]), "<-", i))|.
 
 
- \emph{Function calls \code{(F(), F(X), F(F(X)))}} represent two very
+ \emph{Function calls \k{(F(), F(X), F(F(X)))}} represent two very
     frequent patterns: \emph{code generation} and \emph{call reflection}. There
     are numerous cases for code generation.
     %
     One occurring usage (present also in the Kaggle scripts) is to generate
-    ad-hoc calls to libraries such as \code{ggplot2} when one needs to
+    ad-hoc calls to libraries such as \k{ggplot2} when one needs to
     parameterize data or aesthetics selection from a variable. For example
     \lstinline|ggplot(df, aes(x=A, y=B))| maps X and Y axes in the plot to
-    \code{A} and \code{B} columns in \code{df}. It might not be immediately
+    \k{A} and \k{B} columns in \k{df}. It might not be immediately
     clear\footnote{\cf
     \url{https://stackoverflow.com/questions/22309285/how-to-use-a-variable-to-specify-column-name-in-ggplot}}
     for a ggplot2 user how to modify the call to assign the axis columns from
     variables. Another case is the traditional use of \eval as a mean to reduce
     boilerplate code; simple and repetitive code can easily be replaced with
-    judicious use of \eval. For example, the \code{data.table} package uses \eval
-    to call the \code{options} function with named arguments taken from a vector
+    judicious use of \eval. For example, the \k{data.table} package uses \eval
+    to call the \k{options} function with named arguments taken from a vector
     of strings:
 
     \begin{lstlisting}[gobble=2]
@@ -1444,10 +1443,10 @@ rewritten without \eval, our results suggest that \eval is an integral part of
 programming in R.
 
 The cases where \eval appears to be overkill include simple expression shapes
-such as \code{X}, \code{V}, \code{\$}, \code{<-}, and \code{FUN}. Variable lookup in a remote
-environment can be performed by the builtin \code{get} function, a similar case
-can be made for assignment and the \code{assign} function. There is a dedicated
-\code{do.call} function to build function calls. Unnecessary uses of \eval
+such as \k{X}, \k{V}, \k{\$}, \k{<-}, and \k{FUN}. Variable lookup in a remote
+environment can be performed by the builtin \k{get} function, a similar case
+can be made for assignment and the \k{assign} function. There is a dedicated
+\k{do.call} function to build function calls. Unnecessary uses of \eval
 often can be uncovered by manual analysis.
 
 \begin{lstlisting}
@@ -1461,7 +1460,7 @@ PerformanceAnalytics::chart.QQPlot <- function (d="norm",dp,...) {
 The above uses \eval to first lookup a target function name from a constructed
 string, the it constructs a call to the target that include arguments to the
 current functions. \Eval is overkill for this code, a semantically equivalent
-function body uses \code{get} to perform the lookup and then calls directly.
+function body uses \k{get} to perform the lookup and then calls directly.
 
 \begin{lstlisting}
  function (R, d="norm", dp, ...) {
@@ -1470,7 +1469,7 @@ function body uses \code{get} to perform the lookup and then calls directly.
  }
 \end{lstlisting}
 
-Another example, from \code{coin::copyslots}, constructs an expression that access
+Another example, from \k{coin::copyslots}, constructs an expression that access
 fields of an object and copy them. This can be replaced by symbolic field reads
 and writes.
 
@@ -1478,9 +1477,9 @@ and writes.
   eval(str2lang(paste0("target@", s, " <- source@", s)))
 \end{lstlisting}
 
-As a last example, \code{configr::config.funs.par} construct three expressions
-that are then fed to \eval. Semantically equivalent code would use \code{get}
-to lookup \code{fun}, and then directly execute the three expressions.
+As a last example, \k{configr::config.funs.par} construct three expressions
+that are then fed to \eval. Semantically equivalent code would use \k{get}
+to lookup \k{fun}, and then directly execute the three expressions.
 
 \begin{lstlisting}
  config.funs.par <- function(fun="",...) {
@@ -1502,12 +1501,12 @@ open problem.
 
 We have not yet touched on alternative implementations of \eval. The tidyverse
 libraries include their own implementation calls
-\code{rlang::eval\_tidy}~\cite{tidyverse}. This departs from \eval in two ways.
+\k{rlang::eval\_tidy}~\cite{tidyverse}. This departs from \eval in two ways.
 First, it supports evaluation of quosures, custom objects used by for
-metaprogramming that bundle expressions with an environment. \code{eval\_tidy}
+metaprogramming that bundle expressions with an environment. \k{eval\_tidy}
 accepts a data mask argument, a set of bindings such as a dataframe or list,
 which takes precedence over the environment. Effects such as assignments happen
-in the data mask. Expressions such as \code{return()} do not work since the data
+in the data mask. Expressions such as \k{return()} do not work since the data
 mask does not correspond to a frame on the call stack.
 
 \section{Conclusion}
