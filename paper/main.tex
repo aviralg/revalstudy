@@ -739,16 +739,16 @@ elucidate \emph{what} it does.
 \begin{table}[!b]\small
 \begin{tabular}{crrrrrc}\toprule
   \bf $min(e)$& \bf \#sites & \bf \%sites & \bf \#packages & \bf \#operations & \bf \%envir & \bf example\\\midrule
-\code X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedmedianoperationsaRnd &\packageMinimizedpercentparentframesa & \code{y+1}\\
-\code{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedmedianoperationsbRnd & \packageMinimizedpercentparentframesb & \code{gbov( mean(x), a-1)}\\
-\code{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedmedianoperationscRnd &\packageMinimizedpercentparentframesc& \code{c(42,21,0)}\\
-\code{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedmedianoperationsdRnd & \packageMinimizedpercentparentframesd & \code{seq\_len(iters)} \\
-\code{$} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedmedianoperationseRnd & \packageMinimizedpercentparentframese & \code{DF\$B}\\
-\code{model.frame}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedmedianoperationsfRnd & \packageMinimizedpercentparentframesf &  \code{model.frame(formula = Z ~  U)}   \\
-\code{F()}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedmedianoperationsgRnd & \packageMinimizedpercentparentframesg & \code{rgamma(3, 2, n = 10L)} \\
-\code{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentparentframesh & \code{function(x, y) x + 3 * y} \\
-\code{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedmedianoperationsiRnd & \packageMinimizedpercentparentframesi & \code{x[1, 2:3, 2:3] <- value}\\
-\code{BLOCK} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentparentframesj & \code{{ write.csv(iris, tf) ; file.size(tf) }} \\\bottomrule
+\c X&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedmedianoperationsaRnd &\packageMinimizedpercentparentframesa & \c{y+1}\\
+\c{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedmedianoperationsbRnd & \packageMinimizedpercentparentframesb & \c{gbov( mean(x), a-1)}\\
+\c{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedmedianoperationscRnd &\packageMinimizedpercentparentframesc& \c{c(42,21,0)}\\
+\c{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedmedianoperationsdRnd & \packageMinimizedpercentparentframesd & \c{seq\_len(iters)} \\
+\c{\$} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedmedianoperationseRnd & \packageMinimizedpercentparentframese & \c{DF\$B}\\
+\c{model.frame}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedmedianoperationsfRnd & \packageMinimizedpercentparentframesf &  \c{model.frame(formula = Z $\sim$ U)}   \\
+\c{F()}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedmedianoperationsgRnd & \packageMinimizedpercentparentframesg & \c{rgamma(3, 2, n = 10L)} \\
+\c{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentparentframesh & \c{function(x, y) x + 3 * y} \\
+\c{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedmedianoperationsiRnd & \packageMinimizedpercentparentframesi & \c{x[1, 2:3, 2:3] <- value}\\
+\c{BLOCK} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentparentframesj & \c{\{ write.csv(iris, tf) ; file.size(tf) \}} \\\bottomrule
 \end{tabular}
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
@@ -761,16 +761,16 @@ function $min(e)$ which for a given expression $e$ returns a normal form. Normal
 forms use \c V to stand in for values occurring in expression, \c X stands in
 for variables, and \c F stands for functions. The function performs constant
 folding of arithmetic and string expressions over base operators, for instance
-$min(\c{1+1})$ simplifies to \code{V}, on the ground that addition of values
-likely returns a value. Value simplification takes $min$(\code{c(1,2,3+2)}) to
-\code{V} as a complex vector containing values is a value. Variable absorption
-has $min$(\code{x+y}) becomes \code{X}, this motivated by the fact that addition is
-not an ``interesting'' operation, and that \code{X} stands in for any number of
+$min(\c{1+1})$ simplifies to $\c{V}$, on the ground that addition of values
+likely returns a value. Value simplification takes $min(\c{c(1,2,3+2)})$ to
+$\c{V}$ as a complex vector containing values is a value. Variable absorption
+has $min(\c{x+y})$ becomes $\c{X}$, this motivated by the fact that addition is
+not an ``interesting'' operation, and that \c X stands in for any number of
 variable lookups. Function absorption simplifies nested functions to keep an
-abstraction of the nesting $min$(\code{g(f(x),h(z))})$=$\code{F(F(X))}. There are other
+abstraction of the nesting $min(\c{g(f(x),h(z))})=\c{F(F(X))}$. There are other
 simplifications, the full list can be found in our artifact. It is worth
-mentioning that these simplifications are heuristics, in R \code{1+1} is not
-necessary \code{2}. The addition operator can be redefined, but it typically isn't
+mentioning that these simplifications are heuristics, in R \c{1+1} is not
+necessary \c 2. The addition operator can be redefined, but it typically isn't
 or at least not in a way that would invalidate arithmetic.
 
 Table~\ref{tab:minimizedexpressions} gives the 10 most frequent shapes with the
@@ -784,7 +784,7 @@ the behavior of \eval.
 \newcommand{\EE}[1]{{{\emph{\framebox{#1}}}}\\[1mm]}
 
 \begin{tabular}{@{}p{.97\linewidth}}
-  \medskip\EE{$min(e)=$ \code{V}} \\[-2mm]\small Values occur in 16\% of sites, 74\% of
+  \medskip\EE{$min(e)=\c{V}$} \\[-2mm]\small Values occur in 16\% of sites, 74\% of
   those are constants such as integers, the remainder evaluate to a value. \Eval
   is needed when the expression denoting the values is constructed
   programmatically. Cases when a value is directly given to \eval, and \eval
@@ -797,7 +797,7 @@ the behavior of \eval.
   eval(paste("A~",paste(paste(names(X[,-1])),collapse="+")))
 \end{lstlisting}
 \\
-\medskip\EE{$min(e)=$ \code{X}}\\[-2mm]\small Variable lookups are the most common shape,
+\medskip\EE{$min(e)=\c{X}$}\\[-2mm]\small Variable lookups are the most common shape,
 \packageNbSymbolVarSitePercent are simple variable names, e.g. \c x. The shapes
 subsumes \c{V} and built-in arithmetic operations, so a mixture of arithmetics
 and variables normalize to \c X. A lookup is one step of execution, if a promise
@@ -807,39 +807,39 @@ little work. Variables are often evaluated in environments that have been
 constructed programmatically, \packageMinimizedpercentparentframesa of
 expressions are evaluated in a function environment.
 \\
-\medskip\EE{$min(e)=$ \code{$}}\\[-2mm]\small This shape extends \c X to include lookup
+\medskip\EE{$min(e)=\c{\$}$}\\[-2mm]\small This shape extends \c X to include lookup
 with the dollar operator, \eg~\c{x\$f}, and vector indexing, \eg~\c{x[42]} and
 \c{x[[24]]}. This takes a few more step of evaluation on average, and is
 typically used in a function environment.
 \\
-\medskip\EE{$min(e)=$~\code{<-}}\\[-2mm]\small This includes both direct assignment {\tt
+\medskip\EE{$min(e)=$~\c{<-}}\\[-2mm]\small This includes both direct assignment {\tt
   <-} and parent environment assignment {\tt <\,\!<-} as well as the \c{assign}
 function. It subsumes \c{\$}. Assignments
 represent the most obvious source of side effects in \eval.
 \\
-\medskip\EE{$min(e)=$ \code{F()}}\\[-2mm]\small Function calls without variable lookups or
+\medskip\EE{$min(e)=\c{F()}$}\\[-2mm]\small Function calls without variable lookups or
 assignment. A variable is allowed the function position, looking up
 functions does not trigger computation unless the function's name
 is bound to a promise. This shape typically does not perform much work.
 \\
-\medskip\framebox{$min(e)=$ \code{F(X)}}~\EE{$min(e)=\c{F(F(X))}$}\\[-2mm]\small Function
+\medskip\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$}\\[-2mm]\small Function
 calls whose arguments may include variable references and nested calls. Together
 they represent the most frequent shape and perform over 16 steps. They are
 frequently evaluated in function environments.
 \end{tabular}
 
 \begin{tabular}{@{}p{.97\linewidth}}
-  \medskip\EE{$min(e)=$ \code{FUN}}\\[-2mm]\small Function definitions without any
+  \medskip\EE{$min(e)=\c{FUN}$}\\[-2mm]\small Function definitions without any
   computation, \eg~\c{function(x) x+1}. In addition to \c{FUN},
   \packageGeneralizedFunctionDefinitionSitesPercent of sites have function
   definitions nested in other expressions.
 \\
-\medskip\EE{$min(e)=$ \code{BLOCK}}\\[-2mm]\small Multi-statement code blocks, as
+\medskip\EE{$min(e)=\c{BLOCK}$}\\[-2mm]\small Multi-statement code blocks, as
 they can be large we do not try to normalize their contents. They execute in a
 median \packageMinimizedmedianoperationsjRnd steps, usually, in function
 environments.
 \\
-\medskip\EE{$min(e)=$ \code{model.frame}}\\[-2mm]\small The \c{model.frame} function
+\medskip\EE{$min(e)=\c{model.frame}$}\\[-2mm]\small The \c{model.frame} function
 returns a dataframe resulting from fitting the model described in a formula.
 This shape subsumes \c{F(F(X))}, \c{FUN}, and assignments. It is the single most
 popular function invoked from \eval. Each call does a median of 2K instructions.
@@ -852,16 +852,16 @@ would be encouraging if one could, given a small training set, predict the shape
 of \evals to come. In our corpus, only a few sites are highly polymorphic with
 more than eight shapes. An example of those is the pipe operator of the
 \c{magrittr} package which is used to compose functions, \eg instead of
-\code{f(g(h(x),y),z)} one can write \code{h(x) \%>\% g(y) \%>\% f(z)}. As there many
+\c{f(g(h(x),y),z)} one can write \c{h(x) \%>\% g(y) \%>\% f(z)}. As there many
 different patterns of use, there are also many different shapes. In comparison
 with R, JavaScript's \eval usage was more straightforward and more predictable
 as reported by \citet{oopsla12b}, with 98\% of sites with only one shape. On the
 other hand, there are \packageNbSimpleMinimizedOne sites that only receive one
-of the simple shape (\ie\xspace \code{X}, \code{V}, \code{\$} or \code{<-}), and
+of the simple shape (\ie\xspace \c{X}, \c{V}, \c{\$} or \c{<-}), and
 \packageNbSimpleMinimizedMore sites get multiple simple shapes. Among these
 sites, there are many cases where \eval could be replaced by simpler constructs
-such as \code{get} to lookup a name in an environment, \code{assign} to set a value to
-a name in an environment, or \code{do.call} to call a function reflectively.
+such as \c{get} to lookup a name in an environment, \c{assign} to set a value to
+a name in an environment, or \c{do.call} to call a function reflectively.
 
 \subsection{The environments of \eval}\label{sec:env}
 
@@ -872,11 +872,11 @@ distinguish the following kinds of environments:
 
 \begin{itemize}[---]
 \item \emph{Function:} environments for the local variables of some function
-  currently active on the call stack. Obtained by calling \code{parent.frame()} or
-  \code{sys.frame()}.
+  currently active on the call stack. Obtained by calling \c{parent.frame()} or
+  \c{sys.frame()}.
 \item \emph{Synthetic:} environments built from data structures such as lists,
-  data.frames, or constructed explicitly with \code{new.env}, \code{list2env}, or
-  \code{as.environment} or the empty environment.
+  data.frames, or constructed explicitly with \c{new.env}, \c{list2env}, or
+  \c{as.environment} or the empty environment.
 \item \emph{Global:} environments in which scripts or interactive commands are
   evaluated.
 \item \emph{Package:} environments of libraries.
@@ -940,13 +940,13 @@ Global & \packageNewEnvCategorySitesc & \packageNewEnvCategorySitePercentc \\
 \end{table}
 
 Each synthetic environment has parent that is specified when calling
-\code{new.env}. When \code{envir} is a list or a data frame, \eval uses its third
-argument (\code{enclos}). The parent is used to search for variables not found in
+\c{new.env}. When \c{envir} is a list or a data frame, \eval uses its third
+argument (\c{enclos}). The parent is used to search for variables not found in
 its child (side-effects stay in the child). Table~\ref{tab:newenvs} shows parent
 kinds for synthetic environments. Most of them are functions.
 
 Global \evals split between intentional and accidental one. Direct references to
-the top-level, using \code{globalenv()} or \code{.GlobalEnv}, are rare; they occur in
+the top-level, using \c{globalenv()} or \c{.GlobalEnv}, are rare; they occur in
 only \packageNbExplicitGlobalSites sites. Thus we suspect most uses of global
 are accidental. They arise from the fact that our corpus, consists of many code
 snippet that are run at top-level, global is thus the caller of \eval. This
@@ -968,7 +968,7 @@ refactorings may break code that does that.
 
 One bit of information that we lack is how the environment was obtained. Our
 expectation is that the expression was extracted from a promise using
-\code{substitute}, perhaps modified, and then evaluated with the environment coming
+\c{substitute}, perhaps modified, and then evaluated with the environment coming
 from the same promise. We believe the case where \eval is provided the results
 of programmatically selecting some call stack to be less frequent.
 
@@ -989,7 +989,7 @@ creating an expression, often these means correlate with a particular use case.
 Our analysis records the values returned by some functions of interest as well
 as their arguments. We build a direct acyclic graph that track the provenance of
 the values that are given to \eval. The following example yields the provenance
-graph with five nodes on Figure~\ref{fig:provgraph} for expression \code{e}.
+graph with five nodes on Figure~\ref{fig:provgraph} for expression \c{e}.
 
 \begin{lstlisting}
  > e <- parse(text = "a;b")
@@ -1023,10 +1023,10 @@ graph with five nodes on Figure~\ref{fig:provgraph} for expression \code{e}.
 \caption{Provenance} \label{fig:provgraph}
 \end{figure}
 
-The provenance of \code{e} includes both \code{parse} and \code{quote}. We pick an origin
+The provenance of \c{e} includes both \c{parse} and \c{quote}. We pick an origin
 by traversing the graph from the root, following the left-hand side member of
 assignments until a leaf. It represents the provenance that is further modified
-to yield the expression passed to \eval. In our example, the origin is \code{parse}.
+to yield the expression passed to \eval. In our example, the origin is \c{parse}.
 
 % Wrap tables do not play well with lists (they warn about it in the documentation actually!)
 \begin{wraptable}{r}{5cm}\small\centering
@@ -1076,17 +1076,17 @@ high-level categories:
 
 Table~\ref{tab:provenance} summarizes provenance. Some sites are invoked with
 different provenances, they are counted multiple times. Strings correlate with
-dynamic code loading as done by \code{source} and \code{sys.source}. Few calls
-(\packageNbParseFromFileSites in total) consume the result of calling \code{parse}
+dynamic code loading as done by \c{source} and \c{sys.source}. Few calls
+(\packageNbParseFromFileSites in total) consume the result of calling \c{parse}
 on a file. Most build strings programmatically. We identified one function
-\code{invokeRestartInteractively} that prompts the user for input and \evals it.
+\c{invokeRestartInteractively} that prompts the user for input and \evals it.
 
 
 
 
 \paragraph{Discussion}
-The main use case for \eval involves using \code{match.call}, \code{substitute}, or
-\code{formals} to access and transform arguments of a function. Constructing
+The main use case for \eval involves using \c{match.call}, \c{substitute}, or
+\c{formals} to access and transform arguments of a function. Constructing
 expressions from strings is also a common use case. The constructed category
 shows that most \evals comes from existing code that was modified by the
 programmer before invoking \eval. Both constructed and reflection categories
