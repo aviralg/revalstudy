@@ -13,7 +13,7 @@
 \newcommand{\authorcomment}[3]{\xspace\textcolor{#1}{{\bf #2} #3}\xspace}
 \newcommand{\todo}[1]{\authorcomment{red}{TODO}{#1}}
 \newcommand{\code}[1]{\lstinline |#1|\xspace}
-%\renewcommand{\c}[1]{\lstinline |#1|\xspace}
+\renewcommand{\k}[1]{\lstinline |#1|\xspace}
 % cf. https://tex.stackexchange.com/a/144640
 \makeatletter\let\expandableinput\@@input\makeatother
 \lstdefinelanguage{smalleR} {
@@ -1021,7 +1021,7 @@ graph with five nodes on Figure~\ref{fig:provgraph} for expression \c{e}.
 		\node (Q) at (4, 3) {\code{quote(c)}};
 		\node[text width = 4cm] (A) at (0, 3) {\code{e <- parse(text = "a;b")}};
 		\node[text width = 3cm] (P) at (0, 4.5) {\code{parse(text = "a;b")}};
-		
+
 		\draw[<-, >=latex] (E) -- (CA);
 		\draw[<-, >=latex] (CA) -- (Q);
 		\draw[<-, >=latex] (CA) -- (A);
@@ -1342,7 +1342,8 @@ see_if <- function(..., env = parent.frame(), msg = NULL) {
   \caption{assertthat::see\_if}
 \end{figure}
 
-\paragraph{Core function variants} Many packages use \eval to implement variations of the
+\paragraph{Core function variants} Many packages use \eval to implement variations of
+the
 \code{base} R functions. For example, the \code{igraph} package provides the
 \code{do_call} function shown below. This is a variant of the \code{do.call}
 function from the \code{base} package. This function executes a function call by
@@ -1472,46 +1473,9 @@ the author passes the expression to unlock the package environment as a string
 to \code{parse} which is then evaluated by \code{eval}.
 
 
-\paragraph{Miscellaneous} Many uses of \eval are diverse and do not fit into a
-category by themselves. For example, packages for unit testing (testthat,
-testit, etc.), code benchmarking (rbenchmark, microbenchmark, etc.), and,
-running code in parallel (foreach, doParallel, etc.), use \eval to evaluate
-program fragments in a particular way in specific environments. Many numerical
-computation and mathematical modeling packages use \eval to evaluate chunks of
-code or bodies of functions in specific environments. Consider the
-\code{findZeros} function from \code{mosaic} package which is used to compute
-the zero of a function.
-
-\begin{figure}[h]
-\begin{lstlisting}
-findZeros <- function(expr, ..., xlim=c(near-within, near+within), near=0, within=Inf) {
-  dots <- list(...)
-
-  pfun <- function(x){  # removed . from name, was .x
-    mydots <- dots
-    mydots[[rhsVars]] <- x
-    eval( lhs(expr), envir=mydots, enclos=parent.frame() )
-  }
-  searchx <- sort(unique(internal.near   + c(0, leftseq, middleseq, rightseq)))
-  y <- sapply( searchx, pfun )
-\end{lstlisting}
-  \caption{mosaic::findZeros}
-\end{figure}
-
-This function can be invoked as: \code{findZeros( A*sin(2*pi*t/P) ~ t,
-  xlim=c(0,100), P=50, A=2)}. It will evaluate \code{A*sin(2*pi*t/P)} inside
-\code{pfun}. It calls \code{pfun} repeatedly with different values of \code{t}
-to find the point at which the expression is zero.
-
-
 \subsection{Shapes redux}
 
-In Table~\ref{tab:minimizedexpressions} we have shown the most common shapes of
-expressions passed to \eval. Here, we illustrate them in concrete instances.
-
-\begin{compactitem}[---]
-
-  \item \emph{Variable lookup and values, and indexing \c{(X, V, \$)}}
+\emph{Variable lookup and values, and indexing \c{(X, V, \$)}}
     constitute one of the most common use case for \eval. Let's consider the
     \c{subset} function from the R base library, which allows, among others, to
     select variables in a data frame. For example, given a data frame \c{df}
@@ -1533,7 +1497,7 @@ expressions passed to \eval. Here, we illustrate them in concrete instances.
     one can specify parent classes using \c{pkg\_name::class\_name}, as the
     \c{::} operator is a function call in R.
 
-  \item \emph{Assignments \c{(<-)}} appear in the cases where a developer wants
+ \emph{Assignments \c{(<-)}} appear in the cases where a developer wants
     to create or update a binding in a specific environment where either the
     name or the value come from some expression. Most cases originate from
     trivial code generation where the assign expression is assembled using
@@ -1546,14 +1510,9 @@ expressions passed to \eval. Here, we illustrate them in concrete instances.
     column. Package \c{overture} repeatedly evaluates R expressions capturing
     any assignments that happen in it as samples of Markov chains.
 
-  \item \emph{Function definition \c{(FUN)}} is mostly used in conjunction with
-    code generation where new functions are synthesized using either \c{parse}
-    or \c{substitute}. Some FFI frameworks use this to automatically generate R
-    binding to native code. For example, \c{Rcpp}, which bridges R with C++,
-    uses \eval to generate R functions for C++ methods:\\
-    \lstinline|eval(substitute(function(...) .CppObj$M(...), list(M=...)), env)|.
 
-  \item \emph{Function calls \c{(F(), F(X), F(F(X)))}} represent two very
+
+ \emph{Function calls \c{(F(), F(X), F(F(X)))}} represent two very
     frequent patterns: \emph{code generation} and \emph{call reflection}. There
     are numerous cases for code generation.
     %
@@ -1594,170 +1553,110 @@ expressions passed to \eval. Here, we illustrate them in concrete instances.
     mf <- eval(tform, parent.frame())
     \end{lstlisting}
 
-  \item \emph{Block \c{(BLOCK)}} can appear anywhere, but it is almost always
-    the case that the block is only passed to \eval rather than being directly
-    part of in as in \lstinline|eval({...})|. 
-\end{compactitem}
-
-%\todo{Say somewhere that the R community commonly calls call/argument capturing
-%(with substitute or match.call), Non-Standard Evaluation.}
 
 
 
-
-\subsection{Discussion}
-
-\Eval in R is used chiefly for meta-programming purposes and to access
-environments other than the local one. In Javascript, patterns are ad-hoc, such
-as json loading and parsing, and can often be rewritten without \eval, such as a
-function or method call, or an assignment to a local variable or an object
-property. For R, the data suggests that in some cases, the use of \eval in the
-\code{X, V, \$, <-, FUN} and the function calls related to code generation could
-replaced by more specific functions. For instance, variable lookup in any
-environment can be performed with \code{get}, and assignment in any environment,
-with \code{assign}. Building a call and executing can be done with \code{do.call}.
-Nevertheless, many of the observed \eval usage in R, particularly, the ones
-related to statistical modeling and DSLs are more sophisticated than those
-reported for JavaScript.
 
 
 
 \section{Discussion}
 
-\subsection{Removing \eval}
 
-Similarly to JavaScript, there are also unnecessary uses of \eval. These uses of
-\eval can be replaced with alternate functions yielding the same results. For
-example, the \code{PerformanceAnalytics} package contains a function
-\code{chart.QQPlot} that uses \eval to resolve a string into function and another
-to call it and assign its results into a variable:
+In R, \eval is used chiefly for meta-programming and access remote environments.
+Unlike, JavaScript which had a small set of well-defined patterns that could be
+rewritten without \eval, our results suggest that \eval is an integral part of
+programming in R.
+
+The cases where \eval appears to be overkill include simple expression shapes
+such as \c X, \c V, \$, \c{<-}, and \c{FUN}. Variable lookup in a remote
+environment can be performed by the builtin \code{get} function, a similar case
+can be made for assignment and the \code{assign} function. There is a dedicated
+\c{do.call} function to build function calls. Unnecessary uses of \eval
+often can be uncovered by manual analysis.
+
 \begin{lstlisting}
-  function (R, d="norm", dp, ...) {
-	  q.f <- eval(parse(text=paste("q",d,sep=""))); z <- NULL
-  	eval(parse(text=paste("z<-q.f(",dp,",...)")))
+PerformanceAnalytics::chart.QQPlot <- function (d="norm",dp,...) {
+   q.f <- eval(parse(text=paste("q",d)))
+   z <- NULL
+   eval(parse(text=paste("z<-q.f(",dp,",...)")))
   }
 \end{lstlisting}
-  In both cases, there is no need for \eval and the function can be rewritten as
+
+The above uses \eval to first lookup a target function name from a constructed
+string, the it constructs a call to the target that include arguments to the
+current functions. \Eval is overkill for this code, a semantically equivalent
+function body uses \c{get} to perform the lookup and then calls directly.
+
 \begin{lstlisting}
-  function (R, d="norm", dp, ...) {
-	  q.f <- get(paste0("q",d)); z <- q.f(dp, ...)
-  }
+ function (R, d="norm", dp, ...) {
+   q.f <- get(paste0("q",d))
+   z <- q.f(dp, ...)
+ }
 \end{lstlisting}
-  or even to a one-liner \code{do.call(paste0("q",d), c(dp, list(...)))}.
 
-
-  The \code{copyslots} function from the \code{coin} package uses \eval to copy the
-  slots from one \code{S4} object to another. It performs
-  \code{eval(str2lang(paste0("target@", s, " <- source@", s)))} for each slot name
-  \code{s}. This can be replaced by the expression \code{slot(target, s) <- slot(source,
-    s)} which uses the \code{slot<-} and \code{slot} functions to assign and retrieve
-  the slots by name.
-
-  Another examples is in the \code{configr::config.funs.par} function whose
-  simplified definition is shown below.
+Another example, from \c{coin::copyslots}, constructs an expression that access
+fields of an object and copy them. This can be replaced by symbolic field reads
+and writes.
 
 \begin{lstlisting}
-config.funs.par <- function(fun = "", ...) {
-  args.all <- as.list(match.call()); args.all <- args.all[names(args.all) != ""];
-  parameters <- list()
-  text.1 <- sprintf("parameters <- names(as.list(args(%s)))", fun)
-  text.2 <- "parameters <- parameters[parameters != '']"
-  text.3 <- "parameters <- args.all[names(args.all) %in% parameters]"
-  for (j in c(text.1, text.2, text.3)) {
+  eval(str2lang(paste0("target@", s, " <- source@", s)))
+\end{lstlisting}
+
+As a last example, \code{configr::config.funs.par} construct three expressions
+that are then fed to \eval. Semantically equivalent code would use \c{get}
+to lookup \c{fun}, and then directly execute the three expressions.
+
+\begin{lstlisting}
+ config.funs.par <- function(fun="",...) {
+   args.all <- as.list(match.call())
+   args.all <- args.all[names(args.all) != ""]
+   parameters <- list()
+   t1 <- sprintf("parameters <- names(as.list(args(%s)))", fun)
+   t2 <- "parameters <- parameters[parameters != '']"
+   t3 <- "parameters <- args.all[names(args.all) %in% parameters]"
+   for (j in c(t1,t2,t3))
     eval(parse(text = j))
-  }
-  return(parameters)
-}
+   return(parameters)
+ }
 \end{lstlisting}
 
-  The function appears to use \eval since the function name \code{fun} is received
-  as a string. This string can be resolved to the function object using the
-  \code{get} function and the contents of \code{text.1}, \code{text.2}, and \code{text.3}
-  can be written directly without the need to convert them to text for
-  evaluation using \eval.
+The challenge for automation is that such examples are not easy to find. Dynamic
+analysis is limited due to coverage issues, and static analysis of R remains an
+open problem.
 
-
-The problem is that these cases are not easy to spot. Because of the
-limits of dynamic analysis, we only have a partial coverage and cannot determine
-if for example, \eval sites classified as \c{X, V} will not be eventually called
-with an expression in a \c{F(), F(X)} or \c{F(F(X))} category.
-
-
-\subsection{Alternatives to \eval}
-
-An alternative implementation of \eval, \c{eval\_tidy}, is provided by the
-\c{rlang} package. This forms the base of the tidy evaluation framework used by
-the libraries collectively referred to as the \c{tidyverse}~\cite{tidyverse}. It
-differs from the \c{eval} function in two ways. First, it supports evaluation of
-Quosures, which are also custom objects used by the \c{tidyverse} libraries for
-metaprogramming. Quosures package expression with an evaluation environment. The
-\c{tidy\_eval} function extracts this expression and evaluates it in that
-environment, ignoring the environment passed to it explicitly as an argument.
-Second, the \c{eval\_tidy} function also accepts a data mask argument.This is a
-set of bindings supplied by the user as a data frame or a named vector or list.
-The data mask environment take precedence over the environment passed for
-evaluation. Since the expression is always evaluated in the data mask, it has
-different semantics compared to \c{base::eval}. Effects such as assignment using
-\c{<-} happen in the data mask environment. Expressions such as \c{return()} do
-not work since the data mask environment does not correspond to a frame on the
-call stack.
+We have not yet touched on alternative implementations of \eval. The tidyverse
+libraries include their own implementation calls
+\c{rlang::eval\_tidy}~\cite{tidyverse}. This departs from \eval in two ways.
+First, it supports evaluation of quosures, custom objects used by for
+metaprogramming that bundle expressions with an environment. \c{eval\_tidy}
+accepts a data mask argument, a set of bindings such as a dataframe or list,
+which takes precedence over the environment. Effects such as assignments happen
+in the data mask. Expressions such as \c{return()} do not work since the data
+mask does not correspond to a frame on the call stack.
 
 \section{Conclusion}
 
-In this paper, we provide a large-scale study of the use of the \eval function
-in the R programming language. It is based primarily on a corpus of
-\CranRunnableScripts scripts extracted from \CranPackages R packages. As
-expected, \eval is used mainly in libraries. We have found just a few \eval
-call sites in scripts coming from a large corpus of Kaggle representing code
-written by R practitioners. We used an instrumented version of the R virtual
-machine, \rdyntrace, to capture all \eval calls, including the relevant
-side effects that happen within these calls. Several insights can be learned
-from the data.
-%
-First, \eval is widely used in the R core packages that come bundled with the
-language. Because of that, there is hardly any R code that would not use it.
-\eval is used to implement some basic functionality such as package loading.
-Putting the core packages aside, in CRAN, \eval is used by \PkgPackagesRatio of
-the available \CranPackages packages.
-%
-The code executed by R \eval has unusual expressive power. It can essentially
-modify anything anywhere, which is wary for both R developers and R compiler.
-The shapes of expressions passed to \eval are extremely diverse, ranging from
-simple variable lookups to complex blocks or the creation of new functions.
-Luckily, most sites only see a single shape. \eval unlashes its power and shows
-up its singularity compared to \eval in other languages with the diversity of
-environments in which it can evaluate its expressions. While most of the time,
-the \eval environment is the local environment, it is also often the global
-environment, a synthetic environment, or even a package environment. Luckily, as
-for the expressions passed to \eval, the environment passed to \eval for one
-given site is easily predictable with the first call to the site.
+The \eval functions used widely and in varied ways in R. The function is an
+essential tool for language implementers. Our analysis observed that the base
+libraries heavily depend on \eval and any R program will end up calling it
+through the core of the language. Independently developed libraries often use
+\eval in subtle ways, mostly to perform macro-programming tasks. Our review of
+code written by less experienced users suggest that \eval is exceedingly rarely
+used. So, it is fair to conclude that majority of R programmers never have to
+write a call to \eval, but that the code they write would not run without it.
 
-The expressive power of \eval shines even more so in the case of side effects
-that can quite literally happen anywhere. The data, however, suggest that this
-is not the case. The majority of eval sites do not do any observable side
-effects, and when they do, it happens in a predictable environment.
+\Eval is thus a challenge for automated program understanding. Program analysis
+and transformation tools or compilers must assume the worst when faced with code
+that calls this function. We have observed all sorts of side-effects with
+various degree of visibility.
 
-The origins of the expression passed to \eval, either constructed from language
-expressions, or stemming from reflection, or built by parsing strings.
-Reflection and constructed expressions dominate, which suggests the primary use
-of \eval is meta-programming.
+While our results are not encouraging in general, we have observed many cases
+where \eval is used in a disciplined and predictable ways. While in the general
+case \eval is hell, there are many cases where it is just a function. It does
+not appear that a general purpose replacement for \eval is possible, in future
+work we hope to focus on special cases and propose tools that target particular
+subsets of call sites with some common properties.
 
-Similarly to \citep{ecoop11}, we started looking into \evals in R with the
-ambition to replace them with other features that are more amenable to static
-analysis. The data, unfortunately, suggests that replacing \eval is going to be
-a lengthy journey. Even if we disregard core packages as they are part of the
-language and the \eval use is stable, in CRAN \eval is used widely and in more
-sophisticated ways than was the case in JavaScript. There the vast majority of
-sites fitted an extremely simple categorization based on simple regular
-expressions. Not so in R. While some usage, especially the one which calls \eval
-with an expression parsed from string, can be categorized and often replaced by
-equivalent yet more disciplined and safer code, the case of \eval coming from
-reflection is much harder.
-
-Even though we reckon that \eval has more expressive power than macros, as it
-can access runtime information such as its call stack, adding a macro system to
-R to replace \eval for all meta-programming purposes would help static analysis
-as macros can be expanded at analysis-time.
 
 \bibliography{bib/bibliography,bib/jv}
 
