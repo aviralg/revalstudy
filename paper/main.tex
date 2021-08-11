@@ -784,14 +784,14 @@ the behavior of \eval.
 \newcommand{\EE}[1]{{{\emph{\framebox{#1}}}}\\[1mm]}
 
 \begin{tabular}{@{}p{.97\linewidth}}
-  \medskip\EE{$min(e)=\c{V}$} \\[-2mm]\small Values occur in 16\% of sites, 74\% of
-  those are constants such as integers, the remainder evaluate to a value. \Eval
+  \medskip\EE{$min(e)=\c{V}$}\\[-2mm]\small Values occur in 16\% of sites, 74\% of
+  those are constants such as integers, the remainder evaluate to a value (\packageNbCallSitesUniqueActualValue of
+  sites only ever see a value). \Eval
   is needed when the expression denoting the values is constructed
   programmatically. Cases when a value is directly given to \eval, and \eval
   returns it unchanged, often occur when a computation has a default path and
-  another, more interesting, path that requires evaluation. The following is a
-  call site that always see a string; \packageNbCallSitesUniqueActualValue of
-  sites only ever see a value. This shape usually run in few interpreter steps.
+  another, more interesting, path that requires evaluation.
+  This shape usually run in few interpreter steps.
   The environment in which they evaluate is mostly irrelevant.
 \begin{lstlisting}
   eval(paste("A~",paste(paste(names(X[,-1])),collapse="+")))
@@ -1144,9 +1144,7 @@ functions in which these sites occur (and ratio).
 Most sites, \SESitesInOneClass, do all their side-effects consistently in one
 kind of environments. The same happens at the function level. Almost half of the
 sites (over a third of the functions) do side effects in either \emph{Local} or
-\emph{Object} environments. This gives a ray of hope for a hypothetical R
-compiler. Even though \eval can do anything anywhere, the data suggests most
-effects are sane.
+\emph{Object} environments.
 
 Table~\ref{tab:se-types} shows recorded effects. There are over 5M updates. In
 terms of calls, we see assignments primarily and in terms of site definitions.
@@ -1182,7 +1180,7 @@ did not find a common use case.
   \caption{Types of \eval side-effects} \label{tab:se-types}
 \end{table}
 
-Out of the minimized expressions, it is \c{BLOCK}, \c{<-} and \c{F(F(X)} that
+Out of the minimized expressions, it is \c{BLOCK}, \c{<-} and \c{F(F(X))} that
 contribute to the vast majority of side effects. Concretely, 92\% of \c{BLOCK},
 87\% of \c{<-} and 15\% of \c{F(F(X))} expressions do side effects. In the case
 of \c{BLOCK}, most of them happen in the environment passed to the \eval call
@@ -1195,14 +1193,16 @@ of side effects happen in a different environment to the one that was passed to
 \eval.
 
 \paragraph{Discussion} In JavaScript assignments in \eval can happen in either
-local scope or less often, when called through an alias, in the global scope. In
-R, given the support for first-class environments, it can happen anywhere,
+local scope or less often, when called through an alias, in the global scope.
+In R, given the support for first-class environments, it can happen anywhere,
 making it \eval more dangerous than it already is. However, the data suggest
 that first, side-effects from \eval are not as widespread as in the case of
 JavaScript,\footnote{\citep{ecoop11} shows that in the \emph{Interactive}
-scenario, \eval in Javascript performs, store events can reach up to 40\% of the
-events, and 7\% to 8\% of the \eval do side effects in the global scope. } and
-that over half of them happen in a predictable environment.
+  scenario, \eval in Javascript performs, store events can reach up to 40\% of
+the events, and 7\% to 8\% of the \eval do side effects in the global scope. }
+and that over half of them happen in a predictable environment. This gives a
+ray of hope for a hypothetical R compiler. Even though \eval can do anything
+anywhere, the data suggests most effects are sane.
 
 \section{Usage of \eval}
 
@@ -1381,6 +1381,20 @@ which will compute the number of flights done by American Airlines (\code{"AA"})
 for each origin airport. At its core, \code{[} uses \code{substitute} to capture
 the operand expressions, transforms them, and evaluates them using \eval in an
 environment which has data frame columns available as bindings.
+
+The use of \eval with \code{substitute} is a general pattern that we often see
+in R packages. It is used to make the interfaces more flexible. For example the
+\code{subset}, which selects columns in a data frame, uses it to allow to specify
+the selected columns using either the column name or index. For example
+\code{subset(df, sel=c(1,B,x))} returns a subset of \code{df} with the first
+column, the column named \code{B} and whatever column is at index the variable
+\code{x} holds.
+
+It is implemented using \code{eval(substitute(sel), nl, parent.frame())}. The
+first argument returns the expression passed to \code{sel}. The second is a
+named list that contains the names of the columns from \code{df} and which will
+be used to evaluate the expression. The last parameter indicates which
+environment should be used to look up bindings not found in \c{nl}.
 
 \paragraph{Boilerplate Removal} The combination of \code{match.call} and \code{eval}
 is frequently used by modeling functions to avoid boilerplate code and ease
@@ -1575,15 +1589,7 @@ expressions passed to \eval. Here, we illustrate them in concrete instances.
 
   \item \emph{Block \c{(BLOCK)}} can appear anywhere, but it is almost always
     the case that the block is only passed to \eval rather than being directly
-    part of in as in \lstinline|eval({...})|. Essentially, the block denotes a
-    fragment of a program to be evaluated in a particular way and in a particular
-    environment. The latter is what makes it different from 0-argument closure.
-
-    There is a number of use cases: unit testing frameworks (\eg \c{testthat},
-    \c{testit}), code benchmarking (\eg \c{rbenchmark}, \c{microbenchmark}),
-    running code in parallel (\eg \c{foreach}, \c{doParallel}), or deferring
-    code execution (\eg \c{withr}).
-
+    part of in as in \lstinline|eval({...})|. 
 \end{compactitem}
 
 %\todo{Say somewhere that the R community commonly calls call/argument capturing
