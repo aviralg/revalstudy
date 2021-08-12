@@ -956,7 +956,7 @@ Global \evals split between intentional and accidental one. Direct references to
 the top-level, using \k{globalenv()} or \k{.GlobalEnv}, are rare; they occur in
 only \packageNbExplicitGlobalSites sites. Thus we suspect most uses of global
 are accidental. They arise from the fact that our corpus consists of many code
-snippets that are run at the top-level, global is thus the caller of \eval. This is 
+snippets that are run at the top-level, global is thus the caller of \eval. This is
 noteworthy because writes to global variables are visible to all functions and
 are not reclaimed by the garbage collector. So accidental uses may pollute that
 namespace. Table~\ref{tab:polyenvir} gives the number of kinds seen at a given
@@ -1011,9 +1011,9 @@ origin is \k{parse}.
  > e[[2]] <- quote(c) # e is a;c
  > eval(e)
 \end{lstlisting}
-\end{minipage}
-\begin{minipage}{.59\textwidth}
-	\centering
+  \end{minipage} \hspace{2cm}
+ \begin{minipage}{.4\textwidth}
+	\centering\scalebox{.7}{
 	\begin{tikzpicture}[
 		every node/.style={draw, rounded corners, fill=LightGray, text width = 2cm, align = center, thick}
 		]
@@ -1027,7 +1027,7 @@ origin is \k{parse}.
 		\draw[<-, >=latex] (CA) -- (Q);
 		\draw[<-, >=latex] (CA) -- (A);
 		\draw[<-, >=latex] (A) -- (P);
-	\end{tikzpicture}
+	\end{tikzpicture}}
 \end{minipage}
 \caption{Example of an origin graph} \label{fig:provgraph}
 \end{figure}
@@ -1048,13 +1048,22 @@ origin is \k{parse}.
 		\packageProvenanceNamel & \packageNbProvenanceSitesl & \packagePercentProvenanceSitesl \\
 		\packageProvenanceNamen & \packageNbProvenanceSitesn & \packagePercentProvenanceSitesn \\\bottomrule
 \end{tabular}
-\caption{Origin} \label{tab:detailed_provenances}
+
+\medskip
+
+\begin{tabular}{rrr} \toprule
+\bf Origin  & \bf \#sites & \bf \%sites \\\midrule
+Reflection &  \packageNbReflectionSites & \packageReflectionSitesPercent\\
+String & \packageNbStringSites & \packageStringSitesPercent \\
+Constructed & \packageNbConstructedSites & \packageConstructedSitesPercent \\
+Environment & \packageNbSymbolSites & \packageSymbolSitesPercent \\
+External & \packageNbExternalSites & \packageExternalSitesPercent \\\bottomrule
+\end{tabular}
+\caption{Origins}\label{tab:provenance}\vspace{-1cm}
 \end{wraptable}
 
-Table~\ref{tab:detailed_provenances} shows frequencies of origins. For
-technical reasons, we misclassify a small number of sites. Manual inspection of
-numerous examples suggests that errors are rare. We further classify them into
-high-level categories:
+To have a high-level views of provenance we classify functions into the
+following five categories:
 
 \begin{itemize}[---]
 \item {\it Reflection:} use of \k{match.call} to reflectively capture the
@@ -1069,34 +1078,23 @@ high-level categories:
 \item {\it External: }  call to a C function. % Put an example
 \end{itemize}
 
-\begin{wraptable}{r}{5cm}\small\centering
-\begin{tabular}{rrr} \toprule
-\bf Origin  & \bf \#sites & \bf \%sites \\\midrule
-Reflection &  \packageNbReflectionSites & \packageReflectionSitesPercent\\
-String & \packageNbStringSites & \packageStringSitesPercent \\
-Constructed & \packageNbConstructedSites & \packageConstructedSitesPercent \\
-Environment & \packageNbSymbolSites & \packageSymbolSitesPercent \\
-External & \packageNbExternalSites & \packageExternalSitesPercent \\\bottomrule
-\end{tabular}
-\caption{Origins}\label{tab:provenance}
-\end{wraptable}
-
-Table~\ref{tab:provenance} summarizes origins. Some sites are invoked with
-different origins, they are counted multiple times. Strings correlate with
-dynamic code loading as done by \k{source} and \k{sys.source}. Few calls
-(\packageNbParseFromFileSites in total) consume the result of calling \k{parse}
-on a file. Most build strings programmatically.
-
+Table~\ref{tab:provenance} summarizes origins. Is shows frequencies by function
+and by category. For technical reasons, we misclassify a small number of sites.
+Manual inspection of numerous examples suggests that errors are rare. Some sites
+are counted multiple times as they are invoked with different origins. Strings
+correlate with dynamic code loading as done by \k{source} and \k{sys.source}.
+Few calls (\packageNbParseFromFileSites in total) consume the result of calling
+\k{parse} on a file. Most build strings programmatically.
 
 
 \paragraph{Discussion}
-The main use case for \eval involves using \k{match.call}, \k{substitute}, or
+The main use cases for \eval involve using \k{match.call}, \k{substitute}, or
 \k{formals} to access and transform arguments of a function. Constructing
 expressions from strings is also a common use case. The constructed category
 shows that most \evals come from existing code that was modified by the
 programmer before invoking \eval. Both constructed and reflection categories
-roughly correspond to meta-programming. Some use cases could likely be replaced
-by macros if the R designers could be convinced to overcome their distaste for
+roughly correspond to meta-programming. Some uses could be replaced by
+macros if the R designers could be convinced to overcome their distaste for
 those.
 
 \subsection{The effects of \eval}
@@ -1124,7 +1122,7 @@ column), \k{withr::execute\_handlers} (executes deferred expressions), and
 possibly in parallel). Most of the sites (\SESitesInEnvirRatio) update
 the environment specified by the \k{env} parameter.
 
-\begin{wraptable}{r}{7cm}\small\centering
+\begin{table}[!h]
   \begin{tabular}{lrrrr}
     \toprule
     \bf Environments & \bf \#sites & \bf \%sites & \bf \#funs. & \bf \%funs. \\%
@@ -1133,7 +1131,7 @@ the environment specified by the \k{env} parameter.
     \bottomrule
   \end{tabular}
   \caption{Target environments for side-effects} \label{tab:se-env}
-\end{wraptable}
+\end{table}
 
 Table~\ref{tab:se-env} shows environment kinds where side-effects happen.
 Function environments distinguish between \emph{local}, the caller environment
