@@ -277,12 +277,16 @@ to the \eval function R offers three other variants:
                    encl = if(is.list(envir)) parent.frame() else baseenv()) ...
 \end{lstlisting}
 
-The expression passed to \eval can be thought of as an abstract syntax
-tree. It can be parsed from a string, created manually or using reflection.
+The expression passed to \eval can be thought of as an abstract syntax tree.
+Listings~\ref{lst:exprs} and \ref{lst:match.call} show some of the ways of
+creating expressions: parsing from a string, manually or via reflection. The
+call to \k{substitute(x)} extracts the unevaluated expression from the promise
+\k{x}. The call to \k{match.call()} returns an expression representing the
+current call which can then be further modified.
 
 \begin{figure}[htb]
 \begin{minipage}{.49\textwidth}
-\begin{lstlisting}[caption={Examples of calls producing expression \k{a+b}}]
+\begin{lstlisting}[caption={Examples of calls producing expression \k{a+b}},label=lst:exprs]
   parse(text="a+b")
   quote(a+b)
   call("+", quote(a), quote(b))
@@ -293,21 +297,17 @@ tree. It can be parsed from a string, created manually or using reflection.
   \end{lstlisting}
 \end{minipage}
 \begin{minipage}{.49\textwidth}
-  \begin{lstlisting}[caption={Example of a call reflection}]
+  \begin{lstlisting}[caption={Example of a call reflection},label=lst:match.call]
   f <- function(x, y) {
     mc <- match.call() # reflect curr. call
     mc[[1]] <- as.name("g")
-    mc[["x"]] <- 2
+    mc[["x"]] <- 3
     mc
   }
-  f(1,2) # returns a call g(2,y)
+  f(1,2) # returns an expr g(x=3,y=2)
   \end{lstlisting}
 \end{minipage}
 \end{figure}
-
- The call to \k{substitute(x)} extracts the unevaluated expression from
-the promise \k{x}. The function \k{match.call} returns an expression
-representing the current call.
 
 R is generous when it comes to what is allowed to be passed as environment to
 \eval. Besides ordinary environments, it also accepts a list or a data
@@ -323,13 +323,24 @@ environment is \k{.GlobalEnv}, it has parents that represent the packages that
 have been loaded. One can also directly read, modify or create new bindings,
 given any environment:
 %
-\begin{lstlisting}
-  # reading                                # writing
-  envir$v                                  envir$v <- 2
-  get("v", envir=envir)                    assign("v", 2, envir=envir)
-\end{lstlisting}
+\begin{figure}[H]
+\begin{minipage}{.49\textwidth}
+  \begin{lstlisting}
+  # reading
+  envir$v              
+  get("v", envir=envir)
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{.49\textwidth}
+  \begin{lstlisting}
+  # writing
+  envir$v <- 2
+  assign("v", 2, envir=envir)  
+  \end{lstlisting}
+\end{minipage}
+\end{figure}
 %
- Environments are used as hash maps as they have reference semantics
+\noindent Environments are used as hash maps as they have reference semantics
 and a built-in string lookup.
 
 \subsection{Previous Work}
