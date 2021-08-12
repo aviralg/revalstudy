@@ -817,7 +817,9 @@ function. It subsumes \k{\$}. Assignments represent the most obvious source
 of side effects in \eval. Most cases originate from trivial code generation
 where the assign expression is assembled using parse or substitute, often in
 a loop.
-\\
+\end{tabular}
+
+\begin{tabular}{@{}p{.97\linewidth}}
 \medskip\EE{$min(e)=\c{F()}$}\\[-2mm]\small Function calls without variable lookups or
 assignment. A variable is allowed the function position, looking up
 functions does not trigger computation unless the function's name
@@ -827,9 +829,7 @@ is bound to a promise. This shape typically does not perform much work.
 calls whose arguments may include variable references and nested calls. Together
 they represent the most frequent shape and perform over 16 steps. They are
 frequently evaluated in function environments.
-\end{tabular}
-
-\begin{tabular}{@{}p{.97\linewidth}}
+\\
   \medskip\EE{$min(e)=\c{FUN}$}\\[-2mm]\small Function definitions without any
   computation, \eg~\k{function(x) x+1}. In addition to \k{FUN},
   \packageGeneralizedFunctionDefinitionSitesPercent of sites have function
@@ -845,8 +845,6 @@ different from 0-argument closure. There is a number of use cases: unit testing
 frameworks (\eg \k{testthat}, \k{testit}), code benchmarking (\eg
 \k{rbenchmark}, \k{microbenchmark}), running code in parallel (\eg \k{foreach},
 \k{doParallel}), or deferring code execution (\eg \k{withr}).
-
-
 \\
 \medskip\EE{$min(e)=\c{model.frame}$}\\[-2mm]\small The \k{model.frame} function
 returns a dataframe resulting from fitting the model described in a formula.
@@ -868,7 +866,7 @@ as reported by \citet{oopsla12b}, with 98\% of sites with only one shape. On the
 other hand, there are \packageNbSimpleMinimizedOne sites that only receive one
 of the simple shape (\ie\xspace \k{X}, \k{V}, \k{\$} or \k{<-}), and
 \packageNbSimpleMinimizedMore sites get multiple simple shapes. Among these
-sites, there are many cases where \eval could be replaced by simpler constructs
+sites, there are many cases where \eval could be possibly replaced by simpler constructs
 such as \k{get} to lookup a name in an environment, \k{assign} to set a value to
 a name in an environment, or \k{do.call} to call a function reflectively.
 
