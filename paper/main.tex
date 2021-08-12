@@ -1223,12 +1223,13 @@ provide formulas as strings, such as \k{"exp(-x^2/2)"}, the contract being that
 the text can refer to some variable \k{x} that will be set up by the called
 function. In this case one users could provide an anonymous function.
 
-\begin{figure}[h!]
+\begin{minipage}{.95\textwidth}
+\medskip\underline{\c{AdapSamp::rARS}:}
 \begin{lstlisting}
  function(n,formula) {
     p <- function(x) eval(parse(text=formula))
-\end{lstlisting} \caption{AdapSamp::rARS}
-\end{figure}
+\end{lstlisting}\medskip
+\end{minipage}
 
 \paragraph{Code Generation}
 \Eval can be used to generate boiler plate code that would either be tedious to
@@ -1236,14 +1237,15 @@ write by hand or that is only known after deployment. The example uses \eval to
 construct function objects that are parameterized with string \k{what}.
 This is used  automatically generate R bindings to native code.
 
-\begin{figure}[h]
+\begin{minipage}{.95\textwidth}
+\medskip\underline{\c{Rcpp::.makeCppMethods}:}
 \begin{lstlisting}
  function(methods,env) {
    for(what in cppMethods)
-     methods[[what]] <- eval(substitute(function(...)CppObject$WHAT(...,name=what)),env)
-\end{lstlisting}
-  \caption{Rcpp::.makeCppMethods}
-\end{figure}
+     methods[[what]] <-
+       eval(substitute(function(...)CppObject$WHAT(...,name=what)),env)
+\end{lstlisting}\medskip
+\end{minipage}
 
 \paragraph{Extracting Varargs}
 A somewhat odd use of \eval is to obtain the source code of the arguments passed
@@ -1251,10 +1253,11 @@ to a vararg parameter. In this example, the function iterates over the contents
 of the vararg until it finds a non-null value. \k{substitute(alist(...))} yields
 an expression that represents a call to \k{alist} but where the \k{...} are
 expended with the arguments supplied to the function. \Eval then returns a
-\k{list} with unevaluated argument expressions which are evaluated
-sequentially for their result.
+\k{list} with unevaluated argument expressions which are evaluated sequentially
+for their result.
 
-\begin{figure}[h]
+\begin{minipage}{.95\textwidth}
+\medskip\underline{\c{statnet.common::NVL}:}
 \begin{lstlisting}
  function(...) {
    for(e in eval(substitute(alist(...)))) {
@@ -1263,9 +1266,8 @@ sequentially for their result.
    }
    x
  }
-\end{lstlisting}
-  \caption{statnet.common::NVL}
-\end{figure}
+\end{lstlisting}\medskip
+\end{minipage}
 
 
 \paragraph{Controlled Evaluation}
@@ -1277,7 +1279,8 @@ with a list of expressions whose code is extracted using
 in the caller's environment. If an expression is false, an error message is
 generated.
 
-\begin{figure}[h]
+\begin{minipage}{.95\textwidth}
+  \medskip\underline{\c {assertthat::see\_if}:}
 \begin{lstlisting}
  function(..., env=parent.frame(), msg=NULL) {
     asserts <- eval(substitute(alist(...)))
@@ -1285,9 +1288,8 @@ generated.
       res <- tryCatch({
         eval(assertion, env)
       }, assertError=function(e) { structure(FALSE, msg=e$message) })
-\end{lstlisting}
-  \caption{assertthat::see\_if}
-\end{figure}
+\end{lstlisting}\medskip
+\end{minipage}
 
 \paragraph{Shadowing}
 %%% TODO ?????????????////
@@ -1297,15 +1299,15 @@ shown below. This is a variant of the \k{do.call} function from the
 \k{base} package. This function executes a function call by constructs it
 from a name and a list of arguments and calling \eval.
 
-\begin{figure}[h]
+\begin{minipage}{.95\textwidth}
+  \medskip\underline{\c{igraph::do\_call}:}
 \begin{lstlisting}
  function(f,...,args=list(),env=parent.frame()) {
    f <- substitute(f)
    eval(make_call(f,...,args), env)
  }
-\end{lstlisting}
-\caption{igraph::do\_call}
-\end{figure}
+\end{lstlisting}\medskip
+\end{minipage}
 
 \paragraph{Domain-Specific Language}
 A domain-specific language leverages R's grammar but redefines it semantics in
@@ -1314,16 +1316,15 @@ some suitable way. The usage example illustrates string interpolation. The
 evaluates them using \eval, and finally splices their results to construct the
 result.
 
-\begin{figure}[h]
+\begin{minipage}{.95\textwidth}
+  \medskip\underline{\c{glue::glue}:}
 \begin{lstlisting}
  library(glue)
  greeting <- "Hello"
  glue('{greeting} World!')
  #> Hello World!
-\end{lstlisting}
-  \caption{glue::glue}
-\end{figure}
-
+\end{lstlisting}\medskip
+\end{minipage}
 
 \paragraph{Boilerplate Removal}
 A variant of code generation is to let users write compact code that is expended
@@ -1335,7 +1336,8 @@ is evaluated in the parent environment. The use of \k{match.call}, avoids
 repeated use of \k{substitute} for extracting the argument expressions. This
 setup is also extensible as new parameter names can be easily added.
 
-\begin{figure}[h]
+\begin{minipage}{.95\textwidth}
+  \medskip\underline{\c{survival::survfit.formula}:}
 \begin{lstlisting}
  function(formula, data, weights, ...) {
    Call <- match.call()
@@ -1343,20 +1345,19 @@ setup is also extensible as new parameter names can be easily added.
    temp <- Call[c(1, indx)]
    temp[[1L]] <- quote(stats::model.frame)
    mf <- eval.parent(temp)
-\end{lstlisting}
-  \caption{survival::survfit.formula}
-\end{figure}
+\end{lstlisting}\medskip
+\end{minipage}
 
 \paragraph{Formula Resolution}
 Many packages use \eval to evaluate formulas. The example extracts the
 \k{"formula"} attribute attached to the \k{pdMat} object and evaluates it.
 
-\begin{figure}[h]
+\begin{minipage}{.95\textwidth}
+  \medskip\underline{\c{nlme::formula.pdMat}:}
 \begin{lstlisting}
  function(x, asList, ...) eval(attr(x, "formula"))
-\end{lstlisting}
-  \caption{nlme::formula.pdMat}
-\end{figure}
+\end{lstlisting}\medskip
+\end{minipage}
 
 \paragraph{Obfuscation}
 Some packages use \eval to bypass the restrictions imposed by the \k{R CMD
@@ -1368,16 +1369,16 @@ the package environment. However, that is locked by default and
 \k{unlockBinding}, is a restricted function. To work around this, the call to
 unlock is done through \eval.
 
-\begin{figure}[h]
+\begin{minipage}{.95\textwidth}
+  \medskip\underline{\c{aibd::scalaEnsure}:}
 \begin{lstlisting}
  function() {
    env <- parent.env(environment())
    eval(parse(text=paste0('unlockBinding("s", env)')))
    assign("s", s, envir=env)
    lockBinding("s", env)
-\end{lstlisting}
-  \caption{aibd::scalaEnsure}
-\end{figure}
+\end{lstlisting}\medskip
+\end{minipage}
 
 \section{Discussion}
 
