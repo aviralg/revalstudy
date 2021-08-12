@@ -738,9 +738,9 @@ elucidate \emph{what} it does.
 \subsection{The expression in \eval} \label{sec:minimized}
 
 \begin{table}[!b]\small
-\hspace*{-0.5cm}
+\hspace*{-0.2cm}
 \begin{tabular}{crrrrrc}\toprule
-  \bf $min(e)$& \bf \#sites & \bf \%sites & \bf \#packages & \bf \#operations & \bf \%envir & \bf example\\\midrule
+  \bf $min(e)$& \bf \#sites & \bf \%sites & \bf \#packages & \bf \#ops & \bf \%envir & \bf example\\\midrule
 \k{X}&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedmedianoperationsaRnd &\packageMinimizedpercentparentframesa & \k{y+1}\\
 \k{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedmedianoperationsbRnd & \packageMinimizedpercentparentframesb & \k{gbov( mean(x), a-1)}\\
 \k{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedmedianoperationscRnd &\packageMinimizedpercentparentframesc& \k{c(42,21,0)}\\
@@ -994,12 +994,12 @@ frowned upon and R tries to discourage it.
 Where does the expression passed to \eval come from? There are various means of
 creating an expression, often these means correlate with a particular use case.
 Our analysis records the values returned by some functions of interest as well
-as their arguments. We build a direct acyclic graph that track the provenance
+as their arguments. We build a direct acyclic graph that track the origin
 of the values that are given to \eval. Fig~\ref{fig:provgraph} shows an example
-of the provenance graph for the expression \k{e}.
-The provenance of \k{e} includes both \k{parse} and \k{quote}. We pick an
-origin by traversing the graph from the root, following the left-hand side
-member of assignments until a leaf. It represents the provenance that is
+of the origin graph for the expression \k{e}.
+The origin of \k{e} includes both \k{parse} and \k{quote}. We pick an
+origin by traversing the graph from the terminal leaf, \ie from the \eval node, following the left-hand side
+member of assignments until reaching a root node. It represents the origin that is
 further modified to yield the expression passed to \eval. In our example, the
 origin is \k{parse}.
 
@@ -1029,7 +1029,7 @@ origin is \k{parse}.
 		\draw[<-, >=latex] (A) -- (P);
 	\end{tikzpicture}
 \end{minipage}
-\caption{Example of a provenance graph} \label{fig:provgraph}
+\caption{Example of an origin graph} \label{fig:provgraph}
 \end{figure}
 
 
@@ -1051,7 +1051,7 @@ origin is \k{parse}.
 \caption{Origin} \label{tab:detailed_provenances}
 \end{wraptable}
 
-Table~\ref{tab:detailed_provenances} shows frequencies of provenance. For
+Table~\ref{tab:detailed_provenances} shows frequencies of origins. For
 technical reasons, we misclassify a small number of sites. Manual inspection of
 numerous examples suggests that errors are rare. We further classify them into
 high-level categories:
@@ -1081,8 +1081,8 @@ External & \packageNbExternalSites & \packageExternalSitesPercent \\\bottomrule
 \caption{Provenance}\label{tab:provenance}
 \end{wraptable}
 
-Table~\ref{tab:provenance} summarizes provenance. Some sites are invoked with
-different provenances, they are counted multiple times. Strings correlate with
+Table~\ref{tab:provenance} summarizes origins. Some sites are invoked with
+different origins, they are counted multiple times. Strings correlate with
 dynamic code loading as done by \k{source} and \k{sys.source}. Few calls
 (\packageNbParseFromFileSites in total) consume the result of calling \k{parse}
 on a file. Most build strings programmatically.
