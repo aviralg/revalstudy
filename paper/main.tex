@@ -209,16 +209,16 @@ the promise's result is cached for future use.
 While a data-to-code facility is available in many languages, some design
 choices affect its expressive power. The key choices are the input format, the
 environment in which generated code evaluates and the reflective operations
-available to that code. Fig.~\ref{comp} summarizes a few designs.
+available to that code. Table~\ref{comp} summarizes a few designs.
 
-\begin{figure}[!h]\center\small\begin{tabular}{r@{~}llll}\toprule
+\begin{table}[!h]\center\small\begin{tabular}{r@{~}llll}\toprule
 \tiny\sc Language&&\sc\tiny Input&\sc\tiny Scope&\tiny\sc Reflective operations\\\midrule
 \bf Julia&\cite{julia}     & expression& toplevel         & data\\
 \bf Java&\cite{cl}  & bytecode  & classloader       & data\\
 \bf JavaScript&\cite{ecoop11}& text      & current, toplevel& data\\
 \bf R&\cite{R96}  & expression& programmatic      & data, stack, environment\\\bottomrule
 \end{tabular}\caption{Design space of \eval}\label{comp}
-\end{figure}
+\end{table}
 
 The input to \eval can be in any format convertible to code. JavaScript allows
 arbitrary strings, Julia and R are more restrictive as they require expressions
