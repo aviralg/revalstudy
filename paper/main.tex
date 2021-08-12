@@ -1384,57 +1384,6 @@ unlock is done through \eval.
   \caption{aibd::scalaEnsure}
 \end{figure}
 
-
-\emph{Variable lookup and values, and indexing \k{(X, V, \$)}}
-    constitute one of the most common use case for \eval. Let's consider the
-    \k{subset} function from the R base library, which allows, among others, to
-    select variables in a data frame. For example, given a data frame \k{df}
-    with three columns \k{A,B,C}, \k{subset(df, sel=A)} returns a subset of
-    \k{df} with just the \k{A} column. The same would happen with \k{subset(df,
-      sel=1)}. However, thanks to \eval it can also be also called with
-    \k{subset(df, sel=c(1,B,x))} returning a subset of the first column, column
-    \k{B} and whatever index the variable \k{x} holds. It is implemented using:
-    \lstinline|eval(substitute(sel), nl, parent.frame())| The first argument
-    returns the expression passed to \k{sel}, the second is the data frame in
-    which this expression will be evaluated, and the last indicates which
-    environment should be used to look up bindings not found in \k{nl}.
-
-
- \emph{Assignments \k{(<-)}} appear in the cases where a developer wants
-    to create or update a binding in a specific environment where either the
-    name or the value come from some expression. Most cases originate from
-    trivial code generation where the assign expression is assembled using
-    \k{parse} or \k{substitute}, often in a loop. For example, the
-    \k{PopED::get\_rse} uses it to assign a number of variables in the current
-    scope: \lstinline|eval(parse(text=paste(default_args[[i]]), "<-", i))|.
-
-
- \emph{Function calls \k{(F(), F(X), F(F(X)))}} represent two very
-    frequent patterns: \emph{code generation} and \emph{call reflection}. There
-    are numerous cases for code generation.
-    %
-    One occurring usage (present also in the Kaggle scripts) is to generate
-    ad-hoc calls to libraries such as \k{ggplot2} when one needs to
-    parameterize data or aesthetics selection from a variable. For example
-    \lstinline|ggplot(df, aes(x=A, y=B))| maps X and Y axes in the plot to
-    \k{A} and \k{B} columns in \k{df}. It might not be immediately
-    clear\footnote{\cf
-    \url{https://stackoverflow.com/questions/22309285/how-to-use-a-variable-to-specify-column-name-in-ggplot}}
-    for a ggplot2 user how to modify the call to assign the axis columns from
-    variables. Another case is the traditional use of \eval as a mean to reduce
-    boilerplate code; simple and repetitive code can easily be replaced with
-    judicious use of \eval. For example, the \k{data.table} package uses \eval
-    to call the \k{options} function with named arguments taken from a vector
-    of strings:
-
-    \begin{lstlisting}[gobble=2]
-    opts = c("datatable.verbose"="FALSE", ... )
-    for (i in names(opts)) eval(parse(text=paste0("options(",i,"=",opts[i],")")))
-    \end{lstlisting}
-
-
-
-
 \section{Discussion}
 
 
