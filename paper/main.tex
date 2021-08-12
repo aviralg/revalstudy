@@ -1234,8 +1234,7 @@ function. In this case one users could provide an anonymous function.
 \paragraph{Code Generation}
 \Eval can be used to generate boiler plate code that would either be tedious to
 write by hand or that is only known after deployment. The example uses \eval to
-construct function objects that are parameterized with string \k{what}.
-This is used  automatically generate R bindings to native code.
+automatically generate R bindings to C++ methods.
 
 \begin{minipage}{.95\textwidth}
 \medskip\underline{\c{Rcpp::.makeCppMethods}:}
@@ -1243,7 +1242,7 @@ This is used  automatically generate R bindings to native code.
  function(methods,env) {
    for(what in cppMethods)
      methods[[what]] <-
-       eval(substitute(function(...)CppObject$WHAT(...,name=what)),env)
+       eval(substitute(function(...)CppObject$what(...)), env)
 \end{lstlisting}\medskip
 \end{minipage}
 
