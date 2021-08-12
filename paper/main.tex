@@ -895,15 +895,15 @@ distinguish the following kinds of environments:
 Table~\ref{tab:highlevelenvironments} shows that most calls evaluate in the
 scope of a function, global is a distant second. This means that most reads and
 writes act on local variables. But of which function? Table~\ref{tab:funoffset}
-gives the offset of that function on the call stack: 0 is function that called
-\eval, 1 is that function's caller, and so on. In 81\% of cases, \eval is
-resolved the caller -- the variables of the function where the call to \eval
+gives the offset of that function on the call stack: 0 is the function that called
+\eval, 1 is that function's caller, and so on. In 81\% of cases, \eval uses
+its caller's environment -- the variables of the function where the call to \eval
 textually occurs are read and written. About 1.5\% of sites evaluate their
 argument three frames up the call stack, or above. Modular reasoning is thus
 impossible in R. Since the actions of \eval happen at a distance, understanding
 any given code snippet requires knowing which functions may be called
 transitively from that snippet. In \packageNbOneCategoryEnvirSitePercent of
-sites, only kind of environment is observed.
+the sites, only one kind of environment is observed.
 
 \begin{table}[h]
   \centering\small\hspace{-.5cm}
@@ -948,7 +948,7 @@ Global & \packageNewEnvCategorySitesc & \packageNewEnvCategorySitePercentc \\
 \end{minipage}\hspace{-1cm}
 \end{table}
 
-Each synthetic environment has parent that is specified when calling
+Each synthetic environment has a parent that is specified when calling
 \k{new.env}. When \k{envir} is a list or a data frame, \eval uses its third
 argument (\k{enclos}). The parent is used to search for variables not found in
 its child (side-effects stay in the child). Table~\ref{tab:newenvs} shows parent
@@ -957,8 +957,8 @@ kinds for synthetic environments. Most of them are functions.
 Global \evals split between intentional and accidental one. Direct references to
 the top-level, using \k{globalenv()} or \k{.GlobalEnv}, are rare; they occur in
 only \packageNbExplicitGlobalSites sites. Thus we suspect most uses of global
-are accidental. They arise from the fact that our corpus, consists of many code
-snippet that are run at top-level, global is thus the caller of \eval. This
+are accidental. They arise from the fact that our corpus consists of many code
+snippets that are run at the top-level, global is thus the caller of \eval. This is 
 noteworthy because writes to global variables are visible to all functions and
 are not reclaimed by the garbage collector. So accidental uses may pollute that
 namespace. Table~\ref{tab:polyenvir} gives the number of kinds seen at a given
@@ -969,24 +969,24 @@ The data presented here is not surprising. The main use of \eval is to provide a
 customizable extension mechanism for the behavior of functions. They are a way
 to parameterize the function with any behavior that can be expressed in R. The
 behavior of \eval within its enclosing function is to read and write variables,
-mostly read, and very rarely delete variables. There are also some cases where
+mostly read, and very rarely, delete variables. There are also some cases where
 new variables are injected in a function. Usually, this in the direct caller,
-but can sometimes take effect several frames up the call stack. There is
-something brittle about code relying on the position of a caller, many
-refactorings may break code that does that.
+but it can sometimes take effect several frames up the call stack. There is
+something brittle about code relying on the position of a caller, a lot of
+refactoring may break code that does that.
 
 One bit of information that we lack is how the environment was obtained. Our
 expectation is that the expression was extracted from a promise using
 \k{substitute}, perhaps modified, and then evaluated with the environment coming
-from the same promise. We believe the case where \eval is provided the results
+from the same promise. We believe the case where \eval is provided with the results
 of programmatically selecting some call stack to be less frequent.
 
 Synthetic environments are relatively frequent. Common uses-case include
 evaluation of an expression in a sandbox, or using a data structure as
-environment, for example one could evaluate a method of an object and use and
+environment. For example one could evaluate a method of an object and use an
 environment to hold the object's fields.
 
-We have already explained the popularity of global environments, as for package
+We have already explained the popularity of global environments. As for package
 environments, they are used in only \packageNbPackageNamespaceEnvSites sites.
 This is probably for the best as mutating the bindings of a loaded package is
 frowned upon and R tries to discourage it.
