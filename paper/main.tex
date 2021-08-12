@@ -817,9 +817,7 @@ function. It subsumes \k{\$}. Assignments represent the most obvious source
 of side effects in \eval. Most cases originate from trivial code generation
 where the assign expression is assembled using parse or substitute, often in
 a loop.
-\end{tabular}
-
-\begin{tabular}{@{}p{.97\linewidth}}
+\\
 \medskip\EE{$min(e)=\c{F()}$}\\[-2mm]\small Function calls without variable lookups or
 assignment. A variable is allowed the function position, looking up
 functions does not trigger computation unless the function's name
@@ -830,11 +828,13 @@ calls whose arguments may include variable references and nested calls. Together
 they represent the most frequent shape and perform over 16 steps. They are
 frequently evaluated in function environments.
 \\
-  \medskip\EE{$min(e)=\c{FUN}$}\\[-2mm]\small Function definitions without any
-  computation, \eg~\k{function(x) x+1}. In addition to \k{FUN},
-  \packageGeneralizedFunctionDefinitionSitesPercent of sites have function
-  definitions nested in other expressions.
-\\
+\medskip\EE{$min(e)=\c{FUN}$}\\[-2mm]\small Function definitions without any
+computation, \eg~\k{function(x) x+1}. In addition to \k{FUN},
+\packageGeneralizedFunctionDefinitionSitesPercent of sites have function
+definitions nested in other expressions.
+\end{tabular}
+
+\begin{tabular}{@{}p{.97\linewidth}}
 \medskip\EE{$min(e)=\c{BLOCK}$}\\[-2mm]\small Multi-statement code blocks, as
 they can be large we do not try to normalize their contents. They execute in a
 median \packageMinimizedmedianoperationsjRnd steps, usually, in function
@@ -1114,9 +1114,9 @@ We record \SEAllRnd side-effects from \SEAllCallsRnd calls and \SEAllSites
 sites. The challenge is to remove accidental side-effects caused by the R
 virtual machine implementation and not user code. For example, the
 \k{.Random.seed} variable is saved and restored from and to the global
-environment every time a statistical routine is called. Filtering accidental
+environment every time a statistical routine is called. Filtering out accidental
 side-effects leaves us with \SEUserRnd writes from \SEUserCallsRnd calls (in
-\SEUserSites sites and \SEUserFunctions functions). \SEFunsNighty functions are
+\SEUserSites sites and \SEUserFunctions functions). In this set, \SEFunsNighty functions are
 responsible for 90\% of side effects. Half of those come from just three
 functions: \k{plyr::allocate\_column} (allocates space for a new data frame
 column), \k{withr::execute\_handlers} (executes deferred expressions), and
