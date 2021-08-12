@@ -1274,9 +1274,9 @@ any more arguments once a non-null value was found.
 Developer often want to control when and if expressions are evaluated. For
 example, a package that provides users with the ability to make assertions and,
 if they fail, produce legible error messages. The example here accepts a vararg
-with a list of expressions whose code is extracted using
-\k{eval(substitute(alist(...)))}. The expression are evaluated sequentially
-in the caller's environment. If an expression is false, an error message is
+with a list of expressions. It extracts the associated code in the same way as
+the extracting varags example and evaluates each of the expression sequentially
+in the caller's environment. If an expression does not hold, an error is
 generated.
 
 \begin{minipage}{.95\textwidth}
