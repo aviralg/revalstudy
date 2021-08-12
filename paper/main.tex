@@ -251,30 +251,26 @@ implement DSLs, it is also a replacement for macros. By contrast, the designers
 of Julia chose to limit \eval. In Julia, only global variables can be
 side-effected, and environments cannot be readily manipulated. This is designed
 to shield optimized code from some of the most pernicious uses of the
-facility~\cite{oopsla18a}. Furthermore, Julia provides a versioning mechanism,
-called world age, to ensure that any methods defined within an \eval only become
-visible at well-defined program points and thus that recompilation does not have
-to occur when optimized code is running~\cite{oopsla20a}.
+facility~\cite{oopsla18a}. Furthermore, Julia provides a versioning mechanism to
+ensure that any method defined within an \eval only become visible at
+well-defined points and thus that optimized code does not have to be
+invalidated~\cite{oopsla20a}.
 
 \subsection{Eval in R}\label{sec:eval-in-r}
 
-The \eval function in R takes three parameters: an \k{expression} to evaluate
-(\k{e}), an environment where to evaluate (\k{envir}), and an enclosure
-(\k{encl}) that is used to look up objects not found in \k{envir}.\footnote{Next
-to the \eval function R offers three other variants:
-  \begin{inparaenum}[1.]
-    \item \k{evalq} automatically quotes passed expression---a shorthand to
-      \k{eval(quote(...))},
-    \item \k{eval.parent(e, n)} specifies the evaluating environment in terms of
-      number of call frames (\k{n}) to go back---a shorthand to \k{eval(e,
-        parent.frame(n))}, and
-    \item \k{local} evaluates \k{e} in a fresh environment---a shorthand to
-      \k{evalq(e, new.env())}.
-  \end{inparaenum} }
+The \eval function in R takes three parameters: an expression to evaluate
+(\k{e}), an environment where to evaluate (\k{env}), and an enclosure (\k{encl})
+that is used to look up objects not found in \k{env}.\footnote{R offers three
+other variants of {\tt eval}: {\tt evalq} automatically quotes passed
+expression---shorthand for {\tt eval(quote(...))}, {\tt eval.parent(e,n)}
+specifies the evaluating environment in terms of number of call frames ({\tt n})
+to go back---shorthand for {\tt eval(e,parent.frame(n))}, and {\tt local}
+evaluates {\tt e} in a fresh environment---shorthand for {\tt
+  evalq(e,new.env())}.}
 
 \begin{lstlisting}
- eval <- function(e, envir = parent.frame(),
-                   encl = if(is.list(envir)) parent.frame() else baseenv()) ...
+ eval <- function(e, env = parent.frame(),
+                   encl = if(is.list(env)) parent.frame() else baseenv()) ...
 \end{lstlisting}
 
 The expression passed to \eval can be thought of as an abstract syntax tree.
@@ -309,25 +305,25 @@ current call which can then be further modified.
 \end{minipage}
 \end{figure}
 
-R is generous when it comes to what is allowed to be passed as environment to
-\eval. Besides ordinary environments, it also accepts a list or a data
-frame (using element names or column names for variable resolution) or an
-integer \k{n} (in which case it would use the \k{n.} call frame). If no
-environment is specified, then the default is the environment where the call to
-\eval was made (as returned by \k{parent.frame}).
+R is permissive in terms of what is considered an environment. Besides
+environments, it accepts lists, data frames (using element names or column names
+for variable resolution), or an integer \k{n} (in which case it would use the
+\k{n.} call frame). The default is the environment where the call to \eval was
+made.
 %
-Environments nest, each has a parent. When creating a new environment with
-\k{new.env}, the parent is the current environment. Environment chains can be
-traversed with \k{parent.env}, until \k{emptyenv} is reached. The top-level
-environment is \k{.GlobalEnv}, it has parents that represent the packages that
-have been loaded. One can also directly read, modify or create new bindings,
-given any environment:
+Environments nest, each has a parent. A new environment created with \k{new.env}
+has the current environment as parent. Parent chains canf be traversed with
+\k{parent.env}, until \k{emptyenv} is reached. The top-level environment is
+\k{.GlobalEnv}, its parents are the packages that have been loaded. Environments
+are used as hash maps as they have reference semantics and a built-in string
+lookup. One can also directly read, modify or create new bindings, given any
+environment:
 %
 \begin{figure}[H]
 \begin{minipage}{.49\textwidth}
   \begin{lstlisting}
   # reading
-  envir$v              
+  envir$v
   get("v", envir=envir)
   \end{lstlisting}
 \end{minipage}
@@ -335,13 +331,11 @@ given any environment:
   \begin{lstlisting}
   # writing
   envir$v <- 2
-  assign("v", 2, envir=envir)  
+  assign("v", 2, envir=envir)
   \end{lstlisting}
 \end{minipage}
 \end{figure}
 %
-\noindent Environments are used as hash maps as they have reference semantics
-and a built-in string lookup.
 
 \subsection{Previous Work}
 
@@ -384,17 +378,15 @@ a static approximation of the argument to \eval and then analyze possible
 behaviors of the interpreter when evaluating the generated code.
 
 \citet{ecoop12} in their evaluation of the design of the R language, briefly
-looked at the use of \eval in their corpus (1238 CRAN packages, R base
-libraries, and 515 Bioconductor packages). They found 8500 \eval call sites and
-recorded 2.2M \eval calls at runtime. Because they included base, the results
-were dominated by a few functions (15 call sites accounted for 88\% of \eval
-calls) with \c{match.arg}\footnote{A popular base function that matches an
-  argument against a set of candidate values that uses \eval to get the
-candidate values.} being responsible for over half of the recorded \eval
-calls. They discussed two use cases. The first one is the evaluation of an
-expression extracted from a promise using the \k{substitute} call in a new
-environment. The other is the invocation of a function with dynamically
-computed names and arguments.
+looked at the use of \eval in their corpus (1763 packages). They found 8500
+\eval call sites and recorded 2M \eval calls. Because they included the base
+libraries, their results were dominated by a few functions with
+\c{match.arg}\footnote{A base function that matches an argument against a set of
+candidate values, it uses \eval to get the candidate values.} being responsible
+for over half of the recorded \eval calls. They discussed two use cases. The
+first one is the evaluation of an expression extracted from a promise using the
+\k{substitute} call in a new environment. The other is the invocation of a
+function with dynamically computed names and arguments.
 
 In this work, we significantly expand that study. First, our corpus covers
 \CranPackages packages (about the whole of CRAN at time of writing) with
