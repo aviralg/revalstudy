@@ -1358,6 +1358,40 @@ Many packages use \eval to evaluate formulas. The example extracts the
 \end{lstlisting}\medskip
 \end{minipage}
 
+\paragraph{Non-standard Scoping}
+
+\Eval allows functions to resolve symbols in different environments that the
+current one. For example, the \k{data.table} redefines the subsetting
+operator\footnote{It defines it as a triplet \texttt{[i, j, k]}, where expression
+  \texttt{j} is used to calculate a subset of rows from \texttt{i} grouped by \texttt{k}.}
+for data frames to enable compact queries. The following  
+computes the average departure delays on 2014 Delta flights for each
+origin airport.
+
+\begin{minipage}{.95\textwidth}
+\medskip
+\begin{lstlisting}
+> flights[carrier=="DL" & year == 2014, mean(dep_delay), by=origin]
+#    origin       V1
+# 1:    LGA 11.35083
+# 2:    EWR 14.96171
+# 3:    JFK 12.45414
+\end{lstlisting}\medskip
+\end{minipage}
+
+At its core, the \k{[} operator uses \k{substitute} to capture its operand
+expressions, transforms them, and evaluates them using \eval in the given data
+frame.\footnote{We omit the code as the implementation spans over 1700 lines,\\
+  \indent \cf
+\url{https://github.com/Rdatatable/data.table/blob/master/R/data.table.R}} The
+symbols \k{carrier}, \k{year}, \k{dep_delay} and \k{origin} are not looked up
+in the current environment, but instead in the \k{flights} data frame. 
+
+The non-standard scoping is an important use case in R. It allows ergonomic
+functions for interactive data exploration. The ergonomics come from the
+reduced typing and syntactic noise at the cost of some ambiguity. Since R is
+used primarily interactively, this trade-off is justifiable. 
+
 \paragraph{Obfuscation}
 A few packages use \eval to bypass the restrictions imposed by the \k{R CMD
   CHECK} tool. This tool enforces some well-formedness rules on a submitted
