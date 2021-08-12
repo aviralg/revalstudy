@@ -529,18 +529,16 @@ data size, and number of elements manipulated. The pipeline steps are:
   extracts code from notebooks. Each extracted script is instrumented with calls
   to our dynamic analyzer in a way that avoid recording calls to \eval
   originating from our execution harness.
-\item \emph{Trace.} Script run with a modified R interpreter to capture
-  execution traces. Each script is run in its own process with the GNU R
-  compiler turned off to avoid recording its execution. CRAN scripts run twice,
-  once to capture \eval calls originating from package code and a second time to
-  capture calls coming from base libraries.
+\item \emph{Trace.} Script run with a modified R interpreter to capture calls
+  to \eval in CRAN packages. Each script is run in its own process with the GNU
+  R compiler turned off to avoid recording its execution.
 \item \emph{Analyze.} Analysis outputs are merged, cleaned, and summarized.
   RMarkdown notebooks process the summarized data to generate all graphs (PDF
   from \k{ggplot2}) and numbers (exported as \LaTeX macros) appearing in the
   paper.
 \end{compactenum}
 
- The pipeline runs in parallel~\cite{GNUparallel} orchestrated by a
+\medskip The pipeline runs in parallel~\cite{GNUparallel} orchestrated by a
 Makefile. Servers have identical environments thanks to a docker image with all
 dependencies installed.
 
@@ -550,26 +548,25 @@ The tracer that performs dynamic analysis of R scripts is built on top of
 \rdyntrace, an extended R 4.0.2 virtual machine that exposes callbacks for
 various runtime events~\cite{oopsla19b}. The tracer registers callbacks to all
 variants of \eval and a few additional functions to locate the origin of \eval
-arguments (it taints the results of calls to \k{parse} and \k{match.call}). It
-captures dynamic code loading, as well as variable definition and assignment,
-allowing us to record side effects that happen in environments while evaluating
-code in \eval. A challenge was that lack of source code references for
-expression that are not within block surrounded by braces. This is unfortunately
-not easily fixed. We extend our dynamic analysis tool to attach synthetic source
-code references to all \eval call sites, but the approach fails in some edge
-cases. For performance reasons, the tracer is an R package written in C++ (3.2K
-LOC) and R (1.3K LOC). While in theory the implementation should be
-straightforward, not so in practice. Lazy evaluation requires delaying the
-processing of arguments until (and if) they are forced. Accounting for
-side-effects performed in an \eval is complicated by the fact that R is
-implemented in a mixture of R and C, and that the language implementation can
-call \eval. Lastly, large code bases exercise many edge cases of the highly
-underspecified R behavior.
+arguments. It captures dynamic code loading, as well as variable definition and
+assignment, allowing us to record side effects that happen in environments
+while evaluating code in \eval. A challenge was that lack of source code
+references for expression that are not within block surrounded by braces. This
+is unfortunately not easily fixed. We extend our dynamic analysis tool to
+attach synthetic source code references to all \eval call sites, but the
+approach fails in some edge cases. For performance reasons, the tracer is an R
+package written in C++ (3.2K LOC) and R (1.3K LOC). While in theory the
+implementation should be straightforward, not so in practice. Lazy evaluation
+requires delaying the processing of arguments until (and if) they are forced.
+Accounting for side-effects performed in an \eval is complicated by the fact
+that R is implemented in a mixture of R and C, and that the language
+implementation can (and does) call \eval. Lastly, large code bases exercise
+many edge cases of the highly underspecified R behavior.
 
 \paragraph{Limitations.} Even with the extension described above, there are
 \PkgUndefinedRnd \eval calls without source information (\PkgUndefinedRatio of
 all \eval calls). This happen when \eval is an argument to a higher-order
-function or when it is called from native code. An other limitation is that we
+function or when it is called from native code. Another limitation is that we
 do not record calls to the native \eval. Neither of these limitations should
 invalidate our conclusions.
 
@@ -589,15 +586,12 @@ than 3 sites, and with the exception \MaxEvalCallSitesPackage which has
 histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
 \CranFunsWithEvalRatio of all functions use \eval.
 
-
-\begin{figure}[!b]
-\centering
+\begin{figure}[H]
   \includegraphics[width=9cm]{pkgs-eval-callsites-hist.pdf}
   \caption{ \eval call sites}\label{fig:pkgs-eval-callsites-hist}
-
-\medskip
-  \medskip
-
+\end{figure}
+\begin{table}[H]
+\centering
   \small
 \begin{tabular}{@{}l@{\hspace{1.5cm}}l@{}}
 \begin{minipage} {5cm}\small
@@ -609,7 +603,7 @@ histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
 \tt 101 &--& \tt 1K    & \packageBinc  & \tt 1M &--&\tt 10M   & \packageBing\\
 \tt 1K &--& \tt 10K    & \packageBind  & \tt 10M &--& \tt 100M & \packageBinh\\\bottomrule
 \end{tabular}
-\caption{Call frequency}\label{freq}
+\caption{Call frequency}\label{tab:freq}
 \end{minipage}
 &
 \begin{minipage}{7cm}\small
@@ -622,9 +616,9 @@ histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
 \end{tabular}~\\[2mm]\caption{Variants}\label{tab:variantseval}
 \end{minipage}\end{tabular}
 
-\medskip
-
-\includegraphics[width=.8\textwidth]{traced-eval-callsites.pdf} \centering
+\end{table}
+\begin{figure}[H]
+  \includegraphics[width=.8\textwidth]{traced-eval-callsites.pdf} \centering
   \caption{\eval call sites coverage of the \PkgPackages packages.}%
   \label{fig:traced-eval-callsites}
 \end{figure}
@@ -640,18 +634,18 @@ exercised can be chalked down to incomplete tests and analysis failures
 (\PkgFailedProgramsRatio of the runs crashed or timed out).
 Fig.~\ref{fig:traced-eval-callsites} plots exercised site with respect to all
 sites for each program; as can be seen coverage is unequal.
-Fig.~\ref{freq} summarizes the frequency of calls, call counts on the left and
+Table~\ref{tab:freq} summarizes the frequency of calls, call counts on the left and
 number of packages on the right. There are \packageFewcalls packages with fewer
 than 100 calls, and \packageManycalls packages with more than 1,000 calls.
 \packageMaxcallspack calls \eval \packageMaxcalls times and thus accounts for
 over half of our observations.
-Fig.~\ref{tab:variantseval} summarizes use of variants, the first row has sites
+Table~\ref{tab:variantseval} summarizes use of variants, the first row has sites
 (\emph{static}), the second has sites encountered during analysis
 (\emph{exercised}) and the last gives calls (\emph{invocations}). Most sites and
 calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
 \k{local} are barely used at all.
 
-\begin{wrapfigure}{r}{5cm}  \small  \vspace*{-2mm}\centering
+\begin{wraptable}{r}{5cm}  \small  \vspace*{-2mm}\centering
   \begin{tabular}{r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r} \toprule
     \multicolumn{3}{c}{\bf \#calls} & \bf \#sites &
      \multicolumn{3}{c}{\bf \#calls} & \bf \#sites \\\midrule
@@ -660,10 +654,10 @@ calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
     \tt 101 &--& \tt 250 & \packageRunbinc & \tt 1501 &--& \tt 2000  & \packageRunbing\\
     \tt 251 &--& \tt 500 & \packageRunbind & \tt 2001 &--& \tt 3000 & \packageRunbinh\\\bottomrule
   \end{tabular}
-  \caption{Normalized calls} \label{cn}
-\end{wrapfigure}
+  \caption{Normalized calls} \label{tab:cn}
+\end{wraptable}
 
-Fig.~\ref{cn} shows average count of calls from a given site and given run and
+Table~\ref{tab:cn} shows average count of calls from a given site and given run and
 how many sites fall in that range. For instance, \packageRunbinh sites are
 called over 2,000 times per run. Larger call counts suggest the presence of
 loops or recursive functions, but given the data this seems to be the exception;
@@ -672,9 +666,9 @@ once and half as many are invoked twice.
 
 \Eval accepts any value as argument, but if the value is not an expression,
 \eval returns it unchanged. Expressions account for \packageCodepercent of
-arguments. More specifically, \packageSymbolpercent are \k{symbol}s (variables
-such as \k{x}), \packageLanguagepercent are \k{language} objects (expressions
-representing a function calls), and \packageExpressionpercent are \k{expression}
+arguments. More specifically, \packageSymbolpercent are symbols (variables
+such as \k{x}), \packageLanguagepercent are language objects (expressions
+representing a function calls), and \packageExpressionpercent are expression
 objects (lists of expressions). Further inspection reveals that \k{\_inherit}
 accounts for \packageGgplotsymbolpercent of symbols and comes from one site in
 \k{ggplot2}.\footnote{Each object has a field model inheritance, this comes from
