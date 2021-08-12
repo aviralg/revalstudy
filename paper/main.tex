@@ -1247,13 +1247,14 @@ automatically generate R bindings to C++ methods.
 \end{minipage}
 
 \paragraph{Extracting Varargs}
-A somewhat odd use of \eval is to obtain the source code of the arguments passed
-to a vararg parameter. In this example, the function iterates over the contents
-of the vararg until it finds a non-null value. \k{substitute(alist(...))} yields
-an expression that represents a call to \k{alist} but where the \k{...} are
+\Eval is to obtain the source code of the arguments passed to a vararg
+parameter. One example is a function that iterates over the contents of the
+vararg until it finds a non-null value. \k{substitute(alist(...))} yields an
+expression that represents a call to \k{alist} but where the \k{...} are
 expended with the arguments supplied to the function. \Eval then returns a
 \k{list} with unevaluated argument expressions which are evaluated sequentially
-for their result.
+for their result. The reason \eval is needed is not to force
+any more arguments once a non-null value was found. 
 
 \begin{minipage}{.95\textwidth}
 \medskip\underline{\c{statnet.common::NVL}:}
