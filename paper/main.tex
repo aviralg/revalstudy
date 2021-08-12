@@ -586,6 +586,22 @@ than 3 sites, and with the exception \MaxEvalCallSitesPackage which has
 histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
 \CranFunsWithEvalRatio of all functions use \eval.
 
+Our pipeline runs \CranRunnableScripts scripts extracted from \CranPackages
+packages. Any run that does not call \eval is discarded, leaving us with
+\packageNbruns runs. In these runs, \packageAllcalls \eval calls were recorded
+originating from \PkgHitEvalCallSites sites. The runs exercised
+\PkgHitEvalCallSitesAvgRatio of sites, a ratio similar to the package code
+coverage metric which is \PkgCodeCoverage. The reasons some sites are not
+exercised can be chalked down to incomplete tests and analysis failures
+(\PkgFailedProgramsRatio of the runs crashed or timed out).
+Fig.~\ref{fig:traced-eval-callsites} plots exercised site with respect to all
+sites for each program; as can be seen coverage is unequal.
+Table~\ref{tab:freq} summarizes the frequency of calls, call counts on the left and
+number of packages on the right. There are \packageFewcalls packages with fewer
+than 100 calls, and \packageManycalls packages with more than 1,000 calls.
+\packageMaxcallspack calls \eval \packageMaxcalls times and thus accounts for
+over half of our observations.
+
 \begin{figure}[H]
   \includegraphics[width=9cm]{pkgs-eval-callsites-hist.pdf}
   \caption{ \eval call sites}\label{fig:pkgs-eval-callsites-hist}
@@ -623,22 +639,6 @@ histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
   \label{fig:traced-eval-callsites}
 \end{figure}
 
-
-Our pipeline runs \CranRunnableScripts scripts extracted from \CranPackages
-packages. Any run that does not call \eval is discarded, leaving us with
-\packageNbruns runs. In these runs, \packageAllcalls \eval calls were recorded
-originating from \PkgHitEvalCallSites sites. The runs exercised
-\PkgHitEvalCallSitesAvgRatio of sites, a ratio similar to the package code
-coverage metric which is \PkgCodeCoverage. The reasons some sites are not
-exercised can be chalked down to incomplete tests and analysis failures
-(\PkgFailedProgramsRatio of the runs crashed or timed out).
-Fig.~\ref{fig:traced-eval-callsites} plots exercised site with respect to all
-sites for each program; as can be seen coverage is unequal.
-Table~\ref{tab:freq} summarizes the frequency of calls, call counts on the left and
-number of packages on the right. There are \packageFewcalls packages with fewer
-than 100 calls, and \packageManycalls packages with more than 1,000 calls.
-\packageMaxcallspack calls \eval \packageMaxcalls times and thus accounts for
-over half of our observations.
 Table~\ref{tab:variantseval} summarizes use of variants, the first row has sites
 (\emph{static}), the second has sites encountered during analysis
 (\emph{exercised}) and the last gives calls (\emph{invocations}). Most sites and
