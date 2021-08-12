@@ -994,24 +994,25 @@ frowned upon and R tries to discourage it.
 Where does the expression passed to \eval come from? There are various means of
 creating an expression, often these means correlate with a particular use case.
 Our analysis records the values returned by some functions of interest as well
-as their arguments. We build a direct acyclic graph that track the provenance of
-the values that are given to \eval. The following example yields the provenance
-graph with five nodes on Figure~\ref{fig:provgraph} for expression \k{e}.
+as their arguments. We build a direct acyclic graph that track the provenance
+of the values that are given to \eval. Fig~\ref{fig:provgraph} shows an example
+of the provenance graph for the expression \k{e}.
+The provenance of \k{e} includes both \k{parse} and \k{quote}. We pick an
+origin by traversing the graph from the root, following the left-hand side
+member of assignments until a leaf. It represents the provenance that is
+further modified to yield the expression passed to \eval. In our example, the
+origin is \k{parse}.
 
+\begin{figure}[H]
+  \begin{minipage}{.39\textwidth}
+    \vspace{-35mm}
 \begin{lstlisting}
  > e <- parse(text = "a;b")
- > e[[2]] <- quote(c)
+ > e[[2]] <- quote(c) # e is a;c
  > eval(e)
 \end{lstlisting}
-
-
-%\begin{figure}[h]
-%\centering
-%\includegraphics[width=8cm]{provenance-graph}
-%\caption{The provenance DAG for the code example above. Assignments and complex assignments are intermediate nodes, whereas expression builders are leaves of the graph.} \label{fig:provgraph}
-%\end{figure}
-
-\begin{figure}[h]
+\end{minipage}
+\begin{minipage}{.59\textwidth}
 	\centering
 	\begin{tikzpicture}[
 		every node/.style={draw, rounded corners, fill=LightGray, text width = 2cm, align = center, thick}
@@ -1027,13 +1028,10 @@ graph with five nodes on Figure~\ref{fig:provgraph} for expression \k{e}.
 		\draw[<-, >=latex] (CA) -- (A);
 		\draw[<-, >=latex] (A) -- (P);
 	\end{tikzpicture}
-\caption{Provenance} \label{fig:provgraph}
+\end{minipage}
+\caption{Example of a provenance graph} \label{fig:provgraph}
 \end{figure}
 
-The provenance of \k{e} includes both \k{parse} and \k{quote}. We pick an origin
-by traversing the graph from the root, following the left-hand side member of
-assignments until a leaf. It represents the provenance that is further modified
-to yield the expression passed to \eval. In our example, the origin is \k{parse}.
 
 % Wrap tables do not play well with lists (they warn about it in the documentation actually!)
 \begin{wraptable}{r}{5cm}\small\centering
@@ -1051,16 +1049,6 @@ to yield the expression passed to \eval. In our example, the origin is \k{parse}
 		\packageProvenanceNamen & \packageNbProvenanceSitesn & \packagePercentProvenanceSitesn \\\bottomrule
 \end{tabular}
 \caption{Origin} \label{tab:detailed_provenances}
-\medskip
-\begin{tabular}{rrr} \toprule
-\bf Origin  & \bf \#sites & \bf \%sites \\\midrule
-Reflection &  \packageNbReflectionSites & \packageReflectionSitesPercent\\
-String & \packageNbStringSites & \packageStringSitesPercent \\
-Constructed & \packageNbConstructedSites & \packageConstructedSitesPercent \\
-Environment & \packageNbSymbolSites & \packageSymbolSitesPercent \\
-External & \packageNbExternalSites & \packageExternalSitesPercent \\\bottomrule
-\end{tabular}
-\caption{Provenance}\label{tab:provenance}
 \end{wraptable}
 
 Table~\ref{tab:detailed_provenances} shows frequencies of provenance. For
@@ -1073,13 +1061,25 @@ high-level categories:
   expression that invoked this function, arguments are promises, and
   \k{substitute} is used to retrieve their source.
 \item {\it String:} create from strings by invoking \k{parse},
-  \k{str2expression}, or \k{str2lang}.
+  \k{str2lang}, or \k{str2expression}.
 \item {\it Constructed:} invoked \k{quote} or \k{expression}, or by built with
   \k{call} or \k{as.call}.
 \item {\it Environment: } created with \k{as.name} or \k{as.symbol}, typically
   to read a non-local environment.
 \item {\it External: }  call to a C function. % Put an example
 \end{itemize}
+
+\begin{wraptable}{r}{5cm}\small\centering
+\begin{tabular}{rrr} \toprule
+\bf Origin  & \bf \#sites & \bf \%sites \\\midrule
+Reflection &  \packageNbReflectionSites & \packageReflectionSitesPercent\\
+String & \packageNbStringSites & \packageStringSitesPercent \\
+Constructed & \packageNbConstructedSites & \packageConstructedSitesPercent \\
+Environment & \packageNbSymbolSites & \packageSymbolSitesPercent \\
+External & \packageNbExternalSites & \packageExternalSitesPercent \\\bottomrule
+\end{tabular}
+\caption{Provenance}\label{tab:provenance}
+\end{wraptable}
 
 Table~\ref{tab:provenance} summarizes provenance. Some sites are invoked with
 different provenances, they are counted multiple times. Strings correlate with
