@@ -1312,17 +1312,16 @@ from a name and a list of arguments and calling \eval.
 \paragraph{Domain-Specific Language}
 A domain-specific language leverages R's grammar but redefines it semantics in
 some suitable way. The usage example illustrates string interpolation. The
-\k{glue} function extracts snippets of code enclosed between braces and
-evaluates them using \eval, and finally splices their results to construct the
-result.
+\k{glue} function from the \k{glue} package extracts snippets of code enclosed
+between braces and evaluates them using \eval, and finally splices their
+results to construct the result.
 
 \begin{minipage}{.95\textwidth}
-  \medskip\underline{\c{glue::glue}:}
+\medskip
 \begin{lstlisting}
- library(glue)
- greeting <- "Hello"
- glue('{greeting} World!')
- #> Hello World!
+> greeting <- "Hello"
+> glue('{greeting} World!') 
+# Hello World!
 \end{lstlisting}\medskip
 \end{minipage}
 
