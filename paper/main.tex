@@ -537,18 +537,16 @@ data size, and number of elements manipulated. The pipeline steps are:
   extracts code from notebooks. Each extracted script is instrumented with calls
   to our dynamic analyzer in a way that avoid recording calls to \eval
   originating from our execution harness.
-\item \emph{Trace.} Script run with a modified R interpreter to capture
-  execution traces. Each script is run in its own process with the GNU R
-  compiler turned off to avoid recording its execution. CRAN scripts run twice,
-  once to capture \eval calls originating from package code and a second time to
-  capture calls coming from base libraries.
+\item \emph{Trace.} Script run with a modified R interpreter to capture calls
+  to \eval in CRAN packages. Each script is run in its own process with the GNU
+  R compiler turned off to avoid recording its execution.
 \item \emph{Analyze.} Analysis outputs are merged, cleaned, and summarized.
   RMarkdown notebooks process the summarized data to generate all graphs (PDF
   from \k{ggplot2}) and numbers (exported as \LaTeX macros) appearing in the
   paper.
 \end{compactenum}
 
- The pipeline runs in parallel~\cite{GNUparallel} orchestrated by a
+\medskip The pipeline runs in parallel~\cite{GNUparallel} orchestrated by a
 Makefile. Servers have identical environments thanks to a docker image with all
 dependencies installed.
 
@@ -558,26 +556,25 @@ The tracer that performs dynamic analysis of R scripts is built on top of
 \rdyntrace, an extended R 4.0.2 virtual machine that exposes callbacks for
 various runtime events~\cite{oopsla19b}. The tracer registers callbacks to all
 variants of \eval and a few additional functions to locate the origin of \eval
-arguments (it taints the results of calls to \k{parse} and \k{match.call}). It
-captures dynamic code loading, as well as variable definition and assignment,
-allowing us to record side effects that happen in environments while evaluating
-code in \eval. A challenge was that lack of source code references for
-expression that are not within block surrounded by braces. This is unfortunately
-not easily fixed. We extend our dynamic analysis tool to attach synthetic source
-code references to all \eval call sites, but the approach fails in some edge
-cases. For performance reasons, the tracer is an R package written in C++ (3.2K
-LOC) and R (1.3K LOC). While in theory the implementation should be
-straightforward, not so in practice. Lazy evaluation requires delaying the
-processing of arguments until (and if) they are forced. Accounting for
-side-effects performed in an \eval is complicated by the fact that R is
-implemented in a mixture of R and C, and that the language implementation can
-call \eval. Lastly, large code bases exercise many edge cases of the highly
-underspecified R behavior.
+arguments. It captures dynamic code loading, as well as variable definition and
+assignment, allowing us to record side effects that happen in environments
+while evaluating code in \eval. A challenge was that lack of source code
+references for expression that are not within block surrounded by braces. This
+is unfortunately not easily fixed. We extend our dynamic analysis tool to
+attach synthetic source code references to all \eval call sites, but the
+approach fails in some edge cases. For performance reasons, the tracer is an R
+package written in C++ (3.2K LOC) and R (1.3K LOC). While in theory the
+implementation should be straightforward, not so in practice. Lazy evaluation
+requires delaying the processing of arguments until (and if) they are forced.
+Accounting for side-effects performed in an \eval is complicated by the fact
+that R is implemented in a mixture of R and C, and that the language
+implementation can (and does) call \eval. Lastly, large code bases exercise
+many edge cases of the highly underspecified R behavior.
 
 \paragraph{Limitations.} Even with the extension described above, there are
 \PkgUndefinedRnd \eval calls without source information (\PkgUndefinedRatio of
 all \eval calls). This happen when \eval is an argument to a higher-order
-function or when it is called from native code. An other limitation is that we
+function or when it is called from native code. Another limitation is that we
 do not record calls to the native \eval. Neither of these limitations should
 invalidate our conclusions.
 
