@@ -594,15 +594,12 @@ than 3 sites, and with the exception \MaxEvalCallSitesPackage which has
 histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
 \CranFunsWithEvalRatio of all functions use \eval.
 
-
-\begin{figure}[!b]
-\centering
+\begin{figure}[H]
   \includegraphics[width=9cm]{pkgs-eval-callsites-hist.pdf}
   \caption{ \eval call sites}\label{fig:pkgs-eval-callsites-hist}
-
-\medskip
-  \medskip
-
+\end{figure}
+\begin{table}[H]
+\centering
   \small
 \begin{tabular}{@{}l@{\hspace{1.5cm}}l@{}}
 \begin{minipage} {5cm}\small
@@ -614,7 +611,7 @@ histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
 \tt 101 &--& \tt 1K    & \packageBinc  & \tt 1M &--&\tt 10M   & \packageBing\\
 \tt 1K &--& \tt 10K    & \packageBind  & \tt 10M &--& \tt 100M & \packageBinh\\\bottomrule
 \end{tabular}
-\caption{Call frequency}\label{freq}
+\caption{Call frequency}\label{tab:freq}
 \end{minipage}
 &
 \begin{minipage}{7cm}\small
@@ -627,9 +624,9 @@ histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
 \end{tabular}~\\[2mm]\caption{Variants}\label{tab:variantseval}
 \end{minipage}\end{tabular}
 
-\medskip
-
-\includegraphics[width=.8\textwidth]{traced-eval-callsites.pdf} \centering
+\end{table}
+\begin{figure}[H]
+  \includegraphics[width=.8\textwidth]{traced-eval-callsites.pdf} \centering
   \caption{\eval call sites coverage of the \PkgPackages packages.}%
   \label{fig:traced-eval-callsites}
 \end{figure}
@@ -645,18 +642,18 @@ exercised can be chalked down to incomplete tests and analysis failures
 (\PkgFailedProgramsRatio of the runs crashed or timed out).
 Fig.~\ref{fig:traced-eval-callsites} plots exercised site with respect to all
 sites for each program; as can be seen coverage is unequal.
-Fig.~\ref{freq} summarizes the frequency of calls, call counts on the left and
+Table~\ref{tab:freq} summarizes the frequency of calls, call counts on the left and
 number of packages on the right. There are \packageFewcalls packages with fewer
 than 100 calls, and \packageManycalls packages with more than 1,000 calls.
 \packageMaxcallspack calls \eval \packageMaxcalls times and thus accounts for
 over half of our observations.
-Fig.~\ref{tab:variantseval} summarizes use of variants, the first row has sites
+Table~\ref{tab:variantseval} summarizes use of variants, the first row has sites
 (\emph{static}), the second has sites encountered during analysis
 (\emph{exercised}) and the last gives calls (\emph{invocations}). Most sites and
 calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
 \k{local} are barely used at all.
 
-\begin{wrapfigure}{r}{5cm}  \small  \vspace*{-2mm}\centering
+\begin{wraptable}{r}{5cm}  \small  \vspace*{-2mm}\centering
   \begin{tabular}{r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r} \toprule
     \multicolumn{3}{c}{\bf \#calls} & \bf \#sites &
      \multicolumn{3}{c}{\bf \#calls} & \bf \#sites \\\midrule
@@ -665,10 +662,10 @@ calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
     \tt 101 &--& \tt 250 & \packageRunbinc & \tt 1501 &--& \tt 2000  & \packageRunbing\\
     \tt 251 &--& \tt 500 & \packageRunbind & \tt 2001 &--& \tt 3000 & \packageRunbinh\\\bottomrule
   \end{tabular}
-  \caption{Normalized calls} \label{cn}
-\end{wrapfigure}
+  \caption{Normalized calls} \label{tab:cn}
+\end{wraptable}
 
-Fig.~\ref{cn} shows average count of calls from a given site and given run and
+Table~\ref{tab:cn} shows average count of calls from a given site and given run and
 how many sites fall in that range. For instance, \packageRunbinh sites are
 called over 2,000 times per run. Larger call counts suggest the presence of
 loops or recursive functions, but given the data this seems to be the exception;
@@ -677,9 +674,9 @@ once and half as many are invoked twice.
 
 \Eval accepts any value as argument, but if the value is not an expression,
 \eval returns it unchanged. Expressions account for \packageCodepercent of
-arguments. More specifically, \packageSymbolpercent are \k{symbol}s (variables
-such as \k{x}), \packageLanguagepercent are \k{language} objects (expressions
-representing a function calls), and \packageExpressionpercent are \k{expression}
+arguments. More specifically, \packageSymbolpercent are symbols (variables
+such as \k{x}), \packageLanguagepercent are language objects (expressions
+representing a function calls), and \packageExpressionpercent are expression
 objects (lists of expressions). Further inspection reveals that \k{\_inherit}
 accounts for \packageGgplotsymbolpercent of symbols and comes from one site in
 \k{ggplot2}.\footnote{Each object has a field model inheritance, this comes from
