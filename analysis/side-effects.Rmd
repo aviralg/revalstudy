@@ -19,10 +19,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(DT)
 library(digest)
+library(dplyr)
 library(fs)
 library(fst)
 library(purrr)
-library(tidyverse)
+library(readr)
+library(stringr)
+library(tidyr)
 library(viridis)
 library(xtable)
 
@@ -95,7 +98,6 @@ S <- mutate(
   caller_package=str_replace(eval_call_srcref, "::(.*)::.*::.*", "\\1")
 )
 ```
-
 
 ## Overview
 
@@ -558,5 +560,35 @@ CSE <- left_join(
   select(SE, cid, event, class, N),
   by="cid"
 )
+```
+
+```{r}
+N <- read_csv(PACKAGE_NORMALIZED_EXPRESSION_FILE) %>%
+  select(minimized, expr_resolved_hash=hash)
+```
+
+```{r}
+E <- read_fst(PACKAGE_SUM_CALLS_FILE) %>% as_tibble()
+EN <- left_join(E, N, by="expr_resolved_hash")
+
+#ENS <- left_join(
+#  select(EN, eval_call_srcref, minimized, N1=nb_ev_calls), 
+#  select(SE, eval_call_srcref, in_envir, class, N2=N), 
+#  by="eval_call_srcref"
+#)
+```
+
+```{r}
+EN_sites <- group_by(EN, eval_call_srcref, minimized) %>% summarise(nb_ev_calls=sum(nb_ev_calls)) %>% ungroup
+cs_count(EN_sites, minimized)
+```
+
+
+```{r}
+cs_count(EN, wt=nb_ev_calls, minimized)
+```
+
+```{r}
+SEN <- left_join(SE, N, by="expr_resolved_hash")
 ```
 
