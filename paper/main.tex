@@ -1093,12 +1093,11 @@ on a file. Most build strings programmatically.
 The main use case for \eval involves using \k{match.call}, \k{substitute}, or
 \k{formals} to access and transform arguments of a function. Constructing
 expressions from strings is also a common use case. The constructed category
-shows that most \evals comes from existing code that was modified by the
+shows that most \evals come from existing code that was modified by the
 programmer before invoking \eval. Both constructed and reflection categories
 roughly correspond to meta-programming. Some use cases could likely be replaced
 by macros if the R designers could be convinced to overcome their distaste for
-those. Another use of \eval is to directly build symbols to evaluate them in
-another environment.
+those.
 
 \subsection{The effects of \eval}
 
