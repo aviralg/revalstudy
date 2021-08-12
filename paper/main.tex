@@ -586,6 +586,22 @@ than 3 sites, and with the exception \MaxEvalCallSitesPackage which has
 histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
 \CranFunsWithEvalRatio of all functions use \eval.
 
+Our pipeline runs \CranRunnableScripts scripts extracted from \CranPackages
+packages. Any run that does not call \eval is discarded, leaving us with
+\packageNbruns runs. In these runs, \packageAllcalls \eval calls were recorded
+originating from \PkgHitEvalCallSites sites. The runs exercised
+\PkgHitEvalCallSitesAvgRatio of sites, a ratio similar to the package code
+coverage metric which is \PkgCodeCoverage. The reasons some sites are not
+exercised can be chalked down to incomplete tests and analysis failures
+(\PkgFailedProgramsRatio of the runs crashed or timed out).
+Fig.~\ref{fig:traced-eval-callsites} plots exercised site with respect to all
+sites for each program; as can be seen coverage is unequal.
+Table~\ref{tab:freq} summarizes the frequency of calls, call counts on the left and
+number of packages on the right. There are \packageFewcalls packages with fewer
+than 100 calls, and \packageManycalls packages with more than 1,000 calls.
+\packageMaxcallspack calls \eval \packageMaxcalls times and thus accounts for
+over half of our observations.
+
 \begin{figure}[H]
   \includegraphics[width=9cm]{pkgs-eval-callsites-hist.pdf}
   \caption{ \eval call sites}\label{fig:pkgs-eval-callsites-hist}
@@ -623,22 +639,6 @@ histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
   \label{fig:traced-eval-callsites}
 \end{figure}
 
-
-Our pipeline runs \CranRunnableScripts scripts extracted from \CranPackages
-packages. Any run that does not call \eval is discarded, leaving us with
-\packageNbruns runs. In these runs, \packageAllcalls \eval calls were recorded
-originating from \PkgHitEvalCallSites sites. The runs exercised
-\PkgHitEvalCallSitesAvgRatio of sites, a ratio similar to the package code
-coverage metric which is \PkgCodeCoverage. The reasons some sites are not
-exercised can be chalked down to incomplete tests and analysis failures
-(\PkgFailedProgramsRatio of the runs crashed or timed out).
-Fig.~\ref{fig:traced-eval-callsites} plots exercised site with respect to all
-sites for each program; as can be seen coverage is unequal.
-Table~\ref{tab:freq} summarizes the frequency of calls, call counts on the left and
-number of packages on the right. There are \packageFewcalls packages with fewer
-than 100 calls, and \packageManycalls packages with more than 1,000 calls.
-\packageMaxcallspack calls \eval \packageMaxcalls times and thus accounts for
-over half of our observations.
 Table~\ref{tab:variantseval} summarizes use of variants, the first row has sites
 (\emph{static}), the second has sites encountered during analysis
 (\emph{exercised}) and the last gives calls (\emph{invocations}). Most sites and
@@ -817,9 +817,7 @@ function. It subsumes \k{\$}. Assignments represent the most obvious source
 of side effects in \eval. Most cases originate from trivial code generation
 where the assign expression is assembled using parse or substitute, often in
 a loop.
-\end{tabular}
-
-\begin{tabular}{@{}p{.97\linewidth}}
+\\
 \medskip\EE{$min(e)=\c{F()}$}\\[-2mm]\small Function calls without variable lookups or
 assignment. A variable is allowed the function position, looking up
 functions does not trigger computation unless the function's name
@@ -830,11 +828,13 @@ calls whose arguments may include variable references and nested calls. Together
 they represent the most frequent shape and perform over 16 steps. They are
 frequently evaluated in function environments.
 \\
-  \medskip\EE{$min(e)=\c{FUN}$}\\[-2mm]\small Function definitions without any
-  computation, \eg~\k{function(x) x+1}. In addition to \k{FUN},
-  \packageGeneralizedFunctionDefinitionSitesPercent of sites have function
-  definitions nested in other expressions.
-\\
+\medskip\EE{$min(e)=\c{FUN}$}\\[-2mm]\small Function definitions without any
+computation, \eg~\k{function(x) x+1}. In addition to \k{FUN},
+\packageGeneralizedFunctionDefinitionSitesPercent of sites have function
+definitions nested in other expressions.
+\end{tabular}
+
+\begin{tabular}{@{}p{.97\linewidth}}
 \medskip\EE{$min(e)=\c{BLOCK}$}\\[-2mm]\small Multi-statement code blocks, as
 they can be large we do not try to normalize their contents. They execute in a
 median \packageMinimizedmedianoperationsjRnd steps, usually, in function
@@ -1085,9 +1085,7 @@ Table~\ref{tab:provenance} summarizes provenance. Some sites are invoked with
 different provenances, they are counted multiple times. Strings correlate with
 dynamic code loading as done by \k{source} and \k{sys.source}. Few calls
 (\packageNbParseFromFileSites in total) consume the result of calling \k{parse}
-on a file. Most build strings programmatically. We identified one function
-\k{invokeRestartInteractively} that prompts the user for input and \evals it.
-
+on a file. Most build strings programmatically.
 
 
 
@@ -1095,12 +1093,11 @@ on a file. Most build strings programmatically. We identified one function
 The main use case for \eval involves using \k{match.call}, \k{substitute}, or
 \k{formals} to access and transform arguments of a function. Constructing
 expressions from strings is also a common use case. The constructed category
-shows that most \evals comes from existing code that was modified by the
+shows that most \evals come from existing code that was modified by the
 programmer before invoking \eval. Both constructed and reflection categories
 roughly correspond to meta-programming. Some use cases could likely be replaced
 by macros if the R designers could be convinced to overcome their distaste for
-those. Another use of \eval is to directly build symbols to evaluate them in
-another environment.
+those.
 
 \subsection{The effects of \eval}
 
@@ -1117,9 +1114,9 @@ We record \SEAllRnd side-effects from \SEAllCallsRnd calls and \SEAllSites
 sites. The challenge is to remove accidental side-effects caused by the R
 virtual machine implementation and not user code. For example, the
 \k{.Random.seed} variable is saved and restored from and to the global
-environment every time a statistical routine is called. Filtering accidental
+environment every time a statistical routine is called. Filtering out accidental
 side-effects leaves us with \SEUserRnd writes from \SEUserCallsRnd calls (in
-\SEUserSites sites and \SEUserFunctions functions). \SEFunsNighty functions are
+\SEUserSites sites and \SEUserFunctions functions). In this set, \SEFunsNighty functions are
 responsible for 90\% of side effects. Half of those come from just three
 functions: \k{plyr::allocate\_column} (allocates space for a new data frame
 column), \k{withr::execute\_handlers} (executes deferred expressions), and
