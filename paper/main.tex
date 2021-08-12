@@ -383,23 +383,28 @@ interpretation-based approach to analyzing dynamic languages. One must construct
 a static approximation of the argument to \eval and then analyze possible
 behaviors of the interpreter when evaluating the generated code.
 
-\citet{ecoop12} had a few paragraphs on the usage of \eval in R. They found the
-that \eval is widely used in R code with 8500 call sites in 1238 CRAN packages
-and 2.2 million dynamic calls. The 15 most frequent call sites account for 88\%
-of those. The \k{match.arg} function is the highest used one with 54\% of all
-calls. In the other call sites, they saw two use cases. The most common is the
-evaluation of the source code of a promise retrieved by \k{substitute} in a new
-environment, \eg as done in the \k{with} function. The other use case is the
-invocation of a function whose name or arguments are determined dynamically. For
-this purpose, R provides \k{do.call} and thus \eval is overkill. Our corpus is
-larger, with \CranPackages packages, \packageTriggeredpkgs packages with at
-least one \eval, for a total of \PkgHitEvalCallSites sites and
-\packageAllcallsRnd dynamic calls, although they also looked at the Bioconductor
-package repository in addition to CRAN. We also track much more runtime
-information on the \eval calls during tracing. It enables us to have a more
-nuanced and accurate picture, and identify more diverse use cases of \eval.
+\citet{ecoop12} in their evaluation of the design of the R language, briefly
+looked at the use of \eval in their corpus (1238 CRAN packages, R base
+libraries, and 515 Bioconductor packages). They found 8500 \eval call sites and
+recorded 2.2M \eval calls at runtime. Because they included base, the results
+were dominated by a few functions (15 call sites accounted for 88\% of \eval
+calls) with \c{match.arg}\footnote{A popular base function that matches an
+  argument against a set of candidate values that uses \eval to get the
+candidate values.} being responsible for over half of the recorded \eval
+calls. They discussed two use cases. The first one is the evaluation of an
+expression extracted from a promise using the \k{substitute} call in a new
+environment. The other is the invocation of a function with dynamically
+computed names and arguments.
 
-
+In this work, we significantly expand that study. First, our corpus covers
+\CranPackages packages (about the whole of CRAN at time of writing) with
+\PkgHitEvalCallSites \eval call sites and \packageAllcallsRnd \eval calls.
+Next, we track the number of information such as the shapes of expressions
+passed to \eval, their provenance, complexity, and side effects. This enables
+us to have an accurate and detailed picture of the use of \eval in the R
+ecosystem. We use this to provide both quantitative and qualitative views on
+\eval, including several use cases to demonstrate the popularity, diversity and
+powerfulness of \eval in R.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
