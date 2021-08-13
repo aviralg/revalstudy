@@ -1325,15 +1325,17 @@ results to construct the result.
 \end{lstlisting}\medskip
 \end{minipage}
 
-\paragraph{Boilerplate Removal}
-A variant of code generation is to let users write compact code that is expended
-via \eval and \k{match.call}. The example uses \k{match.call} to access
-the expression with which the function is called. The next three lines construct
-a call to \k{stats::model.frame} with argument text of parameters
-\k{'formula'}, \k{'data'}, and \k{'weights'}. Then, the call expression
-is evaluated in the parent environment. The use of \k{match.call}, avoids
-repeated use of \k{substitute} for extracting the argument expressions. This
-setup is also extensible as new parameter names can be easily added.
+\paragraph{Boilerplate Removal} 
+A variant of code generation is to let users write compact code that is
+expended via \eval and \k{match.call}. The example uses \k{match.call} to
+access the expression with which the function is called. The next three lines
+construct a call to \k{stats::model.frame} with argument text of parameters
+\k{'formula'}, \k{'data'}, and \k{'weights'}. Then, the call expression is
+evaluated in the parent environment. The use of \k{match.call}, avoids repeated
+use of \k{substitute} for extracting the argument expressions. It is extensible
+as new parameter names can be easily added. This example illustrates one of the
+most recurring usage of \eval that is used by the majority of packages that do
+statistical modeling.
 
 \begin{minipage}{.95\textwidth}
   \medskip\underline{\c{survival::survfit.formula}:}
@@ -1347,8 +1349,31 @@ setup is also extensible as new parameter names can be easily added.
 \end{lstlisting}\medskip
 \end{minipage}
 
-This example illustrates one of the most recurring usage of \eval that is used
-by the majority of packages that do statistical modeling.
+This combination of \k{match.call} and \eval to pass most of the call to
+another function is also used to created wrappers. For example, the
+\k{write.csv} uses it to forward most of the parameters to the more general
+\k{write.table} function, only setting the CSV-related parameters:
+
+\begin{minipage}{.95\textwidth}
+  \medskip\underline{\c{base::write.csv}:}
+\begin{lstlisting}
+function (...)
+{
+    Call <- match.call(expand.dots = TRUE)
+    Call$sep <- ","
+    Call$dec <- "."
+    Call$qmethod <- "double"
+    Call[[1L]] <- as.name("write.table")
+    eval.parent(Call)
+}
+\end{lstlisting}\medskip
+\end{minipage}
+
+The most probable reason for this is to ease maintenance of such
+wrappers.\footnote{This was speculated by the Brian Ripley, the author of the
+function, in a private conversation.} Wrapping functions in R is somewhat
+harder than in other languages because of the default arguments, the varargs
+and is missing arguments.
 
 \paragraph{Formula Resolution}
 Many packages use \eval to evaluate formulas. The example extracts the
