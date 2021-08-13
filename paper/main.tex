@@ -1294,10 +1294,10 @@ generated.
 \paragraph{Shadowing}
 %%% TODO ?????????????////
 Many packages use \eval to implement variations of the \k{base} R functions.
-For example, the \k{igraph} package provides the \k{do_call} function
-shown below. This is a variant of the \k{do.call} function from the
-\k{base} package. This function executes a function call by constructs it
-from a name and a list of arguments and calling \eval.
+For example, the \k{igraph} package provides the \k{do_call} function shown
+below. This is a variant of the builtin \k{do.call} function with the
+additional support for specifying the environment where the call should happen.
+It constructs a call from a name and a list of arguments, and pass it to \eval.
 
 \begin{minipage}{.95\textwidth}
   \medskip\underline{\c{igraph::do\_call}:}
