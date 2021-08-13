@@ -997,9 +997,8 @@ Our analysis records the values returned by some functions of interest as well
 as their arguments. We build a direct acyclic graph that track the origin
 of the values that are given to \eval. Fig~\ref{fig:provgraph} shows an example
 of the origin graph for the expression \k{e}.
-The origin of \k{e} includes both \k{parse} and \k{quote}. We pick an
-origin by traversing the graph from the terminal leaf, \ie from the \eval node, following the left-hand side
-member of assignments until reaching a root node. It represents the origin that is
+The origin of \k{e} includes both \k{parse} and \k{quote}, the starting nodes. We pick one origin by traversing the graph from the terminal leaf, \ie from the \eval node, following the left-hand side
+member of assignments until reaching a starting node. It represents the origin that is
 further modified to yield the expression passed to \eval. In our example, the
 origin is \k{parse}.
 
@@ -1067,18 +1066,18 @@ following five categories:
 
 \begin{itemize}[---]
 \item {\it Reflection:} use of \k{match.call} to reflectively capture the
-  expression that invoked this function, arguments are promises, and
-  \k{substitute} is used to retrieve their source.
+  expression that invoked this function. Function arguments are promises, and
+  \k{substitute} is used to retrieve their source. 
 \item {\it String:} create from strings by invoking \k{parse},
   \k{str2lang}, or \k{str2expression}.
-\item {\it Constructed:} invoked \k{quote} or \k{expression}, or by built with
+\item {\it Constructed:} invoked \k{quote} or \k{expression}, or by building with
   \k{call} or \k{as.call}.
 \item {\it Environment: } created with \k{as.name} or \k{as.symbol}, typically
   to read a non-local environment.
-\item {\it External: }  call to a C function. % Put an example
+\item {\it External: }  call to a C function. 
 \end{itemize}
 
-Table~\ref{tab:provenance} summarizes origins. Is shows frequencies by function
+Table~\ref{tab:provenance} summarizes origins. It shows frequencies by function
 and by category. For technical reasons, we misclassify a small number of sites.
 Manual inspection of numerous examples suggests that errors are rare. Some sites
 are counted multiple times as they are invoked with different origins. Strings
@@ -1088,8 +1087,7 @@ Few calls (\packageNbParseFromFileSites in total) consume the result of calling
 
 
 \paragraph{Discussion}
-The main use cases for \eval involve using \k{match.call}, \k{substitute}, or
-\k{formals} to access and transform arguments of a function. Constructing
+The main use cases for \eval involve using \k{match.call}, or \k{substitute} to access and transform arguments of a function. Constructing
 expressions from strings is also a common use case. The constructed category
 shows that most \evals come from existing code that was modified by the
 programmer before invoking \eval. Both constructed and reflection categories
