@@ -1473,7 +1473,7 @@ The cases where \eval appears to be overkill include simple expression shapes
 such as \k{X}, \k{V}, \k{\$}, \k{<-}, and \k{FUN}. Variable lookup in a remote
 environment can be performed by the builtin \k{get} function, a similar case
 can be made for assignment and the \k{assign} function. There is a dedicated
-\k{do.call} function to build function calls. However, the unnecessary uses of
+\k{do.call} function to perform function calls. However, the unnecessary uses of
 \eval often can only be uncovered by manual analysis.
 
 \begin{lstlisting}[caption={Unnecessary use of \eval},label=lst:unnecessary]
@@ -1486,8 +1486,8 @@ can be made for assignment and the \k{assign} function. There is a dedicated
 For example in Listing~\ref{lst:unnecessary}, the function uses \eval to lookup
 a target function name from a constructed string. Then it constructs a calls it
 with the arguments that are passed to the current function. \Eval is overkill
-in this case, a semantically equivalent function body uses \k{get} to perform
-the lookup and then calls the resulting function directly.
+in this case: a semantically equivalent function body can use \k{get} to perform
+the lookup and then call the resulting function directly.
 
 \begin{lstlisting}
  q.f <- get(paste0("q",d))
@@ -1505,7 +1505,7 @@ and writes.
 % TODO: show how will it look with symbolic field read and write
 
 % TODO: remove - does not bring anything new or interesting
-As a last example, \k{configr::config.funs.par} construct three expressions
+As a last example, \k{configr::config.funs.par} constructs three expressions
 that are then fed to \eval. Semantically equivalent code would use \k{get}
 to lookup \k{fun}, and then directly execute the three expressions.
 
