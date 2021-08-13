@@ -1212,17 +1212,19 @@ The R language was intended to be extensible. The combination of lazy
 evaluation, \k{substitute} and \k{eval} are some of the tools given to
 developers to this end. To understand \emph{why} developers use \eval, we
 manually inspected top 117 sites which contribute to 90\% of the calls in the
-corpus. In this section we show 10 real-world examples form this batch. The
+corpus. In this section we show 10 real-world examples from this batch. The
 goal is to illustrate the variety of use cases that employ \eval in the R
 ecosystem. The code snippets are simplified for clarity.
 
-\paragraph{Extended Interfaces}
-Sometimes it is convenient to allow users to extend the behavior of a library
-function. \Eval allows clients to provide a simple text string that shall be
-executed in the context of the function. The example here allows users to
-provide formulas as strings, such as \k{"exp(-x^2/2)"}, the contract being that
-the text can refer to some variable \k{x} that will be set up by the called
-function. In this case one users could provide an anonymous function.
+\paragraph{Extended Interfaces} Sometimes it is convenient to allow users to
+extend the behavior of a library function. \Eval allows clients to provide a
+simple text string that shall be executed in the context of the function. The
+example here allows users to provide formulas as strings, such as
+\k{"exp(-x^2/2)"}, the contract being that the text can refer to some variable
+\k{x} that will be set up by the called function.\footnote{The function is used
+to generates a sequence of random numbers using the adaptive rejection sampling
+algorithm and the string formula is used to describe the target density.} In
+this case users could provide an anonymous function.
 
 \begin{minipage}{.95\textwidth}
 \medskip\underline{\c{AdapSamp::rARS}:}
@@ -1423,7 +1425,7 @@ results to construct the result.
 \end{minipage}
 
 The \k{glue} package contains a variant that leverages the non-standard scoping
-as well allowing to resolve interpolation in alternative environments. For
+as well allowing to resolve interpolation in an alternative environment. For
 example, the following snippet pipes the subsetted data frame into the
 \k{glue_data} function that uses it to resolve the symbols in string
 interpolation.
