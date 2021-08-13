@@ -1210,9 +1210,14 @@ The R language was intended to be extensible. The combination of lazy
 evaluation, \k{substitute} and \k{eval} are some of the tools given to
 developers to this end. To understand \emph{why} developers use \eval, we
 manually inspected top 117 sites which contribute to 90\% of the calls in the
-corpus. In this section we show 9 real-world examples from this batch. The
-goal is to illustrate the variety of use cases that employ \eval in the R
-ecosystem. The code snippets are simplified for clarity.
+corpus. We present examples from nine classes from this batch. The
+classification is not exhaustive; we only study 117 call sites from the
+\PkgEvalCallSites call sites in our corpus and many uses of \eval do not fit in
+a specific category. The goal here is to demonstrate the wide variety of uses to
+which \eval is put to use. This also speaks to the ubiquity of \eval in the R
+ecosystem. The code snippets have been simplified for clarity.
+
+
 
 \paragraph{Behavioral Extension} Sometimes it is convenient to allow users to
 extend the behavior of a library function. \Eval allows clients to provide a
@@ -1233,7 +1238,7 @@ this case users could provide an anonymous function instead.
 \end{minipage}
 
 \paragraph{Code Generation}
-\Eval can be used to generate boiler plate code that would either be tedious to
+\Eval can be used to generate boilerplate code that would either be tedious to
 write by hand or that is only known after deployment. The example uses \eval to
 automatically generate R bindings to C++ methods.
 
@@ -1253,20 +1258,13 @@ parameter. One example is a function that iterates over the contents of the
 vararg until it finds a non-null value. \k{substitute(alist(...))} yields an
 expression that represents a call to \k{alist} but where the \k{...} are
 expended with the arguments supplied to the function. \Eval then returns a
-\k{list} with unevaluated argument expressions which are evaluated sequentially
-for their result. The reason \eval is needed is not to force
-any more arguments once a non-null value was found. 
+\k{list} with the unevaluated argument expressions.
 
 \begin{minipage}{.95\textwidth}
 \medskip\underline{\c{statnet.common::NVL}:}
 \begin{lstlisting}
  function(...) {
-   for(e in eval(substitute(alist(...)))) {
-     x <- eval(e, parent.frame())
-     if(!is.null(x)) break
-   }
-   x
- }
+   exprs <- eval(substitute(alist(...)))
 \end{lstlisting}\medskip
 \end{minipage}
 
@@ -1311,16 +1309,16 @@ It constructs a call from a name and a list of arguments, and pass it to \eval.
 \end{minipage}
 
 \paragraph{Boilerplate Removal} 
-A variant of code generation is to let users write compact code that is
-expended via \eval and \k{match.call}. The example uses \k{match.call} to
-access the expression with which the function is called. The next three lines
-construct a call to \k{stats::model.frame} with argument text of parameters
-\k{'formula'}, \k{'data'}, and \k{'weights'}. Then, the call expression is
-evaluated in the parent environment. The use of \k{match.call}, avoids repeated
-use of \k{substitute} for extracting the argument expressions. It is extensible
-as new parameter names can be easily added. This example illustrates one of the
-most recurring usage of \eval that is used by the majority of packages that do
-statistical modeling, \ie the \c{model.frame} shape in Table~\ref{tab:minimizedexpressions}.
+A variant of code generation is to let users write compact code that is expended
+via \eval and \k{match.call}. The example uses \k{match.call} to access the
+expression with which the function is called. The next three lines construct a
+call to \k{stats::model.frame} with argument text of parameters \k{'formula'},
+\k{'data'}, and \k{'weights'}. Then, the call expression is evaluated in the
+parent environment. The use of \k{match.call} avoids repeated use of
+\k{substitute} for extracting the argument expressions. It is extensible as new
+parameter names can be easily added. This example illustrates one of the most
+recurring uses of \eval by packages that do statistical modeling, \ie the
+\c{model.frame} shape in Table~\ref{tab:minimizedexpressions}.
 
 \begin{minipage}{.95\textwidth}
   \medskip\underline{\c{survival::survfit.formula}:}
@@ -1356,10 +1354,10 @@ parameters:
 \end{minipage}
 
 The most probable reason for this is to ease maintenance of such
-wrappers.\footnote{This was speculated by the Brian Ripley, the author of the
-function, in a private conversation.} Wrapping functions in R is somewhat
-harder than in other languages because of the default argument values, the
-varargs and the missing arguments.
+wrappers.\footnote{Private communication with a developer of R.} Wrapping
+functions in R is somewhat harder than in other languages because of default
+arguments, varargs and missing arguments.
+
 
 % % TODO: update to explain why the eval is needed or remove
 % \paragraph{Formula Resolution}
