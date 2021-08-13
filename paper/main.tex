@@ -1227,7 +1227,7 @@ function. In this case one users could provide an anonymous function.
 \medskip\underline{\c{AdapSamp::rARS}:}
 \begin{lstlisting}
  function(n,formula) {
-    p <- function(x) eval(parse(text=formula))
+   p <- function(x) eval(parse(text=formula))
 \end{lstlisting}\medskip
 \end{minipage}
 
@@ -1283,11 +1283,11 @@ generated.
   \medskip\underline{\c {assertthat::see\_if}:}
 \begin{lstlisting}
  function(..., env=parent.frame(), msg=NULL) {
-    asserts <- eval(substitute(alist(...)))
-    for (assertion in asserts) {
-      res <- tryCatch({
-        eval(assertion, env)
-      }, assertError=function(e) { structure(FALSE, msg=e$message) })
+   asserts <- eval(substitute(alist(...)))
+   for (assertion in asserts) {
+     res <- tryCatch({
+       eval(assertion, env)
+     }, assertError=function(e) { structure(FALSE, msg=e$message) })
 \end{lstlisting}\medskip
 \end{minipage}
 
@@ -1357,15 +1357,15 @@ another function is also used to created wrappers. For example, the
 \begin{minipage}{.95\textwidth}
   \medskip\underline{\c{base::write.csv}:}
 \begin{lstlisting}
-function (...)
-{
-    Call <- match.call(expand.dots = TRUE)
-    Call$sep <- ","
-    Call$dec <- "."
-    Call$qmethod <- "double"
-    Call[[1L]] <- as.name("write.table")
-    eval.parent(Call)
-}
+ function (...)
+ {
+   Call <- match.call(expand.dots = TRUE)
+   Call$sep <- ","
+   Call$dec <- "."
+   Call$qmethod <- "double"
+   Call[[1L]] <- as.name("write.table")
+   eval.parent(Call)
+ }
 \end{lstlisting}\medskip
 \end{minipage}
 
