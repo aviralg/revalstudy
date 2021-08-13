@@ -1453,27 +1453,25 @@ The cases where \eval appears to be overkill include simple expression shapes
 such as \k{X}, \k{V}, \k{\$}, \k{<-}, and \k{FUN}. Variable lookup in a remote
 environment can be performed by the builtin \k{get} function, a similar case
 can be made for assignment and the \k{assign} function. There is a dedicated
-\k{do.call} function to build function calls. Unnecessary uses of \eval
-often can be uncovered by manual analysis.
+\k{do.call} function to build function calls. However, the unnecessary uses of
+\eval often can only be uncovered by manual analysis.
 
-\begin{lstlisting}
-PerformanceAnalytics::chart.QQPlot <- function (d="norm",dp,...) {
-   q.f <- eval(parse(text=paste("q",d)))
+\begin{lstlisting}[caption={Unnecessary use of \eval},label=lst:unnecessary]
+ PerformanceAnalytics::chart.QQPlot <- function (d="norm",dp,...) {
+   q.f <- eval(parse(text=paste0("q",d)))
    z <- NULL
-   eval(parse(text=paste("z<-q.f(",dp,",...)")))
-  }
+   eval(parse(text=paste0("z<-q.f(",dp,",...)")))
 \end{lstlisting}
 
-The above uses \eval to first lookup a target function name from a constructed
-string, the it constructs a call to the target that include arguments to the
-current functions. \Eval is overkill for this code, a semantically equivalent
-function body uses \k{get} to perform the lookup and then calls directly.
+For example in Listing~\ref{lst:unnecessary}, the function uses \eval to lookup
+a target function name from a constructed string. Then it constructs a calls it
+with the arguments that are passed to the current function. \Eval is overkill
+in this case, a semantically equivalent function body uses \k{get} to perform
+the lookup and then calls the resulting function directly.
 
 \begin{lstlisting}
- function (R, d="norm", dp, ...) {
-   q.f <- get(paste0("q",d))
-   z <- q.f(dp, ...)
- }
+ q.f <- get(paste0("q",d))
+ z <- q.f(dp, ...)
 \end{lstlisting}
 
 Another example, from \k{coin::copyslots}, constructs an expression that access
@@ -1484,6 +1482,9 @@ and writes.
   eval(str2lang(paste0("target@", s, " <- source@", s)))
 \end{lstlisting}
 
+% TODO: show how will it look with symbolic field read and write
+
+% TODO: remove - does not bring anything new or interesting
 As a last example, \k{configr::config.funs.par} construct three expressions
 that are then fed to \eval. Semantically equivalent code would use \k{get}
 to lookup \k{fun}, and then directly execute the three expressions.
@@ -1507,14 +1508,15 @@ analysis is limited due to coverage issues, and static analysis of R remains an
 open problem.
 
 We have not yet touched on alternative implementations of \eval. The tidyverse
-libraries include their own implementation calls
-\k{rlang::eval\_tidy}~\cite{tidyverse}. This departs from \eval in two ways.
-First, it supports evaluation of quosures, custom objects used by for
-metaprogramming that bundle expressions with an environment. \k{eval\_tidy}
-accepts a data mask argument, a set of bindings such as a dataframe or list,
-which takes precedence over the environment. Effects such as assignments happen
-in the data mask. Expressions such as \k{return()} do not work since the data
-mask does not correspond to a frame on the call stack.
+libraries\footnote{An opinionated collection of R packages designed for data
+science. It consists of some of the most popular packages.} include their own
+implementation calls \k{rlang::eval\_tidy}~\cite{tidyverse}. This departs from
+\eval in two ways. First, it supports evaluation of quosures, custom objects
+used by for metaprogramming that bundle expressions with an environment.
+\k{eval\_tidy} accepts a data mask argument, a set of bindings such as a
+dataframe or list, which takes precedence over the environment. Effects such as
+assignments happen in the data mask. Expressions such as \k{return()} do not
+work since the data mask does not correspond to a frame on the call stack.
 
 \section{Conclusion}
 
