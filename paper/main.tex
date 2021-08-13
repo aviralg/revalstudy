@@ -1210,11 +1210,11 @@ The R language was intended to be extensible. The combination of lazy
 evaluation, \k{substitute} and \k{eval} are some of the tools given to
 developers to this end. To understand \emph{why} developers use \eval, we
 manually inspected top 117 sites which contribute to 90\% of the calls in the
-corpus. In this section we show 10 real-world examples from this batch. The
+corpus. In this section we show 9 real-world examples from this batch. The
 goal is to illustrate the variety of use cases that employ \eval in the R
 ecosystem. The code snippets are simplified for clarity.
 
-\paragraph{Extended Interfaces} Sometimes it is convenient to allow users to
+\paragraph{Behavioral Extension} Sometimes it is convenient to allow users to
 extend the behavior of a library function. \Eval allows clients to provide a
 simple text string that shall be executed in the context of the function. The
 example here allows users to provide formulas as strings, such as
@@ -1222,7 +1222,7 @@ example here allows users to provide formulas as strings, such as
 \k{x} that will be set up by the called function.\footnote{The function is used
 to generates a sequence of random numbers using the adaptive rejection sampling
 algorithm and the string formula is used to describe the target density.} In
-this case users could provide an anonymous function.
+this case users could provide an anonymous function instead.
 
 \begin{minipage}{.95\textwidth}
 \medskip\underline{\c{AdapSamp::rARS}:}
@@ -1334,10 +1334,11 @@ statistical modeling, \ie the \c{model.frame} shape in Table~\ref{tab:minimizede
 \end{lstlisting}\medskip
 \end{minipage}
 
-This combination of \k{match.call} and \eval to pass most of the call to
-another function is also used to created wrappers. For example, the
-\k{write.csv} uses it to forward most of the parameters to the more general
-\k{write.table} function, only setting the CSV-related parameters:
+This combination of \k{match.call} and \eval for passing most of the current
+call's argument to another function is also used to created wrappers. For
+example, the \k{write.csv} uses it to forward most of the parameters to the
+more general \k{write.table} function, only setting the CSV-related
+parameters:
 
 \begin{minipage}{.95\textwidth}
   \medskip\underline{\c{base::write.csv}:}
@@ -1357,20 +1358,20 @@ another function is also used to created wrappers. For example, the
 The most probable reason for this is to ease maintenance of such
 wrappers.\footnote{This was speculated by the Brian Ripley, the author of the
 function, in a private conversation.} Wrapping functions in R is somewhat
-harder than in other languages because of the default arguments, the varargs
-and is missing arguments.
+harder than in other languages because of the default argument values, the
+varargs and the missing arguments.
 
-% TODO: update to explain why the eval is needed or remove
-\paragraph{Formula Resolution}
-Many packages use \eval to evaluate formulas. The example extracts the
-\k{"formula"} attribute attached to the \k{pdMat} object and evaluates it.
+% % TODO: update to explain why the eval is needed or remove
+% \paragraph{Formula Resolution}
+% Many packages use \eval to evaluate formulas. The example extracts the
+% \k{"formula"} attribute attached to the \k{pdMat} object and evaluates it.
 
-\begin{minipage}{.95\textwidth}
-  \medskip\underline{\c{nlme::formula.pdMat}:}
-\begin{lstlisting}
- function(x, asList, ...) eval(attr(x, "formula"))
-\end{lstlisting}\medskip
-\end{minipage}
+% \begin{minipage}{.95\textwidth}
+%   \medskip\underline{\c{nlme::formula.pdMat}:}
+% \begin{lstlisting}
+%  function(x, asList, ...) eval(attr(x, "formula"))
+% \end{lstlisting}\medskip
+% \end{minipage}
 
 \paragraph{Non-standard Scoping}
 
@@ -1423,10 +1424,9 @@ results to construct the result.
 \end{minipage}
 
 The \k{glue} package contains a variant that leverages the non-standard scoping
-as well allowing to resolve interpolation in an alternative environment. For
-example, the following snippet pipes the subsetted data frame into the
-\k{glue_data} function that uses it to resolve the symbols in string
-interpolation.
+allowing to resolve interpolation in an alternative environment. For example,
+the following snippet pipes the subsetted data frame into the \k{glue_data}
+function that uses it to resolve the symbols in string interpolation.
 
 \begin{minipage}{.95\textwidth}
 \medskip
@@ -1473,8 +1473,11 @@ The cases where \eval appears to be overkill include simple expression shapes
 such as \k{X}, \k{V}, \k{\$}, \k{<-}, and \k{FUN}. Variable lookup in a remote
 environment can be performed by the builtin \k{get} function, a similar case
 can be made for assignment and the \k{assign} function. There is a dedicated
-\k{do.call} function to perform function calls. However, the unnecessary uses of
-\eval often can only be uncovered by manual analysis.
+\k{do.call} function to perform function calls. However, the unnecessary uses
+of \eval are not easy to find and often can only be uncovered by manual
+analysis. Dynamic analysis is limited due to coverage issues, and static
+analysis of R remains an open problem.
+
 
 \begin{lstlisting}[caption={Unnecessary use of \eval},label=lst:unnecessary]
  PerformanceAnalytics::chart.QQPlot <- function (d="norm",dp,...) {
@@ -1512,27 +1515,23 @@ and writes:
 \end{lstlisting}
 
 % TODO: remove - does not bring anything new or interesting
-As a last example, \k{configr::config.funs.par} constructs three expressions
-that are then fed to \eval. Semantically equivalent code would use \k{get}
-to lookup \k{fun}, and then directly execute the three expressions.
+% As a last example, \k{configr::config.funs.par} constructs three expressions
+% that are then fed to \eval. Semantically equivalent code would use \k{get}
+% to lookup \k{fun}, and then directly execute the three expressions.
 
-\begin{lstlisting}
- config.funs.par <- function(fun="",...) {
-   args.all <- as.list(match.call())
-   args.all <- args.all[names(args.all) != ""]
-   parameters <- list()
-   t1 <- sprintf("parameters <- names(as.list(args(%s)))", fun)
-   t2 <- "parameters <- parameters[parameters != '']"
-   t3 <- "parameters <- args.all[names(args.all) %in% parameters]"
-   for (j in c(t1,t2,t3))
-    eval(parse(text = j))
-   return(parameters)
- }
-\end{lstlisting}
-
-The challenge for automation is that such examples are not easy to find. Dynamic
-analysis is limited due to coverage issues, and static analysis of R remains an
-open problem.
+% \begin{lstlisting}
+%  config.funs.par <- function(fun="",...) {
+%    args.all <- as.list(match.call())
+%    args.all <- args.all[names(args.all) != ""]
+%    parameters <- list()
+%    t1 <- sprintf("parameters <- names(as.list(args(%s)))", fun)
+%    t2 <- "parameters <- parameters[parameters != '']"
+%    t3 <- "parameters <- args.all[names(args.all) %in% parameters]"
+%    for (j in c(t1,t2,t3))
+%     eval(parse(text = j))
+%    return(parameters)
+%  }
+% \end{lstlisting}
 
 We have not yet touched on alternative implementations of \eval. The tidyverse
 libraries\footnote{An opinionated collection of R packages designed for data
