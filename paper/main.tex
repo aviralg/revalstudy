@@ -735,7 +735,7 @@ and arguments that perform massive amounts of work.
 The previous section gave a quantitative view of \eval usage; we now try to
 elucidate \emph{what} it does.
 
-\subsection{The expression in \eval} \label{sec:minimized}
+\subsection{The Expression in \Eval} \label{sec:minimized}
 
 \begin{table}[!b]\small
 \hspace*{-0.2cm}
@@ -870,7 +870,7 @@ sites, there are many cases where \eval could be possibly replaced by simpler co
 such as \k{get} to lookup a name in an environment, \k{assign} to set a value to
 a name in an environment, or \k{do.call} to call a function reflectively.
 
-\subsection{The environments of \eval}\label{sec:env}
+\subsection{The Environments of \Eval}\label{sec:env}
 
 Contrary to JavaScript, in R the environment of \eval can be specifies by its
 \k{env} argument. This gives users control over what is visible to the
@@ -989,7 +989,7 @@ environments, they are used in only \packageNbPackageNamespaceEnvSites sites.
 This is probably for the best as mutating the bindings of a loaded package is
 frowned upon and R tries to discourage it.
 
-\subsection{The origins of \eval}
+\subsection{The Origins of \Eval}
 
 Where does the expression passed to \eval come from? There are various means of
 creating an expression, often these means correlate with a particular use case.
@@ -1097,7 +1097,7 @@ roughly correspond to meta-programming. Some uses could be replaced by
 macros if the R designers could be convinced to overcome their distaste for
 those.
 
-\subsection{The effects of \eval}
+\subsection{The Effects of \Eval}
 
 \Eval may perform side-effects. We care about effects that are visible after a
 call finishes, \ie variable definitions, updates, and removals. Knowing in which
