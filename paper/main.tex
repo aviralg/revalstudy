@@ -1212,8 +1212,9 @@ The R language was intended to be extensible. The combination of lazy
 evaluation, \k{substitute} and \k{eval} are some of the tools given to
 developers to this end. To understand \emph{why} developers use \eval, we
 manually inspected top 117 sites which contribute to 90\% of the calls in the
-corpus. This section gives some real-world examples, we simplify code for
-clarity.
+corpus. In this section we show 10 real-world examples form this batch. The
+goal is to illustrate the variety of use cases that employ \eval in the R
+ecosystem. The code snippets are simplified for clarity.
 
 \paragraph{Extended Interfaces}
 Sometimes it is convenient to allow users to extend the behavior of a library
@@ -1247,7 +1248,7 @@ automatically generate R bindings to C++ methods.
 \end{minipage}
 
 \paragraph{Extracting Varargs}
-\Eval is to obtain the source code of the arguments passed to a vararg
+\Eval can be used to obtain the source code of the arguments passed to a vararg
 parameter. One example is a function that iterates over the contents of the
 vararg until it finds a non-null value. \k{substitute(alist(...))} yields an
 expression that represents a call to \k{alist} but where the \k{...} are
@@ -1271,13 +1272,13 @@ any more arguments once a non-null value was found.
 
 
 \paragraph{Controlled Evaluation}
-Developer often want to control when and if expressions are evaluated. For
-example, a package that provides users with the ability to make assertions and,
+\Eval can be used to control when and if expressions are evaluated. For
+example, \k{assertthat} provides users with the ability to make assertions and,
 if they fail, produce legible error messages. The example here accepts a vararg
-with a list of expressions. It extracts the associated code in the same way as
-the extracting varags example and evaluates each of the expression sequentially
-in the caller's environment. If an expression does not hold, an error is
-generated.
+with a list of expressions. It extracts the associated code in the same way
+as the extracting varags example and evaluates each of the expression
+sequentially in the caller's environment. If an expression does not hold, an
+error is generated.
 
 \begin{minipage}{.95\textwidth}
   \medskip\underline{\c {assertthat::see\_if}:}
@@ -1292,7 +1293,7 @@ generated.
 \end{minipage}
 
 \paragraph{Shadowing}
-%%% TODO ?????????????////
+%%% TODO ?????????????//// <- left by Jan
 Many packages use \eval to implement variations of the \k{base} R functions.
 For example, the \k{igraph} package provides the \k{do_call} function shown
 below. This is a variant of the builtin \k{do.call} function with the
@@ -1309,22 +1310,6 @@ It constructs a call from a name and a list of arguments, and pass it to \eval.
 \end{lstlisting}\medskip
 \end{minipage}
 
-\paragraph{Domain-Specific Language}
-A domain-specific language leverages R's grammar but redefines it semantics in
-some suitable way. The usage example illustrates string interpolation. The
-\k{glue} function from the \k{glue} package extracts snippets of code enclosed
-between braces and evaluates them using \eval, and finally splices their
-results to construct the result.
-
-\begin{minipage}{.95\textwidth}
-\medskip
-\begin{lstlisting}
-> greeting <- "Hello"
-> glue('{greeting} World!') 
-# Hello World!
-\end{lstlisting}\medskip
-\end{minipage}
-
 \paragraph{Boilerplate Removal} 
 A variant of code generation is to let users write compact code that is
 expended via \eval and \k{match.call}. The example uses \k{match.call} to
@@ -1335,7 +1320,7 @@ evaluated in the parent environment. The use of \k{match.call}, avoids repeated
 use of \k{substitute} for extracting the argument expressions. It is extensible
 as new parameter names can be easily added. This example illustrates one of the
 most recurring usage of \eval that is used by the majority of packages that do
-statistical modeling.
+statistical modeling, \ie the \c{model.frame} shape in Table~\ref{tab:minimizedexpressions}.
 
 \begin{minipage}{.95\textwidth}
   \medskip\underline{\c{survival::survfit.formula}:}
@@ -1375,6 +1360,7 @@ function, in a private conversation.} Wrapping functions in R is somewhat
 harder than in other languages because of the default arguments, the varargs
 and is missing arguments.
 
+% TODO: update to explain why the eval is needed or remove
 \paragraph{Formula Resolution}
 Many packages use \eval to evaluate formulas. The example extracts the
 \k{"formula"} attribute attached to the \k{pdMat} object and evaluates it.
@@ -1388,7 +1374,7 @@ Many packages use \eval to evaluate formulas. The example extracts the
 
 \paragraph{Non-standard Scoping}
 
-\Eval allows functions to resolve symbols in different environments that the
+\Eval allows functions to resolve symbols in different environments than the
 current one. For example, the \k{data.table} redefines the subsetting
 operator\footnote{It defines it as a triplet \texttt{[i, j, k]}, where expression
   \texttt{j} is used to calculate a subset of rows from \texttt{i} grouped by \texttt{k}.}
@@ -1419,6 +1405,40 @@ The non-standard scoping is an important use case in R. It allows ergonomic
 functions for interactive data exploration. The ergonomics come from the
 reduced typing and syntactic noise at the cost of some ambiguity. Since R is
 used primarily interactively, this trade-off is justifiable. 
+
+\paragraph{Domain-Specific Language}
+A domain-specific language leverages R's grammar but redefines it semantics in
+some suitable way. The usage example illustrates string interpolation. The
+\k{glue} function from the \k{glue} package extracts snippets of code enclosed
+between braces and evaluates them using \eval, and finally splices their
+results to construct the result.
+
+\begin{minipage}{.95\textwidth}
+\medskip
+\begin{lstlisting}
+> greeting <- "Hello"
+> glue('{greeting} World!') 
+# Hello World!
+\end{lstlisting}\medskip
+\end{minipage}
+
+The \k{glue} package contains a variant that leverages the non-standard scoping
+as well allowing to resolve interpolation in alternative environments. For
+example, the following snippet pipes the subsetted data frame into the
+\k{glue_data} function that uses it to resolve the symbols in string
+interpolation.
+
+\begin{minipage}{.95\textwidth}
+\medskip
+\begin{lstlisting}
+> flights[carrier=="DL" & year == 2014, mean(dep_delay), by=origin] |> 
+    glue_data("{origin} has average delay of {round(V1)} min")
+# LGA has average delay of 11 min
+# EWR has average delay of 15 min
+# JFK has average delay of 12 min
+\end{lstlisting}\medskip
+\end{minipage}
+
 
 \paragraph{Obfuscation}
 A few packages use \eval to bypass the restrictions imposed by the \k{R CMD
