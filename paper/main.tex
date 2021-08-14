@@ -1138,7 +1138,7 @@ constructed environments. \emph{Object} is used to denote the environments
 attached to objects and classes in the S4 and R6 object systems. \emph{Multiple}
 denotes cases where side-effects to more than one kind originate from one site.
 The table gives the number of call sites of \eval (and the ratio) performing
-side-effect in a particular environment kind. The table also gives the number of
+side-effects in a particular environment kind. The table also gives the number of
 functions in which these sites occur (and ratio).
 
 Most sites, \SESitesInOneClass, do all their side-effects consistently in one
@@ -1209,7 +1209,7 @@ anywhere, the data suggests most effects are sane.
 The R language was intended to be extensible. The combination of lazy
 evaluation, \k{substitute} and \k{eval} are some of the tools given to
 developers to this end. To understand \emph{why} developers use \eval, we
-manually inspected top 117 sites which contribute to 90\% of the calls in the
+manually inspected the top 117 sites which contribute to 90\% of the calls in the
 corpus. We present examples from nine classes from this batch. The
 classification is not exhaustive; we only study 117 call sites from the
 \PkgEvalCallSites call sites in our corpus and many uses of \eval do not fit in
@@ -1403,7 +1403,7 @@ symbols \k{carrier}, \k{year}, \k{dep_delay} and \k{origin} are not looked up
 in the current environment, but in the \k{flights} data frame. 
 
 Non-standard scoping is an important use case of \eval in R. It enables the
-design of functions which require less typing. Since R is used primarily
+design of functions which require less writing. Since R is used primarily
 interactively, this trade-off is justifiable.
 
 \paragraph{Domain-Specific Language}
@@ -1470,7 +1470,7 @@ integral part of programming in R.
 
 The cases where \eval appears to be an overkill include simple expression shapes
 such as \k{X}, \k{V}, \k{\$}, \k{<-}, and \k{FUN}. Variable lookup in a remote
-environment can be performed by the builtin \k{get} function, a similar case can
+environment can be performed by the builtin \k{get} function. A similar case can
 be made for assignment and the \k{assign} function. There is a dedicated
 \k{do.call} function to perform function calls. However, the unnecessary uses of
 \eval are not easy to find and often can only be uncovered by manual analysis.
