@@ -312,7 +312,7 @@ for variable resolution), or an integer \k{n} (in which case it would use the
 made.
 %
 Environments nest, each has a parent. A new environment created with \k{new.env}
-has the current environment as parent. Parent chains canf be traversed with
+has the current environment as parent. Parent chains can be traversed with
 \k{parent.env}, until \k{emptyenv} is reached. The top-level environment is
 \k{.GlobalEnv}, its parents are the packages that have been loaded. Environments
 are used as hash maps as they have reference semantics and a built-in string
@@ -353,7 +353,7 @@ behaviors. Furthermore, JavaScript usage in 2011 is likely different from today,
 \eg Node.js was not covered. More details about dynamic analysis of JavaScript
 can be found in~\cite{liang}.
 
-\citet{wang} analyzed use of dynamic features in 18 Python programs to find if
+\citet{wang} analyzed the use of dynamic features in 18 Python programs to find if
 they affect file change-proneness. Files with dynamic features are significantly
 more likely to be the subject of changes than other files. Chen et al. looked
 at the correlation between code changes and dynamic features, including \eval,
@@ -429,7 +429,7 @@ end-user scripts from \emph{Kaggle}:
   packages and extract \CranRunnableScripts scripts with \CranRunnableCode
   lines of code (\CranRunnableCodeExamplesRnd in examples,
   \CranRunnableCodeVignettesRnd in vignettes and \CranRunnableCodeTestsRnd in
-  tests). CRAN packages contain 20 years of contribution from thousands from
+  tests). CRAN packages contain 20 years of contribution from
   thousands of authors, often experienced R developers.
 
 \item \emph{Kaggle.} Kaggle ({\small \url{kaggle.com}}) is an online platform
@@ -443,7 +443,7 @@ end-user scripts from \emph{Kaggle}:
 
 
 \paragraph{Discussion.} When we started this project, our goal was to contrast the
-usage of \eval by package developers and end-users, but the Kaggle dataset have
+usage of \eval by package developers and end-users, but the Kaggle dataset has
 so few calls to \eval that there is little that can be said about those. The
 remainder of the paper focuses on CRAN with a few observations about the other
 sources when relevant.
@@ -451,7 +451,7 @@ sources when relevant.
 
 \subsection{Pipeline}
 
-We implemented an automated pipeline to acquires packages, extracts scripts,
+We implemented an automated pipeline that acquires packages, extracts scripts,
 executes them, traces their behavior, and summarizes observations.
 Figure~\ref{fig:pipeline} shows the main steps along with their running time,
 data size, and number of elements manipulated. The pipeline steps are:
@@ -550,7 +550,7 @@ various runtime events~\cite{oopsla19b}. The tracer registers callbacks to all
 variants of \eval and a few additional functions to locate the origin of \eval
 arguments. It captures dynamic code loading, as well as variable definition and
 assignment, allowing us to record side effects that happen in environments
-while evaluating code in \eval. A challenge was that lack of source code
+while evaluating code in \eval. A challenge was the lack of source code
 references for expression that are not within block surrounded by braces. This
 is unfortunately not easily fixed. We extend our dynamic analysis tool to
 attach synthetic source code references to all \eval call sites, but the
@@ -594,8 +594,8 @@ originating from \PkgHitEvalCallSites sites. The runs exercised
 coverage metric which is \PkgCodeCoverage. The reasons some sites are not
 exercised can be chalked down to incomplete tests and analysis failures
 (\PkgFailedProgramsRatio of the runs crashed or timed out).
-Fig.~\ref{fig:traced-eval-callsites} plots exercised site with respect to all
-sites for each program; as can be seen coverage is unequal.
+Fig.~\ref{fig:traced-eval-callsites} plots exercised sites with respect to all
+sites for each program; as can be seen, coverage is unequal.
 Table~\ref{tab:freq} summarizes the frequency of calls, call counts on the left and
 number of packages on the right. There are \packageFewcalls packages with fewer
 than 100 calls, and \packageManycalls packages with more than 1,000 calls.
@@ -639,7 +639,7 @@ over half of our observations.
   \label{fig:traced-eval-callsites}
 \end{figure}
 
-Table~\ref{tab:variantseval} summarizes use of variants, the first row has sites
+Table~\ref{tab:variantseval} summarizes the use of variants, the first row has sites
 (\emph{static}), the second has sites encountered during analysis
 (\emph{exercised}) and the last gives calls (\emph{invocations}). Most sites and
 calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
@@ -657,7 +657,7 @@ calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
   \caption{Normalized calls} \label{tab:cn}
 \end{wraptable}
 
-Table~\ref{tab:cn} shows average count of calls from a given site and given run and
+Table~\ref{tab:cn} shows the average count of calls from a given site and given run and
 how many sites fall in that range. For instance, \packageRunbinh sites are
 called over 2,000 times per run. Larger call counts suggest the presence of
 loops or recursive functions, but given the data this seems to be the exception;
@@ -720,10 +720,10 @@ shows the distribution of work-intensive \evals which go all the way to
 least one \eval call site. However, most packages use \eval modestly. Packages
 that rely heavily on \eval are mostly ones that provide statistical modeling and
 simulation functions. At runtime, over a third of our scripts triggered calls to
-\eval, note that all scripts performed \eval originating from base package but
+\eval. Note that all scripts performed \evals originating from base package but
 these are disregarded here. Half of the calls come from a single site, for the
-rest, most packages have low call frequency. The data is consistent with usage
-of \eval for configuration and meta-programming and not in performance sensitive
+rest, most packages have low call frequency. The data is consistent with the usage
+of \eval for configuration and meta-programming, not in performance sensitive
 contexts such as loops. While most arguments to \eval are small, often just a
 variable name, and do little work, we have also observed large \eval arguments
 and arguments that perform massive amounts of work.
@@ -757,7 +757,7 @@ elucidate \emph{what} it does.
 
 
 The expressions passed to \eval vary widely. We categorize expressions using a
-minimization function which abstract some of the incidental details of
+minimization function which abstracts some of the incidental details of
 expressions and return a ``shape'' that can be used to group similar \evals. The
 function $min(e)$ which for a given expression $e$ returns a normal form. Normal
 forms use \k{V} to stand in for values occurring in expression, \k{X} stands in
