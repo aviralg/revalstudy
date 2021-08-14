@@ -771,12 +771,12 @@ not an ``interesting'' operation, and that \k{X} stands in for any number of
 variable lookups. Function absorption simplifies nested functions to keep an
 abstraction of the nesting $min(\c{g(f(x),h(z))})=\c{F(F(X))}$. There are other
 simplifications, the full list can be found in our artifact. It is worth
-mentioning that these simplifications are heuristics, in R \k{1+1} is not
+mentioning that these simplifications are heuristics; in R, \k{1+1} is not
 necessary \k{2}. The addition operator can be redefined, but it typically isn't
 or at least not in a way that would invalidate arithmetic.
 
 Table~\ref{tab:minimizedexpressions} gives the 10 most frequent shapes with the
-number and ratio of sites that received arguments of that shape. Operations is
+number and ratio of sites that received arguments of that shape. Operations (ops) is
 the median count of instructions performed by the interpreter when evaluating
 argument of the given shape. Envir is the ratio of sites that evaluate in a
 function environment. The last column has a sample expression that normalizes to
@@ -801,14 +801,14 @@ the behavior of \eval.
 subsumes \k{V} and built-in arithmetic operations, so a mixture of arithmetics
 and variables normalize to \k{X}. A lookup is one step of execution, if a promise
 is returned an arbitrary number of additional steps may be needed; the median is
-\packageMinimizedmedianoperationsaRnd, suggesting that most variable read do
+\packageMinimizedmedianoperationsaRnd, suggesting that most variable reads do
 little work. Variables are often evaluated in environments that have been
 constructed programmatically, \packageMinimizedpercentparentframesa of
 expressions are evaluated in a function environment.
 \\
 \medskip\EE{$min(e)=\c{\$}$}\\[-2mm]\small This shape extends \k{X} to include lookup
 with the dollar operator, \eg~\k{x\$f}, and vector indexing, \eg~\k{x[42]} and
-\k{x[[24]]}. This takes a few more step of evaluation on average, and is
+\k{x[[24]]}. This takes a few more steps of evaluation on average, and is
 typically used in a function environment.
 \\
 \medskip\EE{$min(e)=$~\k{<-}}\\[-2mm]\small This includes both direct assignment {\tt
@@ -819,7 +819,7 @@ where the assign expression is assembled using parse or substitute, often in
 a loop.
 \\
 \medskip\EE{$min(e)=\c{F()}$}\\[-2mm]\small Function calls without variable lookups or
-assignment. A variable is allowed the function position, looking up
+assignment. A variable is allowed in the function position, looking up
 functions does not trigger computation unless the function's name
 is bound to a promise. This shape typically does not perform much work.
 \\
@@ -859,7 +859,7 @@ would be encouraging if one could, given a small training set, predict the shape
 of \evals to come. In our corpus, only a few sites are highly polymorphic with
 more than eight shapes. An example of those is the pipe operator of the
 \k{magrittr} package which is used to compose functions, \eg instead of
-\k{f(g(h(x),y),z)} one can write \k{h(x) \%>\% g(y) \%>\% f(z)}. As there many
+\k{f(g(h(x),y),z)} one can write \k{h(x) \%>\% g(y) \%>\% f(z)}. As there are many
 different patterns of use, there are also many different shapes. In comparison
 with R, JavaScript's \eval usage was more straightforward and more predictable
 as reported by \citet{oopsla12b}, with 98\% of sites with only one shape. On the
@@ -872,7 +872,7 @@ a name in an environment, or \k{do.call} to call a function reflectively.
 
 \subsection{The Environments of \Eval}\label{sec:env}
 
-Contrary to JavaScript, in R the environment of \eval can be specifies by its
+Contrary to JavaScript, in R the environment of \eval can be specified by its
 \k{env} argument. This gives users control over what is visible to the
 computation started by \eval and the potential reach of its side-effects. We
 distinguish the following kinds of environments:
@@ -970,7 +970,7 @@ behavior of \eval within its enclosing function is to read and write variables,
 mostly read, and very rarely, delete variables. There are also some cases where
 new variables are injected in a function. Usually, this in the direct caller,
 but it can sometimes take effect several frames up the call stack. There is
-something brittle about code relying on the position of a caller, a lot of
+something brittle about code relying on the position of a caller: a lot of
 refactoring may break code that does that.
 
 One bit of information that we lack is how the environment was obtained. Our
@@ -979,8 +979,8 @@ expectation is that the expression was extracted from a promise using
 from the same promise. We believe the case where \eval is provided with the results
 of programmatically selecting some call stack to be less frequent.
 
-Synthetic environments are relatively frequent. Common uses-case include
-evaluation of an expression in a sandbox, or using a data structure as
+Synthetic environments are relatively frequent. Common uses-cases include
+the evaluation of an expression in a sandbox, or using a data structure as
 environment. For example one could evaluate a method of an object and use an
 environment to hold the object's fields.
 
@@ -994,12 +994,12 @@ frowned upon and R tries to discourage it.
 Where does the expression passed to \eval come from? There are various means of
 creating an expression, often these means correlate with a particular use case.
 Our analysis records the values returned by some functions of interest as well
-as their arguments. We build a direct acyclic graph that track the origin
+as their arguments. We build a direct acyclic graph that tracks the origin
 of the values that are given to \eval. Fig~\ref{fig:provgraph} shows an example
 of the origin graph for the expression \k{e}.
 The origin of \k{e} includes both \k{parse} and \k{quote}, the starting nodes. We pick one origin by traversing the graph from the terminal leaf, \ie from the \eval node, following the left-hand side
 member of assignments until reaching a starting node. It represents the origin that is
-further modified to yield the expression passed to \eval. In our example, the
+further modified to yield the expression passed to \eval. In our example, that
 origin is \k{parse}.
 
 \begin{figure}[H]
@@ -1061,14 +1061,14 @@ External & \packageNbExternalSites & \packageExternalSitesPercent \\\bottomrule
 \caption{Origins}\label{tab:provenance}\vspace{-1cm}
 \end{wraptable}
 
-To have a high-level views of provenance we classify functions into the
+To have a high-level views of provenance, we classify functions into the
 following five categories:
 
 \begin{itemize}[---]
 \item {\it Reflection:} use of \k{match.call} to reflectively capture the
   expression that invoked this function. Function arguments are promises, and
   \k{substitute} is used to retrieve their source. 
-\item {\it String:} create from strings by invoking \k{parse},
+\item {\it String:} created from strings by invoking \k{parse},
   \k{str2lang}, or \k{str2expression}.
 \item {\it Constructed:} invoked \k{quote} or \k{expression}, or by building with
   \k{call} or \k{as.call}.
