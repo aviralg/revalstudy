@@ -425,7 +425,7 @@ end-user scripts from \emph{Kaggle}:
   implementation and do not include them in our analysis.
 
 \item \emph{CRAN.} Packages hosted on the Comprehensive R Archive Network
-  ({\small \url{cran.r-project.org}}, aka CRAN) have three sources of runnable:
+  ({\small \url{cran.r-project.org}}, aka CRAN) have three sources of runnable code:
   unit \emph{tests} for individual functions, code \emph{examples} embedded in
   the documentation, and use-cases called \emph{vignettes}. All runnable
   snippets can be extracted into independent files. We download \CranPackages
@@ -439,7 +439,7 @@ end-user scripts from \emph{Kaggle}:
   that allows users to submit and compete to solve problems. We download
   \KaggleUnique unique scripts and notebooks with their input files
   (\KaggleDuplicates duplicates were removed using SHA-1 hashes); 665K lines of
-  R code making only \KaggleWithEvals calls \eval. Authors of these scripts
+  R code making only \KaggleWithEvals calls \eval. The authors of these scripts
   have highly variable levels of expertise.
 
 \end{itemize}
@@ -457,7 +457,7 @@ sources when relevant.
 We implemented an automated pipeline that acquires packages, extracts scripts,
 executes them, traces their behavior, and summarizes observations.
 Figure~\ref{fig:pipeline} shows the main steps along with their running time,
-data size, and number of elements manipulated. The pipeline steps are:
+data size, and the number of elements manipulated. The pipeline steps are:
 
  \begin{figure}[ht!]
    \centering
@@ -530,15 +530,15 @@ data size, and number of elements manipulated. The pipeline steps are:
 \item \emph{Extract.} The \genthat tool extracts all runnable code snippets and
   turns each of these into a self-standing program~\cite{issta18}, \k{knitr}
   extracts code from notebooks. Each extracted script is instrumented with calls
-  to our dynamic analyzer in a way that avoid recording calls to \eval
+  to our dynamic analyzer in a way that avoids recording calls to \eval
   originating from our execution harness.
-\item \emph{Trace.} Script run with a modified R interpreter to capture calls
-  to \eval in CRAN packages. Each script is run in its own process with the GNU
-  R compiler turned off to avoid recording its execution.
+\item \emph{Trace.} Scripts are run with a modified R interpreter to capture
+  calls to \eval in CRAN packages. Each script is run in its own process with
+  the GNU R compiler turned off to avoid recording its execution.
 \item \emph{Analyze.} Analysis outputs are merged, cleaned, and summarized.
-  RMarkdown notebooks process the summarized data to generate all graphs (PDF
-  from \k{ggplot2}) and numbers (exported as \LaTeX macros) appearing in the
-  paper.
+  RMarkdown~\cite{rmarkdown} notebooks process the summarized data to generate all graphs (using
+  \k{ggplot2}~\cite{ggplot}) and numbers (exported as \LaTeX\xspace macros)
+  appearing in the paper.
 \end{compactenum}
 
 \medskip The pipeline runs in parallel~\cite{GNUparallel} orchestrated by a
@@ -552,25 +552,25 @@ The tracer that performs dynamic analysis of R scripts is built on top of
 various runtime events~\cite{oopsla19b}. The tracer registers callbacks to all
 variants of \eval and a few additional functions to locate the origin of \eval
 arguments. It captures dynamic code loading, as well as variable definition and
-assignment, allowing us to record side effects that happen in environments
-while evaluating code in \eval. A challenge was the lack of source code
-references for expression that are not within block surrounded by braces. This
-is unfortunately not easily fixed. We extend our dynamic analysis tool to
-attach synthetic source code references to all \eval call sites, but the
-approach fails in some edge cases. For performance reasons, the tracer is an R
-package written in C++ (3.2K LOC) and R (1.3K LOC). While in theory the
-implementation should be straightforward, not so in practice. Lazy evaluation
-requires delaying the processing of arguments until (and if) they are forced.
-Accounting for side-effects performed in an \eval is complicated by the fact
-that R is implemented in a mixture of R and C, and that the language
-implementation can (and does) call \eval. Lastly, large code bases exercise
-many edge cases of the highly underspecified R behavior.
+assignment, allowing us to record side effects that happen in environments while
+evaluating code in \eval. A challenge was the lack of source code references for
+expressions that are not within a block surrounded by braces. This is
+unfortunately not easily fixed. We extend our dynamic analysis tool to attach
+synthetic source code references to all \eval call sites, but the approach fails
+in some edge cases. For performance reasons, the tracer is an R package written
+in C++ (3.2K LOC) and R (1.3K LOC). While in theory, the implementation should
+be straightforward, it is not so in practice. Lazy evaluation requires delaying
+the processing of arguments until (and if) they are forced. Accounting for
+side-effects performed in an \eval is complicated by the fact that R is
+implemented in a mixture of R and C, and that the language implementation can
+(and does) call \eval. Lastly, large codebases exercise many edge cases of the
+highly underspecified R behavior.
 
 \paragraph{Limitations.} Even with the extension described above, there are
 \PkgUndefinedRnd \eval calls without source information (\PkgUndefinedRatio of
-all \eval calls). This happen when \eval is an argument to a higher-order
-function or when it is called from native code. Another limitation is that we
-do not record calls to the native \eval. Neither of these limitations should
+all \eval calls). This happens when \eval is an argument to a higher-order
+function or when it is called from native code. Another limitation is that we do
+not record calls to the native \eval. Neither of these limitations should
 invalidate our conclusions.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
