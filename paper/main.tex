@@ -920,7 +920,7 @@ frameworks (\eg \k{testthat}, \k{testit}), code benchmarking (\eg
 
 \begin{tabular}{@{}p{.97\linewidth}}
 \medskip\EE{$min(e)=\c{model.frame}$}\\[-2mm]\small The \k{model.frame} function
-returns a dataframe resulting from fitting the model described in a formula.
+returns a data frame resulting from fitting the model described in a formula.
 This shape subsumes \k{F(F(X))}, \k{FUN}, and assignments. It is the single most
 popular function invoked from \eval. Each call does a median of 2K instructions.
 \end{tabular}
@@ -1479,9 +1479,9 @@ through \eval.
 
 
 In R, \eval is used chiefly for meta-programming and accessing remote
-environments. Unlike JavaScript which had a small set of well-defined patterns
-that could be rewritten without \eval, our results suggest that \eval is an
-integral part of programming in R.
+environments. Unlike JavaScript, which according to ~\citet{ecoop11} had a small
+set of well-defined patterns that could be rewritten without \eval, our results
+suggest that \eval is an integral part of programming in R.
 
 The cases where \eval appears to be an overkill include simple expression shapes
 such as \k{X}, \k{V}, \k{\$}, \k{<-}, and \k{FUN}. Variable lookup in a remote
@@ -1498,7 +1498,7 @@ remains an open problem.
    q.f <- eval(parse(text=paste0("q",d)))
    z <- NULL
    eval(parse(text=paste0("z<-q.f(",dp,",...)")))
-\end{lstlisting}
+\end{lstlisting}\medskip
 
 For the example in Listing~\ref{lst:unnecessary}, the function uses \eval to
 lookup a target function name from a constructed string. Then it constructs a
@@ -1548,14 +1548,15 @@ This can be replaced by symbolic field reads and writes:
 
 We have not yet touched on alternative implementations of \eval. The tidyverse
 libraries\footnote{An opinionated collection of R packages designed for data
-science. It consists of some of the most popular packages.} include their own
-implementation calls \k{rlang::eval\_tidy}~\cite{tidyverse}. This departs from
-\eval in two ways. First, it supports evaluation of quosures, custom objects
-used for metaprogramming that bundle expressions with an environment.
-\k{eval\_tidy} accepts a data mask argument, a set of bindings such as a
-dataframe or list, which takes precedence over the environment. Effects such as
-assignments happen in the data mask. Expressions such as \k{return()} do not
-work since the data mask does not correspond to a frame on the call stack.
+  science. It consists of some of the most popular packages.} include their own
+implementation of \eval called \k{rlang::eval\_tidy}~\cite{tidyverse}, which
+departs from \eval in two ways. First, it supports the evaluation of quosures,
+custom objects used for metaprogramming that bundle expressions with an
+environment. The \k{eval\_tidy} function accepts a data mask argument, a set of
+bindings such as a data frame or list, which takes precedence over the
+environment. Effects such as assignments happen in the data mask, and
+expressions such as \k{return()} do not work since the data mask does not
+correspond to a frame on the call stack.
 
 \section{Conclusion}
 
