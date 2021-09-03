@@ -1559,25 +1559,25 @@ work since the data mask does not correspond to a frame on the call stack.
 
 \section{Conclusion}
 
-The \eval functions are used widely and in varied ways in R. The function is an
+The \eval function is used widely, and in varied ways, in R. The function is an
 essential tool for language implementers. Our analysis observed that the base
-libraries heavily depend on \eval and any R program will end up calling it
+libraries heavily depend on \eval, and any R program will end up calling it
 through the core of the language. Independently developed libraries often use
 \eval in subtle ways, mostly to perform macro-programming tasks. Our review of
-code written by less experienced users suggest that \eval is exceedingly rarely
+code written by less experienced users suggests that \eval is exceedingly rarely
 used. So, it is fair to conclude that a majority of R programmers never have to
 write a call to \eval, but that the code they write would not run without it.
 
 \Eval is thus a challenge for automated program understanding. Program analysis
 and transformation tools or compilers must assume the worst when faced with code
 that calls this function. We have observed all sorts of side-effects with
-various degree of visibility.
+various degrees of visibility.
 
 While our results are not encouraging in general, we have observed many cases
-where \eval is used in a disciplined and predictable ways. While in the general
+where \eval is used in disciplined and predictable ways. While in the general
 case \eval is hell, there are many cases where it is just a function. It does
-not appear that a general purpose replacement for \eval is possible, in future
-work we hope to focus on special cases and propose tools that target particular
+not appear that a general-purpose replacement for \eval is possible; in future
+work, we hope to focus on special cases and propose tools that target particular
 subsets of call sites with some common properties.
 
 
