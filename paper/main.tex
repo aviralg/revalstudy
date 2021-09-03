@@ -1,7 +1,24 @@
-\documentclass[review,screen,acmsmall]{acmart}%\settopmatter{printfolios=false,printccs=false,printacmref=false}
-\setcopyright{none}
-\renewcommand\footnotetextcopyrightpermission[1]{}
-\pagestyle{plain}
+\documentclass[acmsmall, screen]{acmart}
+\setlength{\pdfpagewidth}{8.5in}
+\setlength{\pdfpageheight}{11in}
+
+
+%%% The following is specific to OOPSLA '20 and the paper
+%%% 'World Age in Julia: Optimizing Method Dispatch in the Presence of Eval'
+%%% by Julia Belyakova, Benjamin Chung, Jack Gelinas, Jameson Nash, Ross Tate, and Jan Vitek.
+%%%
+\setcopyright{rightsretained}
+\acmPrice{}
+\acmDOI{10.1145/3428275}
+\acmYear{2020}
+\copyrightyear{2020}
+\acmSubmissionID{oopsla20main-p384-p}
+\acmJournal{PACMPL}
+\acmVolume{4}
+\acmNumber{OOPSLA}
+\acmArticle{207}
+\acmMonth{11}
+
 
 \bibliographystyle{ACM-Reference-Format}
 \citestyle{acmauthoryear}   %% For author/year citations
@@ -55,6 +72,38 @@
 \title{What We Eval in the Shadows}
 \subtitle{A Large-scale Study of Eval in R programs}
 
+
+%%% TODO CHANGE
+\keywords{eval, dynamic languages}
+\begin{CCSXML}
+	<ccs2012>
+	<concept>
+	<concept_id>10011007.10011006.10011008.10011024</concept_id>
+	<concept_desc>Software and its engineering~Language features</concept_desc>
+	<concept_significance>500</concept_significance>
+	</concept>
+	<concept>
+	<concept_id>10011007.10011006.10011008</concept_id>
+	<concept_desc>Software and its engineering~General programming languages</concept_desc>
+	<concept_significance>300</concept_significance>
+	</concept>
+	<concept>
+	<concept_id>10011007.10011006.10011041.10011044</concept_id>
+	<concept_desc>Software and its engineering~Just-in-time compilers</concept_desc>
+	<concept_significance>300</concept_significance>
+	</concept>
+	<concept>
+	<concept_id>10011007.10011006.10011008.10011009.10011021</concept_id>
+	<concept_desc>Software and its engineering~Multiparadigm languages</concept_desc>
+	<concept_significance>100</concept_significance>
+	</concept>
+	</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Software and its engineering~Language features}
+\ccsdesc[300]{Software and its engineering~General programming languages}
+
+
 \author{Aviral Goel}\affiliation{\institution{Northeastern
     University}\country{USA}}
 \author{Pierre Donat-Bouillud}\affiliation{\institution{Czech Technical University in Prague}\country{Czech Republic}}
@@ -89,9 +138,9 @@ Most dynamic languages provide their users with a facility to transform
 unstructured text into executable code and evaluate that code. We refer to this
 reflective facility as \eval bowing to its origins in LISP, all the way back in
 1956. \Eval has been much maligned over the years. In computing lore, it is as
-close to a boogeyman as it gets. Yet, for McCarthy, \eval was simply the way to
+close to a boogeyman as it gets. Yet, for \citet{lisp}, \eval was simply the way to
 write down the definition of LISP; he was surprised that someone coded it up and
-offered it to end-users~\cite{lisp}. Since then, reflective facilities have been
+offered it to end-users. Since then, reflective facilities have been
 used to parameterize programs over code patterns that can be provided after the
 program is written. The presence of such a feature in a language is a hallmark
 of dynamism; it is a form of delayed binding as the behavior of any particular
@@ -102,11 +151,11 @@ call site is evaluated.
 most attempts to reason about or apply meaning-preserving transformations to the
 code using them. In practice, \eval causes static analysis techniques to lose so
 much precision as to become pointless. For compilers, anything but the most
-trivial, local optimizations are unsound after the use of \eval. Furthermore, the
-addition of arbitrary code --- code that could have been obtained from a network
-connection --- as a program is running is a security vulnerability waiting to
-happen. To illustrate these challenges, consider the interaction of a static
-analysis tool with a dynamic language. A program analyzer computes an
+trivial, local optimizations are unsound after the use of \eval. Furthermore,
+the addition of arbitrary code --- code that could have been obtained from a
+network connection --- as a program is running is a security vulnerability
+waiting to happen. To illustrate these challenges, consider the interaction of a
+static analysis tool with a dynamic language. A program analyzer computes an
 over-approximation of the set of possible behaviors exhibited by the program
 under study, a reflective facility must be represented by all behaviors that can
 be expressed in the target language. \ie any legal sequence of instructions can
@@ -117,11 +166,11 @@ information about the program state and meaning of identifiers. This loss of
 precision can sometimes be mitigated by analyzing the string
 argument~\cite{moller03}, but if the string comes from outside the program, not
 much can be done. A frustrated group of researchers argued giving up on
-soundness and, instead, under-approximating dynamic features
-(soundiness)~\cite{soundy}. In their words, ``a practical analysis, may pretend
-that \eval does nothing unless it can precisely resolve its string argument at
-compile time.'' Alas, assuming that \eval does not have side-effects or that
-side-effects will not affect results is unduly optimistic.
+soundness and, instead, under-approximating dynamic features~\cite{soundy}. In
+their words, ``a practical analysis, may pretend that \eval does nothing unless
+it can precisely resolve its string argument at compile time.'' Alas, assuming
+that \eval does not have side-effects or that side-effects will not affect
+results is unduly optimistic.
 
 \paragraph{Is Past Prologue?} Previous work investigated
 \eval in web programming, specifically JavaScript web pages~\cite{pldi10a}. In
@@ -135,7 +184,7 @@ other application domains and to other languages?
 
 \paragraph{The Here and Now.} In this study, we investigate the usage of \eval
 in programs written in the R language. R is a language designed by statisticians
-for applications in data science~\cite{r,R96}. What makes looking at R after
+for applications in data science~\cite{r}. What makes looking at R after
 JavaScript interesting is that, while both languages are dynamic, they are quite
 different. While one can program in an object-oriented style in R like in
 JavaScript, R is mostly a lazy functional language. JavaScript was designed to
@@ -145,16 +194,10 @@ programmers, while R is used for scientific computing by data scientists and
 domain experts with, often, limited programming experience. One can distinguish
 between library implementers who have programming experience and a working
 knowledge of R, and end-users who are typically not expert programmers with a
-cursory knowledge of the language.\footnote{We surveyed end-users and did not
-  find a single one aware that R is lazy.} Our goal is to highlight the
+cursory knowledge of the language. Our goal is to highlight the
 differences in usage between JavaScript and R and explain them in terms of
 language features, application domain, and programmer experience. Hopefully,
-some of our observations generalize to other languages. Our data and code are
-open-source and publicly available at:
-
-\begin{center}
-  \url{https://doi.org/10.5281/zenodo.5415230}
-\end{center}
+some of our observations generalize to other languages.
 
 \paragraph{The What and How.} One benefit of
 R is that every package in the CRAN repository comes with examples of typical
@@ -180,6 +223,16 @@ side-effects, and reaches many environments. By large, the motivations for
 \eval relate to various forms of language extensions and meta-programming. \Eval
 is used where other languages would provide macros. But, the expressive power of
 \eval is higher as it can reach arbitrarily far back in the call stack.
+
+\medskip
+
+Our data and code are
+open-source and publicly available at:
+
+\begin{center}
+  \url{https://doi.org/10.5281/zenodo.5415230}
+\end{center}
+
 
 
 \section{Background and Previous work}
@@ -264,6 +317,31 @@ ensure that any method defined within an \eval only become visible at
 well-defined points and thus that optimized code does not have to be
 invalidated~\cite{oopsla20a}.
 
+\begin{figure}[!t]
+\begin{minipage}{.49\textwidth}
+\begin{lstlisting}[caption={Examples of calls producing expression \k{a+b}},label=lst:exprs]
+  parse(text="a+b")
+  quote(a+b)
+  call("+", quote(a), quote(b))
+
+  # reflect promise
+  f <- function(x) substitute(x)
+  f(a+b)
+  \end{lstlisting}
+\end{minipage}
+\begin{minipage}{.49\textwidth}
+  \begin{lstlisting}[caption={Example of a call reflection},label=lst:match.call]
+  f <- function(x, y) {
+    mc <- match.call() # reflect curr. call
+    mc[[1]] <- as.name("g")
+    mc[["x"]] <- 3
+    mc
+  }
+  f(1,2) # returns an expr g(x=3,y=2)
+  \end{lstlisting}
+\end{minipage}
+\end{figure}
+
 \subsection{Eval in R}\label{sec:eval-in-r}
 
 The \eval function in R takes three parameters: an expression to evaluate
@@ -288,30 +366,6 @@ call to \k{substitute(x)} extracts the unevaluated expression from the promise
 \k{x}. The call to \k{match.call()} returns an expression representing the
 current call which can then be further modified.
 
-\begin{figure}[htb]
-\begin{minipage}{.49\textwidth}
-\begin{lstlisting}[caption={Examples of calls producing expression \k{a+b}},label=lst:exprs]
-  parse(text="a+b")
-  quote(a+b)
-  call("+", quote(a), quote(b))
-
-  # reflect promise
-  f <- function(x) substitute(x)
-  f(a+b)
-  \end{lstlisting}
-\end{minipage}
-\begin{minipage}{.49\textwidth}
-  \begin{lstlisting}[caption={Example of a call reflection},label=lst:match.call]
-  f <- function(x, y) {
-    mc <- match.call() # reflect curr. call
-    mc[[1]] <- as.name("g")
-    mc[["x"]] <- 3
-    mc
-  }
-  f(1,2) # returns an expr g(x=3,y=2)
-  \end{lstlisting}
-\end{minipage}
-\end{figure}
 
 R is permissive in terms of what is considered an environment. Besides
 environments, it accepts lists, data frames (using element names or column names
@@ -594,6 +648,11 @@ than 3 sites, and with the exception \MaxEvalCallSitesPackage which has
 histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
 \CranFunsWithEvalRatio of all functions use \eval.
 
+\begin{figure}[!h]
+   \includegraphics[width=7cm]{pkgs-eval-callsites-hist.pdf}
+  \caption{ \eval call sites}\label{fig:pkgs-eval-callsites-hist}
+\end{figure}
+
 Our pipeline runs \CranRunnableScripts scripts extracted from \CranPackages
 packages. Any run that does not call \eval is discarded, leaving us with
 \packageNbruns runs. In these runs, \packageAllcalls \eval calls were recorded
@@ -610,16 +669,13 @@ than 100 calls, and \packageManycalls packages with more than 1,000 calls.
 \packageMaxcallspack calls \eval \packageMaxcalls times and thus accounts for
 over half of our observations.
 
-\begin{figure}[H]
-  \includegraphics[width=7cm]{pkgs-eval-callsites-hist.pdf}
-  \caption{ \eval call sites}\label{fig:pkgs-eval-callsites-hist}
-\end{figure}
-\begin{table}[H]
+
+\begin{table}[!h]
 \centering
   \small
-\begin{tabular}{@{}l@{\hspace{1.5cm}}l@{}}
+  \begin{tabular}{@{}l@{\hspace{1.5cm}}l@{}}
 \begin{minipage} {5cm}\small
-  \begin{tabular}{r@{\,}r@{\,}l@{}r|r@{\,}r@{\,}l@{}r} \toprule
+  \begin{tabular}{r@{\,}r@{\,}l@{}r|r@{\,}r@{\,}l@{}r@{}} \toprule
     \multicolumn{3}{c}{\bf \small\#calls} &\bf \small \#pck
 &     \multicolumn{3}{c}{\bf \small\#calls} &\bf \small\#pck \\\midrule
 \tt 1 &--& \tt 10      & \packageBina  & \tt 10K &--&\tt 100K  & \packageBine\\
@@ -631,7 +687,7 @@ over half of our observations.
 \end{minipage}
 &
 \begin{minipage}{7cm}\small
-\begin{tabular}{@{\,}r|rrrr}\toprule
+\begin{tabular}{@{}r|r@{~}r@{}r@{~}r@{}}\toprule
   &\eval & \k{evalq} & \k{eval} & \k{local}\\[-1.5mm]
            & & & \k{.parent} &\\\midrule
 \small Static sites &\packageStaticeval&\packageStaticevalq&\packageStaticevalparent&\packageStaticlocal \\
@@ -647,13 +703,14 @@ over half of our observations.
   \label{fig:traced-eval-callsites}
 \end{figure}
 
+
 Table~\ref{tab:variantseval} summarizes the use of variants, the first row has sites
 (\emph{static}), the second has sites encountered during analysis
 (\emph{exercised}) and the last gives calls (\emph{invocations}). Most sites and
 calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
 \k{local} are barely used at all.
 
-\begin{wraptable}{r}{5cm}  \small  \vspace*{-2mm}\centering
+\begin{table}[!h]  \small  \centering
   \begin{tabular}{r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r} \toprule
     \multicolumn{3}{c}{\bf \#calls} & \bf \#sites &
      \multicolumn{3}{c}{\bf \#calls} & \bf \#sites \\\midrule
@@ -663,7 +720,7 @@ calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
     \tt 251 &--& \tt 500 & \packageRunbind & \tt 2001 &--& \tt 3000 & \packageRunbinh\\\bottomrule
   \end{tabular}
   \caption{Normalized calls} \label{tab:cn}
-\end{wraptable}
+\end{table}
 
 Table~\ref{tab:cn} shows the average count of calls from a given site and given run and
 how many sites fall in that range. For instance, \packageRunbinh sites are
@@ -683,12 +740,12 @@ accounts for \packageGgplotsymbolpercent of symbols and comes from one site in
   object-oriented system used by \k{ggplot2}.}
 
 
-\begin{wrapfigure}{r}{6.2cm}
+\begin{figure}[!h]
 \begin{tabular}{c}
-{\hspace{-25mm}\includegraphics[width=0.8\textwidth]{package_size_loaded_distribution}}
+{\includegraphics[width=0.8\textwidth]{package_size_loaded_distribution}}
 \end{tabular}
 \caption{Loaded code} \label{fig:sizedistribution}
-\end{wrapfigure}
+\end{figure}
 
 To estimate how much executable code is injected through \eval, we measure the
 size of the arguments in terms of the number of nodes. For example,
@@ -803,7 +860,9 @@ the behavior of \eval.
   another, more interesting, path that requires evaluation.
   This shape usually run in few interpreter steps.
   The environment in which they evaluate is mostly irrelevant.
-\\
+\end{tabular}
+
+\begin{tabular}{@{}p{.97\linewidth}}
 \medskip\EE{$min(e)=\c{X}$}\\[-2mm]\small Variable lookups are the most common shape,
 \packageNbSymbolVarSitePercent are simple variable names, e.g. \k{x}. The shapes
 subsumes \k{V} and built-in arithmetic operations, so a mixture of arithmetics
@@ -813,7 +872,9 @@ is returned an arbitrary number of additional steps may be needed; the median is
 little work. Variables are often evaluated in environments that have been
 constructed programmatically, \packageMinimizedpercentparentframesa of
 expressions are evaluated in a function environment.
-\\
+\end{tabular}
+
+\begin{tabular}{@{}p{.97\linewidth}}
 \medskip\EE{$min(e)=\c{\$}$}\\[-2mm]\small This shape extends \k{X} to include lookup
 with the dollar operator, \eg~\k{x\$f}, and vector indexing, \eg~\k{x[42]} and
 \k{x[[24]]}. This takes a few more steps of evaluation on average, and is
@@ -830,7 +891,9 @@ a loop.
 assignment. A variable is allowed in the function position, looking up
 functions does not trigger computation unless the function's name
 is bound to a promise. This shape typically does not perform much work.
-\\
+\end{tabular}
+
+\begin{tabular}{@{}p{.97\linewidth}}
 \medskip\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$}\\[-2mm]\small Function
 calls whose arguments may include variable references and nested calls. Together
 they represent the most frequent shape and perform over 16 steps. They are
@@ -853,7 +916,9 @@ different from 0-argument closure. There is a number of use cases: unit testing
 frameworks (\eg \k{testthat}, \k{testit}), code benchmarking (\eg
 \k{rbenchmark}, \k{microbenchmark}), running code in parallel (\eg \k{foreach},
 \k{doParallel}), or deferring code execution (\eg \k{withr}).
-\\
+\end{tabular}
+
+\begin{tabular}{@{}p{.97\linewidth}}
 \medskip\EE{$min(e)=\c{model.frame}$}\\[-2mm]\small The \k{model.frame} function
 returns a dataframe resulting from fitting the model described in a formula.
 This shape subsumes \k{F(F(X))}, \k{FUN}, and assignments. It is the single most
@@ -1040,9 +1105,9 @@ origin is \k{parse}.
 \end{figure}
 
 
-% Wrap tables do not play well with lists (they warn about it in the documentation actually!)
-\begin{wraptable}{r}{5cm}\small\centering
-\begin{tabular}{lcc}\toprule
+\begin{table}[!b]\small\centering
+\begin{tabular}{c@{\hspace{2cm}}c}
+  \begin{tabular}{lcc}\toprule
 \bf Provenance & \bf \#sites & \bf \%sites \\\midrule
 		\packageProvenanceNamea & \packageNbProvenanceSitesa & \packagePercentProvenanceSitesa \\
 		\packageProvenanceNameb & \packageNbProvenanceSitesb & \packagePercentProvenanceSitesb \\
@@ -1055,9 +1120,7 @@ origin is \k{parse}.
 		\packageProvenanceNamel & \packageNbProvenanceSitesl & \packagePercentProvenanceSitesl \\
 		\packageProvenanceNamen & \packageNbProvenanceSitesn & \packagePercentProvenanceSitesn \\\bottomrule
 \end{tabular}
-
-\medskip
-
+&
 \begin{tabular}{rrr} \toprule
 \bf Origin  & \bf \#sites & \bf \%sites \\\midrule
 Reflection &  \packageNbReflectionSites & \packageReflectionSitesPercent\\
@@ -1066,8 +1129,10 @@ Constructed & \packageNbConstructedSites & \packageConstructedSitesPercent \\
 Environment & \packageNbSymbolSites & \packageSymbolSitesPercent \\
 External & \packageNbExternalSites & \packageExternalSitesPercent \\\bottomrule
 \end{tabular}
-\caption{Origins}\label{tab:provenance}\vspace{-1cm}
-\end{wraptable}
+\end{tabular}
+\medskip
+\caption{Origins}\label{tab:provenance}
+\end{table}
 
 To have a high-level views of provenance, we classify functions into the
 following five categories:
@@ -1075,14 +1140,14 @@ following five categories:
 \begin{itemize}[---]
 \item {\it Reflection:} use of \k{match.call} to reflectively capture the
   expression that invoked this function. Function arguments are promises, and
-  \k{substitute} is used to retrieve their source. 
+  \k{substitute} is used to retrieve their source.
 \item {\it String:} created from strings by invoking \k{parse},
   \k{str2lang}, or \k{str2expression}.
 \item {\it Constructed:} invoked \k{quote} or \k{expression}, or by building with
   \k{call} or \k{as.call}.
 \item {\it Environment: } created with \k{as.name} or \k{as.symbol}, typically
   to read a non-local environment.
-\item {\it External: }  call to a C function. 
+\item {\it External: }  call to a C function.
 \end{itemize}
 
 Table~\ref{tab:provenance} summarizes origins. It shows frequencies by function
@@ -1294,7 +1359,7 @@ arguments and passes it to \eval.
  }
 \end{lstlisting}\medskip
 
-\paragraph{Boilerplate Removal} 
+\paragraph{Boilerplate Removal}
 A variant of code generation is to let users write compact code that is expended
 via \eval and \k{match.call}. The example uses \k{match.call} to access the
 expression with which the function is called. The following three lines construct a
@@ -1374,7 +1439,7 @@ result.
 
 \begin{lstlisting}[caption={\k{glue::glue}}, captionpos=b]
 > greeting <- "Hello"
-> glue('{greeting} World!') 
+> glue('{greeting} World!')
 # Hello World!
 \end{lstlisting}\medskip
 
@@ -1384,7 +1449,7 @@ following snippet pipes the subsetted data frame into the \k{glue_data} function
 that uses it to resolve the symbols for string interpolation.
 
 \begin{lstlisting}[caption={\k{glue::glue_data}}, captionpos=b]
-> flights[carrier=="DL" & year == 2014, mean(dep_delay), by=origin] |> 
+> flights[carrier=="DL" & year == 2014, mean(dep_delay), by=origin] |>
     glue_data("{origin} has average delay of {round(V1)} min")
 # LGA has average delay of 11 min
 # EWR has average delay of 15 min
@@ -1447,7 +1512,7 @@ to perform the lookup and then call the resulting function directly.
 \end{lstlisting}
 
 Another example, from \k{coin::copyslots}, constructs an expression that accesses
-fields of an object and copies them. 
+fields of an object and copies them.
 
 \begin{lstlisting}
   eval(str2lang(paste0("target@", s, " <- source@", s)))
@@ -1515,7 +1580,6 @@ not appear that a general purpose replacement for \eval is possible, in future
 work we hope to focus on special cases and propose tools that target particular
 subsets of call sites with some common properties.
 
-
-\bibliography{bib/bibliography,bib/jv}
+\bibliography{bibexport}
 
 \end{document}
