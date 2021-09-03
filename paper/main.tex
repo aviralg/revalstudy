@@ -823,27 +823,27 @@ elucidate \emph{what} it does.
 
 The expressions passed to \eval vary widely. We categorize expressions using a
 minimization function which abstracts some of the incidental details of
-expressions and return a ``shape'' that can be used to group similar \evals. The
-function $min(e)$ which for a given expression $e$ returns a normal form. Normal
+expressions and returns a ``shape'' that can be used to group similar \evals.
+The function $min(e)$, for a given expression $e$, returns a normal form. Normal
 forms use \k{V} to stand in for values occurring in expression, \k{X} stands in
 for variables, and \k{F} stands for functions. The function performs constant
-folding of arithmetic and string expressions over base operators, for instance
+folding of arithmetic and string expressions over base operators; for instance,
 $min(\c{1+1})$ simplifies to $\c{V}$, on the ground that addition of values
 likely returns a value. Value simplification takes $min(\c{c(1,2,3+2)})$ to
-$\c{V}$ as a complex vector containing values is a value. Variable absorption
-has $min(\c{x+y})$ becomes $\c{X}$, this motivated by the fact that addition is
-not an ``interesting'' operation, and that \k{X} stands in for any number of
+$\c{V}$, as a complex vector containing values is a value. Variable absorption
+has $min(\c{x+y})$ become $\c{X}$; this is motivated by the fact that addition is
+not an ``interesting'' operation and that \k{X} stands in for any number of
 variable lookups. Function absorption simplifies nested functions to keep an
 abstraction of the nesting $min(\c{g(f(x),h(z))})=\c{F(F(X))}$. There are other
-simplifications, the full list can be found in our artifact. It is worth
+simplifications; the full list can be found in our artifact. It is worth
 mentioning that these simplifications are heuristics; in R, \k{1+1} is not
-necessary \k{2}. The addition operator can be redefined, but it typically isn't
+necessary \k{2}. The addition operator can be redefined, but it typically isn't,
 or at least not in a way that would invalidate arithmetic.
 
-Table~\ref{tab:minimizedexpressions} gives the 10 most frequent shapes with the
+Table~\ref{tab:minimizedexpressions} gives the ten most frequent shapes with the
 number and ratio of sites that received arguments of that shape. Operations (ops) is
 the median count of instructions performed by the interpreter when evaluating
-argument of the given shape. Envir is the ratio of sites that evaluate in a
+an argument of the given shape. Envir is the ratio of sites that evaluate in a
 function environment. The last column has a sample expression that normalizes to
 the corresponding shape. We detail these shapes and discuss their implication for
 the behavior of \eval.
@@ -852,77 +852,76 @@ the behavior of \eval.
 
 \begin{tabular}{@{}p{.97\linewidth}}
   \medskip\EE{$min(e)=\c{V}$}\\[-2mm]\small Values occur in 16\% of sites, 74\% of
-  those are constants such as integers, the remainder evaluate to a value (\packageNbCallSitesUniqueActualValue of
-  sites only ever see a value). \Eval
+  those are constants such as integers, the remainder evaluate to a value (\packageNbCallSitesUniqueActualValue of sites only ever see a value). \Eval
   is needed when the expression denoting the values is constructed
   programmatically. Cases when a value is directly given to \eval, and \eval
   returns it unchanged, often occur when a computation has a default path and
   another, more interesting, path that requires evaluation.
-  This shape usually run in few interpreter steps.
-  The environment in which they evaluate is mostly irrelevant.
+  This shape usually runs in few interpreter steps.
+  The environment in which these expressions evaluate is mostly irrelevant.
 \end{tabular}
 
 \begin{tabular}{@{}p{.97\linewidth}}
-\medskip\EE{$min(e)=\c{X}$}\\[-2mm]\small Variable lookups are the most common shape,
-\packageNbSymbolVarSitePercent are simple variable names, e.g. \k{x}. The shapes
-subsumes \k{V} and built-in arithmetic operations, so a mixture of arithmetics
-and variables normalize to \k{X}. A lookup is one step of execution, if a promise
-is returned an arbitrary number of additional steps may be needed; the median is
-\packageMinimizedmedianoperationsaRnd, suggesting that most variable reads do
-little work. Variables are often evaluated in environments that have been
-constructed programmatically, \packageMinimizedpercentparentframesa of
-expressions are evaluated in a function environment.
+  \medskip\EE{$min(e)=\c{X}$}\\[-2mm]\small Variable lookups are the most common shape,
+  \packageNbSymbolVarSitePercent are simple variable names, e.g. \k{x}. The shapes
+  subsume \k{V} and built-in arithmetic operations, so a mixture of arithmetics
+  and variables normalize to \k{X}. A lookup is one step of execution; if a promise
+  is returned, an arbitrary number of additional steps may be needed. The median number of steps is
+  \packageMinimizedmedianoperationsaRnd, suggesting that most variable reads do
+  little work. Variables are often evaluated in environments that have been
+  constructed programmatically; \packageMinimizedpercentparentframesa of
+  expressions are evaluated in a function environment.
 \end{tabular}
 
 \begin{tabular}{@{}p{.97\linewidth}}
-\medskip\EE{$min(e)=\c{\$}$}\\[-2mm]\small This shape extends \k{X} to include lookup
-with the dollar operator, \eg~\k{x\$f}, and vector indexing, \eg~\k{x[42]} and
-\k{x[[24]]}. This takes a few more steps of evaluation on average, and is
-typically used in a function environment.
-\\
-\medskip\EE{$min(e)=$~\k{<-}}\\[-2mm]\small This includes both direct assignment {\tt
+  \medskip\EE{$min(e)=\c{\$}$}\\[-2mm]\small This shape extends \k{X} to include lookup
+  with the dollar operator, \eg~\k{x\$f}, and vector indexing, \eg~\k{x[42]} and
+  \k{x[[24]]}. This takes a few more steps of evaluation on average and is
+  typically used in a function environment.
+  \\
+  \medskip\EE{$min(e)=$~\k{<-}}\\[-2mm]\small This includes both direct assignment {\tt
   <-} and parent environment assignment {\tt <\,\!<-} as well as the \k{assign}
-function. It subsumes \k{\$}. Assignments represent the most obvious source
-of side effects in \eval. Most cases originate from trivial code generation
-where the assign expression is assembled using parse or substitute, often in
-a loop.
-\\
-\medskip\EE{$min(e)=\c{F()}$}\\[-2mm]\small Function calls without variable lookups or
-assignment. A variable is allowed in the function position, looking up
-functions does not trigger computation unless the function's name
-is bound to a promise. This shape typically does not perform much work.
+  function. It subsumes \k{\$}. Assignments represent the most obvious source
+  of side effects in \eval. Most cases originate from trivial code generation
+  where the assign expression is assembled using parse or substitute, often in
+  a loop.
+  \\
+  \medskip\EE{$min(e)=\c{F()}$}\\[-2mm]\small This shape represents function calls without variable lookups or
+  assignment. A variable is allowed in the function position; looking up
+  functions does not trigger computation unless the function's name
+  is bound to a promise. This shape typically does not perform much work.
 \end{tabular}
 
 \begin{tabular}{@{}p{.97\linewidth}}
-\medskip\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$}\\[-2mm]\small Function
-calls whose arguments may include variable references and nested calls. Together
-they represent the most frequent shape and perform over 16 steps. They are
-frequently evaluated in function environments.
-\\
-\medskip\EE{$min(e)=\c{FUN}$}\\[-2mm]\small Function definitions without any
-computation, \eg~\k{function(x) x+1}. In addition to \k{FUN},
-\packageGeneralizedFunctionDefinitionSitesPercent of sites have function
-definitions nested in other expressions.
+  \medskip\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$}\\[-2mm]\small This shape corresponds to function
+  calls whose arguments may include variable references and nested calls. Together
+  they represent the most frequent shape and perform over 16 steps. They are
+  frequently evaluated in function environments.
+  \\
+  \medskip\EE{$min(e)=\c{FUN}$}\\[-2mm]\small This shape represents function definitions without any
+  computation, \eg~\k{function(x) x+1}. In addition to \k{FUN},
+  \packageGeneralizedFunctionDefinitionSitesPercent sites have function
+  definitions nested in other expressions.
 \end{tabular}
 
 \begin{tabular}{@{}p{.97\linewidth}}
-\medskip\EE{$min(e)=\c{BLOCK}$}\\[-2mm]\small Multi-statement code blocks, as
-they can be large we do not try to normalize their contents. They execute in a
-median \packageMinimizedmedianoperationsjRnd steps, usually, in function
-environments.
-Essentially, the block denotes a fragment of a program to be evaluated in a
-particular way and in a particular environment. The latter is what makes it
-different from 0-argument closure. There is a number of use cases: unit testing
-frameworks (\eg \k{testthat}, \k{testit}), code benchmarking (\eg
-\k{rbenchmark}, \k{microbenchmark}), running code in parallel (\eg \k{foreach},
-\k{doParallel}), or deferring code execution (\eg \k{withr}).
+  \medskip\EE{$min(e)=\c{BLOCK}$}\\[-2mm]\small These are multi-statement code blocks; as
+  they can be large, we do not try to normalize their contents. They execute in a
+  median \packageMinimizedmedianoperationsjRnd steps, usually in function
+  environments.
+  Essentially, the block denotes a fragment of a program to be evaluated in a
+  particular way and a particular environment. The latter is what makes it
+  different from a zero-argument closure. There are several use cases: unit testing
+  frameworks (\eg \k{testthat}, \k{testit}), code benchmarking (\eg
+  \k{rbenchmark}, \k{microbenchmark}), running code in parallel (\eg \k{foreach},
+  \k{doParallel}), or deferring code execution (\eg \k{withr}).
 \end{tabular}
 
 \begin{tabular}{@{}p{.97\linewidth}}
-\medskip\EE{$min(e)=\c{model.frame}$}\\[-2mm]\small The \k{model.frame} function
-returns a data frame resulting from fitting the model described in a formula.
-This shape subsumes \k{F(F(X))}, \k{FUN}, and assignments. It is the single most
-popular function invoked from \eval. Each call does a median of 2K instructions.
+  \medskip\EE{$min(e)=\c{model.frame}$}\\[-2mm]\small The \k{model.frame} function
+  returns a data frame resulting from fitting the model described in a formula.
+  This shape subsumes \k{F(F(X))}, \k{FUN}, and assignments. It is the single most
+  popular function invoked from \eval. Each call does a median of 2K instructions.
 \end{tabular}
 
 \paragraph{Discussion.} The number of different shapes that any given
@@ -934,10 +933,10 @@ more than eight shapes. An example of those is the pipe operator of the
 \k{magrittr} package which is used to compose functions, \eg instead of
 \k{f(g(h(x),y),z)} one can write \k{h(x) \%>\% g(y) \%>\% f(z)}. As there are many
 different patterns of use, there are also many different shapes. In comparison
-with R, JavaScript's \eval usage was more straightforward and more predictable
+with R, JavaScript's \eval usage was more straightforward and more predictable,
 as reported by \citet{oopsla12b}, with 98\% of sites with only one shape. On the
 other hand, there are \packageNbSimpleMinimizedOne sites that only receive one
-of the simple shape (\ie\xspace \k{X}, \k{V}, \k{\$} or \k{<-}), and
+of the simple shapes (\ie\xspace \k{X}, \k{V}, \k{\$} or \k{<-}), and
 \packageNbSimpleMinimizedMore sites get multiple simple shapes. Among these
 sites, there are many cases where \eval could be possibly replaced by simpler constructs
 such as \k{get} to lookup a name in an environment, \k{assign} to set a value to
@@ -945,7 +944,7 @@ a name in an environment, or \k{do.call} to call a function reflectively.
 
 \subsection{The Environments of \Eval}\label{sec:env}
 
-Contrary to JavaScript, in R the environment of \eval can be specified by its
+Contrary to JavaScript, in R, the environment of \eval can be specified by its
 \k{env} argument. This gives users control over what is visible to the
 computation started by \eval and the potential reach of its side-effects. We
 distinguish the following kinds of environments:
@@ -964,13 +963,13 @@ distinguish the following kinds of environments:
 
 
 Table~\ref{tab:highlevelenvironments} shows that most calls evaluate in the
-scope of a function, global is a distant second. This means that most reads and
+scope of a function; global is a distant second. This means that most reads and
 writes act on local variables. But of which function? Table~\ref{tab:funoffset}
 gives the offset of that function on the call stack: 0 is the function that called
 \eval, 1 is that function's caller, and so on. In 81\% of cases, \eval uses
 its caller's environment -- the variables of the function where the call to \eval
 textually occurs are read and written. About 1.5\% of sites evaluate their
-argument three frames up the call stack, or above. Modular reasoning is thus
+argument three frames up the call stack or above. Modular reasoning is thus
 impossible in R. Since the actions of \eval happen at a distance, understanding
 any given code snippet requires knowing which functions may be called
 transitively from that snippet. In \packageNbOneCategoryEnvirSitePercent of
@@ -1029,7 +1028,7 @@ Global \evals split between intentional and accidental one. Direct references to
 the top-level, using \k{globalenv()} or \k{.GlobalEnv}, are rare; they occur in
 only \packageNbExplicitGlobalSites sites. Thus we suspect most uses of global
 are accidental. They arise from the fact that our corpus consists of many code
-snippets that are run at the top-level, global is thus the caller of \eval. This is
+snippets that are run at the top-level; global is thus the caller of \eval. This is
 noteworthy because writes to global variables are visible to all functions and
 are not reclaimed by the garbage collector. So accidental uses may pollute that
 namespace. Table~\ref{tab:polyenvir} gives the number of kinds seen at a given
@@ -1041,7 +1040,7 @@ customizable extension mechanism for the behavior of functions. They are a way
 to parameterize the function with any behavior that can be expressed in R. The
 behavior of \eval within its enclosing function is to read and write variables,
 mostly read, and very rarely, delete variables. There are also some cases where
-new variables are injected in a function. Usually, this in the direct caller,
+new variables are injected in a function. Usually, this is in the direct caller,
 but it can sometimes take effect several frames up the call stack. There is
 something brittle about code relying on the position of a caller: a lot of
 refactoring may break code that does that.
@@ -1053,26 +1052,26 @@ from the same promise. We believe the case where \eval is provided with the resu
 of programmatically selecting some call stack to be less frequent.
 
 Synthetic environments are relatively frequent. Common uses-cases include
-the evaluation of an expression in a sandbox, or using a data structure as
-environment. For example one could evaluate a method of an object and use an
+the evaluation of an expression in a sandbox or using a data structure as
+environment. For example, one could evaluate a method of an object and use an
 environment to hold the object's fields.
 
 We have already explained the popularity of global environments. As for package
 environments, they are used in only \packageNbPackageNamespaceEnvSites sites.
 This is probably for the best as mutating the bindings of a loaded package is
-frowned upon and R tries to discourage it.
+frowned upon, and R tries to discourage it.
 
 \subsection{The Origins of \Eval}
 
 Where does the expression passed to \eval come from? There are various means of
-creating an expression, often these means correlate with a particular use case.
+creating an expression; often these means correlate with a particular use case.
 Our analysis records the values returned by some functions of interest as well
 as their arguments. We build a direct acyclic graph that tracks the origin
 of the values that are given to \eval. Fig~\ref{fig:provgraph} shows an example
 of the origin graph for the expression \k{e}.
 The origin of \k{e} includes both \k{parse} and \k{quote}, the starting nodes. We pick one origin by traversing the graph from the terminal leaf, \ie from the \eval node, following the left-hand side
 member of assignments until reaching a starting node. It represents the origin that is
-further modified to yield the expression passed to \eval. In our example, that
+further modified to yield the expression passed to \eval. In this example, that
 origin is \k{parse}.
 
 \begin{figure}[H]
@@ -1134,7 +1133,7 @@ External & \packageNbExternalSites & \packageExternalSitesPercent \\\bottomrule
 \caption{Origins}\label{tab:provenance}
 \end{table}
 
-To have a high-level views of provenance, we classify functions into the
+To have a high-level view of provenance, we classify functions into the
 following five categories:
 
 \begin{itemize}[---]
@@ -1160,24 +1159,24 @@ Few calls (\packageNbParseFromFileSites in total) consume the result of calling
 
 
 \paragraph{Discussion}
-The main use cases for \eval involve using \k{match.call}, or \k{substitute} to access and transform arguments of a function. Constructing
-expressions from strings is also a common use case. The constructed category
-shows that most \evals come from existing code that was modified by the
-programmer before invoking \eval. Both constructed and reflection categories
-roughly correspond to meta-programming. Some uses could be replaced by
-macros if the R designers could be convinced to overcome their distaste for
-those.
+The main use cases for \eval involve using \k{match.call}, or \k{substitute} to
+access and transform arguments of a function. Constructing expressions from
+strings is also a common use case. The constructed category shows that most
+\evals come from existing code that was modified by the programmer before
+invoking \eval. Both constructed and reflection categories roughly correspond to
+meta-programming. Some uses could be replaced by macros if the R designers could
+be convinced to overcome their distaste for those.
 
 \subsection{The Effects of \Eval}
 
 \Eval may perform side-effects. We care about effects that are visible after a
-call finishes, \ie variable definitions, updates, and removals. Knowing in which
-environments these side-effects happen, can help determine the impact of \eval
-on our ability to reason about the code. Our analysis records information about
-every environment. From the recorded data, we discard side-effects coming from
-unit testing frameworks as they use \eval to run all their tests and thus
+call finishes, \ie variable definitions, updates, and removals. Knowing the
+environments in which these side-effects happen can help determine the impact of
+\eval on our ability to reason about the code. Our analysis records information
+about every environment. From the recorded data, we discard side-effects coming
+from unit testing frameworks as they use \eval to run all their tests and thus
 dominate the side-effect data.\footnote{The corpus has \k{RUnit, testthat,
-  tinytest} and \k{unitizer} testing frameworks.}
+    tinytest} and \k{unitizer} testing frameworks.}
 
 We record \SEAllRnd side-effects from \SEAllCallsRnd calls and \SEAllSites
 sites. The challenge is to remove accidental side-effects caused by the R
@@ -1215,15 +1214,15 @@ side-effects in a particular environment kind. The table also gives the number o
 functions in which these sites occur (and ratio).
 
 Most sites, \SESitesInOneClass, do all their side-effects consistently in one
-kind of environments. The same happens at the function level. Almost half of the
+kind of environment. The same happens at the function level. Almost half of the
 sites (over a third of the functions) do side effects in either \emph{Local} or
 \emph{Object} environments.
 
 Table~\ref{tab:se-types} shows recorded effects. There are over 5M updates. In
-terms of calls, we see assignments primarily and in terms of site definitions.
-This is expected. A subsequent \eval call will turn a definition into an update.
-The most dangerous side effect is variable removal, as it means that after a
-call to \eval some binding in some environments will disappear. While rare, this
+terms of calls, we primarily see assignments, followed by definitions. This is
+expected. A subsequent \eval call will turn a definition into an update. The
+most dangerous side effect is variable removal, as it means that after a call to
+\eval some binding in some environments will disappear. While rare, this
 happens, but the vast majority comes from a single site
 (\k{withr::execute\_handlers}). This makes sense as it is used to defer
 evaluation of an expression to after the function exit and thus used for clean
@@ -1233,12 +1232,12 @@ column selectors.\footnote{\cf \url{https://tidyselect.r-lib.org/}}
 
 Looking closely at the value types in variable updates, we observe that the
 majority of \eval sites involve basic R vectors (\SEBasicTypeRatio) and lists
-(\SEListTypeRatio). From the compiler perspective, we would like to know how
-many sites change function bindings. In the corpus, this happens in only
+(\SEListTypeRatio). From the perspective of a compiler, we would like to know
+how many sites change function bindings. In our corpus, this happens in only
 \SEClosureType sites; \SEClosureTypeLocal of them do that in the local
-environment. We have manually inspected a few of these sites, but except for
-manual injection of parameters into a \k{model.frame} execution environment, we
-did not find a common use case.
+environment. We manually inspected a few of these sites; except for manual
+injection of parameters into a \k{model.frame} execution environment, we did not
+find a common use case.
 
 \begin{table}[h]
   \small
@@ -1254,21 +1253,21 @@ did not find a common use case.
 \end{table}
 
 Out of the minimized expressions, it is \k{BLOCK}, \k{<-} and \k{F(F(X))} that
-contribute to the vast majority of side effects. Concretely, 92\% of \k{BLOCK},
-87\% of \k{<-} and 15\% of \k{F(F(X))} expressions do side effects. In the case
+contributes to the vast majority of side effects. Concretely, 92\% of \k{BLOCK},
+87\% of \k{<-}, and 15\% of \k{F(F(X))} expressions do side effects. In the case
 of \k{BLOCK}, most of them happen in the environment passed to the \eval call
-(default is the parent environment). For \k{<-} it is 15\%. However, this form
-is dominated by the \k{plyr::allocate\_column} function that side-effects in
-the environment containing the data frame to which it allocates new column.
+(default is the parent environment). For \k{<-} it is 15\%. This form is
+dominated by the \k{plyr::allocate\_column} function that side-effects in the
+environment containing the data frame to which it allocates a new column.
 Without this call, \k{<-} is similarly predictable with 96\% of side effects
 happening in the passed environment. For \k{F(F(X))}, it is less clear as 58\%
 of side effects happen in a different environment to the one that was passed to
 \eval.
 
-\paragraph{Discussion} In JavaScript assignments in \eval can happen in either
+\paragraph{Discussion} In JavaScript, assignments in \eval can happen in either
 local scope or less often, when called through an alias, in the global scope.
 In R, given the support for first-class environments, it can happen anywhere,
-making it \eval more dangerous than it already is. However, the data suggest
+making \eval more dangerous than it already is. However, the data suggest
 that first, side-effects from \eval are not as widespread as in the case of
 JavaScript,\footnote{\citep{ecoop11} shows that in the \emph{Interactive}
   scenario, \eval in Javascript performs, store events can reach up to 40\% of
