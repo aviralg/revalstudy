@@ -599,7 +599,7 @@ exercised can be chalked down to incomplete tests and analysis failures
 (\PkgFailedProgramsRatio of the runs crashed or timed out).
 Fig.~\ref{fig:traced-eval-callsites} plots exercised sites with respect to all
 sites for each program; as can be seen, coverage is unequal.
-Table~\ref{tab:freq} summarizes the frequency of calls, call counts on the left and
+Table~\ref{tab:freq} summarizes the frequency of calls, call counts on the left, and
 number of packages on the right. There are \packageFewcalls packages with fewer
 than 100 calls, and \packageManycalls packages with more than 1,000 calls.
 \packageMaxcallspack calls \eval \packageMaxcalls times and thus accounts for
@@ -663,19 +663,19 @@ calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
 Table~\ref{tab:cn} shows the average count of calls from a given site and given run and
 how many sites fall in that range. For instance, \packageRunbinh sites are
 called over 2,000 times per run. Larger call counts suggest the presence of
-loops or recursive functions, but given the data this seems to be the exception;
-\packageRunbina of sites are called fewer than 50 times, most sites are invoked
+loops or recursive functions, but given the data, this seems to be the exception;
+\packageRunbina sites are called fewer than 50 times, most sites are invoked
 once and half as many are invoked twice.
 
-\Eval accepts any value as argument, but if the value is not an expression,
+\Eval accepts any value as an argument, but if the value is not an expression,
 \eval returns it unchanged. Expressions account for \packageCodepercent of
-arguments. More specifically, \packageSymbolpercent are symbols (variables
-such as \k{x}), \packageLanguagepercent are language objects (expressions
-representing a function calls), and \packageExpressionpercent are expression
+arguments. More specifically, \packageSymbolpercent are symbols (variables such
+as \k{x}), \packageLanguagepercent are language objects (expressions
+representing function calls), and \packageExpressionpercent are expression
 objects (lists of expressions). Further inspection reveals that \k{\_inherit}
 accounts for \packageGgplotsymbolpercent of symbols and comes from one site in
-\k{ggplot2}.\footnote{Each object has a field model inheritance, this comes from
-\k{ggproto}, one of the many object-oriented systems for R.}
+\k{ggplot2}.\footnote{This field is used to model inheritance in \k{ggproto},
+  one of the many object-oriented systems in R.}
 
 
 \begin{wrapfigure}{r}{6.2cm}
@@ -686,7 +686,7 @@ accounts for \packageGgplotsymbolpercent of symbols and comes from one site in
 \end{wrapfigure}
 
 To estimate how much executable code is injected through \eval, we measure the
-size of the arguments in terms of number of nodes. For example,
+size of the arguments in terms of the number of nodes. For example,
 \k{expression(x+1)} has a size of 3. The large number of symbols skew the median
 to \packageMedianszeval but the average size is \packageAvgszeval nodes. The
 largest \eval input we observed was an expression of \packageMaxszeval nodes, a
@@ -694,15 +694,15 @@ significant chunk of code. Fig.~\ref{fig:sizedistribution} shows the
 distribution of sizes for arguments of fewer than 25 nodes. Sizes drop rapidly,
 there are few observations larger than 15 nodes. The long tail is omitted for
 legibility. As an alternative to counting nodes, we tried measuring string
-lengths of expressions after calling a function to deparse values back to
+lengths of expressions after calling a function to convert values back to
 strings, but these measurements were dominated by massive data objects which
 could range in the MBs.
 
 To assess how much computational work is performed in \evals, we count the
-instructions executed by the interpreter. Most call do relatively little, with
+instructions executed by the interpreter. Most calls do relatively little, with
 \packageSmalleventspct of calls executing fewer than 50 instructions. The violin
 plot of Fig.~\ref{ev}(a) shows the distribution of short running \evals; the
-data is dominated by \evals which simply perform symbol lookup. Fig.~\ref{ev}(b)
+data is dominated by \evals that simply perform symbol lookup. Fig.~\ref{ev}(b)
 shows the distribution of work-intensive \evals which go all the way to
 \packageMaxeventsRnd instructions.
 
@@ -723,12 +723,12 @@ shows the distribution of work-intensive \evals which go all the way to
 least one \eval call site. However, most packages use \eval modestly. Packages
 that rely heavily on \eval are mostly ones that provide statistical modeling and
 simulation functions. At runtime, over a third of our scripts triggered calls to
-\eval. Note that all scripts performed \evals originating from base package but
+\eval. Note that all scripts call \eval originating from the base package but
 these are disregarded here. Half of the calls come from a single site, for the
 rest, most packages have low call frequency. The data is consistent with the usage
-of \eval for configuration and meta-programming, not in performance sensitive
+of \eval for configuration and meta-programming, not in performance-sensitive
 contexts such as loops. While most arguments to \eval are small, often just a
-variable name, and do little work, we have also observed large \eval arguments
+variable name, and do little work, we have also observed large arguments
 and arguments that perform massive amounts of work.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
