@@ -86,7 +86,7 @@ reflective facility as \eval bowing to its origins in LISP, all the way back in
 1956. \Eval has been much maligned over the years. In computing lore, it is as
 close to a boogeyman as it gets. Yet, for McCarthy, \eval was simply the way to
 write down the definition of LISP; he was surprised that someone coded it up and
-offered it to end users~\cite{lisp}. Since then, reflective facilities have been
+offered it to end-users~\cite{lisp}. Since then, reflective facilities have been
 used to parameterize programs over code patterns that can be provided after the
 program is written. The presence of such a feature in a language is a hallmark
 of dynamism; it is a form of delayed binding as the behavior of any particular
@@ -97,7 +97,7 @@ call site is evaluated.
 most attempts to reason about or apply meaning-preserving transformations to the
 code using them. In practice, \eval causes static analysis techniques to lose so
 much precision as to become pointless. For compilers, anything but the most
-trivial, local optimizations are unsound after use of \eval. Furthermore, the
+trivial, local optimizations are unsound after the use of \eval. Furthermore, the
 addition of arbitrary code --- code that could have been obtained from a network
 connection --- as a program is running is a security vulnerability waiting to
 happen. To illustrate these challenges, consider the interaction of a static
@@ -128,25 +128,28 @@ practical usage suggested that most reflective calls were relatively harmless.
 While this backed up the soundiness squad's approach, does it generalize to
 other application domains and to other languages?
 
-\paragraph{The Here and Now.} In this study, we investigate the
-usage of \eval in programs written in the R language. R is a language designed
-by statisticians for applications in data science~\cite{r,R96}. What makes
-looking at R after JavaScript interesting is that, while both languages are
-dynamic, they are quite different. While one can program in an object-oriented
-style in R like in JavaScript, R is mostly a lazy functional language.
-JavaScript was designed to run untrusted code in a browser, while R is used for
-statistical computing on desktops. JavaScript is a general-purpose language used
-by a vast community of programmers, while R is used for scientific computing by
-data scientists and domain experts with, often, limited programming experience.
-One can distinguish between library implementers who have programming experience
-and a working knowledge of R, and end-users who are typically not expert
-programmers with a cursory knowledge of the language.\footnote{We surveyed
-end-users and did not find a single one aware that R is lazy.} Our goal is to
-highlight the differences in usage between JavaScript and R and explain them in
-terms of language features, application domain and programmer experience.
-Hopefully, some of our observations generalize to other languages. Our data
-and code are open source and publicly available:
-\url{https://github.com/PRL-PRG/evalr-experiment}.
+\paragraph{The Here and Now.} In this study, we investigate the usage of \eval
+in programs written in the R language. R is a language designed by statisticians
+for applications in data science~\cite{r,R96}. What makes looking at R after
+JavaScript interesting is that, while both languages are dynamic, they are quite
+different. While one can program in an object-oriented style in R like in
+JavaScript, R is mostly a lazy functional language. JavaScript was designed to
+run untrusted code in a browser, while R is used for statistical computing on
+desktops. JavaScript is a general-purpose language used by a vast community of
+programmers, while R is used for scientific computing by data scientists and
+domain experts with, often, limited programming experience. One can distinguish
+between library implementers who have programming experience and a working
+knowledge of R, and end-users who are typically not expert programmers with a
+cursory knowledge of the language.\footnote{We surveyed end-users and did not
+  find a single one aware that R is lazy.} Our goal is to highlight the
+differences in usage between JavaScript and R and explain them in terms of
+language features, application domain, and programmer experience. Hopefully,
+some of our observations generalize to other languages. Our data and code are
+open-source and publicly available at:
+
+\begin{center}
+  \url{https://doi.org/10.5281/zenodo.5415230}
+\end{center}
 
 \paragraph{The What and How.} One benefit of
 R is that every package in the CRAN repository comes with examples of typical
@@ -168,7 +171,7 @@ once, and never revisited.
 that \eval is widely used for the implementation of the language, and in many
 libraries. End-user code makes less frequent and less sophisticated use of
 \eval. In many ways, \eval in R is as bad as it gets: it's varied, performs
-side-effects and reaches to many environments. By large, the motivations for
+side-effects, and reaches many environments. By large, the motivations for
 \eval relate to various forms of language extensions and meta-programming. \Eval
 is used where other languages would provide macros. But, the expressive power of
 \eval is higher as it can reach arbitrarily far back in the call stack.
