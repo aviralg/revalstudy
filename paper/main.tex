@@ -59,19 +59,19 @@
 \affiliation{\institution{Czech Technical University in Prague}\country{Czech Republic}}
 
 \begin{abstract}
- Most dynamic languages allow users to turn text into code using
-  various functions, often named \eval, with language-dependent semantics. The
+  Most dynamic languages allow users to turn text into code using various
+  functions, often named \eval, with language-dependent semantics. The
   widespread use of these reflective functions hinders static analysis and
   prevents compilers from performing optimizations. This paper aims to provide a
   better sense of why programmers use \eval. Understanding why \eval is used in
   practice is key to finding ways to mitigate its negative impact. We have
   reasons to believe that reflective feature usage is language and application
   domain-specific; we focus on data science code written in R and compare our
-  results to previous work that analyzed web programming in JavaScript. This
-  paper studied \CranRunnableScripts scripts extracted from \CranPackages R
-  packages, for a total of \packageAllcalls calls to \eval. We find that \eval
-  is indeed in widespread use; R's \eval is more pervasive and arguably
-  dangerous than what was previously reported for JavaScript.
+  results to previous work that analyzed web programming in JavaScript. We
+  analyze \packageAllcalls calls to \eval from \CranRunnableScripts scripts
+  extracted from \CranPackages R packages. We find that \eval is indeed in
+  widespread use; R's \eval is more pervasive and arguably dangerous than what
+  was previously reported for JavaScript.
 \end{abstract}
 
 \maketitle
