@@ -69,6 +69,9 @@
   breaklines=true
 }
 
+\usepackage{caption}
+
+
 \begin{document}
 \title{What We Eval in the Shadows}
 \subtitle{A Large-scale Study of Eval in R programs}
@@ -1298,6 +1301,9 @@ example here allows users to provide formulas as strings, such as
 to generate a sequence of random numbers using the adaptive rejection sampling
 algorithm and the string formula is used to describe the target density.}
 
+% To remove "Listing i" in the captions from this point, as we do not refer to them by number
+% We define and refer to listings in 2.2 so we need to put that captionsetup only here
+\captionsetup[lstlisting]{labelformat=empty} 
 \begin{lstlisting}[caption={\k{AdapSamp::rARS}}, captionpos=b]
  function(n,formula) {
    p <- function(x) eval(parse(text=formula))
