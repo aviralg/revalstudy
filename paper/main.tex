@@ -646,7 +646,7 @@ refer to an occurrence of a call site to the \eval function in the source code
 and \emph{call} to denote an observed invocation of the \eval function.
 
 \begin{wrapfigure}{r}{7cm}
-	\includegraphics[width=7cm]{pkgs-eval-callsites-hist.pdf}
+	\hspace*{-1cm}\includegraphics[width=9cm]{pkgs-eval-callsites-hist.pdf}
 	\caption{ \eval call sites}\label{fig:pkgs-eval-callsites-hist}
 \end{wrapfigure}
 
@@ -716,7 +716,7 @@ Table~\ref{tab:variantseval} summarizes the use of variants, the first row has s
 calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
 \k{local} are barely used at all.
 
-\begin{wraptable}{r}{5cm} \vspace*{-2mm}\ \small  \centering
+\begin{wraptable}{r}{5cm}  \small  \centering
   \begin{tabular}{r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r} \toprule
     \multicolumn{3}{c}{\bf \#calls} & \bf \#sites &
      \multicolumn{3}{c}{\bf \#calls} & \bf \#sites \\\midrule
@@ -726,6 +726,7 @@ calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
     \tt 251 &--& \tt 500 & \packageRunbind & \tt 2001 &--& \tt 3000 & \packageRunbinh\\\bottomrule
   \end{tabular}
   \caption{Normalized calls} \label{tab:cn}
+  \vspace{-0.5cm}
 \end{wraptable}
 
 Table~\ref{tab:cn} shows the average count of calls from a given site and given run and
@@ -747,7 +748,7 @@ accounts for \packageGgplotsymbolpercent of symbols and comes from one site in
 
 
 \begin{wrapfigure}{r}{6.2cm}
-\hspace{-25mm} \includegraphics[width=0.8\textwidth]{package_size_loaded_distribution}
+\hspace{-3.3cm} \includegraphics[width=0.9\textwidth]{package_size_loaded_distribution}
 \caption{Loaded code} \label{fig:sizedistribution}
 \end{wrapfigure}
 
