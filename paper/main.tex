@@ -645,6 +645,11 @@ This section reports on the frequency of \eval in CRAN. We use \emph{site} to
 refer to an occurrence of a call site to the \eval function in the source code
 and \emph{call} to denote an observed invocation of the \eval function.
 
+\begin{wrapfigure}{r}{7cm}
+	\includegraphics[width=7cm]{pkgs-eval-callsites-hist.pdf}
+	\caption{ \eval call sites}\label{fig:pkgs-eval-callsites-hist}
+\end{wrapfigure}
+
 There are \PkgEvalCallSites \eval sites in \PkgPackages packages;
 \PkgPackagesRatio packages use \eval. Over half of these packages have fewer
 than 3 sites, and with the exception \MaxEvalCallSitesPackage which has
@@ -653,10 +658,7 @@ than 3 sites, and with the exception \MaxEvalCallSitesPackage which has
 histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
 \CranFunsWithEvalRatio of all functions use \eval.
 
-\begin{figure}[!h]
-   \includegraphics[width=7cm]{pkgs-eval-callsites-hist.pdf}
-  \caption{ \eval call sites}\label{fig:pkgs-eval-callsites-hist}
-\end{figure}
+
 
 Our pipeline runs \CranRunnableScripts scripts extracted from \CranPackages
 packages. Any run that does not call \eval is discarded, leaving us with
@@ -674,11 +676,10 @@ than 100 calls, and \packageManycalls packages with more than 1,000 calls.
 \packageMaxcallspack calls \eval \packageMaxcalls times and thus accounts for
 over half of our observations.
 
-
-\begin{table}[!h]
+\begin{table}[H]
 \centering
-  \small
-  \begin{tabular}{@{}l@{\hspace{1.5cm}}l@{}}
+\small
+\begin{tabular}{@{}l@{\hspace{1.5cm}}l@{}}
 \begin{minipage} {5cm}\small
   \begin{tabular}{r@{\,}r@{\,}l@{}r|r@{\,}r@{\,}l@{}r@{}} \toprule
     \multicolumn{3}{c}{\bf \small\#calls} &\bf \small \#pck
@@ -687,26 +688,26 @@ over half of our observations.
 \tt 11 &--& \tt 100    & \packageBinb  & \tt 100K &--&\tt 1M  & \packageBinf\\
 \tt 101 &--& \tt 1K    & \packageBinc  & \tt 1M &--&\tt 10M   & \packageBing\\
 \tt 1K &--& \tt 10K    & \packageBind  & \tt 10M &--& \tt 100M & \packageBinh\\\bottomrule
-\end{tabular}
-\caption{Call frequency}\label{tab:freq}
+\end{tabular}\caption{Call frequency}\label{tab:freq}
 \end{minipage}
 &
 \begin{minipage}{7cm}\small
 \begin{tabular}{@{}r|r@{~}r@{}r@{~}r@{}}\toprule
-  &\eval & \k{evalq} & \k{eval} & \k{local}\\[-1.5mm]
-           & & & \k{.parent} &\\\midrule
+  &\eval & \k{evalq} & \k{eval} & \k{local}\\[-1.3mm]
+           & & & \k{.parent} &\\[1.3mm]\midrule
 \small Static sites &\packageStaticeval&\packageStaticevalq&\packageStaticevalparent&\packageStaticlocal \\
 \small Exercised sites&\packageTriggeredeval&\packageTriggeredevalq&\packageTriggeredevalparent&\packageTriggeredlocal\\
 \small Invocations&\packageEvalsRnd&\packageEvalqsRnd&\packageEparentsRnd&\packageLocalsRnd\\\bottomrule
-\end{tabular}~\\[2mm]\caption{Variants}\label{tab:variantseval}
+\end{tabular}\caption{Variants}\label{tab:variantseval}
 \end{minipage}\end{tabular}
-
 \end{table}
-\begin{figure}[H]
-  \includegraphics[width=.7\textwidth]{traced-eval-callsites.pdf} \centering
-  \caption{\eval call sites coverage of the \PkgPackages packages.}%
-  \label{fig:traced-eval-callsites}
+
+\begin{figure}[h]
+	\includegraphics[width=.7\textwidth]{traced-eval-callsites.pdf} \centering
+	\caption{\eval call sites coverage of the \PkgPackages packages.}%
+	\label{fig:traced-eval-callsites}
 \end{figure}
+
 
 
 Table~\ref{tab:variantseval} summarizes the use of variants, the first row has sites
@@ -715,7 +716,7 @@ Table~\ref{tab:variantseval} summarizes the use of variants, the first row has s
 calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
 \k{local} are barely used at all.
 
-\begin{table}[!h]  \small  \centering
+\begin{wraptable}{r}{5cm} \vspace*{-2mm}\ \small  \centering
   \begin{tabular}{r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r} \toprule
     \multicolumn{3}{c}{\bf \#calls} & \bf \#sites &
      \multicolumn{3}{c}{\bf \#calls} & \bf \#sites \\\midrule
@@ -725,7 +726,7 @@ calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
     \tt 251 &--& \tt 500 & \packageRunbind & \tt 2001 &--& \tt 3000 & \packageRunbinh\\\bottomrule
   \end{tabular}
   \caption{Normalized calls} \label{tab:cn}
-\end{table}
+\end{wraptable}
 
 Table~\ref{tab:cn} shows the average count of calls from a given site and given run and
 how many sites fall in that range. For instance, \packageRunbinh sites are
@@ -745,12 +746,10 @@ accounts for \packageGgplotsymbolpercent of symbols and comes from one site in
   object-oriented system used by \k{ggplot2}.}
 
 
-\begin{figure}[!h]
-\begin{tabular}{c}
-{\includegraphics[width=0.8\textwidth]{package_size_loaded_distribution}}
-\end{tabular}
+\begin{wrapfigure}{r}{6.2cm}
+\hspace{-25mm} \includegraphics[width=0.8\textwidth]{package_size_loaded_distribution}
 \caption{Loaded code} \label{fig:sizedistribution}
-\end{figure}
+\end{wrapfigure}
 
 To estimate how much executable code is injected through \eval, we measure the
 size of the arguments in terms of the number of nodes. For example,
