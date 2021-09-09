@@ -957,6 +957,7 @@ Contrary to JavaScript, in R, the environment of \eval can be specified by its
 computation started by \eval and the potential reach of its side-effects. We
 distinguish the following kinds of environments:
 
+\enlargethispage{2mm}
 \begin{itemize}[---]
 \item \emph{Function:} environments for the local variables of some function
   currently active on the call stack. Obtained by calling \k{parent.frame()} or
@@ -1351,6 +1352,7 @@ non-standard scoping for interpolation in a custom environment. For example,
 the following snippet pipes the subsetted data frame into the \k{glue_data}
 function used to resolve the symbols for string interpolation.
 
+\enlargethispage{2mm}
 \begin{lstlisting}[title={\k{glue::glue_data}}, captionpos=b]
 > flights[carrier=="DL" & year == 2014, mean(dep_delay), by=origin] |>
     glue_data("{origin} has average delay of {round(V1)} min")
@@ -1527,11 +1529,11 @@ function calls. However, the unnecessary uses of \eval are not easy to find and
 often can only be uncovered by manual analysis. Dynamic analysis is limited due
 to coverage issues, and static analysis of R remains an open problem.
 
-\begin{lstlisting}[H,caption={Unnecessary use of \eval},label=lst:unnecessary]
- PerformanceAnalytics::chart.QQPlot <- function (d="norm",dp,...) {
-   q.f <- eval(parse(text=paste0("q",d)))
+\begin{lstlisting}[caption={Unnecessary use of \eval (\k{PerformanceAnalytics::chart.QQPlot})},label=lst:unnecessary]
+function (d="norm", dp, ...) {
+   q.f <- eval(parse(text=paste0("q", d)))
    z <- NULL
-   eval(parse(text=paste0("z<-q.f(",dp,",...)")))
+   eval(parse(text=paste0("z<-q.f(", dp, ", ...)")))
    ...
  }
 \end{lstlisting}\medskip
@@ -1542,8 +1544,8 @@ call with the arguments that are passed to the current function. \Eval is
 overkill in this case: a semantically equivalent function body can use \k{get}
 to perform the lookup and then call the resulting function directly.
 
-\begin{lstlisting}[H]
- q.f <- get(paste0("q",d))
+\begin{lstlisting}
+ q.f <- get(paste0("q", d))
  z <- q.f(dp, ...)
 \end{lstlisting}
 
