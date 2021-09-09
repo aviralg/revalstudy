@@ -883,13 +883,13 @@ the behavior of \eval.
 
 \begin{tabular}{@{}p{.97\linewidth}}
   \medskip\EE{$min(e)=\c{\$}$}\\[-2mm]\small This shape extends \k{X} to include lookup
-  with the dollar operator, \eg~\k{x\$f}, and vector indexing, \eg~\k{x[42]} and
+  with the dollar operator, \eg~\texttt{x\$f}, and vector indexing, \eg~\k{x[42]} and
   \k{x[[24]]}. This takes a few more steps of evaluation on average and is
   typically used in a function environment.
   \\
   \medskip\EE{$min(e)=$~\k{<-}}\\[-2mm]\small This includes both direct assignment {\tt
   <-} and parent environment assignment {\tt <\,\!<-} as well as the \k{assign}
-  function. It subsumes \k{\$}. Assignments represent the most obvious source
+  function. It subsumes \texttt{\$}. Assignments represent the most obvious source
   of side effects in \eval. Most cases originate from trivial code generation
   where the assign expression is assembled using parse or substitute, often in
   a loop.
@@ -944,7 +944,7 @@ different patterns of use, there are also many different shapes. In comparison
 with R, JavaScript's \eval usage was more straightforward and more predictable,
 as reported by \citet{oopsla12b}, with 98\% of sites with only one shape. On the
 other hand, there are \packageNbSimpleMinimizedOne sites that only receive one
-of the simple shapes (\ie\xspace \k{X}, \k{V}, \k{\$} or \k{<-}), and
+of the simple shapes (\ie\xspace \k{X}, \k{V}, \texttt{\$} or \k{<-}), and
 \packageNbSimpleMinimizedMore sites get multiple simple shapes. Among these
 sites, there are many cases where \eval could be possibly replaced by simpler constructs
 such as \k{get} to lookup a name in an environment, \k{assign} to set a value to
@@ -1183,8 +1183,8 @@ environments in which these side-effects happen can help determine the impact of
 \eval on our ability to reason about the code. Our analysis records information
 about every environment. From the recorded data, we discard side-effects coming
 from unit testing frameworks as they use \eval to run all their tests and thus
-dominate the side-effect data.\footnote{The corpus has \k{RUnit, testthat,
-    tinytest} and \k{unitizer} testing frameworks.}
+dominate the side-effect data.\footnote{The corpus has \texttt{\scriptsize RUnit, testthat,
+    tinytest} and \texttt{\scriptsize unitizer} testing frameworks.}
 
 We record \SEAllRnd side-effects from \SEAllCallsRnd calls and \SEAllSites
 sites. The challenge is to remove accidental side-effects caused by the R
@@ -1315,7 +1315,7 @@ in 2014 by the origin airport. The symbols \k{carrier}, \k{year},
 \k{dep_delay}, and \k{origin} are not looked up in the current environment but
 in the \k{flights} data frame.
 
-\begin{lstlisting}[caption={\k{data.table::[}}, captionpos=b]
+\begin{lstlisting}[title={\k{data.table::[}}, captionpos=b]
 > flights[carrier=="DL" & year == 2014, mean(dep_delay), by=origin]
 #    origin       V1
 # 1:    LGA 11.35083
@@ -1326,8 +1326,8 @@ in the \k{flights} data frame.
 At its core, the \k{[} operator uses \k{substitute} to capture its operand
 expressions, transforms them, and evaluates them using \eval in the given data
 frame. We omit the implementation as it spans over 1700 lines at the time of
-this writing\footnote{Its implementation can be found at:
-  \url{https://github.com/Rdatatable/data.table/blob/master/R/data.table.R}}.
+this writing.\footnote{Its implementation can be found at:
+  \url{https://github.com/Rdatatable/data.table/blob/master/R/data.table.R}}
 
 Non-standard scoping is an important use case of \eval in R. It enables the
 design of functions that require less typing and syntactic noise at the cost of
@@ -1340,9 +1340,9 @@ illustrates string interpolation. The \k{glue} function from the \k{glue}
 package extracts snippets of code enclosed between braces, evaluates them using
 \eval, and splices their results to construct the result.
 
-\begin{lstlisting}[caption={\k{glue::glue}}, captionpos=b]
+\begin{lstlisting}[title={\k{glue::glue}}, captionpos=b]
 > greeting <- "Hello"
-> glue('{greeting} World!')
+> glue("{greeting} World!")
 # Hello World!
 \end{lstlisting}\medskip
 
@@ -1351,7 +1351,7 @@ non-standard scoping for interpolation in a custom environment. For example,
 the following snippet pipes the subsetted data frame into the \k{glue_data}
 function used to resolve the symbols for string interpolation.
 
-\begin{lstlisting}[caption={\k{glue::glue_data}}, captionpos=b]
+\begin{lstlisting}[title={\k{glue::glue_data}}, captionpos=b]
 > flights[carrier=="DL" & year == 2014, mean(dep_delay), by=origin] |>
     glue_data("{origin} has average delay of {round(V1)} min")
 # LGA has average delay of 11 min
@@ -1370,8 +1370,7 @@ formula is used to describe the target density.}
 
 % To remove "Listing i" in the captions from this point, as we do not refer to them by number
 % We define and refer to listings in 2.2 so we need to put that captionsetup only here
-\captionsetup[lstlisting]{labelformat=empty} 
-\begin{lstlisting}[caption={\k{AdapSamp::rARS}}, captionpos=b]
+\begin{lstlisting}[title={\k{AdapSamp::rARS}}, captionpos=b]
  function(n,formula) {
    p <- function(x) eval(parse(text=formula))
    ...
@@ -1385,7 +1384,7 @@ arguments passed to a vararg parameter (\k{...}). Concretely,
 Passing this to \eval returns a list of the unevaluated argument
 expressions. In the following example, it is used to find and return the value of the first expression that evaluates to non-null value. The extracting varargs pattern is needed to avoid premature promise forcing.
 
-\begin{lstlisting}[caption={\k{statnet.common::NVL}}, captionpos=b]
+\begin{lstlisting}[title={\k{statnet.common::NVL}}, captionpos=b]
  function(...) {
    for (e in eval(substitute(alist(...)))) {
      if (!is.null(eval(e, parent.frame()))) break
@@ -1397,12 +1396,12 @@ expressions. In the following example, it is used to find and return the value o
 \paragraph{Controlled Evaluation} \Eval can be used to control when and if
 expressions are evaluated. For example, \k{assertthat} provides users with the
 ability to make assertions and, if they fail, produce legible error messages.
-The \k{assertthat::see_if} function accepts a vararg with a list of
+The \texttt{\small assertthat::see\_if} function accepts a vararg with a list of
 expressions. It extracts these expressions using the extracting varargs
 pattern and evaluates them sequentially in the caller's environment using
 \k{eval}. If an expression does not hold, an error is generated.
 
-\begin{lstlisting}[caption={\k{assertthat::see_if}}, alsoletter={\_}, captionpos=b]
+\begin{lstlisting}[title={\texttt{\small assertthat::see\_if}}, alsoletter={\_}, captionpos=b]
  function(..., env=parent.frame(), msg=NULL) {
    asserts <- eval(substitute(alist(...)))
    for (assertion in asserts) {
@@ -1415,11 +1414,11 @@ pattern and evaluates them sequentially in the caller's environment using
 
 \paragraph{Shadowing} Some packages use \eval to implement variations of the
 \k{base} R functions. For example, the \k{igraph} package provides the
-\k{do_call} function shown below. This is a variant of the builtin \k{do.call}
+\k{do_call} function shown below. This is a variant of the built-in \k{do.call}
 function with different semantics for resolving the function name. It
 constructs a call from a name and a list of arguments and passes it to \eval.
 
-\begin{lstlisting}[caption={\k{igraph::do\_call}}, captionpos=b]
+\begin{lstlisting}[title={\k{igraph::do\_call}}, captionpos=b]
  function(f,...,args=list(),env=parent.frame()) {
    f <- substitute(f)
    eval(make_call(f,...,args), env)
@@ -1436,7 +1435,7 @@ either be tedious to write by hand or that is only known after deployment. The
 following code snippet for the \k{Rcpp} package uses \eval to automatically
 generate R bindings to C++ methods.
 
-\begin{lstlisting}[caption={\k{Rcpp::.makeCppMethods}}, captionpos=b]
+\begin{lstlisting}[title={\k{Rcpp::.makeCppMethods}}, captionpos=b]
  function(methods, env) {
    for(what in cppMethods)
      methods[[what]] <-
@@ -1457,10 +1456,10 @@ added. This example illustrates one of the most recurring uses of \eval by
 packages that do statistical modeling, and relates to the \k{model.frame} shape
 in Table~\ref{tab:minimizedexpressions}.
 
-\begin{lstlisting}[caption={\k{survival::survfit.formula}}, captionpos=b]
+\begin{lstlisting}[title={\k{survival::survfit.formula}}, captionpos=b]
  function(formula, data, weights, ...) {
    Call <- match.call()
-   indx <- match(c('formula', 'data', 'weights'), names(Call), nomatch=0)
+   indx <- match(c("formula", "data", "weights"), names(Call), nomatch=0)
    temp <- Call[c(1, indx)]
    temp[[1L]] <- quote(stats::model.frame)
    mf <- eval.parent(temp)
@@ -1477,7 +1476,7 @@ maintenance of wrappers. For example, the \k{base::write.csv} function passes
 most of its arguments unchanged to the more general \k{base::write.table}
 function.
 
-\begin{lstlisting}[caption={\k{base::write.csv}}, captionpos=b]
+\begin{lstlisting}[title={\k{base::write.csv}}, captionpos=b]
  function (...) {
    Call <- match.call(expand.dots = TRUE)
    Call$sep <- ","
@@ -1498,7 +1497,7 @@ environment. However, that is locked by default and unlocking it requires
 \k{unlockBinding} which is a restricted function. To work around this, the call
 to \k{unlockBinding} is done through \eval.
 
-\begin{lstlisting}[caption={\k{aibd::scalaEnsure}}, captionpos=b]
+\begin{lstlisting}[title={\k{aibd::scalaEnsure}}, captionpos=b]
  function() {
    env <- parent.env(environment())
    eval(parse(text=paste0('unlockBinding("s", env)')))
@@ -1511,25 +1510,30 @@ to \k{unlockBinding} is done through \eval.
 \section{Discussion}
 
 In R, \eval is used chiefly for meta-programming and accessing remote
-environments. Unlike JavaScript, which according to ~\citet{ecoop11} had a small
+environments. Unlike JavaScript, which according to~\citet{ecoop11} had a small
 set of well-defined patterns that could be rewritten without \eval, our results
-suggest that \eval is an integral part of programming in R.
+suggest that \eval is an integral part of programming in R. However, there are
+cases in which \eval is not needed, and other, more stylized functions could
+have been used. There are also alternatives to \eval that provide
+a more principled way for meta-programming and dealing with lazy evaluation. In
+this section, we briefly discuss these issues.
 
-The cases where \eval appears to be an overkill include simple expression shapes
-such as \k{X}, \k{V}, \k{\$}, \k{<-}, and \k{FUN}. Variable lookup in a remote
-environment can be performed by the builtin \k{get} function. A similar case can
-be made for assignment and the \k{assign} function. There is a dedicated
-\k{do.call} function to perform function calls. However, the unnecessary uses of
-\eval are not easy to find and often can only be uncovered by manual analysis.
-Dynamic analysis is limited due to coverage issues, and static analysis of R
-remains an open problem.
+\paragraph{Unnecessary use of eval} The cases where \eval appears to be an
+overkill include simple expression shapes such as \k{X}, \k{V}, \texttt{\$}, \k{<-},
+and \k{FUN}. Variable lookup in a remote environment can be performed by the
+built-in \k{get} function. A similar case can be made for assignment and the
+\k{assign} function. There is a dedicated \k{do.call} function to perform
+function calls. However, the unnecessary uses of \eval are not easy to find and
+often can only be uncovered by manual analysis. Dynamic analysis is limited due
+to coverage issues, and static analysis of R remains an open problem.
 
-
-\begin{lstlisting}[caption={Unnecessary use of \eval},label=lst:unnecessary]
+\begin{lstlisting}[H,caption={Unnecessary use of \eval},label=lst:unnecessary]
  PerformanceAnalytics::chart.QQPlot <- function (d="norm",dp,...) {
    q.f <- eval(parse(text=paste0("q",d)))
    z <- NULL
    eval(parse(text=paste0("z<-q.f(",dp,",...)")))
+   ...
+ }
 \end{lstlisting}\medskip
 
 For the example in Listing~\ref{lst:unnecessary}, the function uses \eval to
@@ -1538,39 +1542,76 @@ call with the arguments that are passed to the current function. \Eval is
 overkill in this case: a semantically equivalent function body can use \k{get}
 to perform the lookup and then call the resulting function directly.
 
-\begin{lstlisting}
+\begin{lstlisting}[H]
  q.f <- get(paste0("q",d))
  z <- q.f(dp, ...)
 \end{lstlisting}
 
-Another example, from \k{coin::copyslots}, constructs an expression that accesses
-fields of an object and copies them.
+\paragraph{Eval alternatives}
 
-\begin{lstlisting}
-  eval(str2lang(paste0("target@", s, " <- source@", s)))
+There are alternative implementations of \eval. The \k{lazyeval} package
+provides \k{lazy} and \k{lazy_eval} as safer variants for the built-in
+\k{substitute} and \k{eval} functions. The main differences are
+that the \k{lazy} function captures not only the expression, but also the
+environment associated with a function argument, and that it follows promises
+across function invocations. This helps to avoid scoping bugs, as shown in the
+example bellow:
+
+\begin{figure}[H]
+  \begin{minipage}{.48\textwidth}
+    \begin{lstlisting}[title={Use of R \eval},label=lst:lazyeval]
+ filter <- function(df, cond) {
+   conf <- substitute(cond)
+   r <- eval(cond, df, parent.frame())
+   df[r, ]
+ }
+
+ f <- function(...) {
+   x <- 1
+   filter(flights, ...)
+ }
+
+ x <- 2020
+ f(year > x) # uses wrongly 1 for x
+    \end{lstlisting}
+  \end{minipage}
+  \begin{minipage}{.48\textwidth}
+    \begin{lstlisting}[title={Use of \k{lazyeval}},label=lst:lazyeval]
+ filter <- function(df, cond) {
+   cond <- lazy(cond)
+   r <- lazy_eval(cond, df)
+   df[r, ]
+ }
+
+ f <- function(...) {
+   x <- 1
+   filter(flights, ...)
+ }
+
+ x <- 2020
+ f(year > x) # uses correctly 2020 for x
 \end{lstlisting}
+\end{minipage}
+\end{figure}
 
-% TODO: show how will it look with symbolic field read and write
+The \k{filter} function selects rows from \k{df} that match a given condition
+passed in \k{cond}. However, the implementation using the built-in R \eval has a
+scoping issue since it does not correctly capture the proper environment
+associated with the condition.\footnote{This is a simplified version of the
+  built-in \texttt{\scriptsize subset} function which suffers from this exact
+problem.} The \k{lazyeval} version does not manifest the issue as it properly
+captures the correct environment.
 
-This can be replaced by symbolic field reads and writes:
-
-% This should be enough:
-\begin{lstlisting}
- slot(target, s) <- slot(source, s)
-\end{lstlisting}
-
-
-We have not yet touched on alternative implementations of \eval. The tidyverse
-libraries\footnote{An opinionated collection of R packages designed for data
-  science. It consists of some of the most popular packages.} include their own
-implementation of \eval called \k{rlang::eval\_tidy}~\cite{tidyverse}, which
-departs from \eval in two ways. First, it supports the evaluation of quosures,
-custom objects used for metaprogramming that bundle expressions with an
-environment. The \k{eval\_tidy} function accepts a data mask argument, a set of
-bindings such as a data frame or list, which takes precedence over the
-environment. Effects such as assignments happen in the data mask, and
-expressions such as \k{return()} do not work since the data mask does not
-correspond to a frame on the call stack.
+The tidyverse libraries\footnote{An opinionated collection of R packages
+designed for data science. It consists of some of the most popular packages.}
+include their own implementation of \eval called
+\k{rlang::eval\_tidy}~\cite{tidyverse}, which departs from \eval in two ways.
+First, it supports the evaluation of quosures, custom objects used for
+metaprogramming that bundle expressions with an environment. The \k{eval\_tidy}
+function accepts a data mask argument, a set of bindings such as a data frame
+or list, which takes precedence over the environment. Effects such as
+assignments happen in the data mask, and expressions such as \k{return()} do
+not work since the data mask does not correspond to a frame on the call stack.
 
 \section{Conclusion}
 
