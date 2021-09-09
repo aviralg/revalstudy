@@ -1352,7 +1352,7 @@ non-standard scoping for interpolation in a custom environment. For example,
 the following snippet pipes the subsetted data frame into the \k{glue_data}
 function used to resolve the symbols for string interpolation.
 
-\enlargethispage{2mm}
+
 \begin{lstlisting}[title={\k{glue::glue_data}}, captionpos=b]
 > flights[carrier=="DL" & year == 2014, mean(dep_delay), by=origin] |>
     glue_data("{origin} has average delay of {round(V1)} min")
