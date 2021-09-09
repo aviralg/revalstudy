@@ -38,7 +38,9 @@
     for,
     if,
     else,
-    function
+    function,
+    break,
+    in
   },
   sensitive=true, % keywords are case-sensitive
   morecomment=[l]{\#}, % l is for line comment
@@ -1288,18 +1290,82 @@ evaluation, \k{substitute}, and \k{eval} are some of the tools given to
 developers to this end. To understand \emph{why} developers use \eval, we
 manually inspected the top 117 sites, which contribute to 90\% of the calls in
 the corpus. We present examples from nine classes from this batch. The
-classification is not exhaustive; we present results from only 117 of the total
-\PkgEvalCallSites call sites in our corpus, and many uses of \eval do not fit in
-a specific category. The \eval usage patterns are described below.
+classification is not exhaustive as we only study a fraction from the
+\PkgEvalCallSites call sites in our corpus, and many uses of \eval do not fit
+in a specific category. Instead, the goal is to demonstrate the wide variety of
+uses to which \eval is put to use. At the high level, the usage can be grouped
+into two groups: one contains patterns that aim to provide better
+API for R users and the other focuses on simplifying implementation.
+
+\subsection{Better API}
+
+This category contains \eval used to develop a better API in terms of
+ergonomics, extensibility, and ease of use. This is important given
+that R is often being used interactively for data exploration.
+
+\paragraph{Non-standard Scoping} \Eval allows functions to resolve symbols in
+different environments than the current one. For example, the \k{data.table}
+package redefines the subsetting operator, \k{[}\footnote{Defined as a triplet
+  \texttt{[i, j, k]}, where expression \texttt{j} is used to calculate a subset
+of rows from \texttt{i} grouped by \texttt{k}.}, to enable compact queries on
+data frames. The example below shows the use of this operator on the
+\k{flights} data frame to compute the average departure delays of Delta flights
+in 2014 by the origin airport. The symbols \k{carrier}, \k{year},
+\k{dep_delay}, and \k{origin} are not looked up in the current environment but
+in the \k{flights} data frame.
+
+\begin{lstlisting}[caption={\k{data.table::[}}, captionpos=b]
+> flights[carrier=="DL" & year == 2014, mean(dep_delay), by=origin]
+#    origin       V1
+# 1:    LGA 11.35083
+# 2:    EWR 14.96171
+# 3:    JFK 12.45414
+\end{lstlisting}\medskip
+
+At its core, the \k{[} operator uses \k{substitute} to capture its operand
+expressions, transforms them, and evaluates them using \eval in the given data
+frame. We omit the implementation as it spans over 1700 lines at the time of
+this writing\footnote{Its implementation can be found at:
+  \url{https://github.com/Rdatatable/data.table/blob/master/R/data.table.R}}.
+
+Non-standard scoping is an important use case of \eval in R. It enables the
+design of functions that require less typing and syntactic noise at the cost of
+some ambiguity. Since R is used primarily interactively, this trade-off is
+justifiable.
+
+\paragraph{Domain-Specific Language} A domain-specific language leverages R's
+grammar but redefines its semantics in a suitable way. The example below
+illustrates string interpolation. The \k{glue} function from the \k{glue}
+package extracts snippets of code enclosed between braces, evaluates them using
+\eval, and splices their results to construct the result.
+
+\begin{lstlisting}[caption={\k{glue::glue}}, captionpos=b]
+> greeting <- "Hello"
+> glue('{greeting} World!')
+# Hello World!
+\end{lstlisting}\medskip
+
+The \k{glue} package contains a variant of \k{glue} function that leverages
+non-standard scoping for interpolation in a custom environment. For example,
+the following snippet pipes the subsetted data frame into the \k{glue_data}
+function used to resolve the symbols for string interpolation.
+
+\begin{lstlisting}[caption={\k{glue::glue_data}}, captionpos=b]
+> flights[carrier=="DL" & year == 2014, mean(dep_delay), by=origin] |>
+    glue_data("{origin} has average delay of {round(V1)} min")
+# LGA has average delay of 11 min
+# EWR has average delay of 15 min
+# JFK has average delay of 12 min
+\end{lstlisting}
 
 \paragraph{Behavioral Extension} Sometimes it is convenient to allow users to
 extend the behavior of a library function. \Eval allows clients to provide a
-simple text string that is executed in the context of the function. The
-example here allows users to provide formulas as strings, such as
-\k{"exp(-x^2/2)"}, the contract being that the text can refer to some variable
-\k{x} that will be set up by the called function.\footnote{The function is used
-to generate a sequence of random numbers using the adaptive rejection sampling
-algorithm and the string formula is used to describe the target density.}
+simple text string that is executed in the context of the function. The example
+here allows users to provide formulas as strings, such as \k{"exp(-x^2/2)"},
+the contract being that the text can refer to some variable \k{x} the called
+function will set up.\footnote{The function is used to generate a sequence of
+  random numbers using the adaptive rejection sampling algorithm and the string
+formula is used to describe the target density.}
 
 % To remove "Listing i" in the captions from this point, as we do not refer to them by number
 % We define and refer to listings in 2.2 so we need to put that captionsetup only here
@@ -1307,76 +1373,88 @@ algorithm and the string formula is used to describe the target density.}
 \begin{lstlisting}[caption={\k{AdapSamp::rARS}}, captionpos=b]
  function(n,formula) {
    p <- function(x) eval(parse(text=formula))
+   ...
+ }
 \end{lstlisting}
 
-\paragraph{Code Generation}
-\Eval can be used to generate boilerplate code that would either be tedious to
-write by hand or that is only known after deployment. The following code snippet
-for the \k{Rcpp} package uses \eval to automatically generate R bindings to C++
-methods.
+\paragraph{Extracting Varargs} \Eval is used to obtain the source code of the
+arguments passed to a vararg parameter (\k{...}). Concretely,
+\k{substitute(alist(...))} yields an expression representing a call to
+\k{alist} with the \k{...} expanded to the arguments supplied to the function.
+Passing this to \eval returns a list of the unevaluated argument
+expressions. In the following example, it is used to find and return the value of the first expression that evaluates to non-null value. The extracting varargs pattern is needed to avoid premature promise forcing.
 
-\begin{lstlisting}[caption={\k{Rcpp::.makeCppMethods}}, captionpos=b]
- function(methods,env) {
-   for(what in cppMethods)
-     methods[[what]] <-
-       eval(substitute(function(...)CppObject$what(...)), env)
-\end{lstlisting}
-
-\paragraph{Extracting Varargs}
-\Eval is used to obtain the source code of the arguments passed to a vararg
-(\k{...}) parameter. In the following example, \k{substitute(alist(...))} yields
-an expression representing a call to \k{alist} with the \k{...} expanded to the
-arguments supplied to the function. \Eval evaluates this expression and returns
-a \k{list} of the unevaluated argument expressions.
-
-\begin{lstlisting}[caption={\k{statnet.common::NVM}}, captionpos=b]
+\begin{lstlisting}[caption={\k{statnet.common::NVL}}, captionpos=b]
  function(...) {
-   exprs <- eval(substitute(alist(...)))
-\end{lstlisting}\medskip
+   for (e in eval(substitute(alist(...)))) {
+     if (!is.null(eval(e, parent.frame()))) break
+   }
+   e
+ }
+\end{lstlisting}
 
-\paragraph{Controlled Evaluation}
-\Eval can be used to control when and if expressions are evaluated. For example,
-\k{assertthat} provides users with the ability to make assertions and, if they
-fail, produce legible error messages. The \k{assertthat::see_if} function
-accepts a vararg with a list of expressions. It extracts these expressions
-(\emph{Extracting Varargs} pattern) and evaluates them sequentially in the
-caller's environment using \k{eval}. If an expression does not hold, an error is
-generated.
+\paragraph{Controlled Evaluation} \Eval can be used to control when and if
+expressions are evaluated. For example, \k{assertthat} provides users with the
+ability to make assertions and, if they fail, produce legible error messages.
+The \k{assertthat::see_if} function accepts a vararg with a list of
+expressions. It extracts these expressions using the extracting varargs
+pattern and evaluates them sequentially in the caller's environment using
+\k{eval}. If an expression does not hold, an error is generated.
 
-\begin{lstlisting}[caption={\k{assertthat::see\_if}}, captionpos=b]
+\begin{lstlisting}[caption={\k{assertthat::see_if}}, alsoletter={\_}, captionpos=b]
  function(..., env=parent.frame(), msg=NULL) {
    asserts <- eval(substitute(alist(...)))
    for (assertion in asserts) {
      res <- tryCatch({
        eval(assertion, env)
      }, assertError=function(e) { structure(FALSE, msg=e$message) })
-\end{lstlisting}\medskip
+   ...
+ }
+\end{lstlisting}
 
-\paragraph{Shadowing}
-Some packages use \eval to implement variations of the \k{base} R functions. For
-example, the \k{igraph} package provides the \k{do_call} function shown below.
-This is a variant of the builtin \k{do.call} function with different semantics
-for resolving the function name. It constructs a call from a name and a list of
-arguments and passes it to \eval.
+\paragraph{Shadowing} Some packages use \eval to implement variations of the
+\k{base} R functions. For example, the \k{igraph} package provides the
+\k{do_call} function shown below. This is a variant of the builtin \k{do.call}
+function with different semantics for resolving the function name. It
+constructs a call from a name and a list of arguments and passes it to \eval.
 
 \begin{lstlisting}[caption={\k{igraph::do\_call}}, captionpos=b]
  function(f,...,args=list(),env=parent.frame()) {
    f <- substitute(f)
    eval(make_call(f,...,args), env)
  }
-\end{lstlisting}\medskip
+\end{lstlisting}
 
-\paragraph{Boilerplate Removal}
-A variant of code generation is to let users write compact code that is expended
-via \eval and \k{match.call}. The example uses \k{match.call} to access the
-expression with which the function is called. The following three lines construct a
-call to \k{stats::model.frame} with argument text of parameters \k{'formula'},
-\k{'data'}, and \k{'weights'}. Then, the call expression is evaluated in the
-parent environment. The use of \k{match.call} avoids repeated use of
-\k{substitute} for extracting the argument expressions. It is extensible as new
-parameter names can be easily added. This example illustrates one of the most
-recurring uses of \eval by packages that do statistical modeling, and relates to
-the \k{model.frame} shape in Table~\ref{tab:minimizedexpressions}.
+\subsection{Implementation simplification}
+
+The patterns in this category use \eval to simplify implementation in terms of
+avoiding repetitive and boilerplate code.
+
+\paragraph{Code Generation} \Eval can be used to generate code that would
+either be tedious to write by hand or that is only known after deployment. The
+following code snippet for the \k{Rcpp} package uses \eval to automatically
+generate R bindings to C++ methods.
+
+\begin{lstlisting}[caption={\k{Rcpp::.makeCppMethods}}, captionpos=b]
+ function(methods, env) {
+   for(what in cppMethods)
+     methods[[what]] <-
+       eval(substitute(function(...)CppObject$what(...)), env)
+   ...
+ }
+\end{lstlisting}
+
+\paragraph{Boilerplate Removal} A variant of code generation is to let users
+write compact code that is expended via \eval and \k{match.call}. The example
+uses \k{match.call} to access the expression with which the function is called.
+The following three lines construct a call to \k{stats::model.frame} with
+argument text of parameters \k{'formula'}, \k{'data'}, and \k{'weights'}. Then,
+the call expression is evaluated in the parent environment. The use of
+\k{match.call} avoids repeated use of \k{substitute} for extracting the
+argument expressions. It is extensible as new parameter names can be easily
+added. This example illustrates one of the most recurring uses of \eval by
+packages that do statistical modeling, and relates to the \k{model.frame} shape
+in Table~\ref{tab:minimizedexpressions}.
 
 \begin{lstlisting}[caption={\k{survival::survfit.formula}}, captionpos=b]
  function(formula, data, weights, ...) {
@@ -1385,8 +1463,10 @@ the \k{model.frame} shape in Table~\ref{tab:minimizedexpressions}.
    temp <- Call[c(1, indx)]
    temp[[1L]] <- quote(stats::model.frame)
    mf <- eval.parent(temp)
-\end{lstlisting}\medskip
-
+   ...
+ }
+\end{lstlisting}
+\medskip
 
 Wrapping functions in R is somewhat harder than in other languages because of
 default arguments, varargs, and missing arguments. The combination of
@@ -1405,74 +1485,17 @@ function.
    Call[[1L]] <- as.name("write.table")
    eval.parent(Call)
  }
-\end{lstlisting}\medskip
+\end{lstlisting}
 
-\paragraph{Non-standard Scoping}
-
-\Eval allows functions to resolve symbols in different environments than the
-current one. For example, the \k{data.table} package redefines the subsetting
-operator, \k{[}\footnote{Defined as a triplet \texttt{[i, j, k]}, where
-  expression \texttt{j} is used to calculate a subset of rows from \texttt{i}
-  grouped by \texttt{k}.}, to enable compact queries on data frames. The example
-below shows the use of this operator on the \k{flights} data frame to compute
-the average departure delays of Delta flights in 2014 by the origin airport. The
-symbols \k{carrier}, \k{year}, \k{dep_delay} and \k{origin} are not looked up in
-the current environment, but in the \k{flights} data frame.
-
-\begin{lstlisting}[caption={\k{data.table::[}}, captionpos=b]
-> flights[carrier=="DL" & year == 2014, mean(dep_delay), by=origin]
-#    origin       V1
-# 1:    LGA 11.35083
-# 2:    EWR 14.96171
-# 3:    JFK 12.45414
-\end{lstlisting}\medskip
-
-At its core, the \k{[} operator uses \k{substitute} to capture its operand
-expressions, transforms them, and evaluates them using \eval in the given data
-frame. We omit the implementation as it spans over 1700 lines at the time of
-this writing\footnote{Its implementation can be found at:
-  \url{https://github.com/Rdatatable/data.table/blob/master/R/data.table.R}}.
-
-Non-standard scoping is an important use case of \eval in R. It enables the
-design of functions that require less typing. Since R is used primarily
-interactively, this trade-off is justifiable.
-
-\paragraph{Domain-Specific Language}
-A domain-specific language leverages R's grammar but redefines its semantics in
-a suitable way. The example below illustrates string interpolation. The \k{glue}
-function from the \k{glue} package extracts snippets of code enclosed between
-braces, evaluates them using \eval, and splices their results to construct the
-result.
-
-\begin{lstlisting}[caption={\k{glue::glue}}, captionpos=b]
-> greeting <- "Hello"
-> glue('{greeting} World!')
-# Hello World!
-\end{lstlisting}\medskip
-
-The \k{glue} package contains a variant of \k{glue} function that leverages
-non-standard scoping for interpolation in a custom environment. For example, the
-following snippet pipes the subsetted data frame into the \k{glue_data} function
-that uses it to resolve the symbols for string interpolation.
-
-\begin{lstlisting}[caption={\k{glue::glue_data}}, captionpos=b]
-> flights[carrier=="DL" & year == 2014, mean(dep_delay), by=origin] |>
-    glue_data("{origin} has average delay of {round(V1)} min")
-# LGA has average delay of 11 min
-# EWR has average delay of 15 min
-# JFK has average delay of 12 min
-\end{lstlisting}\medskip
-
-\paragraph{Obfuscation}
-A few packages use \eval to bypass the restrictions imposed by the \k{R CMD
-  CHECK} tool. This tool enforces some well-formedness rules on a submitted
-package before accepting it for inclusion in CRAN. Some static checks ensure
-that the package code does not use certain restricted functions. Package authors
-use \eval to obfuscate their code to get around this limitation. The example
-below mutates the variable \k{s} in the package environment. However, that is
-locked by default and unlocking it requires \k{unlockBinding} which is a
-restricted function. To work around this, the call to \k{unlockBinding} is done
-through \eval.
+\paragraph{Obfuscation}  A few packages use \eval to bypass the restrictions
+imposed by the \k{R CMD CHECK} tool. This tool enforces some well-formedness
+rules on a submitted package before accepting it for inclusion in CRAN. Some
+static checks ensure that the package code does not use certain restricted
+functions. Package authors use \eval to obfuscate their code to get around this
+limitation. The example below mutates the variable \k{s} in the package
+environment. However, that is locked by default and unlocking it requires
+\k{unlockBinding} which is a restricted function. To work around this, the call
+to \k{unlockBinding} is done through \eval.
 
 \begin{lstlisting}[caption={\k{aibd::scalaEnsure}}, captionpos=b]
  function() {
@@ -1480,10 +1503,11 @@ through \eval.
    eval(parse(text=paste0('unlockBinding("s", env)')))
    assign("s", s, envir=env)
    lockBinding("s", env)
+   ...
+ }
 \end{lstlisting}\medskip
 
 \section{Discussion}
-
 
 In R, \eval is used chiefly for meta-programming and accessing remote
 environments. Unlike JavaScript, which according to ~\citet{ecoop11} had a small
@@ -1549,14 +1573,14 @@ correspond to a frame on the call stack.
 
 \section{Conclusion}
 
-The \eval function is used widely, and in varied ways, in R. The function is an
+The \eval function is used widely, and in varied ways in R. The function is an
 essential tool for language implementers. Our analysis observed that the base
 libraries heavily depend on \eval, and any R program will end up calling it
 through the core of the language. Independently developed libraries often use
 \eval in subtle ways, mostly to perform macro-programming tasks. Our review of
 code written by less experienced users suggests that \eval is exceedingly rarely
-used. So, it is fair to conclude that a majority of R programmers never have to
-write a call to \eval, but that the code they write would not run without it.
+used. So, it is fair to conclude that most R programmers never have to
+write a call to \eval, but the code they write would not run without it.
 
 \Eval is thus a challenge for automated program understanding. Program analysis
 and transformation tools or compilers must assume the worst when faced with code
