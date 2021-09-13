@@ -546,7 +546,7 @@ data size, and the number of elements manipulated. The pipeline steps are:
 
        \node [block, fill = red, draw = darkred, very thick] (download) {
          \nodename{
-           \vspace{1mm}\textbf{Download}\vspace{1mm}\\
+           \textbf{Download}\\
            15K packages\\
            8K Kaggle kernels\\
            219 Kaggle datasets
@@ -555,7 +555,7 @@ data size, and the number of elements manipulated. The pipeline steps are:
        \node [below = \textsep of download]   (downloaddesc)   {\nodedesc{12 hours}};
        \node [block, right = \nodesep of download, fill = yellow, draw = darkyellow, very thick] (extract) {
          \nodename{
-           \vspace{1mm}\textbf{Extract}\vspace{1mm}\\
+           \textbf{Extract}\\
            240K package programs\\%, 4.6M LOC\\
            74 Kaggle kernels\\%, 13K LOC\\
            \newline
@@ -564,7 +564,7 @@ data size, and the number of elements manipulated. The pipeline steps are:
        \node [below = \textsep of extract]   (extractdesc)   {\nodedesc{2 hours}};
        \node [block, right = \nodesep of extract, fill = blue, draw = darkblue, very thick] (trace) {
          \nodename{
-           \vspace{1mm}\textbf{Trace}\vspace{1mm}\\
+           \textbf{Trace}\\
            49M eval calls \\
            14M side-effects\\
            \newline
@@ -573,7 +573,7 @@ data size, and the number of elements manipulated. The pipeline steps are:
        \node [below = \textsep of trace]     (tracedesc)     {\nodedesc{36 hours}};
        \node [block, right = \nodesep of trace, fill = green, draw = darkgreen, very thick] (analyze) {
          \nodename{
-           \vspace{1mm}\textbf{Analyze}\vspace{1mm}\\
+           \textbf{Analyze}\\
            2.8M unique eval calls\\
            22\% packages use eval\\
            \newline
@@ -729,7 +729,7 @@ calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
     \tt 251 &--& \tt 500 & \packageRunbind & \tt 2001 &--& \tt 3000 & \packageRunbinh\\\bottomrule
   \end{tabular}
   \caption{Normalized calls} \label{tab:cn}
-  \vspace{-0.5cm}
+  %\vspace{-0.5cm}
 \end{wraptable}
 
 Table~\ref{tab:cn} shows the average count of calls from a given site and given run and
@@ -1085,7 +1085,7 @@ origin is \k{parse}.
 
 \begin{figure}[H]
   \begin{minipage}{.39\textwidth}
-    \vspace{-5mm}
+    %\vspace{-5mm}
 \begin{lstlisting}
  > e <- parse(text = "a;b")
  > e[[2]] <- quote(c) # e is a;c
@@ -1294,7 +1294,7 @@ manually inspected the top 117 sites, which contribute to 90\% of the calls in
 the corpus. We present examples from nine classes from this batch. This
 classification is not exhaustive since there are \PkgEvalCallSites \eval call
 sites in our corpus, and many uses of eval do not fit in a specific category.
-further categorize the nine classes into two groups: those that improve the
+We further categorize the nine classes into two groups: those that improve the
 interface for users and those that simplify the implementation for developers.
 
 \subsection{Better Interface}
@@ -1405,21 +1405,20 @@ does not hold, an error is generated.
  }
 \end{lstlisting}
 
-\paragraph{Shadowing} First-class environment and \eval enable R users to
+\paragraph{Shadowing} First-class environments and \eval enable R users to
 implement variations of core language functionality. For example, the \k{igraph}
-package provides the \k{do_call} function shown below. This is a variant of the
-built-in \k{do.call} function with different semantics for resolving the
-function name. \k{do_call} calls a function (\k{f}) in the specified environment
-(\k{env}) with the arguments supplied as a list (\k{args}).
+package provides the \k{do_call} function shown below. \k{do_call} calls a
+function (\k{f}) in the specified environment (\k{env}) with the arguments
+supplied to \k{...}, and \k{args}. This is a variant of the built-in \k{do.call}
+function with two differences: it resolves the function name differently, and it
+also allows arguments to be passed as varargs.
 
 \begin{lstlisting}[title={\k{igraph::do\_call}}, captionpos=b]
- function(f,...,args=list(),env=parent.frame()) {
-   f <- substitute(f)
-   eval(make_call(f,...,args), env)
- }
+ function(f,...,args=list(),env=parent.frame())
+   eval(make_call(substitute(f),...,args), env)
 \end{lstlisting}
 
-\subsection{Implementation simplification}
+\subsection{Implementation Simplification}
 
 This group contains \eval uses that simplify implementation for package
 developers.
