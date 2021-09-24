@@ -3,24 +3,6 @@
 \setlength{\pdfpageheight}{11in}
 
 
-
-%%% The following is specific to OOPSLA '21 and the paper
-%%% 'Why We Eval in the Shadows'
-%%% by Aviral Goel, Pierre Donat-Bouillud, Filip Křikava, Christoph M. Kirsch, and Jan Vitek.
-%%%
-\setcopyright{rightsretained}
-\acmPrice{}
-\acmDOI{10.1145/3485502}
-\acmYear{2021}
-\copyrightyear{2021}
-\acmSubmissionID{oopsla21main-p121-p}
-\acmJournal{PACMPL}
-\acmVolume{5}
-\acmNumber{OOPSLA}
-\acmArticle{125}
-\acmMonth{10}
-
-
 \bibliographystyle{ACM-Reference-Format}
 \citestyle{acmauthoryear}   %% For author/year citations
 \usepackage{listings,hyperref,multirow,paralist,xspace,url,wrapfig,tikz}
@@ -70,13 +52,28 @@
   %emphstyle=\underbar,
   breaklines=true
 }
-
 \usepackage{caption}
 
+\setcopyright{rightsretained}
 
 \begin{document}
+%%% The following is specific to OOPSLA '21 and the paper
+%%% 'Why We Eval in the Shadows'
+%%% by Aviral Goel, Pierre Donat-Bouillud, Filip Křikava, Christoph M. Kirsch, and Jan Vitek.
+%%% 
+\acmPrice{}
+\acmDOI{10.1145/3485502}
+\acmYear{2021}
+\copyrightyear{2021}
+\acmSubmissionID{oopsla21main-p121-p}
+\acmJournal{PACMPL}
+\acmVolume{5}
+\acmNumber{OOPSLA}
+\acmArticle{125}
+\acmMonth{10}
+
 \title{What We Eval in the Shadows}
-\subtitle{A Large-scale Study of Eval in R programs}
+\subtitle{A Large-Scale Study of Eval in R Programs}
 
 \keywords{eval, dynamic languages}
 \begin{CCSXML}
@@ -109,7 +106,11 @@
 \author{Christoph M.~Kirsch}\affiliation{\institution{University of Salzburg}\country{Austria}}
 \affiliation{\institution{Czech Technical University in Prague}\country{Czech Republic}}
 \author{Jan Vitek}\affiliation{\institution{Northeastern University}\country{USA}}
-\affiliation{\institution{Czech Technical University in Prague}\country{Czech Republic}}
+\affiliation{\institution{Czech Technical University in Prague}\country{Czech
+    Republic}}
+\authorsaddresses{} 
+\renewcommand{\shortauthors}{A. Goel, P. Donat-Bouillud, F. Křikava, C. M.
+  Kirsch, J. Vitek}
 
 \begin{abstract}
   Most dynamic languages allow users to turn text into code using various
@@ -128,7 +129,7 @@
 \end{abstract}
 
 \maketitle
-\renewcommand{\shortauthors}{Goel et al.}
+%\renewcommand{\shortauthors}{Goel et al.}
 \renewcommand{\shorttitle}{What We Eval in the Shadows}
 
 \section{Introduction}
@@ -639,11 +640,6 @@ This section reports on the frequency of \eval in CRAN. We use \emph{site} to
 refer to an occurrence of a call site to the \eval function in the source code
 and \emph{call} to denote an observed invocation of the \eval function.
 
-\begin{wrapfigure}{r}{7cm}
-	\hspace*{-1cm}\includegraphics[width=9cm]{pkgs-eval-callsites-hist.pdf}
-	\caption{ \eval call sites}\label{fig:pkgs-eval-callsites-hist}
-\end{wrapfigure}
-
 There are \PkgEvalCallSites \eval sites in \PkgPackages packages;
 \PkgPackagesRatio packages use \eval. Over half of these packages have fewer
 than 3 sites, and with the exception \MaxEvalCallSitesPackage which has
@@ -652,7 +648,10 @@ than 3 sites, and with the exception \MaxEvalCallSitesPackage which has
 histogram of sites per package. Sites appear in \PkgFunsWithEval functions;
 \CranFunsWithEvalRatio of all functions use \eval.
 
-
+\begin{wrapfigure}{r}{7cm}
+	\hspace*{-1cm}\includegraphics[width=9cm]{pkgs-eval-callsites-hist.pdf}
+	\caption{ \eval call sites}\label{fig:pkgs-eval-callsites-hist}
+\end{wrapfigure}
 
 Our pipeline runs \CranRunnableScripts scripts extracted from \CranPackages
 packages. Any run that does not call \eval is discarded, leaving us with
@@ -770,9 +769,9 @@ shows the distribution of work-intensive \evals which go all the way to
 
 \begin{figure}[h!]
 \begin{tabular}{@{}c@{}c@{}}
-\begin{minipage}{7.5cm}
+\begin{minipage}{6cm}
  \includegraphics[width=\textwidth]{package_events_per_pack_small}
-\end{minipage}&\begin{minipage}{7.5cm}
+\end{minipage}&\begin{minipage}{6cm}
   \includegraphics[width=\textwidth]{package_events_per_pack_large}
 \end{minipage}\\[-3mm]
 \small (a) Small & \small (b) Large
@@ -815,7 +814,7 @@ elucidate \emph{what} it does.
 \k{F()}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedmedianoperationsgRnd & \packageMinimizedpercentparentframesg & \k{rgamma(3, 2, n = 10L)} \\
 \k{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentparentframesh & \k{function(x, y) x + 3 * y} \\
 \k{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedmedianoperationsiRnd & \packageMinimizedpercentparentframesi & \k{x[1, 2:3, 2:3] <- value}\\
-\k{BLOCK} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentparentframesj & \k{\{write.csv(iris,tf);file.size(tf)\}} \\\bottomrule
+\k{BLOCK} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentparentframesj & \k{\{write(iris,tf);file.size(tf)\}} \\\bottomrule
 \end{tabular}
 \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
@@ -977,8 +976,8 @@ transitively from that snippet. In \packageNbOneCategoryEnvirSitePercent of
 the sites, only one kind of environment is observed.
 
 \begin{table}[h]
-  \centering\small\hspace{-.5cm}
-\begin{minipage}{3.7cm}
+  \centering\small%\hspace{-.5cm}
+\begin{minipage}{3.5cm}
   \begin{tabular}{@{}rrr@{}}\toprule
  \bf Kind & \bf \#sites & \bf \%sites \\\midrule
  Function & \packageNbFunctionEnvSites &  \packageNbFunctionEnvSitePercent\\
@@ -987,8 +986,8 @@ the sites, only one kind of environment is observed.
  Package & \packageNbPackageNamespaceEnvSites & \packageNbPackageNamespaceEnvSitePercent \\\bottomrule
 \end{tabular}
 \caption{Kinds per site} \label{tab:highlevelenvironments}
-\end{minipage}\hspace{-.2cm}
-\begin{minipage}{3.7cm}\centering
+\end{minipage}%\hspace{-.2cm}
+\begin{minipage}{3.5cm}\centering
   \begin{tabular}{@{}rrr@{}}\toprule
  \bf Offset & \bf \#sites & \bf \%sites \\\midrule
   \packageCallerEnvHierarchyNamea & \packageCallerEnvHierarchySitesaRnd & \packageCallerEnvHierarchySitePercenta \\
@@ -997,8 +996,8 @@ the sites, only one kind of environment is observed.
 $\ge 3$& \packageNbFarAwayCallerSites &  \packageNbFarAwayCallerSitePercent \\\bottomrule
  \end{tabular}
 \caption{Function offset}\label{tab:funoffset}
-\end{minipage}\hspace{-.2cm}
-\begin{minipage}{3.7cm}
+\end{minipage}%\hspace{-.2cm}
+\begin{minipage}{3.5cm}
   \begin{tabular}{@{}rrr@{}} \toprule
 \bf Parent & \bf \#sites & \bf \%sites \\\midrule
 Function & \packageNewEnvCategorySitesa & \packageNewEnvCategorySitePercenta \\
@@ -1007,8 +1006,8 @@ Global & \packageNewEnvCategorySitesc & \packageNewEnvCategorySitePercentc \\
     Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\bottomrule
 \end{tabular}
 \caption{Wrapper envs.} \label{tab:newenvs}
-\end{minipage}\hspace{-.2cm}
-\begin{minipage}{3.7cm}\centering
+\end{minipage}%\hspace{-.2cm}
+\begin{minipage}{3.45cm}\centering
   \begin{tabular}{@{}ccc@{}} \toprule
  \bf \#kinds & \bf \#sites &  \bf \%sites \\\midrule
  \packageNbCategoryEnvira & \packageNbCategoryEnvirSitesaRnd &  \packageNbCategoryEnvirPercenta\\
