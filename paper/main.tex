@@ -108,8 +108,8 @@
 \author{Jan Vitek}\affiliation{\institution{Northeastern University}\country{USA}}
 \affiliation{\institution{Czech Technical University in Prague}\country{Czech
     Republic}}
-\renewcommand{\shortauthors}{A. Goel, P. Donat-Bouillud, F. Křikava, C. M.
-  Kirsch, J. Vitek}
+\renewcommand{\shortauthors}{Aviral Goel, Pierre Donat-Bouillud, Filip Křikava, Christoph M.
+  Kirsch, Jan Vitek}
 
 \begin{abstract}
   Most dynamic languages allow users to turn text into code using various
@@ -271,13 +271,15 @@ choices affect its expressive power. The key choices are the input format, the
 environment in which generated code evaluates, and the reflective operations
 available to that code. Table~\ref{comp} summarizes a few designs.
 
-\begin{table}[!h]\center\small\begin{tabular}{r@{~}llll}\toprule
+\begin{table}[!h]\center\small
+  \caption{Design space of \eval}\label{comp}
+  \begin{tabular}{r@{~}llll}\toprule
 \tiny\sc Language&&\sc\tiny Input&\sc\tiny Scope&\tiny\sc Reflective operations\\\midrule
 \bf Julia&\cite{julia}     & expression& toplevel         & data\\
 \bf Java&\cite{cl}  & bytecode  & classloader       & data\\
 \bf JavaScript&\cite{ecoop11}& text      & current, toplevel& data\\
 \bf R&\cite{R96}  & expression& programmatic      & data, stack, environment\\\bottomrule
-\end{tabular}\caption{Design space of \eval}\label{comp}
+\end{tabular}
 \end{table}
 
 The input to \eval can be in any format convertible to code. JavaScript allows
@@ -316,31 +318,6 @@ ensure that any method defined within an \eval only becomes visible at
 well-defined points and thus that optimized code does not have to be
 invalidated~\cite{oopsla20a}.
 
-\begin{figure}[!t]
-\begin{minipage}{.49\textwidth}
-\begin{lstlisting}[caption={Examples of calls producing expression \k{a+b}},label=lst:exprs]
-  parse(text="a+b")
-  quote(a+b)
-  call("+", quote(a), quote(b))
-
-  # reflect promise
-  f <- function(x) substitute(x)
-  f(a+b)
-  \end{lstlisting}
-\end{minipage}
-\begin{minipage}{.49\textwidth}
-  \begin{lstlisting}[caption={Example of a call reflection},label=lst:match.call]
-  f <- function(x, y) {
-    mc <- match.call() # reflect curr. call
-    mc[[1]] <- as.name("g")
-    mc[["x"]] <- 3
-    mc
-  }
-  f(1,2) # returns an expr g(x=3,y=2)
-  \end{lstlisting}
-\end{minipage}
-\end{figure}
-
 \subsection{Eval in R}\label{sec:eval-in-r}
 
 The \eval function in R takes three parameters: an expression to evaluate
@@ -365,6 +342,30 @@ call to \k{substitute(x)} extracts the unevaluated expression from the promise
 \k{x}. The call to \k{match.call()} returns an expression representing the
 current call which can then be further modified.
 
+\begin{figure}[!t]
+  \begin{minipage}{.49\textwidth}
+\begin{lstlisting}[caption={Examples of calls producing expression \k{a+b}},label=lst:exprs]
+  parse(text="a+b")
+  quote(a+b)
+  call("+", quote(a), quote(b))
+
+  # reflect promise
+  f <- function(x) substitute(x)
+  f(a+b)
+\end{lstlisting}
+  \end{minipage}
+  \begin{minipage}{.49\textwidth}
+\begin{lstlisting}[caption={Example of a call reflection},label=lst:match.call]
+  f <- function(x, y) {
+    mc <- match.call() # reflect curr. call
+    mc[[1]] <- as.name("g")
+    mc[["x"]] <- 3
+    mc
+  }
+  f(1,2) # returns an expr g(x=3,y=2)
+\end{lstlisting}
+  \end{minipage}
+\end{figure}
 
 R is permissive in terms of what is considered an environment. Besides
 environments, it accepts lists, data frames (using element names or column names
@@ -673,7 +674,8 @@ over half of our observations.
 \small
 
 \begin{tabular}{@{\hspace{0.5cm}}l@{\hspace{1.2cm}}l}
-\begin{minipage}{5cm}\small
+  \begin{minipage}{5cm}\small
+    \caption{Call frequency}\label{tab:freq}
   \begin{tabular}{r@{\,}r@{\,}l@{}r|r@{\,}r@{\,}l@{}r@{}} \toprule
     \multicolumn{3}{c}{\bf \small\#calls} &\bf \small \#pck
 &     \multicolumn{3}{c}{\bf \small\#calls} &\bf \small\#pck \\\midrule
@@ -681,17 +683,18 @@ over half of our observations.
 \tt 11 &--& \tt 100    & \packageBinb  & \tt 100K &--&\tt 1M  & \packageBinf\\
 \tt 101 &--& \tt 1K    & \packageBinc  & \tt 1M &--&\tt 10M   & \packageBing\\
 \tt 1K &--& \tt 10K    & \packageBind  & \tt 10M &--& \tt 100M & \packageBinh\\\bottomrule
-\end{tabular}\caption{Call frequency}\label{tab:freq}
+\end{tabular}
 \end{minipage}
 &
 \begin{minipage}{8cm}\small
+\caption{Variants}\label{tab:variantseval}
 \begin{tabular}{@{}r|rrrr}\toprule
   &\eval & \k{evalq} & \k{eval} & \k{local}\\[-1.3mm]
            & & & \k{.parent} &\\[1.3mm]\midrule
 \small Static sites &\packageStaticeval&\packageStaticevalq&\packageStaticevalparent&\packageStaticlocal \\
 \small Exercised sites&\packageTriggeredeval&\packageTriggeredevalq&\packageTriggeredevalparent&\packageTriggeredlocal\\
 \small Invocations&\packageEvalsRnd&\packageEvalqsRnd&\packageEparentsRnd&\packageLocalsRnd\\\bottomrule
-\end{tabular}\caption{Variants}\label{tab:variantseval}
+\end{tabular}
 \end{minipage}\end{tabular}
 \end{table}
 
@@ -701,26 +704,25 @@ over half of our observations.
 	\label{fig:traced-eval-callsites}
 \end{figure}
 
-
-
-Table~\ref{tab:variantseval} summarizes the use of variants, the first row has sites
-(\emph{static}), the second has sites encountered during analysis
-(\emph{exercised}) and the last gives calls (\emph{invocations}). Most sites and
-calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
-\k{local} are barely used at all.
-
 \begin{wraptable}{r}{5cm}  \small  \centering
+  \caption{Normalized calls} \label{tab:cn}
   \begin{tabular}{r@{\,}r@{\,}l@{\,}r|r@{\,}r@{\,}l@{}r} \toprule
     \multicolumn{3}{c}{\bf \#calls} & \bf \#sites &
-     \multicolumn{3}{c}{\bf \#calls} & \bf \#sites \\\midrule
+                                                    \multicolumn{3}{c}{\bf \#calls} & \bf \#sites \\\midrule
     \tt 0 &--& \tt 50    & \packageRunbina & \tt 501 &--& \tt 1000   & \packageRunbine\\
     \tt 51 &--& \tt 100  & \packageRunbinb & \tt 1001 &--& \tt 1500  & \packageRunbinf\\
     \tt 101 &--& \tt 250 & \packageRunbinc & \tt 1501 &--& \tt 2000  & \packageRunbing\\
     \tt 251 &--& \tt 500 & \packageRunbind & \tt 2001 &--& \tt 3000 & \packageRunbinh\\\bottomrule
   \end{tabular}
-  \caption{Normalized calls} \label{tab:cn}
-  %\vspace{-0.5cm}
+  % \vspace{-0.5cm}
 \end{wraptable}
+
+Table~\ref{tab:variantseval} summarizes the use of variants, the first row has sites
+(\emph{static}), the second has sites encountered during analysis
+(\emph{exercised}) and the last gives calls (\emph{invocations}).
+Most sites and
+calls go to \eval itself, \k{eval.parent} is rare, and both \k{evalq} and
+\k{local} are barely used at all.
 
 Table~\ref{tab:cn} shows the average count of calls from a given site and given run and
 how many sites fall in that range. For instance, \packageRunbinh sites are
@@ -775,7 +777,7 @@ shows the distribution of work-intensive \evals which go all the way to
 \end{minipage}\\[-3mm]
 \small (a) Small & \small (b) Large
 \end{tabular}
- \caption{Instructions per call} \label{ev}
+\caption{Instructions per call} \label{ev}
 \end{figure}
 
 \paragraph{Discussion.}
@@ -801,21 +803,21 @@ elucidate \emph{what} it does.
 \subsection{The Expression in \Eval} \label{sec:minimized}
 
 \begin{table}[!b]\small
-\hspace*{-0.2cm}
+  \hspace*{-0.2cm}
+  \caption{Minimized expressions} \label{tab:minimizedexpressions}
 \begin{tabular}{crrrrrc}\toprule
   \bf $min(e)$& \bf \#sites & \bf \%sites & \bf \#packages & \bf \#ops & \bf \%envir & \bf example\\\midrule
 \k{X}&\packageMinimizedcallsitesa &\packageMinimizedpropsitesa &\packageMinimizedpackagea &\packageMinimizedmedianoperationsaRnd &\packageMinimizedpercentparentframesa & \k{y+1}\\
-\k{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedmedianoperationsbRnd & \packageMinimizedpercentparentframesb & \k{gbov( mean(x), a-1)}\\
+\k{F(F(X))} & \packageMinimizedcallsitesb  & \packageMinimizedpropsitesb & \packageMinimizedpackageb  & \packageMinimizedmedianoperationsbRnd & \packageMinimizedpercentparentframesb & \k{gbov(mean(x), a-1)}\\
 \k{V}&\packageMinimizedcallsitesc &\packageMinimizedpropsitesc &\packageMinimizedpackagec &\packageMinimizedmedianoperationscRnd &\packageMinimizedpercentparentframesc& \k{c(42,21,0)}\\
 \k{F(X)}& \packageMinimizedcallsitesd & \packageMinimizedpropsitesd & \packageMinimizedpackaged & \packageMinimizedmedianoperationsdRnd & \packageMinimizedpercentparentframesd & \k{seq\_len(iters)} \\
 \k{\$} & \packageMinimizedcallsitese & \packageMinimizedpropsitese & \packageMinimizedpackagee & \packageMinimizedmedianoperationseRnd & \packageMinimizedpercentparentframese & \k{DF\$B}\\
-\k{model.frame}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedmedianoperationsfRnd & \packageMinimizedpercentparentframesf &  \k{model.frame(formula = Z ~ U)}   \\
+\k{model.frame}& \packageMinimizedcallsitesf & \packageMinimizedpropsitesf & \packageMinimizedpackagef & \packageMinimizedmedianoperationsfRnd & \packageMinimizedpercentparentframesf &  \k{model.frame(formula = Z~U)}   \\
 \k{F()}& \packageMinimizedcallsitesg & \packageMinimizedpropsitesg & \packageMinimizedpackageg & \packageMinimizedmedianoperationsgRnd & \packageMinimizedpercentparentframesg & \k{rgamma(3, 2, n = 10L)} \\
-\k{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentparentframesh & \k{function(x, y) x + 3 * y} \\
+\k{FUN} & \packageMinimizedcallsitesh & \packageMinimizedpropsitesh & \packageMinimizedpackageh & \packageMinimizedmedianoperationshRnd & \packageMinimizedpercentparentframesh & \k{function(x)x+1} \\
 \k{<-} & \packageMinimizedcallsitesi  & \packageMinimizedpropsitesi & \packageMinimizedpackagei & \packageMinimizedmedianoperationsiRnd & \packageMinimizedpercentparentframesi & \k{x[1, 2:3, 2:3] <- value}\\
 \k{BLOCK} & \packageMinimizedcallsitesj & \packageMinimizedpropsitesj & \packageMinimizedpackagej & \packageMinimizedmedianoperationsjRnd & \packageMinimizedpercentparentframesj & \k{\{write(iris,tf);file.size(tf)\}} \\\bottomrule
 \end{tabular}
-\caption{Minimized expressions} \label{tab:minimizedexpressions}
 \end{table}
 
 
@@ -849,17 +851,6 @@ the behavior of \eval.
 \newcommand{\EE}[1]{{{\emph{\framebox{#1}}}}\\[1mm]}
 
 \begin{tabular}{@{}p{.97\linewidth}}
-  \medskip\EE{$min(e)=\c{V}$}\\[-2mm]\small Values occur in 16\% of sites, 74\% of
-  those are constants such as integers, the remainder evaluate to a value (\packageNbCallSitesUniqueActualValue of sites only ever see a value). \Eval
-  is needed when the expression denoting the values is constructed
-  programmatically. Cases when a value is directly given to \eval, and \eval
-  returns it unchanged, often occur when a computation has a default path and
-  another, more interesting, path that requires evaluation.
-  This shape usually runs in few interpreter steps.
-  The environment in which these expressions evaluate is mostly irrelevant.
-\end{tabular}
-
-\begin{tabular}{@{}p{.97\linewidth}}
   \medskip\EE{$min(e)=\c{X}$}\\[-2mm]\small Variable lookups are the most common shape,
   \packageNbSymbolVarSitePercent are simple variable names, e.g. \k{x}. The shapes
   subsume \k{V} and built-in arithmetic operations, so a mixture of arithmetics
@@ -869,13 +860,41 @@ the behavior of \eval.
   little work. Variables are often evaluated in environments that have been
   constructed programmatically; \packageMinimizedpercentparentframesa of
   expressions are evaluated in a function environment.
-\end{tabular}
-
-\begin{tabular}{@{}p{.97\linewidth}}
+  \\
+  \medskip\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$}\\[-2mm]\small This shape corresponds to function
+  calls whose arguments may include variable references and nested calls. Together
+  they represent the most frequent shape and perform over 16 steps. They are
+  frequently evaluated in function environments.
+  \\
+  \medskip\EE{$min(e)=\c{V}$}\\[-2mm]\small Values occur in 16\% of sites, 74\% of
+  those are constants such as integers, the remainder evaluate to a value (\packageNbCallSitesUniqueActualValue of sites only ever see a value). \Eval
+  is needed when the expression denoting the values is constructed
+  programmatically. Cases when a value is directly given to \eval, and \eval
+  returns it unchanged, often occur when a computation has a default path and
+  another, more interesting, path that requires evaluation.
+  This shape usually runs in few interpreter steps.  
+  \\
   \medskip\EE{$min(e)=\c{\$}$}\\[-2mm]\small This shape extends \k{X} to include lookup
   with the dollar operator, \eg~\texttt{x\$f}, and vector indexing, \eg~\k{x[42]} and
   \k{x[[24]]}. This takes a few more steps of evaluation on average and is
   typically used in a function environment.
+  \\
+  \medskip\EE{$min(e)=\c{model.frame}$}\\[-2mm]\small The \k{model.frame} function
+  returns a data frame resulting from fitting the model described in a formula.
+  This shape subsumes \k{F(F(X))}, \k{FUN}, and assignments. It is the single most
+  popular function invoked from \eval. Each call does a median of 2K instructions.
+\end{tabular}
+
+\begin{tabular}{@{}p{.97\linewidth}}
+  \medskip\EE{$min(e)=\c{F()}$}\\[-2mm]\small This shape represents function calls without variable lookups or
+  assignment. A variable is allowed in the function position; looking up
+  functions does not trigger computation unless the function's name
+  is bound to a promise. This shape typically does not perform much work.
+  \\
+  \medskip\EE{$min(e)=\c{FUN}$}\\[-2mm]\small This shape represents function definitions without any
+  computation, \eg~\k{function(x) x+1}. In addition to \k{FUN},
+  \packageGeneralizedFunctionDefinitionSitesPercent sites have function
+  definitions nested in other expressions.
   \\
   \medskip\EE{$min(e)=$~\k{<-}}\\[-2mm]\small This includes both direct assignment {\tt
   <-} and parent environment assignment {\tt <\,\!<-} as well as the \k{assign}
@@ -884,25 +903,6 @@ the behavior of \eval.
   where the assign expression is assembled using parse or substitute, often in
   a loop.
   \\
-  \medskip\EE{$min(e)=\c{F()}$}\\[-2mm]\small This shape represents function calls without variable lookups or
-  assignment. A variable is allowed in the function position; looking up
-  functions does not trigger computation unless the function's name
-  is bound to a promise. This shape typically does not perform much work.
-\end{tabular}
-
-\begin{tabular}{@{}p{.97\linewidth}}
-  \medskip\framebox{$min(e)=\c{F(X)}$}~\EE{$min(e)=\c{F(F(X))}$}\\[-2mm]\small This shape corresponds to function
-  calls whose arguments may include variable references and nested calls. Together
-  they represent the most frequent shape and perform over 16 steps. They are
-  frequently evaluated in function environments.
-  \\
-  \medskip\EE{$min(e)=\c{FUN}$}\\[-2mm]\small This shape represents function definitions without any
-  computation, \eg~\k{function(x) x+1}. In addition to \k{FUN},
-  \packageGeneralizedFunctionDefinitionSitesPercent sites have function
-  definitions nested in other expressions.
-\end{tabular}
-
-\begin{tabular}{@{}p{.97\linewidth}}
   \medskip\EE{$min(e)=\c{BLOCK}$}\\[-2mm]\small These are multi-statement code blocks; as
   they can be large, we do not try to normalize their contents. They execute in a
   median \packageMinimizedmedianoperationsjRnd steps, usually in function
@@ -913,13 +913,6 @@ the behavior of \eval.
   frameworks (\eg \k{testthat}, \k{testit}), code benchmarking (\eg
   \k{rbenchmark}, \k{microbenchmark}), running code in parallel (\eg \k{foreach},
   \k{doParallel}), or deferring code execution (\eg \k{withr}).
-\end{tabular}
-
-\begin{tabular}{@{}p{.97\linewidth}}
-  \medskip\EE{$min(e)=\c{model.frame}$}\\[-2mm]\small The \k{model.frame} function
-  returns a data frame resulting from fitting the model described in a formula.
-  This shape subsumes \k{F(F(X))}, \k{FUN}, and assignments. It is the single most
-  popular function invoked from \eval. Each call does a median of 2K instructions.
 \end{tabular}
 
 \paragraph{Discussion.} The number of different shapes that any given
@@ -976,7 +969,8 @@ the sites, only one kind of environment is observed.
 
 \begin{table}[h]
   \centering\small%\hspace{-.5cm}
-\begin{minipage}{3.5cm}
+  \begin{minipage}{3.5cm}
+    \caption{Kinds per site} \label{tab:highlevelenvironments}
   \begin{tabular}{@{}rrr@{}}\toprule
  \bf Kind & \bf \#sites & \bf \%sites \\\midrule
  Function & \packageNbFunctionEnvSites &  \packageNbFunctionEnvSitePercent\\
@@ -984,9 +978,9 @@ the sites, only one kind of environment is observed.
  Global &  \packageNbStrictGlobalEnvSites & \packageNbStrictGlobalEnvSitePercent \\
  Package & \packageNbPackageNamespaceEnvSites & \packageNbPackageNamespaceEnvSitePercent \\\bottomrule
 \end{tabular}
-\caption{Kinds per site} \label{tab:highlevelenvironments}
 \end{minipage}%\hspace{-.2cm}
 \begin{minipage}{3.5cm}\centering
+  \caption{Function offsets}\label{tab:funoffset}
   \begin{tabular}{@{}rrr@{}}\toprule
  \bf Offset & \bf \#sites & \bf \%sites \\\midrule
   \packageCallerEnvHierarchyNamea & \packageCallerEnvHierarchySitesaRnd & \packageCallerEnvHierarchySitePercenta \\
@@ -994,9 +988,9 @@ the sites, only one kind of environment is observed.
   \packageCallerEnvHierarchyNamec& \packageCallerEnvHierarchySitescRnd & \packageCallerEnvHierarchySitePercentc  \\
 $\ge 3$& \packageNbFarAwayCallerSites &  \packageNbFarAwayCallerSitePercent \\\bottomrule
  \end{tabular}
-\caption{Function offset}\label{tab:funoffset}
 \end{minipage}%\hspace{-.2cm}
 \begin{minipage}{3.5cm}
+  \caption{Wrapper envs.} \label{tab:newenvs}
   \begin{tabular}{@{}rrr@{}} \toprule
 \bf Parent & \bf \#sites & \bf \%sites \\\midrule
 Function & \packageNewEnvCategorySitesa & \packageNewEnvCategorySitePercenta \\
@@ -1004,16 +998,16 @@ Package & \packageNewEnvCategorySitesb &  \packageNewEnvCategorySitePercentb\\
 Global & \packageNewEnvCategorySitesc & \packageNewEnvCategorySitePercentc \\
     Empty & \packageNewEnvCategorySitesd & \packageNewEnvCategorySitePercentd \\\bottomrule
 \end{tabular}
-\caption{Wrapper envs.} \label{tab:newenvs}
 \end{minipage}%\hspace{-.2cm}
 \begin{minipage}{3.45cm}\centering
+  \caption{Multiplicities}\label{tab:polyenvir}
   \begin{tabular}{@{}ccc@{}} \toprule
  \bf \#kinds & \bf \#sites &  \bf \%sites \\\midrule
  \packageNbCategoryEnvira & \packageNbCategoryEnvirSitesaRnd &  \packageNbCategoryEnvirPercenta\\
  \packageNbCategoryEnvirb &  \packageNbCategoryEnvirSitesbRnd & \packageNbCategoryEnvirPercentb \\
  \packageNbCategoryEnvirc & \packageNbCategoryEnvirSitescRnd &  \packageNbCategoryEnvirPercentc\\
  \packageNbCategoryEnvird & \packageNbCategoryEnvirSitesdRnd & \packageNbCategoryEnvirPercentd\\\bottomrule
-\end{tabular}\caption{Multiplicities}\label{tab:polyenvir}
+\end{tabular}
 \end{minipage}\hspace{-1cm}
 \end{table}
 
@@ -1104,19 +1098,20 @@ origin is \k{parse}.
 
 
 \begin{table}[!b]\small\centering
+  \caption{Origins}\label{tab:provenance}
 \begin{tabular}{c@{\hspace{2cm}}c}
-  \begin{tabular}{lcc}\toprule
+  \begin{tabular}{lrr}\toprule
 \bf Provenance & \bf \#sites & \bf \%sites \\\midrule
-		\packageProvenanceNamea & \packageNbProvenanceSitesa & \packagePercentProvenanceSitesa \\
-		\packageProvenanceNameb & \packageNbProvenanceSitesb & \packagePercentProvenanceSitesb \\
-		\packageProvenanceNamec & \packageNbProvenanceSitesc & \packagePercentProvenanceSitesc \\
-		\packageProvenanceNamee & \packageNbProvenanceSitese & \packagePercentProvenanceSitese \\
-		\packageProvenanceNamef & \packageNbProvenanceSitesf & \packagePercentProvenanceSitesf \\
-		\packageProvenanceNameg & \packageNbProvenanceSitesg & \packagePercentProvenanceSitesg \\
-		\packageProvenanceNameh & \packageNbProvenanceSitesh & \packagePercentProvenanceSitesh \\
-		\packageProvenanceNamei & \packageNbProvenanceSitesi & \packagePercentProvenanceSitesi \\
-		\packageProvenanceNamel & \packageNbProvenanceSitesl & \packagePercentProvenanceSitesl \\
-		\packageProvenanceNamen & \packageNbProvenanceSitesn & \packagePercentProvenanceSitesn \\\bottomrule
+		\packageProvenanceNamea & \packageNbProvenanceSitesa & \packagePercentProvenanceSitesa\unskip\% \\
+		\packageProvenanceNameb & \packageNbProvenanceSitesb & \packagePercentProvenanceSitesb\unskip\% \\
+		\packageProvenanceNamec & \packageNbProvenanceSitesc & \packagePercentProvenanceSitesc\unskip\% \\
+		\packageProvenanceNamee & \packageNbProvenanceSitese & \packagePercentProvenanceSitese\unskip\% \\
+		\packageProvenanceNamef & \packageNbProvenanceSitesf & \packagePercentProvenanceSitesf\unskip\% \\
+		\packageProvenanceNameg & \packageNbProvenanceSitesg & \packagePercentProvenanceSitesg\unskip\% \\
+		\packageProvenanceNameh & \packageNbProvenanceSitesh & \packagePercentProvenanceSitesh\unskip\% \\
+		\packageProvenanceNamei & \packageNbProvenanceSitesi & \packagePercentProvenanceSitesi\unskip\% \\
+		\packageProvenanceNamel & \packageNbProvenanceSitesl & \packagePercentProvenanceSitesl\unskip\% \\
+		\packageProvenanceNamen & \packageNbProvenanceSitesn & \packagePercentProvenanceSitesn\unskip\% \\\bottomrule
 \end{tabular}
 &
 \begin{tabular}{rrr} \toprule
@@ -1129,7 +1124,6 @@ External & \packageNbExternalSites & \packageExternalSitesPercent \\\bottomrule
 \end{tabular}
 \end{tabular}
 \medskip
-\caption{Origins}\label{tab:provenance}
 \end{table}
 
 To have a high-level view of provenance, we classify functions into the
@@ -1192,6 +1186,7 @@ possibly in parallel). Most of the sites (\SESitesInEnvirRatio) update
 the environment specified by the \k{env} parameter.
 
 \begin{table}[!h]
+  \caption{Target environments for side-effects} \label{tab:se-env}
   \begin{tabular}{lrrrr}
     \toprule
     \bf Environments & \bf \#sites & \bf \%sites & \bf \#funs. & \bf \%funs. \\%
@@ -1199,12 +1194,11 @@ the environment specified by the \k{env} parameter.
     \expandableinput tag/table-se-target-envs.tex
     \bottomrule
   \end{tabular}
-  \caption{Target environments for side-effects} \label{tab:se-env}
 \end{table}
 
 Table~\ref{tab:se-env} shows environment kinds where side-effects happen.
 Function environments distinguish between \emph{local}, the caller environment
-(offset 0), and \emph{function} (offset >0). \emph{Synthetic} represents
+(offset 0), and \emph{function} (offset > 0). \emph{Synthetic} represents
 constructed environments. \emph{Object} is used to denote the environments
 attached to objects and classes in the S4 and R6 object systems. \emph{Multiple}
 denotes cases where side-effects to more than one kind originate from one site.
@@ -1241,6 +1235,7 @@ find a common use case.
 \begin{table}[h]
   \small
   \centering
+  \caption{Types of \eval side-effects} \label{tab:se-types}
   \begin{tabular}{lrrrrrr}
     \toprule
     \bf Side effect & \bf \#events & \bf \%events & \bf \#calls & \bf \%calls & \bf \#sites & \bf \%sites \\%
@@ -1248,11 +1243,10 @@ find a common use case.
     \expandableinput tag/table-se-types.tex
     \bottomrule
   \end{tabular}
-  \caption{Types of \eval side-effects} \label{tab:se-types}
 \end{table}
 
 Out of the minimized expressions, it is \k{BLOCK}, \k{<-} and \k{F(F(X))} that
-contributes to the vast majority of side effects. Concretely, 92\% of \k{BLOCK},
+contribute to the vast majority of side effects. Concretely, 92\% of \k{BLOCK},
 87\% of \k{<-}, and 15\% of \k{F(F(X))} expressions do side effects. In the case
 of \k{BLOCK}, most of them happen in the environment passed to the \eval call
 (default is the parent environment). For \k{<-} it is 15\%. This form is
